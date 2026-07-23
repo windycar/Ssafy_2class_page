@@ -1,0 +1,134 @@
+{
+  "className": "SSAFY 광주 2반",
+  "totalStudents": 21,
+  "defaultTeamCount": 7,
+  "defaultMembersPerTeam": 3,
+  "students": [
+    {
+      "id": 1,
+      "name": "강혜진",
+      "username": "@blueishsun24",
+      "class": "광주_2반"
+    },
+    {
+      "id": 2,
+      "name": "구소현",
+      "username": "@so1454",
+      "class": "광주_2반"
+    },
+    {
+      "id": 3,
+      "name": "김범관",
+      "username": "@s202202923",
+      "class": "광주_2반"
+    },
+    {
+      "id": 4,
+      "name": "김병욱",
+      "username": "@byumguk2",
+      "class": "광주_2반"
+    },
+    {
+      "id": 5,
+      "name": "김수정",
+      "username": "@ksujng2338",
+      "class": "광주_2반"
+    },
+    {
+      "id": 6,
+      "name": "김승찬",
+      "username": "@ksc4383",
+      "class": "광주_2반"
+    },
+    {
+      "id": 7,
+      "name": "김예빈",
+      "username": "@kyb0617",
+      "class": "광주_2반"
+    },
+    {
+      "id": 8,
+      "name": "김지명",
+      "username": "@wlaud131",
+      "class": "광주_2반"
+    },
+    {
+      "id": 9,
+      "name": "문경준",
+      "username": "@m86865",
+      "class": "광주_2반"
+    },
+    {
+      "id": 10,
+      "name": "박민희",
+      "username": "@gmlakdckdrh",
+      "class": "광주_2반"
+    },
+    {
+      "id": 11,
+      "name": "박세진",
+      "username": "@tpwls06010",
+      "class": "광주_2반"
+    },
+    {
+      "id": 12,
+      "name": "서승민",
+      "username": "@tmdals2113",
+      "class": "광주_2반"
+    },
+    {
+      "id": 13,
+      "name": "유진석",
+      "username": "@seogi523",
+      "class": "광주_2반"
+    },
+    {
+      "id": 14,
+      "name": "이건",
+      "username": "@1leeg",
+      "class": "광주_2반"
+    },
+    {
+      "id": 15,
+      "name": "이예빈",
+      "username": "@eee912",
+      "class": "광주_2반"
+    },
+    {
+      "id": 16,
+      "name": "이재훈",
+      "username": "@5613ljh",
+      "class": "광주_2반"
+    },
+    {
+      "id": 17,
+      "name": "이혜령",
+      "username": "@zzangu1206",
+      "class": "광주_2반"
+    },
+    {
+      "id": 18,
+      "name": "임진석",
+      "username": "@wlstjr46",
+      "class": "광주_2반"
+    },
+    {
+      "id": 19,
+      "name": "전준혁",
+      "username": "@jys6041",
+      "class": "광주_2반"
+    },
+    {
+      "id": 20,
+      "name": "정용철",
+      "username": "@jyc686397",
+      "class": "광주_2반"
+    },
+    {
+      "id": 21,
+      "name": "조민정",
+      "username": "@iop11232",
+      "class": "광주_2반"
+    }
+  ]
+}

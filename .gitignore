@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.netlify/
+.pnpm-store/
+.pnpm-install.pid
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store

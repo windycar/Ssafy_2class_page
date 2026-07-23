@@ -1,0 +1,19 @@
+packages:
+  - '.'
+
+allowBuilds:
+  '@tailwindcss/oxide': set this to true or false
+  esbuild: set this to true or false
+
+overrides:
+  vite: 6.3.5
+
+supportedArchitectures:
+  os:
+    - linux
+    - win32
+  cpu:
+    - x64
+    - arm64
+  libc:
+    - glibc
