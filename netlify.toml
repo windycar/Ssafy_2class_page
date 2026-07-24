@@ -6,6 +6,7 @@
   NODE_VERSION = "22"
   PNPM_VERSION = "10"
 
+# React Router의 직접 주소 접근과 새로고침에도 앱을 정상적으로 표시합니다.
 [[redirects]]
   from = "/*"
   to = "/index.html"

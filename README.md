@@ -1,27 +1,19 @@
 
-# SSAFY 광주 2반 랜덤 팀 편성
+  # 랜덤 팀 편성 웹페이지
 
-교육생 명단에서 참여자를 선택하고 팀 수 또는 팀당 인원수에 맞춰 랜덤으로 팀을 편성하는 웹페이지입니다.
+  This is a code bundle for 랜덤 팀 편성 웹페이지. The original project is available at https://www.figma.com/design/rEKzsa3P4bLFfBq7vZZryP/%EB%9E%9C%EB%8D%A4-%ED%8C%80-%ED%8E%B8%EC%84%B1-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80.
 
-## 로컬 실행
+  ## Running the code
 
-```bash
-pnpm install
-pnpm dev
-```
+  Run `npm i` to install the dependencies.
 
-## 프로덕션 빌드
+Run `npm run dev` to start the development server.
 
-```bash
-pnpm build
-pnpm preview
-```
+## Supabase photo storage
 
-## Netlify 배포
+1. Create a Supabase project and run [`supabase/schema.sql`](./supabase/schema.sql) in its SQL Editor.
+2. Copy `.env.example` to `.env.local`, then set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` with the project's URL and anon key.
+3. In Netlify, add the same two values under **Site configuration → Environment variables**, then redeploy.
 
-저장소를 Netlify에 연결하면 `netlify.toml` 설정에 따라 자동으로 빌드됩니다.
-
-- 빌드 명령: `pnpm build`
-- 배포 폴더: `dist`
-- Node.js: 22
+The included storage policy allows public uploads for the class gallery. Add Supabase Auth before sharing the site outside the class.
   

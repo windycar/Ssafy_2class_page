@@ -1,12 +1,11 @@
 {
-  "name": "ssafy-2class-random-team",
+  "name": "@figma/my-make-file",
   "private": true,
   "version": "0.0.1",
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite",
-    "preview": "vite preview"
+    "dev": "vite"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -14,6 +13,7 @@
     "@mui/icons-material": "7.3.5",
     "@mui/material": "7.3.5",
     "@popperjs/core": "2.11.8",
+    "@supabase/supabase-js": "^2.49.4",
     "@radix-ui/react-accordion": "1.2.3",
     "@radix-ui/react-alert-dialog": "1.1.6",
     "@radix-ui/react-aspect-ratio": "1.1.2",
@@ -81,6 +81,11 @@
     },
     "react-dom": {
       "optional": true
+    }
+  },
+  "pnpm": {
+    "overrides": {
+      "vite": "6.3.5"
     }
   }
 }

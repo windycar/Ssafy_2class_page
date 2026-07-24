@@ -1,0 +1,22 @@
+import {
+  Home,
+  Shuffle,
+  Coffee,
+  Camera,
+  Shield,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+export interface NavItem {
+  label: string;
+  path: string;
+  icon: LucideIcon;
+}
+
+export const NAV_ITEMS: NavItem[] = [
+  { label: "홈", path: "/", icon: Home },
+  { label: "랜덤 팀", path: "/teams", icon: Shuffle },
+  { label: "같이 공구", path: "/coffee", icon: Coffee },
+  { label: "사진첩", path: "/gallery", icon: Camera },
+  { label: "그라운드 룰", path: "/ground-rules", icon: Shield },
+];
