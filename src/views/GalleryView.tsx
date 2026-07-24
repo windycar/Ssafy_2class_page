@@ -298,9 +298,9 @@ export default function GalleryView() {
       {/* Detail Modal */}
       {detailPhoto && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setDetailId(null)}>
-          <div className="bg-white rounded-2xl overflow-hidden max-w-6xl w-full h-[88vh] flex flex-col md:flex-row shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="relative md:w-3/4 bg-gray-900 flex-shrink-0">
-              <img src={detailPhoto.imageUrl} alt={detailPhoto.title} className="w-full h-72 md:h-full object-contain" />
+          <div className="bg-white rounded-2xl overflow-hidden w-[96vw] h-[92vh] flex flex-col md:flex-row shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="relative md:w-[78%] bg-gray-900 flex-shrink-0">
+              <img src={detailPhoto.imageUrl} alt={detailPhoto.title} className="w-full h-80 md:h-full object-contain" />
               <button onClick={() => setDetailId(null)} className="absolute top-3 right-3 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70"><X className="w-4 h-4" /></button>
               {detailIndex > 0 && (
                 <button onClick={() => setDetailId(detailAlbum[detailIndex - 1].id)} className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70"><ChevronLeft className="w-5 h-5" /></button>
