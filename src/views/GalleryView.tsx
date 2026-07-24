@@ -26,7 +26,7 @@ export default function GalleryView() {
   const [commentText, setCommentText] = useState("");
   const [commentAuthor, setCommentAuthor] = useState("");
   const uploadModal = useModal();
-  const [uploadForm, setUploadForm] = useState({ title: "", description: "", takenAt: "", uploadedBy: "", category: "event" as PhotoCategory, previewUrl: "", file: null as File | null });
+  const [uploadForm, setUploadForm] = useState({ title: "", description: "", takenAt: "", uploadedBy: "", category: "event" as PhotoCategory, previewUrl: "", file: null as File | null, files: [] as File[] });
   const fileRef = useRef<HTMLInputElement>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
@@ -83,10 +83,11 @@ export default function GalleryView() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files ?? []);
+    const file = files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => setUploadForm((p) => ({ ...p, file, previewUrl: ev.target?.result as string }));
+    reader.onload = (ev) => setUploadForm((p) => ({ ...p, file, files, previewUrl: ev.target?.result as string }));
     reader.readAsDataURL(file);
   };
 
@@ -107,12 +108,22 @@ export default function GalleryView() {
       createdAt: new Date().toISOString(),
     };
     if (!ensureSupabase()) return;
-    const storedPhoto = uploadForm.file
-      ? { ...newPhoto, ...(await uploadImage(uploadForm.file, newPhoto.id)) }
-      : newPhoto;
-    await createGalleryPhoto(storedPhoto);
-    setPhotos((prev) => [storedPhoto, ...prev]);
-    setUploadForm({ title: "", description: "", takenAt: "", uploadedBy: "", category: "event", previewUrl: "", file: null });
+    const files = uploadForm.files.length > 0
+      ? uploadForm.files
+      : uploadForm.file ? [uploadForm.file] : [];
+    const storedPhotos = files.length > 0
+      ? await Promise.all(files.map(async (file, index) => {
+          const photo = index === 0
+            ? newPhoto
+            : { ...newPhoto, id: createId("photo"), title: `${newPhoto.title} (${index + 1})` };
+          const storedPhoto = { ...photo, ...(await uploadImage(file, photo.id)) };
+          await createGalleryPhoto(storedPhoto);
+          return storedPhoto;
+        }))
+      : [newPhoto];
+    if (files.length === 0) await createGalleryPhoto(newPhoto);
+    setPhotos((prev) => [...storedPhotos, ...prev]);
+    setUploadForm({ title: "", description: "", takenAt: "", uploadedBy: "", category: "event", previewUrl: "", file: null, files: [] });
     uploadModal.close();
     toast.success("사진이 등록되었습니다!");
   };
@@ -187,7 +198,7 @@ export default function GalleryView() {
         : photo;
       await createGalleryPhoto(storedPhoto);
       setPhotos((prev) => [storedPhoto, ...prev]);
-      setUploadForm({ title: "", description: "", takenAt: "", uploadedBy: "", category: "event", previewUrl: "", file: null });
+      setUploadForm({ title: "", description: "", takenAt: "", uploadedBy: "", category: "event", previewUrl: "", file: null, files: [] });
       uploadModal.close();
       toast.success("사진을 등록했습니다.");
     } catch {
@@ -344,7 +355,10 @@ export default function GalleryView() {
                   <p className="text-sm text-gray-500">클릭하거나 드래그해서 이미지를 업로드하세요</p>
                 </>
               )}
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+              <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileChange} />
+              {uploadForm.files.length > 1 && (
+                <p className="mt-2 text-xs font-semibold text-emerald-600">{uploadForm.files.length}장 선택됨</p>
+              )}
             </div>
             <div>
               <label className="text-sm font-semibold text-gray-600 block mb-1">제목 *</label>
