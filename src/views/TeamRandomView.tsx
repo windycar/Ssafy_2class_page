@@ -49,6 +49,9 @@ export default function TeamRandomView() {
   const [students, setStudents] = useState<StudentEntry[]>(STUDENTS.map((s) => ({ ...s, included: true })));
   const [teams, setTeams] = useState<Team[] | null>(null);
   const [isShuffling, setIsShuffling] = useState(false);
+  const [randomPickCount, setRandomPickCount] = useState(1);
+  const [randomPickedStudents, setRandomPickedStudents] = useState<StudentEntry[]>([]);
+  const [isPickingPeople, setIsPickingPeople] = useState(false);
   const lastKey = useRef("");
 
   const included = students.filter((s) => s.included);
@@ -73,6 +76,20 @@ export default function TeamRandomView() {
     setTeams(result);
     setIsShuffling(false);
     toast.success("팀 편성이 완료되었습니다!");
+  };
+
+  const handleRandomPeoplePick = async () => {
+    if (includedCount === 0) {
+      toast.error("뽑을 수 있는 교육생이 없습니다.");
+      return;
+    }
+
+    setIsPickingPeople(true);
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    const count = Math.min(randomPickCount, includedCount);
+    setRandomPickedStudents(fisherYatesShuffle(included).slice(0, count));
+    setIsPickingPeople(false);
+    toast.success(`${count}명을 랜덤으로 뽑았습니다.`);
   };
 
   const handleReshuffleTeam = () => {
@@ -116,6 +133,8 @@ export default function TeamRandomView() {
     setTeamCount(7);
     setMembersPerTeam(3);
     setOptions({ differentFromLast: false, sortAlpha: false, autoTeamName: true });
+    setRandomPickCount(1);
+    setRandomPickedStudents([]);
     lastKey.current = "";
     toast.success("초기화되었습니다.");
   };
@@ -141,7 +160,7 @@ export default function TeamRandomView() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Settings Card */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-border shadow-sm p-5 sm:p-6 space-y-5">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-border shadow-sm p-5 sm:p-6 space-y-5 flex flex-col">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">팀 편성 설정</h2>
 
           {/* Mode */}
@@ -202,6 +221,64 @@ export default function TeamRandomView() {
             </motion.span>
             {isShuffling ? "편성 중..." : "랜덤 팀 만들기"}
           </button>
+
+          <div className="mt-1 pt-5 border-t border-[#dce8e3] flex-1 flex flex-col">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-base font-extrabold text-gray-800">랜덤 사람 뽑기</h3>
+                <p className="text-xs text-gray-500 mt-1">참여 교육생 중 원하는 인원만 중복 없이 뽑습니다.</p>
+              </div>
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">최대 {includedCount}명</span>
+            </div>
+
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-end gap-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-700 mb-2">랜덤 뽑기 인원</p>
+                <div className="flex items-center gap-2">
+                  <Stepper value={Math.min(randomPickCount, Math.max(1, includedCount))} onChange={setRandomPickCount} min={1} max={Math.max(1, includedCount)} />
+                  <span className="text-sm font-semibold text-gray-500">명</span>
+                </div>
+              </div>
+              <button
+                onClick={handleRandomPeoplePick}
+                disabled={isPickingPeople || includedCount === 0}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-emerald-100"
+              >
+                <motion.span animate={isPickingPeople ? { rotate: 360 } : { rotate: 0 }} transition={isPickingPeople ? { repeat: Infinity, duration: 0.55, ease: "linear" } : {}} className="inline-flex">
+                  <Shuffle className="w-4 h-4" />
+                </motion.span>
+                {isPickingPeople ? "뽑는 중..." : `랜덤 뽑기 - ${Math.min(randomPickCount, includedCount)}명`}
+              </button>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {randomPickedStudents.length > 0 ? (
+                <motion.div key="picked-people" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mt-5 rounded-2xl border border-emerald-100 bg-[linear-gradient(135deg,#f2fbf7_0%,#f8fbfa_100%)] p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-bold text-emerald-800">랜덤 추첨 결과</p>
+                    <span className="text-xs font-bold text-emerald-700 bg-white/80 rounded-full px-2.5 py-1">{randomPickedStudents.length}명</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {randomPickedStudents.map((student, index) => (
+                      <div key={student.id} className="bg-white/90 border border-emerald-100 rounded-xl px-3 py-2.5 flex items-center gap-2.5 shadow-sm">
+                        <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-extrabold flex items-center justify-center">{index + 1}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-gray-800 truncate">{student.name}</p>
+                          <p className="text-[11px] text-gray-500 truncate">@{student.username}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div key="empty-picked-people" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-5 flex-1 min-h-[145px] rounded-2xl border-2 border-dashed border-[#d8e8e0] bg-[#f8fbf9]/70 flex flex-col items-center justify-center text-center px-4">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-2"><Shuffle className="w-5 h-5" /></div>
+                  <p className="text-sm font-bold text-gray-600">랜덤 뽑기 결과가 여기 표시됩니다.</p>
+                  <p className="text-xs text-gray-400 mt-1">인원을 정한 뒤 버튼을 눌러주세요.</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Student List */}
