@@ -147,7 +147,7 @@ export default function CoffeeOrderView() {
       category: orderForm.category,
       storeName: orderForm.storeName,
       storeLink: orderForm.storeLink,
-      deadline: orderForm.deadline || new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+      deadline: orderForm.deadline ? new Date(orderForm.deadline).toISOString() : new Date(Date.now() + 30 * 60 * 1000).toISOString(),
       minOrderAmount: parseInt(orderForm.minOrderAmount) || 0,
       deliveryFee: parseInt(orderForm.deliveryFee) || 0,
       notice: orderForm.notice,
@@ -418,6 +418,15 @@ export default function CoffeeOrderView() {
                   />
                 </div>
                 <div>
+                  <label className="text-sm font-semibold text-gray-600 block mb-1">마감 일시</label>
+                  <input
+                    type="datetime-local"
+                    value={orderForm.deadline}
+                    onChange={(e) => setOrderForm((p) => ({ ...p, deadline: e.target.value }))}
+                    className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  />
+                </div>
+                <div>
                   <label className="text-sm font-semibold text-gray-600 block mb-1">배달비 (원)</label>
                   <input
                     type="number"
@@ -539,7 +548,7 @@ export default function CoffeeOrderView() {
                 <div className="flex flex-wrap gap-4 mt-3 text-sm">
                   <div className="flex items-center gap-1.5 text-gray-600">
                     <Clock className="w-4 h-4 text-amber-500" />
-                    <span className="font-semibold">{formatTimeLeft(order.deadline)}</span>
+                    <span className="font-semibold">마감 {new Date(order.deadline).toLocaleString("ko-KR")} · {formatTimeLeft(order.deadline)}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-gray-600">
                     <Users className="w-4 h-4 text-amber-500" />

@@ -13,6 +13,7 @@ export interface Photo {
   description: string;
   imageUrl: string;
   storagePath?: string;
+  batchId?: string;
   takenAt: string;
   uploadedBy: string;
   category: PhotoCategory;

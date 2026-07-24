@@ -7,6 +7,7 @@ type PhotoRow = {
   description: string;
   image_url: string;
   storage_path: string | null;
+  batch_id: string | null;
   taken_at: string;
   uploaded_by: string;
   category: Exclude<PhotoCategory, "all">;
@@ -36,6 +37,7 @@ const toPhoto = (photo: PhotoRow, comments: PhotoComment[]): Photo => ({
   description: photo.description,
   imageUrl: photo.image_url,
   storagePath: photo.storage_path ?? undefined,
+  batchId: photo.batch_id ?? undefined,
   takenAt: photo.taken_at,
   uploadedBy: photo.uploaded_by,
   category: photo.category,
@@ -99,6 +101,7 @@ export async function createGalleryPhoto(photo: Photo) {
     description: photo.description,
     image_url: photo.imageUrl,
     storage_path: photo.storagePath ?? null,
+    batch_id: photo.batchId ?? null,
     taken_at: photo.takenAt,
     uploaded_by: photo.uploadedBy,
     category: photo.category,

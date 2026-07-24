@@ -50,7 +50,12 @@ export default function GalleryView() {
   });
 
   const detailPhoto = photos.find((p) => p.id === detailId) ?? null;
-  const detailIndex = filtered.findIndex((p) => p.id === detailId);
+  const albumKey = (photo: Photo) => photo.batchId ?? photo.title.replace(/\s\(\d+\)$/, "");
+  const detailAlbum = detailPhoto
+    ? photos.filter((photo) => albumKey(photo) === albumKey(detailPhoto))
+    : [];
+  const detailIndex = detailAlbum.findIndex((photo) => photo.id === detailId);
+  const displayPhotos = filtered.filter((photo, index) => filtered.findIndex((item) => albumKey(item) === albumKey(photo)) === index);
 
   const handleLike = async (id: string) => {
     const photo = photos.find((item) => item.id === id);
@@ -110,15 +115,19 @@ export default function GalleryView() {
     const files = uploadForm.files.length > 0
       ? uploadForm.files
       : uploadForm.file ? [uploadForm.file] : [];
+    const batchId = files.length > 1 ? createId("batch") : undefined;
     const storedPhotos: Photo[] = [];
     if (files.length === 0) {
       await createGalleryPhoto(newPhoto);
       storedPhotos.push(newPhoto);
     } else {
       for (const [index, file] of files.entries()) {
-        const photo = index === 0
+        const photo = {
+          ...(index === 0
           ? newPhoto
-          : { ...newPhoto, id: createId("photo"), title: `${newPhoto.title} (${index + 1})` };
+          : { ...newPhoto, id: createId("photo"), title: `${newPhoto.title} (${index + 1})` }),
+          batchId,
+        };
         const storedPhoto = { ...photo, ...(await uploadImage(file, photo.id)) };
         await createGalleryPhoto(storedPhoto);
         storedPhotos.push(storedPhoto);
@@ -255,7 +264,7 @@ export default function GalleryView() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          {filtered.map((photo) => (
+          {displayPhotos.map((photo) => (
             <div key={photo.id} className="group relative bg-gray-100 rounded-2xl overflow-hidden aspect-square cursor-pointer" onClick={() => setDetailId(photo.id)}>
               <img src={photo.imageUrl} alt={photo.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
@@ -289,15 +298,15 @@ export default function GalleryView() {
       {/* Detail Modal */}
       {detailPhoto && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setDetailId(null)}>
-          <div className="bg-white rounded-2xl overflow-hidden max-w-3xl w-full max-h-[90vh] flex flex-col md:flex-row shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="relative md:w-3/5 bg-gray-900 flex-shrink-0">
-              <img src={detailPhoto.imageUrl} alt={detailPhoto.title} className="w-full h-64 md:h-full object-cover" />
+          <div className="bg-white rounded-2xl overflow-hidden max-w-6xl w-full h-[88vh] flex flex-col md:flex-row shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="relative md:w-3/4 bg-gray-900 flex-shrink-0">
+              <img src={detailPhoto.imageUrl} alt={detailPhoto.title} className="w-full h-72 md:h-full object-contain" />
               <button onClick={() => setDetailId(null)} className="absolute top-3 right-3 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70"><X className="w-4 h-4" /></button>
               {detailIndex > 0 && (
-                <button onClick={() => setDetailId(filtered[detailIndex - 1].id)} className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70"><ChevronLeft className="w-4 h-4" /></button>
+                <button onClick={() => setDetailId(detailAlbum[detailIndex - 1].id)} className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70"><ChevronLeft className="w-5 h-5" /></button>
               )}
-              {detailIndex < filtered.length - 1 && (
-                <button onClick={() => setDetailId(filtered[detailIndex + 1].id)} className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70"><ChevronRight className="w-4 h-4" /></button>
+              {detailIndex < detailAlbum.length - 1 && (
+                <button onClick={() => setDetailId(detailAlbum[detailIndex + 1].id)} className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70"><ChevronRight className="w-5 h-5" /></button>
               )}
             </div>
             <div className="flex flex-col flex-1 overflow-hidden">

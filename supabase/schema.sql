@@ -5,6 +5,7 @@ create table if not exists public.gallery_photos (
   description text not null default '',
   image_url text not null,
   storage_path text,
+  batch_id text,
   taken_at date not null,
   uploaded_by text not null,
   category text not null check (category in ('class', 'project', 'event', 'lunch', 'dinner', 'etc')),
@@ -12,6 +13,8 @@ create table if not exists public.gallery_photos (
   liked_by jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now()
 );
+
+alter table public.gallery_photos add column if not exists batch_id text;
 
 create table if not exists public.gallery_comments (
   id text primary key,
