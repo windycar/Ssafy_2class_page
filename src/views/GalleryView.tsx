@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Camera, Heart, MessageCircle, Plus, X, ChevronLeft, ChevronRight, Search, Upload, MoreVertical, Trash2, Edit2 } from "lucide-react";
 import { toast } from "sonner";
-import { MOCK_PHOTOS } from "../data/galleryMockData";
 import { STUDENTS } from "../data/students";
 import { useModal } from "../hooks/useModal";
 import { PHOTO_CATEGORIES } from "../config/constants";
@@ -19,7 +18,7 @@ import {
 } from "../services/galleryStorage";
 
 export default function GalleryView() {
-  const [photos, setPhotos] = useState<Photo[]>(MOCK_PHOTOS);
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<PhotoCategory>("all");
   const [search, setSearch] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -111,17 +110,20 @@ export default function GalleryView() {
     const files = uploadForm.files.length > 0
       ? uploadForm.files
       : uploadForm.file ? [uploadForm.file] : [];
-    const storedPhotos = files.length > 0
-      ? await Promise.all(files.map(async (file, index) => {
-          const photo = index === 0
-            ? newPhoto
-            : { ...newPhoto, id: createId("photo"), title: `${newPhoto.title} (${index + 1})` };
-          const storedPhoto = { ...photo, ...(await uploadImage(file, photo.id)) };
-          await createGalleryPhoto(storedPhoto);
-          return storedPhoto;
-        }))
-      : [newPhoto];
-    if (files.length === 0) await createGalleryPhoto(newPhoto);
+    const storedPhotos: Photo[] = [];
+    if (files.length === 0) {
+      await createGalleryPhoto(newPhoto);
+      storedPhotos.push(newPhoto);
+    } else {
+      for (const [index, file] of files.entries()) {
+        const photo = index === 0
+          ? newPhoto
+          : { ...newPhoto, id: createId("photo"), title: `${newPhoto.title} (${index + 1})` };
+        const storedPhoto = { ...photo, ...(await uploadImage(file, photo.id)) };
+        await createGalleryPhoto(storedPhoto);
+        storedPhotos.push(storedPhoto);
+      }
+    }
     setPhotos((prev) => [...storedPhotos, ...prev]);
     setUploadForm({ title: "", description: "", takenAt: "", uploadedBy: "", category: "event", previewUrl: "", file: null, files: [] });
     uploadModal.close();

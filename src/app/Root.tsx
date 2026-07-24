@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Outlet } from "react-router";
 import { Toaster } from "sonner";
 import { AppProvider } from "../context/AppContext";
+import { AdminProvider } from "../context/AdminContext";
 import { AppLayout } from "../layouts/AppLayout";
 
 function PageLoader() {
@@ -14,13 +15,15 @@ function PageLoader() {
 
 export default function Root() {
   return (
-    <AppProvider>
+    <AdminProvider>
+      <AppProvider>
       <AppLayout>
         <Suspense fallback={<PageLoader />}>
           <Outlet />
         </Suspense>
       </AppLayout>
       <Toaster position="top-right" richColors />
-    </AppProvider>
+      </AppProvider>
+    </AdminProvider>
   );
 }

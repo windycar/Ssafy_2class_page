@@ -25,7 +25,12 @@ alter table public.gallery_photos enable row level security;
 alter table public.gallery_comments enable row level security;
 
 drop policy if exists "Public gallery photos" on public.gallery_photos;
-create policy "Public gallery photos" on public.gallery_photos for all using (true) with check (true);
+drop policy if exists "Public gallery photo read" on public.gallery_photos;
+drop policy if exists "Public gallery photo create" on public.gallery_photos;
+drop policy if exists "Public gallery photo update" on public.gallery_photos;
+create policy "Public gallery photo read" on public.gallery_photos for select using (true);
+create policy "Public gallery photo create" on public.gallery_photos for insert with check (true);
+create policy "Public gallery photo update" on public.gallery_photos for update using (true) with check (true);
 
 drop policy if exists "Public gallery comments" on public.gallery_comments;
 create policy "Public gallery comments" on public.gallery_comments for all using (true) with check (true);
@@ -83,3 +88,16 @@ create policy "Public coffee orders" on public.coffee_orders for all using (true
 
 drop policy if exists "Public coffee items" on public.coffee_order_items;
 create policy "Public coffee items" on public.coffee_order_items for all using (true) with check (true);
+
+create table if not exists public.anonymous_posts (
+  id text primary key,
+  title text not null,
+  content text not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+alter table public.anonymous_posts enable row level security;
+drop policy if exists "Public anonymous post read" on public.anonymous_posts;
+create policy "Public anonymous post read" on public.anonymous_posts for select using (true);
+drop policy if exists "Public anonymous post create" on public.anonymous_posts;
+create policy "Public anonymous post create" on public.anonymous_posts for insert with check (true);

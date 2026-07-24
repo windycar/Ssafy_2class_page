@@ -4,6 +4,7 @@ import {
   Coffee,
   Camera,
   Shield,
+  MessageSquare,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -19,4 +20,5 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "같이 공구", path: "/coffee", icon: Coffee },
   { label: "사진첩", path: "/gallery", icon: Camera },
   { label: "그라운드 룰", path: "/ground-rules", icon: Shield },
+  { label: "익명 게시판", path: "/board", icon: MessageSquare },
 ];

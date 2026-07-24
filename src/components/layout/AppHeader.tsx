@@ -1,12 +1,23 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { Menu, X, Bell, Users } from "lucide-react";
 import { NAV_ITEMS } from "../../config/navigation";
 import { TOTAL_STUDENTS } from "../../config/constants";
+import { useAdmin } from "../../context/AdminContext";
 
 export function AppHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { isAdmin, login } = useAdmin();
+
+  const openAdmin = async () => {
+    if (isAdmin) return navigate("/admin");
+    const password = window.prompt("G2 관리자 비밀번호");
+    if (!password) return;
+    if (await login(password)) navigate("/admin");
+    else window.alert("비밀번호가 올바르지 않거나 관리자 설정이 없습니다.");
+  };
 
   const isActive = (path: string) =>
     path === "/" ? pathname === "/" : pathname.startsWith(path);
@@ -74,9 +85,9 @@ export function AppHeader() {
           </button>
 
           {/* 아바타 */}
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1259AA] to-[#0a3f7f] flex items-center justify-center text-white text-[11px] font-black cursor-pointer shadow-sm select-none">
+          <button onClick={openAdmin} title={isAdmin ? "관리자 페이지" : "G2 관리자 로그인"} className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1259AA] to-[#0a3f7f] flex items-center justify-center text-white text-[11px] font-black cursor-pointer shadow-sm select-none">
             G2
-          </div>
+          </button>
 
           {/* 모바일 햄버거 */}
           <button

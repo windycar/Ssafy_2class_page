@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { ShoppingBag, Plus, Trash2, Edit2, Check, X, Copy, RotateCcw, Clock, Users, AlertCircle, CreditCard, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
-import { MOCK_COFFEE_ORDER, MOCK_COFFEE_ITEMS } from "../data/coffeeMockData";
 import { STUDENTS } from "../data/students";
 import { calcMenuTotal, calcDeliveryPerPerson, calcGrandTotal } from "../utils/coffeeCalculator";
 import { formatCurrency } from "../utils/formatCurrency";
@@ -103,8 +102,8 @@ const EMPTY_ORDER: OrderFormState = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CoffeeOrderView() {
-  const [order, setOrder] = useState<CoffeeOrder | null>(MOCK_COFFEE_ORDER);
-  const [items, setItems] = useState<CoffeeMenuItem[]>(MOCK_COFFEE_ITEMS);
+  const [order, setOrder] = useState<CoffeeOrder | null>(null);
+  const [items, setItems] = useState<CoffeeMenuItem[]>([]);
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [showMenuForm, setShowMenuForm] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);

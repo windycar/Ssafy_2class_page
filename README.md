@@ -18,4 +18,8 @@ Run `npm run dev` to start the development server.
 The included storage policy allows public uploads for the class gallery. Add Supabase Auth before sharing the site outside the class.
 
 The same SQL file also creates the shared coffee group-order tables. Run it again after pulling updates to add new tables safely.
+
+## G2 administrator mode
+
+Set `ADMIN_PASSWORD` and `SUPABASE_SERVICE_ROLE_KEY` in Netlify Environment variables. Do not prefix these values with `VITE_`, and never expose the Supabase secret key in client-side code. The `G2` button verifies the password through a Netlify Function before showing the admin page.
   
