@@ -23,7 +23,7 @@ export function AppHeader() {
     path === "/" ? pathname === "/" : pathname.startsWith(path);
 
   return (
-    <header className="bg-white border-b border-[#1259AA]/10 sticky top-0 z-30 shadow-sm">
+    <header className="bg-[#fbfdfc]/95 backdrop-blur border-b border-[#1259AA]/10 sticky top-0 z-30 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-6">
 
         {/* Logo */}
