@@ -16,4 +16,6 @@ Run `npm run dev` to start the development server.
 3. In Netlify, add the same two values under **Site configuration → Environment variables**, then redeploy.
 
 The included storage policy allows public uploads for the class gallery. Add Supabase Auth before sharing the site outside the class.
+
+The same SQL file also creates the shared coffee group-order tables. Run it again after pulling updates to add new tables safely.
   

@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ShoppingBag, Plus, Trash2, Edit2, Check, X, Copy, RotateCcw, Clock, Users, AlertCircle, CreditCard, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { MOCK_COFFEE_ORDER, MOCK_COFFEE_ITEMS } from "../data/coffeeMockData";
 import { STUDENTS } from "../data/students";
-import { useLocalStorage } from "../hooks/useLocalStorage";
 import { calcMenuTotal, calcDeliveryPerPerson, calcGrandTotal } from "../utils/coffeeCalculator";
 import { formatCurrency } from "../utils/formatCurrency";
 import { formatTimeLeft } from "../utils/formatDate";
@@ -11,6 +10,16 @@ import { copyToClipboard } from "../utils/copyToClipboard";
 import { createId } from "../utils/createId";
 import { PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from "../config/constants";
 import type { CoffeeOrder, CoffeeMenuItem, PaymentStatus, OrderCategory } from "../types/coffee";
+import { supabase } from "../lib/supabase";
+import {
+  closeCoffeeOrder,
+  createCoffeeMenuItem,
+  createCoffeeOrder,
+  deleteCoffeeMenuItem,
+  deleteCoffeeOrder,
+  getActiveCoffeeOrder,
+  updateCoffeeMenuItem,
+} from "../services/coffeeStorage";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -94,14 +103,31 @@ const EMPTY_ORDER: OrderFormState = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CoffeeOrderView() {
-  const [order, setOrder] = useLocalStorage<CoffeeOrder | null>("coffee-order", MOCK_COFFEE_ORDER);
-  const [items, setItems] = useLocalStorage<CoffeeMenuItem[]>("coffee-items", MOCK_COFFEE_ITEMS);
+  const [order, setOrder] = useState<CoffeeOrder | null>(MOCK_COFFEE_ORDER);
+  const [items, setItems] = useState<CoffeeMenuItem[]>(MOCK_COFFEE_ITEMS);
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [showMenuForm, setShowMenuForm] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [menuForm, setMenuForm] = useState<MenuFormState>(EMPTY_MENU);
   const [orderForm, setOrderForm] = useState<OrderFormState>(EMPTY_ORDER);
   const [showAccount, setShowAccount] = useState(false);
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    getActiveCoffeeOrder()
+      .then(({ order: activeOrder, items: activeItems }) => {
+        setOrder(activeOrder);
+        setItems(activeItems);
+      })
+      .catch(() => toast.error("공동구매 정보를 불러오지 못했습니다."));
+  }, []);
+
+  const ensureSupabase = () => {
+    if (supabase) return true;
+    toast.error("Supabase 설정이 필요합니다.");
+    return false;
+  };
 
   const menuTotal = calcMenuTotal(items);
   const deliveryShare = order ? calcDeliveryPerPerson(order.deliveryFee, items.length) : 0;
@@ -113,7 +139,7 @@ export default function CoffeeOrderView() {
 
   // ── Order actions ──────────────────────────────────────────
 
-  const handleStartOrder = () => {
+  const handleStartOrder = async () => {
     if (!orderForm.title.trim()) { toast.error("공구 제목을 입력해 주세요."); return; }
     if (!orderForm.storeName.trim()) { toast.error("매장/상품명을 입력해 주세요."); return; }
     const newOrder: CoffeeOrder = {
@@ -132,6 +158,13 @@ export default function CoffeeOrderView() {
       createdAt: new Date().toISOString(),
       isActive: true,
     };
+    if (!ensureSupabase()) return;
+    try {
+      await createCoffeeOrder(newOrder);
+    } catch {
+      toast.error("공동구매를 저장하지 못했습니다.");
+      return;
+    }
     setOrder(newOrder);
     setItems([]);
     setShowOrderForm(false);
@@ -141,11 +174,25 @@ export default function CoffeeOrderView() {
 
   // ── Menu actions ───────────────────────────────────────────
 
-  const handleAddMenu = () => {
+  const handleAddMenu = async () => {
     if (!menuForm.participantName) { toast.error("참여자를 선택해 주세요."); return; }
     if (!menuForm.menuName.trim()) { toast.error("상품/메뉴명을 입력해 주세요."); return; }
     if (!menuForm.price || parseInt(menuForm.price) <= 0) { toast.error("금액을 입력해 주세요."); return; }
     if (editingItemId) {
+      const existingItem = items.find((item) => item.id === editingItemId);
+      if (!existingItem || !ensureSupabase()) return;
+      const updatedItem: CoffeeMenuItem = {
+        ...existingItem,
+        ...menuForm,
+        price: parseInt(menuForm.price),
+        quantity: menuForm.quantity,
+      };
+      try {
+        await updateCoffeeMenuItem(updatedItem);
+      } catch {
+        toast.error("메뉴를 수정하지 못했습니다.");
+        return;
+      }
       setItems((prev) =>
         prev.map((item) =>
           item.id === editingItemId
@@ -163,6 +210,13 @@ export default function CoffeeOrderView() {
         price: parseInt(menuForm.price),
         paymentStatus: "unpaid",
       };
+      if (!ensureSupabase()) return;
+      try {
+        await createCoffeeMenuItem(newItem);
+      } catch {
+        toast.error("메뉴를 추가하지 못했습니다.");
+        return;
+      }
       setItems((prev) => [...prev, newItem]);
       toast.success("항목이 추가되었습니다.");
     }
@@ -183,12 +237,28 @@ export default function CoffeeOrderView() {
     setShowMenuForm(true);
   };
 
-  const handleDeleteItem = (id: string) => {
+  const handleDeleteItem = async (id: string) => {
+    if (!ensureSupabase()) return;
+    try {
+      await deleteCoffeeMenuItem(id);
+    } catch {
+      toast.error("메뉴를 삭제하지 못했습니다.");
+      return;
+    }
     setItems((prev) => prev.filter((i) => i.id !== id));
     toast.success("삭제되었습니다.");
   };
 
-  const handleToggleStatus = (id: string) => {
+  const handleToggleStatus = async (id: string) => {
+    const currentItem = items.find((item) => item.id === id);
+    if (!currentItem || !ensureSupabase()) return;
+    const updatedItem = { ...currentItem, paymentStatus: nextStatus(currentItem.paymentStatus) };
+    try {
+      await updateCoffeeMenuItem(updatedItem);
+    } catch {
+      toast.error("결제 상태를 저장하지 못했습니다.");
+      return;
+    }
     setItems((prev) =>
       prev.map((i) => (i.id === id ? { ...i, paymentStatus: nextStatus(i.paymentStatus) } : i))
     );
@@ -228,15 +298,29 @@ export default function CoffeeOrderView() {
     ok ? toast.success("계좌번호가 복사되었습니다!") : toast.error("복사에 실패했습니다.");
   };
 
-  const handleClose = () => {
+  const handleClose = async () => {
     if (!window.confirm("공구를 마감할까요?")) return;
+    if (!order || !ensureSupabase()) return;
+    try {
+      await closeCoffeeOrder(order.id);
+    } catch {
+      toast.error("공동구매를 마감하지 못했습니다.");
+      return;
+    }
     setOrder(null);
     setItems([]);
     toast.success("공구가 마감되었습니다.");
   };
 
-  const handleReset = () => {
+  const handleReset = async () => {
     if (!window.confirm("전체 초기화할까요?")) return;
+    if (!order || !ensureSupabase()) return;
+    try {
+      await deleteCoffeeOrder(order.id);
+    } catch {
+      toast.error("공동구매를 초기화하지 못했습니다.");
+      return;
+    }
     setOrder(null);
     setItems([]);
     toast.success("초기화되었습니다.");

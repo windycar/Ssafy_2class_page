@@ -45,3 +45,41 @@ create policy "Public gallery image upload" on storage.objects for insert with c
 
 drop policy if exists "Public gallery image delete" on storage.objects;
 create policy "Public gallery image delete" on storage.objects for delete using (bucket_id = 'gallery-images');
+
+create table if not exists public.coffee_orders (
+  id text primary key,
+  title text not null,
+  category text not null check (category in ('coffee', 'food', 'snack', 'goods', 'etc')),
+  store_name text not null,
+  store_link text not null default '',
+  deadline timestamptz not null,
+  min_order_amount integer not null default 0,
+  delivery_fee integer not null default 0,
+  notice text not null default '',
+  account_bank text not null default '',
+  account_number text not null default '',
+  account_holder text not null default '',
+  created_at timestamptz not null default now(),
+  is_active boolean not null default true
+);
+
+create table if not exists public.coffee_order_items (
+  id text primary key,
+  order_id text not null references public.coffee_orders(id) on delete cascade,
+  participant_name text not null,
+  menu_name text not null,
+  options text not null default '',
+  quantity integer not null check (quantity > 0),
+  price integer not null check (price > 0),
+  note text not null default '',
+  payment_status text not null default 'unpaid' check (payment_status in ('unpaid', 'paid', 'ordered', 'received'))
+);
+
+alter table public.coffee_orders enable row level security;
+alter table public.coffee_order_items enable row level security;
+
+drop policy if exists "Public coffee orders" on public.coffee_orders;
+create policy "Public coffee orders" on public.coffee_orders for all using (true) with check (true);
+
+drop policy if exists "Public coffee items" on public.coffee_order_items;
+create policy "Public coffee items" on public.coffee_order_items for all using (true) with check (true);
