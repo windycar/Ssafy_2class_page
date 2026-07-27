@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Shuffle, Coffee, Camera, Shield, ArrowRight, GitBranch, GitCommit, Terminal } from "lucide-react";
+import { Shuffle, Coffee, Camera, Shield, Gamepad2, ArrowRight, GitBranch, GitCommit, Terminal } from "lucide-react";
 
 const QUICK_MENU = [
   {
@@ -57,6 +57,20 @@ const QUICK_MENU = [
     colorText: "text-violet-700",
     colorBtn: "bg-violet-600 hover:bg-violet-700 text-white",
     shadowColor: "shadow-violet-100",
+  },
+  {
+    title: "우리 반 게임",
+    description: "뱅! 보드게임을 반 친구들과 함께 즐겨요.",
+    icon: Gamepad2,
+    path: "/games",
+    badge: "🤠 뱅!",
+    buttonLabel: "게임 참여",
+    colorBg: "bg-orange-50",
+    colorBorder: "border-orange-200",
+    colorIcon: "bg-orange-500",
+    colorText: "text-orange-700",
+    colorBtn: "bg-orange-500 hover:bg-orange-600 text-white",
+    shadowColor: "shadow-orange-100",
   },
 ];
 
@@ -215,7 +229,7 @@ export default function HomeView() {
             빠른 메뉴
           </h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
           {QUICK_MENU.map((item) => {
             const Icon = item.icon;
             return (

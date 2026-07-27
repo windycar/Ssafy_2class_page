@@ -1,13 +1,9 @@
 
-  # 랜덤 팀 편성 웹페이지
+# SSAFY 광주 2반 페이지
 
-  This is a code bundle for 랜덤 팀 편성 웹페이지. The original project is available at https://www.figma.com/design/rEKzsa3P4bLFfBq7vZZryP/%EB%9E%9C%EB%8D%A4-%ED%8C%80-%ED%8E%B8%EC%84%B1-%EC%9B%B9%ED%8E%98%EC%9D%B4%EC%A7%80.
+## Running the code
 
-  ## Running the code
-
-  Run `npm i` to install the dependencies.
-
-Run `npm run dev` to start the development server.
+Double-click `start.bat`, or run `corepack pnpm dev`.
 
 ## Supabase photo storage
 
@@ -17,7 +13,11 @@ Run `npm run dev` to start the development server.
 
 The included storage policy allows public uploads for the class gallery. Add Supabase Auth before sharing the site outside the class.
 
-The same SQL file also creates the shared coffee group-order tables. Run it again after pulling updates to add new tables safely.
+The same SQL file creates the shared coffee orders, anonymous posts, and Bang game rooms. Run it again after pulling updates to add new tables safely.
+
+## Bang board game
+
+Open **게임 → 뱅!** and select a class member profile. Game rooms are cached locally and synchronized through the Supabase `bang_rooms` table so classmates on different devices can join the same room.
 
 ## G2 administrator mode
 

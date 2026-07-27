@@ -3,6 +3,7 @@ import { Outlet } from "react-router";
 import { Toaster } from "sonner";
 import { AppProvider } from "../context/AppContext";
 import { AdminProvider } from "../context/AdminContext";
+import { AuthProvider } from "../context/AuthContext";
 import { AppLayout } from "../layouts/AppLayout";
 
 function PageLoader() {
@@ -16,14 +17,16 @@ function PageLoader() {
 export default function Root() {
   return (
     <AdminProvider>
-      <AppProvider>
-      <AppLayout>
-        <Suspense fallback={<PageLoader />}>
-          <Outlet />
-        </Suspense>
-      </AppLayout>
-      <Toaster position="top-right" richColors />
-      </AppProvider>
+      <AuthProvider>
+        <AppProvider>
+          <AppLayout>
+            <Suspense fallback={<PageLoader />}>
+              <Outlet />
+            </Suspense>
+          </AppLayout>
+          <Toaster position="top-right" richColors />
+        </AppProvider>
+      </AuthProvider>
     </AdminProvider>
   );
 }

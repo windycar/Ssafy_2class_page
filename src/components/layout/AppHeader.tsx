@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { Menu, X, Bell, Users } from "lucide-react";
-import { NAV_ITEMS } from "../../config/navigation";
+import { Menu, X, Bell, Users, LogOut, RefreshCw, ChevronDown } from "lucide-react";
+import { NAV_ITEMS, type NavItem } from "../../config/navigation";
 import { TOTAL_STUDENTS } from "../../config/constants";
 import { useAdmin } from "../../context/AdminContext";
+import { useAuth } from "../../hooks/useAuth";
 
 export function AppHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { isAdmin, login } = useAdmin();
+  const { currentUser, isAuthenticated, logout, changeUser } = useAuth();
 
   const openAdmin = async () => {
     if (isAdmin) return navigate("/admin");
@@ -19,8 +23,23 @@ export function AppHeader() {
     else window.alert("비밀번호가 올바르지 않거나 관리자 설정이 없습니다.");
   };
 
-  const isActive = (path: string) =>
-    path === "/" ? pathname === "/" : pathname.startsWith(path);
+  const isActive = (item: NavItem) =>
+    item.matchPrefix
+      ? pathname.startsWith(item.matchPrefix)
+      : item.path === "/"
+        ? pathname === "/"
+        : pathname.startsWith(item.path);
+
+  useEffect(() => {
+    const closeProfile = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", closeProfile);
+    return () => document.removeEventListener("mousedown", closeProfile);
+  }, []);
 
   return (
     <header className="bg-[#fbfdfc]/95 backdrop-blur border-b border-[#1259AA]/10 sticky top-0 z-30 shadow-sm">
@@ -46,7 +65,7 @@ export function AppHeader() {
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-0.5 flex-1">
           {NAV_ITEMS.map((item) => {
-            const active = isActive(item.path);
+            const active = isActive(item);
             const Icon = item.icon;
             return (
               <Link
@@ -84,7 +103,60 @@ export function AppHeader() {
             <Bell className="w-4.5 h-4.5" />
           </button>
 
-          {/* 아바타 */}
+          {isAuthenticated && currentUser ? (
+            <div className="relative" ref={profileRef}>
+              <button
+                onClick={() => setProfileOpen((open) => !open)}
+                className="flex items-center gap-2 p-1 sm:pr-2 rounded-xl hover:bg-[#1259AA]/5 transition-colors"
+                aria-label="게임 사용자 메뉴"
+              >
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-700 flex items-center justify-center text-white text-xs font-extrabold">
+                  {currentUser.name[0]}
+                </div>
+                <span className="hidden xl:block text-sm font-semibold text-gray-700">{currentUser.name}</span>
+                <ChevronDown className="hidden xl:block w-3.5 h-3.5 text-gray-400" />
+              </button>
+
+              {profileOpen && (
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-2xl shadow-xl border border-border py-1.5 z-50">
+                  <div className="px-4 py-2.5 border-b border-border">
+                    <p className="text-sm font-extrabold text-gray-800">{currentUser.name}</p>
+                    <p className="text-xs text-gray-400">{currentUser.username}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      changeUser();
+                      setProfileOpen(false);
+                      navigate("/game-login");
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    <RefreshCw className="w-4 h-4 text-gray-400" />
+                    다른 사용자로 변경
+                  </button>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setProfileOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    게임 로그아웃
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              to="/game-login"
+              className="hidden xl:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+            >
+              🎮 게임 참여
+            </Link>
+          )}
+
+          {/* 관리자 */}
           <button onClick={openAdmin} title={isAdmin ? "관리자 페이지" : "G2 관리자 로그인"} className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1259AA] to-[#0a3f7f] flex items-center justify-center text-white text-[11px] font-black cursor-pointer shadow-sm select-none">
             G2
           </button>
@@ -104,7 +176,7 @@ export function AppHeader() {
       {mobileOpen && (
         <div className="md:hidden border-t border-[#1259AA]/10 bg-white px-4 py-3 space-y-0.5">
           {NAV_ITEMS.map((item) => {
-            const active = isActive(item.path);
+            const active = isActive(item);
             const Icon = item.icon;
             return (
               <Link
@@ -122,6 +194,32 @@ export function AppHeader() {
               </Link>
             );
           })}
+          {isAuthenticated && currentUser ? (
+            <div className="border-t border-border mt-2 pt-2">
+              <div className="px-4 py-2">
+                <p className="text-xs font-extrabold text-gray-700">{currentUser.name}</p>
+                <p className="text-xs text-gray-400">{currentUser.username}</p>
+              </div>
+              <button
+                onClick={() => {
+                  logout();
+                  setMobileOpen(false);
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50"
+              >
+                <LogOut className="w-4 h-4" />
+                게임 로그아웃
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/game-login"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-amber-700 hover:bg-amber-50"
+            >
+              🎮 게임 참여하기
+            </Link>
+          )}
         </div>
       )}
     </header>

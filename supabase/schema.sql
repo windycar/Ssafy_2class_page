@@ -104,3 +104,15 @@ drop policy if exists "Public anonymous post read" on public.anonymous_posts;
 create policy "Public anonymous post read" on public.anonymous_posts for select using (true);
 drop policy if exists "Public anonymous post create" on public.anonymous_posts;
 create policy "Public anonymous post create" on public.anonymous_posts for insert with check (true);
+
+create table if not exists public.bang_rooms (
+  id text primary key,
+  room_data jsonb not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.bang_rooms enable row level security;
+drop policy if exists "Public bang rooms" on public.bang_rooms;
+create policy "Public bang rooms" on public.bang_rooms
+  for all using (true) with check (true);
