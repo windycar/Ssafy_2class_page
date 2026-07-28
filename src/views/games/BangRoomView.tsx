@@ -15,6 +15,7 @@ import { BANG_CHARACTER_BY_ID } from "../../types/bangCharacters";
 import type { BangCharacterId } from "../../types/bangCharacters";
 import { useBangRoomPresence } from "../../hooks/useBangRoomPresence";
 import { BangRoleArt } from "../../components/games/bang/BangRoleArt";
+import { useBangChat } from "../../hooks/useBangChat";
 
 // ── Status helpers ────────────────────────────────────────────────────────────
 
@@ -124,7 +125,8 @@ function BangRoomContent({ initialRoom, currentUserId, currentUserName, navigate
   const me = room.players.find((p) => p.studentId === currentUserId);
   const isJoined = !!me;
   const canJoin = !isJoined && room.status === "recruiting" && room.players.length < room.maxPlayers && currentUserId !== undefined;
-  const chatMessages = room.chatMessages ?? [];
+  const legacyChatMessages = room.chatMessages ?? [];
+  const { messages: chatMessages, sendMessage: sendRealtimeChat } = useBangChat(room.id, legacyChatMessages);
   const latestChatId = chatMessages[chatMessages.length - 1]?.id;
 
   useEffect(() => {
@@ -166,23 +168,24 @@ function BangRoomContent({ initialRoom, currentUserId, currentUserName, navigate
     navigate("/games/bang");
   };
 
-  const handleSendChat = () => {
+  const handleSendChat = async () => {
     if (!currentUserId || !me || !chatInput.trim()) return;
-    const message = chatInput.trim().slice(0, 200);
+    const message = {
+      id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      studentId: currentUserId,
+      name: me.name,
+      message: chatInput.trim().slice(0, 200),
+      createdAt: new Date().toISOString(),
+    };
+    setChatInput("");
+
+    if (await sendRealtimeChat(message)) return;
+
     setRoom({
       ...room,
-      chatMessages: [
-        ...chatMessages,
-        {
-          id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          studentId: currentUserId,
-          name: me.name,
-          message,
-          createdAt: new Date().toISOString(),
-        },
-      ].slice(-100),
+      chatMessages: [...legacyChatMessages, message].slice(-100),
     });
-    setChatInput("");
+    toast.error("실시간 채팅 저장에 실패해 기존 방식으로 저장했습니다.");
   };
 
   const handleToggleReady = () => {

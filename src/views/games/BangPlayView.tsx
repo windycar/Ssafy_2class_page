@@ -17,6 +17,7 @@ import { BANG_CHARACTER_BY_ID } from "../../types/bangCharacters";
 import { BangCardArt } from "../../components/games/bang/BangCardArt";
 import { BangRoleArt } from "../../components/games/bang/BangRoleArt";
 import { useBangRoomPresence } from "../../hooks/useBangRoomPresence";
+import { useBangChat } from "../../hooks/useBangChat";
 
 // ── Card component ─────────────────────────────────────────────────────────────
 
@@ -358,7 +359,8 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const myHand = myId ? getHand(myId) : [];
   const myEquip = myId ? getEquip(myId) : [];
   const pending = state?.pending;
-  const chatMessages = room.chatMessages ?? [];
+  const legacyChatMessages = room.chatMessages ?? [];
+  const { messages: chatMessages, sendMessage: sendRealtimeChat } = useBangChat(room.id, legacyChatMessages);
   const latestChatId = chatMessages[chatMessages.length - 1]?.id;
 
   useEffect(() => {
@@ -482,9 +484,22 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
     toast.success("새로고침!");
   };
 
-  const handleSendChat = () => {
-    if (!myId || !chatInput.trim()) return;
-    if (game.sendChatMessage(myId, chatInput)) setChatInput("");
+  const handleSendChat = async () => {
+    if (!myId || !me || !chatInput.trim()) return;
+    const rawMessage = chatInput.trim().slice(0, 200);
+    const message = {
+      id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      studentId: myId,
+      name: me.name,
+      message: rawMessage,
+      createdAt: new Date().toISOString(),
+    };
+    setChatInput("");
+
+    if (await sendRealtimeChat(message)) return;
+
+    game.sendChatMessage(myId, rawMessage);
+    toast.error("실시간 채팅 저장에 실패해 기존 방식으로 저장했습니다.");
   };
 
   const handleLeaveRoom = () => {
