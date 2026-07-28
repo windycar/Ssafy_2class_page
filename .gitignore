@@ -2,4 +2,5 @@ node_modules/
 dist/
 .env
 .env.local
+.vercel/
 랜덤 팀 편성 웹페이지/
