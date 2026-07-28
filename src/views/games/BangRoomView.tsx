@@ -14,6 +14,7 @@ import type { GameRoomStatus } from "../../types/game";
 import { BANG_CHARACTER_BY_ID } from "../../types/bangCharacters";
 import type { BangCharacterId } from "../../types/bangCharacters";
 import { useBangRoomPresence } from "../../hooks/useBangRoomPresence";
+import { BangRoleArt } from "../../components/games/bang/BangRoleArt";
 
 // ── Status helpers ────────────────────────────────────────────────────────────
 
@@ -33,10 +34,6 @@ const ROLE_DESC: Record<BangRole, string> = {
   outlaw: "보안관을 제거하세요.",
   renegade: "모든 플레이어를 제거하고 혼자 살아남아야 승리. 보안관을 마지막에 죽여라.",
 };
-const ROLE_EMOJI: Record<BangRole, string> = {
-  sheriff: "⭐", deputy: "🛡️", outlaw: "🔫", renegade: "🃏",
-};
-
 // ── Root component ─────────────────────────────────────────────────────────────
 
 export default function BangRoomView() {
@@ -128,11 +125,16 @@ function BangRoomContent({ initialRoom, currentUserId, currentUserName, navigate
   const isJoined = !!me;
   const canJoin = !isJoined && room.status === "recruiting" && room.players.length < room.maxPlayers && currentUserId !== undefined;
   const chatMessages = room.chatMessages ?? [];
+  const latestChatId = chatMessages[chatMessages.length - 1]?.id;
 
   useEffect(() => {
     if (!chatListRef.current) return;
-    chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
-  }, [chatMessages.length]);
+    const frame = window.requestAnimationFrame(() => {
+      if (!chatListRef.current) return;
+      chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [latestChatId]);
 
   const handleJoin = () => {
     if (!currentUserId || !currentUserName) return;
@@ -559,8 +561,9 @@ function PlayerCard({ player, isCurrentTurn, isMe, isHost, isGameHost, isPlaying
             {eliminated && <span className="text-xs bg-red-100 text-red-600 font-bold px-1.5 py-0.5 rounded-full">탈락</span>}
           </div>
           {showRole && player.role && (
-            <p className="text-xs font-semibold text-amber-700 mt-0.5">
-              {ROLE_EMOJI[player.role]} {ROLE_LABEL[player.role]}
+            <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-amber-700">
+              <BangRoleArt role={player.role} className="h-5 w-5 rounded border border-amber-300" />
+              {ROLE_LABEL[player.role]}
             </p>
           )}
           {isPlaying && player.characterId && (
@@ -636,9 +639,9 @@ function RoleRevealModal({ role, characterId, maxLife, onClose }: {
             </>
           ) : (
             <>
-              <div className="w-20 h-28 rounded-xl bg-amber-700 border-2 border-amber-600 flex flex-col items-center justify-center mx-auto gap-1">
-                <span className="text-3xl">{ROLE_EMOJI[role]}</span>
-                <span className="text-xs font-bold text-white">{ROLE_LABEL[role]}</span>
+              <div className="mx-auto w-32 rounded-2xl border-2 border-amber-600 bg-amber-800 p-2 shadow-lg">
+                <BangRoleArt role={role} className="h-28 w-full rounded-xl border border-amber-300" />
+                <span className="mt-2 block text-xs font-bold text-white">{ROLE_LABEL[role]}</span>
               </div>
               <div>
                 <p className="text-lg font-extrabold text-amber-800">{ROLE_LABEL[role]}</p>

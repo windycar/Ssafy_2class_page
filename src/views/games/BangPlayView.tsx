@@ -15,6 +15,7 @@ import type { BangRoom, BangPlayer } from "../../types/bang";
 import type { AuthUser } from "../../types/auth";
 import { BANG_CHARACTER_BY_ID } from "../../types/bangCharacters";
 import { BangCardArt } from "../../components/games/bang/BangCardArt";
+import { BangRoleArt } from "../../components/games/bang/BangRoleArt";
 import { useBangRoomPresence } from "../../hooks/useBangRoomPresence";
 
 // ── Card component ─────────────────────────────────────────────────────────────
@@ -80,7 +81,7 @@ function CardBack({ small }: { small?: boolean }) {
 // ── Player panel ───────────────────────────────────────────────────────────────
 
 const ROLE_LABEL: Record<string, string> = {
-  sheriff: "⭐ 보안관", deputy: "🛡️ 부관", outlaw: "🔫 무법자", renegade: "🃏 배신자",
+  sheriff: "보안관", deputy: "부관", outlaw: "무법자", renegade: "배신자",
 };
 const ROLE_DESC: Record<string, string> = {
   sheriff: "보안관은 살아남아 모든 무법자와 배신자를 제거해야 합니다.",
@@ -102,6 +103,7 @@ function RoleBadge({
       className={`group relative inline-flex cursor-help ${className}`}
       title={`${ROLE_LABEL[role]}: ${ROLE_DESC[role]}`}
     >
+      <BangRoleArt role={role} className="mr-1 h-4 w-4 rounded-sm border border-amber-300/60" />
       {ROLE_LABEL[role]}
       <span className="pointer-events-none absolute bottom-full left-1/2 z-[90] mb-2 hidden w-56 -translate-x-1/2 rounded-xl bg-gray-950 p-2.5 text-left text-[10px] font-medium leading-relaxed text-white shadow-2xl group-hover:block">
         <strong className="mb-1 block text-amber-300">{ROLE_LABEL[role]}</strong>
@@ -319,7 +321,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   roomId: string;
   currentUser: AuthUser | null;
 }) {
-  const [handVisible, setHandVisible] = useState(false);
+  const [handVisible, setHandVisible] = useState(true);
   const [selectedCard, setSelectedCard] = useState<BangCard | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<number | null>(null);
   const [showRoleModal, setShowRoleModal] = useState(false);
@@ -328,6 +330,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const [chatInput, setChatInput] = useState("");
   const [showCardGuide, setShowCardGuide] = useState(false);
   const chatListRef = useRef<HTMLDivElement>(null);
+  const gameLogRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const game = useBangCardGame(initialRoom);
   const { room, getHand, getEquip, getAliveOrder } = game;
@@ -356,11 +359,25 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const myEquip = myId ? getEquip(myId) : [];
   const pending = state?.pending;
   const chatMessages = room.chatMessages ?? [];
+  const latestChatId = chatMessages[chatMessages.length - 1]?.id;
 
   useEffect(() => {
     if (!chatOpen || !chatListRef.current) return;
-    chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
-  }, [chatOpen, chatMessages.length]);
+    const frame = window.requestAnimationFrame(() => {
+      if (!chatListRef.current) return;
+      chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [chatOpen, latestChatId]);
+
+  useEffect(() => {
+    if (!gameLogRef.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (!gameLogRef.current) return;
+      gameLogRef.current.scrollTop = gameLogRef.current.scrollHeight;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [state?.log[0], state?.log.length]);
 
   // What can I do right now?
   const canDraw = isMyTurn && state?.phase === "draw" && !pending;
@@ -804,9 +821,9 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
         )}
 
         {/* Game log */}
-        <div className="flex-1 bg-black/30 rounded-2xl p-3 min-h-[80px] max-h-48 overflow-y-auto">
-          {state.log.slice(0, 20).map((msg, i) => (
-            <p key={i} className={`text-xs leading-relaxed ${i === 0 ? "text-white font-semibold" : "text-white/50"}`}>
+        <div ref={gameLogRef} className="flex-1 bg-black/30 rounded-2xl p-3 min-h-[80px] max-h-48 overflow-y-auto">
+          {state.log.slice(0, 20).reverse().map((msg, i, visibleLogs) => (
+            <p key={`${visibleLogs.length - i}-${msg}`} className={`text-xs leading-relaxed ${i === visibleLogs.length - 1 ? "text-white font-semibold" : "text-white/50"}`}>
               {msg}
             </p>
           ))}
@@ -1130,7 +1147,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
               <p className="text-amber-200 text-xs">주변 사람이 보지 않는지 확인하세요!</p>
             </div>
             <div className="p-6 space-y-3">
-              <div className="text-5xl">{ROLE_LABEL[me.role].split(" ")[0]}</div>
+              <BangRoleArt role={me.role} className="mx-auto h-28 w-28 rounded-2xl border-2 border-amber-300 shadow-lg" />
               <p className="text-xl font-extrabold text-amber-800">{ROLE_LABEL[me.role]}</p>
               <p className="text-sm text-gray-500">
                 {me.role === "sheriff" && "무법자와 배신자를 모두 제거하세요."}
