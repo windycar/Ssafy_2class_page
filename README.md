@@ -1,6 +1,8 @@
 
 # SSAFY 광주 2반 페이지
 
+> 🌐 **배포 사이트:** [https://randomssafy.netlify.app/](https://randomssafy.netlify.app/)
+
 ## Running the code
 
 Double-click `start.bat`, or run `corepack pnpm dev`.
