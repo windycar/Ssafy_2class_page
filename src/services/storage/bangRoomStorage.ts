@@ -1,5 +1,6 @@
 import { supabase } from "../../lib/supabase";
 import type { BangRoom } from "../../types/bang";
+import { removeBangPlayer } from "../../utils/games/bangRoomMembership";
 
 const LOCAL_KEY = "ssafy-gwangju-2-bang-rooms";
 const TABLE = "bang_rooms";
@@ -66,16 +67,8 @@ export const bangRoomStorage = {
     }
 
     const remoteRooms = ((data ?? []) as BangRoomRow[]).map((row) => row.room_data);
-    const remoteIds = new Set(remoteRooms.map((room) => room.id));
-    const localOnlyRooms = localRooms.filter((room) => !remoteIds.has(room.id));
-
-    localOnlyRooms.forEach((room) => {
-      void upsertRemote(room);
-    });
-
-    const merged = [...remoteRooms, ...localOnlyRooms];
-    save(merged);
-    return merged;
+    save(remoteRooms);
+    return remoteRooms;
   },
 
   async refreshRoom(roomId: string): Promise<BangRoom | null> {
@@ -94,8 +87,8 @@ export const bangRoomStorage = {
     }
 
     if (!data) {
-      if (localRoom) void upsertRemote(localRoom);
-      return localRoom;
+      save(load().filter((room) => room.id !== roomId));
+      return null;
     }
 
     const room = (data as BangRoomRow).room_data;
@@ -113,6 +106,15 @@ export const bangRoomStorage = {
     cacheRoom(room);
     void upsertRemote(room);
     return room;
+  },
+
+  leaveRoom(room: BangRoom, studentId: number): BangRoom | null {
+    const updated = removeBangPlayer(room, studentId);
+    if (!updated) {
+      this.deleteRoom(room.id);
+      return null;
+    }
+    return this.updateRoom(updated);
   },
 
   deleteRoom(roomId: string): void {

@@ -18,6 +18,8 @@ export interface BangPlayer {
   maxLife?: number;
   life: number;
   joinedAt: string;
+  sessionId?: string;
+  lastSeenAt?: string;
   eliminatedAt?: string;
 }
 

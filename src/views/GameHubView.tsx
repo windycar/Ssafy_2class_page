@@ -35,12 +35,23 @@ export default function GameHubView() {
         {GAMES.map((game) => (
           <div key={game.id} className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden hover:-translate-y-1 transition-transform">
             {/* Card header with western theme */}
-            <div className="relative h-28 flex items-center justify-center" style={{ background: "linear-gradient(135deg, #78350f 0%, #b45309 60%, #d97706 100%)" }}>
-              <span className="text-5xl">{game.icon}</span>
+            <div className="relative h-36 flex items-center justify-center overflow-hidden" style={{ background: "linear-gradient(135deg, #78350f 0%, #b45309 60%, #d97706 100%)" }}>
+              {game.image ? (
+                <>
+                  <img src={game.image} alt={`${game.name} 서부 테이블 게임 일러스트`} className="absolute inset-0 h-full w-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-amber-950/75 via-transparent to-black/20" />
+                </>
+              ) : (
+                <span className="text-5xl">{game.icon}</span>
+              )}
               <div className="absolute top-3 right-3">
                 <span className="text-xs font-bold bg-white/20 text-white px-2 py-0.5 rounded-full border border-white/30">
                   {game.category.join(" · ")}
                 </span>
+              </div>
+              <div className="absolute bottom-3 left-4 text-white">
+                <p className="text-lg font-black drop-shadow-lg">{game.name}</p>
+                <p className="text-[10px] text-amber-100 font-semibold">서부 테이블 카드 게임</p>
               </div>
             </div>
             <div className="p-4 space-y-3">

@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { ChevronLeft, Play, SkipForward, SkipBack, Heart, LogOut, Eye, EyeOff, Copy, RotateCcw } from "lucide-react";
+import { ChevronLeft, Play, SkipForward, SkipBack, Heart, LogOut, Eye, EyeOff, Copy, RotateCcw, MessageCircle, Send } from "lucide-react";
 import { toast } from "sonner";
 import { bangRoomStorage } from "../../services/storage/bangRoomStorage";
 import { useBangGame } from "../../hooks/useBangGame";
@@ -13,6 +13,7 @@ import type { BangRoom, BangPlayer, BangWinner, BangRole } from "../../types/ban
 import type { GameRoomStatus } from "../../types/game";
 import { BANG_CHARACTER_BY_ID } from "../../types/bangCharacters";
 import type { BangCharacterId } from "../../types/bangCharacters";
+import { useBangRoomPresence } from "../../hooks/useBangRoomPresence";
 
 // ── Status helpers ────────────────────────────────────────────────────────────
 
@@ -97,6 +98,10 @@ function BangRoomContent({ initialRoom, currentUserId, currentUserName, navigate
   const [showEndModal, setShowEndModal] = useState(false);
   const [revealAllRoles, setRevealAllRoles] = useState(false);
   const [elapsed, setElapsed] = useState("00:00");
+  const [chatInput, setChatInput] = useState("");
+  const chatListRef = useRef<HTMLDivElement>(null);
+
+  useBangRoomPresence(room, currentUserId, setRoom);
 
   useEffect(() => {
     void refresh();
@@ -122,7 +127,12 @@ function BangRoomContent({ initialRoom, currentUserId, currentUserName, navigate
   const me = room.players.find((p) => p.studentId === currentUserId);
   const isJoined = !!me;
   const canJoin = !isJoined && room.status === "recruiting" && room.players.length < room.maxPlayers && currentUserId !== undefined;
-  const alivePlayers = room.players.filter((p) => p.status === "alive");
+  const chatMessages = room.chatMessages ?? [];
+
+  useEffect(() => {
+    if (!chatListRef.current) return;
+    chatListRef.current.scrollTop = chatListRef.current.scrollHeight;
+  }, [chatMessages.length]);
 
   const handleJoin = () => {
     if (!currentUserId || !currentUserName) return;
@@ -148,17 +158,29 @@ function BangRoomContent({ initialRoom, currentUserId, currentUserName, navigate
 
   const handleLeave = () => {
     if (!currentUserId) return;
-    if (room.status === "playing") { toast.error("진행 중인 게임에서는 나갈 수 없습니다."); return; }
-    const updated: BangRoom = {
+    if (room.status === "playing" && !window.confirm("진행 중인 게임에서 나가면 좌석과 카드가 정리됩니다. 나갈까요?")) return;
+    bangRoomStorage.leaveRoom(room, currentUserId);
+    toast.success("게임방에서 나왔습니다.");
+    navigate("/games/bang");
+  };
+
+  const handleSendChat = () => {
+    if (!currentUserId || !me || !chatInput.trim()) return;
+    const message = chatInput.trim().slice(0, 200);
+    setRoom({
       ...room,
-      players: room.players.filter((p) => p.studentId !== currentUserId),
-      activityLogs: [
-        { id: createId("log"), roomId: room.id, type: "leave", message: `${currentUserName} 님이 나갔습니다.`, createdAt: new Date().toISOString() },
-        ...room.activityLogs,
-      ],
-    };
-    setRoom(updated);
-    toast.success("게임에서 나왔습니다.");
+      chatMessages: [
+        ...chatMessages,
+        {
+          id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          studentId: currentUserId,
+          name: me.name,
+          message,
+          createdAt: new Date().toISOString(),
+        },
+      ].slice(-100),
+    });
+    setChatInput("");
   };
 
   const handleToggleReady = () => {
@@ -254,9 +276,9 @@ function BangRoomContent({ initialRoom, currentUserId, currentUserName, navigate
                 게임 참여하기
               </button>
             )}
-            {isJoined && room.status !== "playing" && !isHost && (
+            {isJoined && (
               <button onClick={handleLeave} className="bg-white/20 border border-white/30 text-white font-semibold px-4 py-2 rounded-xl text-sm hover:bg-white/30 flex items-center gap-1.5">
-                <LogOut className="w-4 h-4" />참여 취소
+                <LogOut className="w-4 h-4" />방 나가기
               </button>
             )}
             {isJoined && room.status === "playing" && me?.role && (
@@ -394,6 +416,69 @@ function BangRoomContent({ initialRoom, currentUserId, currentUserName, navigate
         </div>
       )}
 
+      {/* Lobby chat */}
+      <section className="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm">
+        <div className="flex items-center gap-3 bg-gradient-to-r from-amber-800 to-orange-700 px-4 py-3 text-white">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15">
+            <MessageCircle className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-extrabold">{room.status === "playing" ? "게임 채팅" : "대기실 채팅"}</h3>
+            <p className="text-[11px] text-amber-100">대기 중에도 참가자끼리 이야기할 수 있습니다.</p>
+          </div>
+          <span className="ml-auto rounded-full bg-white/15 px-2 py-1 text-[10px] font-bold">{chatMessages.length}개</span>
+        </div>
+        <div ref={chatListRef} className="h-64 space-y-2 overflow-y-auto bg-gradient-to-b from-amber-50/70 to-orange-50/40 p-4">
+          {chatMessages.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center text-amber-900/35">
+              <MessageCircle className="mb-2 h-8 w-8" />
+              <p className="text-xs font-bold">아직 대화가 없습니다.</p>
+            </div>
+          ) : (
+            chatMessages.map((chat) => {
+              const mine = chat.studentId === currentUserId;
+              return (
+                <div key={chat.id} className={`flex flex-col ${mine ? "items-end" : "items-start"}`}>
+                  <div className="mb-1 flex items-center gap-1.5 px-1 text-[10px]">
+                    {!mine && <span className="font-extrabold text-amber-900">{chat.name}</span>}
+                    <span className="text-gray-400">{new Date(chat.createdAt).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}</span>
+                  </div>
+                  <p className={`max-w-[82%] break-words rounded-2xl px-3 py-2 text-xs leading-relaxed shadow-sm ${
+                    mine ? "rounded-br-md bg-amber-700 text-white" : "rounded-bl-md border border-amber-100 bg-white text-gray-700"
+                  }`}>
+                    {chat.message}
+                  </p>
+                </div>
+              );
+            })
+          )}
+        </div>
+        <form
+          className="flex items-center gap-2 border-t border-amber-100 p-3"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleSendChat();
+          }}
+        >
+          <input
+            value={chatInput}
+            onChange={(event) => setChatInput(event.target.value)}
+            maxLength={200}
+            disabled={!isJoined}
+            placeholder={isJoined ? "메시지를 입력하세요." : "게임 참가자만 채팅할 수 있습니다."}
+            className="min-w-0 flex-1 rounded-xl border border-amber-200 bg-amber-50/50 px-3 py-2.5 text-sm outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100 disabled:opacity-60"
+          />
+          <button
+            type="submit"
+            disabled={!isJoined || !chatInput.trim()}
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-700 text-white hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="대기실 채팅 보내기"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </form>
+      </section>
+
       {/* Activity log */}
       {room.activityLogs.length > 0 && (
         <div className="bg-white border border-border rounded-2xl overflow-hidden">
@@ -479,9 +564,16 @@ function PlayerCard({ player, isCurrentTurn, isMe, isHost, isGameHost, isPlaying
             </p>
           )}
           {isPlaying && player.characterId && (
-            <p className="text-xs font-semibold text-emerald-700 mt-0.5" title={BANG_CHARACTER_BY_ID[player.characterId].ability}>
-              {BANG_CHARACTER_BY_ID[player.characterId].emoji} {BANG_CHARACTER_BY_ID[player.characterId].name}
-            </p>
+            <div className="group relative mt-0.5 inline-block">
+              <p className="cursor-help text-xs font-semibold text-emerald-700">
+                {BANG_CHARACTER_BY_ID[player.characterId].emoji} {BANG_CHARACTER_BY_ID[player.characterId].name}
+              </p>
+              <div className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 hidden w-64 rounded-xl bg-gray-950 p-3 text-left text-xs leading-relaxed text-white shadow-2xl group-hover:block">
+                <p className="mb-1 font-extrabold text-amber-300">{BANG_CHARACTER_BY_ID[player.characterId].name}</p>
+                <p className="text-gray-200">{BANG_CHARACTER_BY_ID[player.characterId].ability}</p>
+                <p className="mt-2 text-[10px] font-semibold text-emerald-300">게임 로직에 자동 적용됩니다.</p>
+              </div>
+            </div>
           )}
         </div>
         {/* Host: kick button before game starts */}

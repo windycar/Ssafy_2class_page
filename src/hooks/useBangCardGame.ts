@@ -113,15 +113,25 @@ function drawCheckForPlayer(
   const { drawn, state: nextState } = drawFromPile(state, count);
   const favorable = condition === "dynamite"
     ? drawn.find(card => !drawCheck(card, condition))
-    : drawn.find(card => condition === "barrel" ? !drawCheck(card, condition) : drawCheck(card, condition));
+    : drawn.find(card => drawCheck(card, condition));
   const chosen = favorable ?? drawn[0];
   let checkedState = nextState;
   for (const card of drawn) checkedState = discardCard(checkedState, card);
   if (count === 2) {
     checkedState = addLog(checkedState, `🍀 ${player.name} (럭키 듀크) — ${drawn.map(card => `${card.suit}${card.rank}`).join(" / ")} 중 ${chosen.suit}${chosen.rank} 선택`);
   }
-  const result = condition === "barrel" ? !drawCheck(chosen, condition) : drawCheck(chosen, condition);
+  const result = drawCheck(chosen, condition);
   return { chosen, state: checkedState, result };
+}
+
+function takeRandomCards(cards: BangCard[], count: number): BangCard[] {
+  const pool = [...cards];
+  const selected: BangCard[] = [];
+  while (pool.length > 0 && selected.length < count) {
+    const index = Math.floor(Math.random() * pool.length);
+    selected.push(pool.splice(index, 1)[0]);
+  }
+  return selected;
 }
 
 // ── damage & death ─────────────────────────────────────────────────────────────
@@ -183,7 +193,7 @@ function applyDamage(
   if (!died && lostLife > 0 && player.characterId === "el_gringo" && killerId !== undefined && killerId !== targetId) {
     const attacker = updatedPlayers.find(p => p.studentId === killerId);
     const attackerHand = h(newState, killerId);
-    const stolen = attackerHand.slice(0, lostLife);
+    const stolen = takeRandomCards(attackerHand, lostLife);
     for (const card of stolen) newState = removeFromHand(newState, killerId, card.id);
     newState = setHand(newState, targetId, [...h(newState, targetId), ...stolen]);
     if (stolen.length > 0) newState = addLog(newState, `🌵 ${player.name} (엘 그링고) — ${attacker?.name}에게서 카드 ${stolen.length}장 가져옴`);
@@ -388,7 +398,8 @@ export function useBangCardGame(initialRoom: BangRoom) {
         .filter(other => other.studentId !== currentId && other.status !== "eliminated" && h(state, other.studentId).length > 0)
         .sort((a, b) => h(state, b.studentId).length - h(state, a.studentId).length)[0];
       if (donor) {
-        const stolen = h(state, donor.studentId)[0];
+        const donorHand = h(state, donor.studentId);
+        const stolen = donorHand[Math.floor(Math.random() * donorHand.length)];
         state = removeFromHand(state, donor.studentId, stolen.id);
         const result = drawFromPile(state, Math.max(0, count - 1));
         state = result.state;
@@ -595,24 +606,30 @@ export function useBangCardGame(initialRoom: BangRoom) {
       state = { ...state, bangUsed: true };
       // Check barrel
       const targetEquip = eq(state, targetId);
-      const barrel = targetEquip.find(e => e.kind === "barrel");
-      const hasBarrel = !!barrel || target.characterId === "jourdonnais";
-      if (hasBarrel) {
+      const barrelAttempts =
+        (targetEquip.some(e => e.kind === "barrel") ? 1 : 0)
+        + (target.characterId === "jourdonnais" ? 1 : 0);
+      let blockedByBarrel = false;
+      for (let attempt = 0; attempt < barrelAttempts; attempt += 1) {
         const check = drawCheckForPlayer(room, state, target, "barrel");
         state = check.state;
         const topCard = check.chosen;
-        const blocked = check.result;
-        state = addLog(state, `${target.name} 통 드로우: ${topCard.suit}${topCard.rank} → ${blocked ? "💨 통으로 회피!" : "통 실패, 응답 필요"}`);
-        if (blocked) {
-          if (attacker.characterId === "slab_the_killer") {
-            state = addLog(state, `💥 ${attacker.name} (슬랩 더 킬러) — Missed!가 1장 더 필요`);
-            state = { ...state, pending: { type: "bang_response", fromId, targetId, cardId: card.id, missesNeeded: 2, missesPlayed: 1 } };
-          } else {
-            state = { ...state, pending: undefined };
-          }
-          persist({ ...room, cardState: state });
-          return;
+        blockedByBarrel = check.result;
+        state = addLog(
+          state,
+          `${target.name} 통 판정 ${attempt + 1}/${barrelAttempts}: ${topCard.suit}${topCard.rank} → ${blockedByBarrel ? "💨 회피 성공!" : "실패"}`,
+        );
+        if (blockedByBarrel) break;
+      }
+      if (blockedByBarrel) {
+        if (attacker.characterId === "slab_the_killer") {
+          state = addLog(state, `💥 ${attacker.name} (슬랩 더 킬러) — Missed!가 1장 더 필요`);
+          state = { ...state, pending: { type: "bang_response", fromId, targetId, cardId: card.id, missesNeeded: 2, missesPlayed: 1 } };
+        } else {
+          state = { ...state, pending: undefined };
         }
+        persist({ ...room, cardState: state });
+        return;
       }
       state = addLog(state, `${attacker.name} → ${target.name} BANG! 🔫`);
       state = {
@@ -1002,6 +1019,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
 
   return {
     room,
+    setRoom: persist,
     initCardGame,
     drawCards,
     playCard,

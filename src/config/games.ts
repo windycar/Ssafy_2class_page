@@ -1,4 +1,5 @@
 import type { GameDefinition } from "../types/game";
+import bangHubArt from "../assets/games/bang-hub-art.png";
 
 export const GAMES: GameDefinition[] = [
   {
@@ -12,6 +13,7 @@ export const GAMES: GameDefinition[] = [
     route: "/games/bang",
     isAvailable: true,
     icon: "🤠",
+    image: bangHubArt,
     themeColor: "#b45309",
   },
 ];

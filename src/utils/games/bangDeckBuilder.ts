@@ -72,8 +72,8 @@ export function createBangDeck(): BangCard[] {
 /** Draw! mechanic — returns true if the drawn card counts as a "hit" */
 export function drawCheck(card: BangCard, condition: "barrel" | "dynamite" | "jail"): boolean {
   if (condition === "barrel") {
-    // Barrel: miss (lucky) if Hearts
-    return card.suit !== "H";
+    // Barrel: Hearts means the BANG! is missed.
+    return card.suit === "H";
   }
   if (condition === "dynamite") {
     // Dynamite explodes if Spades 2–9
@@ -112,8 +112,13 @@ export function effectiveDistance(
 ): number {
   const cw = Math.abs(toIdx - fromIdx);
   const base = Math.min(cw, total - cw);
-  const scopeBonus = fromEquip.some(e => e.kind === "scope") || fromCharacter === "rose_doolan" ? -1 : 0;
-  const mustangPenalty = toEquip.some(e => e.kind === "mustang") || toCharacter === "paul_regret" ? 1 : 0;
+  // 캐릭터의 상시 효과와 실제 장착 카드는 공식 규칙대로 중첩됩니다.
+  const scopeBonus =
+    (fromEquip.some(e => e.kind === "scope") ? -1 : 0)
+    + (fromCharacter === "rose_doolan" ? -1 : 0);
+  const mustangPenalty =
+    (toEquip.some(e => e.kind === "mustang") ? 1 : 0)
+    + (toCharacter === "paul_regret" ? 1 : 0);
   return Math.max(1, base + mustangPenalty + scopeBonus);
 }
 

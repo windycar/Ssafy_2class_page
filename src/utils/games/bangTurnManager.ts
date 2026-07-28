@@ -1,4 +1,5 @@
 import type { BangRoom } from "../../types/bang";
+import { shuffleArray } from "../shuffleArray";
 
 export function getNextTurnStudentId(room: BangRoom): number | undefined {
   const alive = room.turnOrder.filter((id) => {
@@ -24,9 +25,16 @@ export function getPrevTurnStudentId(room: BangRoom): number | undefined {
 }
 
 export function buildTurnOrder(room: BangRoom): number[] {
-  const sheriff = room.players.find((p) => p.role === "sheriff");
-  const others = room.players.filter((p) => p.role !== "sheriff");
-  const ordered = sheriff ? [sheriff, ...others] : room.players;
-  return ordered.map((p) => p.studentId);
+  const shuffledPlayers = shuffleArray(room.players);
+  const sheriffIndex = shuffledPlayers.findIndex((player) => player.role === "sheriff");
+  if (sheriffIndex < 0) {
+    return shuffledPlayers.map((player) => player.studentId);
+  }
+
+  const clockwiseFromSheriff = [
+    ...shuffledPlayers.slice(sheriffIndex),
+    ...shuffledPlayers.slice(0, sheriffIndex),
+  ];
+  return clockwiseFromSheriff.map((player) => player.studentId);
 }
 

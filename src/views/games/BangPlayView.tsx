@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, Link } from "react-router";
-import { Heart, RefreshCw, ChevronLeft, Eye, EyeOff, SkipForward, X, MessageCircle, Send } from "lucide-react";
+import { useParams, Link, useNavigate } from "react-router";
+import { Heart, RefreshCw, ChevronLeft, Eye, EyeOff, SkipForward, X, MessageCircle, Send, CircleHelp, LogOut, Crosshair, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { bangRoomStorage } from "../../services/storage/bangRoomStorage";
 import { useBangCardGame } from "../../hooks/useBangCardGame";
@@ -15,6 +15,7 @@ import type { BangRoom, BangPlayer } from "../../types/bang";
 import type { AuthUser } from "../../types/auth";
 import { BANG_CHARACTER_BY_ID } from "../../types/bangCharacters";
 import { BangCardArt } from "../../components/games/bang/BangCardArt";
+import { useBangRoomPresence } from "../../hooks/useBangRoomPresence";
 
 // ── Card component ─────────────────────────────────────────────────────────────
 
@@ -41,6 +42,7 @@ function CardFace({
       onClick={onClick}
       onMouseEnter={() => setShowTip(true)}
       onMouseLeave={() => setShowTip(false)}
+      title={`${CARD_NAME[card.kind]}: ${CARD_DESC[card.kind]}`}
     >
       <div className={`font-black leading-none ${SUIT_COLOR[card.suit]} ${small ? "text-[9px]" : "text-sm"}`}>
         {card.rank}<br />{SUIT_SYMBOL[card.suit]}
@@ -53,8 +55,8 @@ function CardFace({
         {CARD_NAME[card.kind]}
       </div>
 
-      {showTip && !small && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-900 text-white text-xs rounded-xl p-2.5 z-50 shadow-xl pointer-events-none">
+      {showTip && (
+        <div className="pointer-events-none absolute bottom-full left-1/2 z-[100] mb-2 w-52 -translate-x-1/2 rounded-xl bg-gray-950 p-2.5 text-xs text-white shadow-2xl">
           <p className="font-bold mb-1">{CARD_NAME[card.kind]}</p>
           <p className="text-gray-300 leading-relaxed">{CARD_DESC[card.kind]}</p>
         </div>
@@ -80,10 +82,38 @@ function CardBack({ small }: { small?: boolean }) {
 const ROLE_LABEL: Record<string, string> = {
   sheriff: "⭐ 보안관", deputy: "🛡️ 부관", outlaw: "🔫 무법자", renegade: "🃏 배신자",
 };
+const ROLE_DESC: Record<string, string> = {
+  sheriff: "보안관은 살아남아 모든 무법자와 배신자를 제거해야 합니다.",
+  deputy: "부관은 보안관을 지키고 보안관 진영의 승리를 돕습니다.",
+  outlaw: "무법자는 보안관을 쓰러뜨리면 승리합니다.",
+  renegade: "배신자는 마지막까지 살아남아 최후에 보안관을 쓰러뜨려야 합니다.",
+};
+const ALL_CARD_KINDS = Object.keys(CARD_NAME) as BangCardKind[];
+
+function RoleBadge({
+  role,
+  className = "",
+}: {
+  role: NonNullable<BangPlayer["role"]>;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`group relative inline-flex cursor-help ${className}`}
+      title={`${ROLE_LABEL[role]}: ${ROLE_DESC[role]}`}
+    >
+      {ROLE_LABEL[role]}
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-[90] mb-2 hidden w-56 -translate-x-1/2 rounded-xl bg-gray-950 p-2.5 text-left text-[10px] font-medium leading-relaxed text-white shadow-2xl group-hover:block">
+        <strong className="mb-1 block text-amber-300">{ROLE_LABEL[role]}</strong>
+        {ROLE_DESC[role]}
+      </span>
+    </span>
+  );
+}
 
 function PlayerPanel({
   player, isCurrentTurn, isMe, cardCount, equipment, aliveIdx, totalAlive,
-  myEquip, myIdx, myCharacter, isSelectable, isSelected, onSelect,
+  myEquip, myIdx, myCharacter, isSelectable, isSelected, onSelect, seatNumber,
 }: {
   player: BangPlayer;
   isCurrentTurn: boolean;
@@ -98,13 +128,25 @@ function PlayerPanel({
   isSelectable: boolean;
   isSelected: boolean;
   onSelect: () => void;
+  seatNumber?: number;
 }) {
   const eliminated = player.status === "eliminated";
   const character = player.characterId ? BANG_CHARACTER_BY_ID[player.characterId] : undefined;
-  const dist = (() => {
-    if (aliveIdx < 0 || myIdx < 0) return "?";
+  const seatDistance = (() => {
+    if (aliveIdx < 0 || myIdx < 0 || totalAlive < 1) return null;
+    const clockwiseSteps = Math.abs(aliveIdx - myIdx);
+    return Math.min(clockwiseSteps, totalAlive - clockwiseSteps);
+  })();
+  const distance = (() => {
+    if (aliveIdx < 0 || myIdx < 0) return null;
     return effectiveDistance(myIdx, aliveIdx, totalAlive, myEquip, equipment, myCharacter, player.characterId);
   })();
+  const distanceModifiers = [
+    ...(myEquip.some((card) => card.kind === "scope") ? ["내 조준경 -1"] : []),
+    ...(myCharacter === "rose_doolan" ? ["내 로즈 둘란 -1"] : []),
+    ...(equipment.some((card) => card.kind === "mustang") ? ["상대 무스탕 +1"] : []),
+    ...(player.characterId === "paul_regret" ? ["상대 폴 리그렛 +1"] : []),
+  ];
 
   return (
     <div
@@ -122,6 +164,11 @@ function PlayerPanel({
           현재 턴
         </div>
       )}
+      {seatNumber !== undefined && (
+        <div className="absolute -left-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 border-amber-200 bg-amber-900 text-[10px] font-black text-amber-50 shadow">
+          {seatNumber}
+        </div>
+      )}
       <div className="flex items-center gap-2">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-extrabold text-sm flex-shrink-0
           ${isCurrentTurn ? "bg-amber-500 text-white" : "bg-gray-100 text-gray-600"}`}>
@@ -131,14 +178,25 @@ function PlayerPanel({
           <p className="text-xs font-extrabold text-gray-800 truncate">{player.name}</p>
           {isMe && <span className="text-[9px] bg-[#1259AA]/10 text-[#1259AA] font-bold px-1 py-0.5 rounded-full">나</span>}
           {(player.role === "sheriff" || eliminated) && player.role && (
-            <span className="block text-[9px] font-bold text-amber-700 mt-0.5">{ROLE_LABEL[player.role]}</span>
+            <RoleBadge
+              role={player.role}
+              className="mt-0.5 block text-[9px] font-bold text-amber-700"
+            />
           )}
         </div>
       </div>
 
       {character && (
-        <div className="rounded-lg bg-amber-100/70 px-2 py-1" title={character.ability}>
-          <p className="text-[10px] font-extrabold text-amber-900 truncate">{character.emoji} {character.name}</p>
+        <div
+          className="group relative rounded-lg bg-amber-100/70 px-2 py-1"
+          title={`${character.name}: ${character.ability}`}
+        >
+          <p className="cursor-help truncate text-[10px] font-extrabold text-amber-900">{character.emoji} {character.name}</p>
+          <div className="pointer-events-none absolute bottom-full left-1/2 z-[80] mb-2 hidden w-64 -translate-x-1/2 rounded-xl bg-gray-950 p-3 text-left text-xs leading-relaxed text-white shadow-2xl group-hover:block">
+            <p className="mb-1 font-extrabold text-amber-300">{character.name} · 체력 {character.life}</p>
+            <p className="text-gray-200">{character.ability}</p>
+            <p className="mt-2 text-[10px] font-semibold text-emerald-300">해당 능력은 게임 판정에 적용됩니다.</p>
+          </div>
         </div>
       )}
 
@@ -166,14 +224,43 @@ function PlayerPanel({
       {equipment.length > 0 && (
         <div className="flex gap-0.5 flex-wrap">
           {equipment.map(eq => (
-            <BangCardArt key={eq.id} kind={eq.kind} className="w-7 h-7 rounded-md border border-amber-300" />
+            <div
+              key={eq.id}
+              className="group relative"
+              title={`${CARD_NAME[eq.kind]}: ${CARD_DESC[eq.kind]}`}
+            >
+              <BangCardArt kind={eq.kind} className="w-7 h-7 rounded-md border border-amber-300" />
+              <div className="pointer-events-none absolute bottom-full left-1/2 z-[80] mb-1 hidden w-48 -translate-x-1/2 rounded-lg bg-gray-950 p-2 text-[10px] leading-relaxed text-white shadow-xl group-hover:block">
+                <p className="font-extrabold text-amber-300">{CARD_NAME[eq.kind]}</p>
+                <p className="mt-0.5 text-gray-200">{CARD_DESC[eq.kind]}</p>
+              </div>
+            </div>
           ))}
         </div>
       )}
 
       {/* Distance badge */}
       {!isMe && !eliminated && (
-        <div className="text-[9px] text-gray-400 text-right">거리 {dist}</div>
+        <div
+          className="group relative flex cursor-help items-center justify-end gap-1 text-[9px] font-bold text-amber-700"
+          title={`좌석 거리 ${seatDistance ?? "?"}${distanceModifiers.length ? ` · ${distanceModifiers.join(" · ")}` : ""} · 최종 거리 ${distance ?? "?"}`}
+        >
+          <Crosshair className="h-3 w-3" />
+          나에게서 거리 {distance ?? "?"}
+          {seatDistance !== null && distance !== null && seatDistance !== distance && (
+            <span className="text-amber-500">(좌석 {seatDistance})</span>
+          )}
+          <div className="pointer-events-none absolute bottom-full right-0 z-[90] mb-2 hidden w-52 rounded-xl bg-gray-950 p-2.5 text-left text-[10px] font-medium leading-relaxed text-white shadow-2xl group-hover:block">
+            <p className="font-extrabold text-amber-300">거리 계산</p>
+            <p className="mt-1">좌석 기준 거리: {seatDistance ?? "?"}</p>
+            {distanceModifiers.map((modifier) => (
+              <p key={modifier}>{modifier}</p>
+            ))}
+            <p className="mt-1 border-t border-white/15 pt-1 font-extrabold text-emerald-300">
+              최종 거리: {distance ?? "?"}
+            </p>
+          </div>
+        </div>
       )}
 
       {isSelectable && (
@@ -237,9 +324,11 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const [selectedTarget, setSelectedTarget] = useState<number | null>(null);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
-  const [chatOpen, setChatOpen] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const [showCardGuide, setShowCardGuide] = useState(false);
   const chatListRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const game = useBangCardGame(initialRoom);
   const { room, getHand, getEquip, getAliveOrder } = game;
   const state = room.cardState;
@@ -254,6 +343,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   }, [roomId, autoRefreshEnabled, game.refresh]);
 
   const myId = currentUser?.id;
+  useBangRoomPresence(room, myId, game.setRoom);
   const me = room.players.find(p => p.studentId === myId);
   const isHost = room.hostStudentId === myId;
   const currentTurnId = room.currentTurnStudentId;
@@ -380,6 +470,13 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
     if (game.sendChatMessage(myId, chatInput)) setChatInput("");
   };
 
+  const handleLeaveRoom = () => {
+    if (!myId) return;
+    if (!window.confirm("게임방을 나가면 좌석과 보유 카드가 정리됩니다. 나갈까요?")) return;
+    bangRoomStorage.leaveRoom(room, myId);
+    navigate("/games/bang");
+  };
+
   // ── Pre-game setup: init card game ──────────────────────────────────────────
   if (!state && room.status === "playing") {
     return (
@@ -430,8 +527,38 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
     );
   }
 
-  const otherPlayers = room.players.filter(p => p.studentId !== myId);
   const isSelectingTarget = awaitingTarget || awaitingCardSelect;
+  const orderedPlayers = [
+    ...room.turnOrder
+      .map((studentId) => room.players.find((player) => player.studentId === studentId))
+      .filter((player): player is BangPlayer => Boolean(player)),
+    ...room.players.filter((player) => !room.turnOrder.includes(player.studentId)),
+  ];
+  const mySeatIndex = orderedPlayers.findIndex((player) => player.studentId === myId);
+  const tablePlayers = mySeatIndex > 0
+    ? [...orderedPlayers.slice(mySeatIndex), ...orderedPlayers.slice(0, mySeatIndex)]
+    : orderedPlayers;
+  const isPlayerSelectable = (player: BangPlayer) => {
+    const playerAliveIdx = aliveOrder.indexOf(player.studentId);
+    return (
+      (awaitingTarget && player.studentId !== myId && player.status !== "eliminated")
+      || (awaitingCatBalou && player.studentId !== myId && (getEquip(player.studentId).length > 0 || getHand(player.studentId).length > 0))
+      || (
+        awaitingPanic
+        && player.studentId !== myId
+        && effectiveDistance(
+          myAliveIdx,
+          playerAliveIdx,
+          aliveOrder.length,
+          myEquip,
+          getEquip(player.studentId),
+          me?.characterId,
+          player.characterId,
+        ) === 1
+        && player.status !== "eliminated"
+      )
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-950 to-amber-900 flex flex-col">
@@ -443,9 +570,23 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
         <span className="text-amber-200 font-extrabold text-sm flex-1 truncate">{room.title}</span>
         <div className="flex items-center gap-2">
           <span className="text-xs text-amber-400">드로우 파일: {state.drawPile.length}장</span>
+          <button
+            onClick={() => setShowCardGuide(true)}
+            className="flex items-center gap-1 rounded-lg border border-amber-700/60 px-2 py-1 text-[11px] font-bold text-amber-200 hover:bg-amber-800"
+          >
+            <CircleHelp className="h-3.5 w-3.5" />카드 설명
+          </button>
           <button onClick={manualRefresh} className="text-amber-400 hover:text-amber-200 p-1 rounded-lg">
             <RefreshCw className="w-4 h-4" />
           </button>
+          {me && (
+            <button
+              onClick={handleLeaveRoom}
+              className="flex items-center gap-1 rounded-lg border border-red-500/40 px-2 py-1 text-[11px] font-bold text-red-300 hover:bg-red-500/10"
+            >
+              <LogOut className="h-3.5 w-3.5" />방 나가기
+            </button>
+          )}
         </div>
       </div>
 
@@ -499,31 +640,78 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
       )}
 
       <div className="flex-1 flex flex-col gap-3 p-4 overflow-auto">
-        {/* Other players */}
-        <div className="flex gap-3 flex-wrap justify-center">
-          {otherPlayers.map(player => {
-            const playerAliveIdx = aliveOrder.indexOf(player.studentId);
-            const isSelectable =
-              (awaitingTarget && player.studentId !== myId && player.status !== "eliminated") ||
-              (awaitingCatBalou && player.studentId !== myId && (getEquip(player.studentId).length > 0 || getHand(player.studentId).length > 0)) ||
-              (awaitingPanic
-                && effectiveDistance(
-                  myAliveIdx,
-                  playerAliveIdx,
-                  aliveOrder.length,
-                  myEquip,
-                  getEquip(player.studentId),
-                  me?.characterId,
-                  player.characterId,
-                ) === 1
-                && player.status !== "eliminated");
+        {/* Clockwise turn order */}
+        <div className="rounded-2xl border border-amber-700/50 bg-black/25 px-3 py-2">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-[11px] font-extrabold text-amber-200">시계 방향 턴 순서</p>
+            <p className="text-[10px] text-amber-400">탈락자는 거리 계산에서 제외됩니다.</p>
+          </div>
+          <div className="flex items-center gap-1 overflow-x-auto pb-1">
+            {tablePlayers.map((player, index) => (
+              <div key={player.studentId} className="flex flex-shrink-0 items-center gap-1">
+                <div className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold ${
+                  player.studentId === currentTurnId
+                    ? "border-amber-300 bg-amber-400 text-amber-950 shadow"
+                    : player.status === "eliminated"
+                      ? "border-white/10 bg-white/5 text-white/30 line-through"
+                      : "border-amber-700/50 bg-amber-950/50 text-amber-100"
+                }`}>
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-black/20 text-[9px]">{index + 1}</span>
+                  {player.name}
+                </div>
+                {index < tablePlayers.length - 1 && <ArrowRight className="h-3 w-3 text-amber-600" />}
+              </div>
+            ))}
+          </div>
+        </div>
 
+        {/* Desktop round table */}
+        <div className="relative hidden min-h-[610px] overflow-visible rounded-[2rem] border border-amber-800/60 bg-[radial-gradient(circle_at_center,_rgba(146,64,14,0.34)_0,_rgba(69,26,3,0.2)_52%,_rgba(0,0,0,0.22)_100%)] lg:block">
+          <div className="absolute left-1/2 top-1/2 flex h-[44%] w-[56%] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-[50%] border-[10px] border-amber-950/80 bg-[radial-gradient(ellipse_at_center,_#78350f_0%,_#451a03_72%)] shadow-[inset_0_0_50px_rgba(0,0,0,0.65),0_20px_40px_rgba(0,0,0,0.35)]">
+            <div className="absolute inset-3 rounded-[50%] border border-amber-500/20" />
+            <p className="relative text-[10px] font-extrabold uppercase tracking-[0.28em] text-amber-500">Round Table</p>
+            <p className="relative mt-1 text-lg font-black text-amber-100">{currentPlayer?.name ?? "-"}의 턴</p>
+            <p className="relative mt-1 rounded-full bg-black/25 px-3 py-1 text-[11px] font-bold text-amber-300">
+              현재 {state.phase === "draw" ? "드로우" : state.phase === "play" ? "카드 사용" : state.phase === "discard" ? "버리기" : "종료"} 단계
+            </p>
+            <div className="relative mt-5 flex items-end gap-8">
+              <div className="text-center">
+                <div className="relative h-20 w-14">
+                  <div className="absolute left-1 top-1"><CardBack /></div>
+                  <div className="absolute left-0 top-0"><CardBack /></div>
+                </div>
+                <p className="mt-1 text-[10px] font-bold text-amber-300">드로우 {state.drawPile.length}</p>
+              </div>
+              <div className="text-center">
+                <div className="flex h-20 w-14 items-center justify-center rounded-xl border-2 border-dashed border-amber-700/60 bg-black/15">
+                  {state.discardPile[0] ? (
+                    <CardFace card={state.discardPile[0]} small />
+                  ) : (
+                    <span className="text-[9px] text-amber-700">버린 카드</span>
+                  )}
+                </div>
+                <p className="mt-1 text-[10px] font-bold text-amber-300">버림 {state.discardPile.length}</p>
+              </div>
+            </div>
+            <p className="relative mt-4 text-[10px] text-amber-500">좌우로 가까운 좌석부터 거리 1 · 시계 방향 진행</p>
+          </div>
+
+          {tablePlayers.map((player, index) => {
+            const total = Math.max(1, tablePlayers.length);
+            const angle = (90 + (360 * index) / total) * Math.PI / 180;
+            const left = 50 + Math.cos(angle) * 41;
+            const top = 50 + Math.sin(angle) * 34;
+            const playerAliveIdx = aliveOrder.indexOf(player.studentId);
             return (
-              <div key={player.studentId} className="flex flex-col gap-1.5">
+              <div
+                key={player.studentId}
+                className="absolute z-20 -translate-x-1/2 -translate-y-1/2"
+                style={{ left: `${left}%`, top: `${top}%` }}
+              >
                 <PlayerPanel
                   player={player}
                   isCurrentTurn={player.studentId === currentTurnId}
-                  isMe={false}
+                  isMe={player.studentId === myId}
                   cardCount={getHand(player.studentId).length}
                   equipment={getEquip(player.studentId)}
                   aliveIdx={playerAliveIdx}
@@ -531,43 +719,73 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
                   myEquip={myEquip}
                   myIdx={myAliveIdx}
                   myCharacter={me?.characterId}
-                  isSelectable={isSelectable}
+                  isSelectable={isPlayerSelectable(player)}
                   isSelected={selectedTarget === player.studentId}
                   onSelect={() => handlePlayerSelect(player.studentId)}
+                  seatNumber={index + 1}
                 />
-                {/* If cat_balou/panic and this player selected: show their cards */}
-                {selectedTarget === player.studentId && awaitingCardSelect && (
-                  <div className="bg-white/10 rounded-xl p-2 space-y-1.5">
-                    {getEquip(player.studentId).length > 0 && (
-                      <div>
-                        <p className="text-[10px] text-amber-300 font-bold mb-1">장착 카드</p>
-                        <div className="flex gap-1 flex-wrap">
-                          {getEquip(player.studentId).map(eq => (
-                            <div key={eq.id} className="cursor-pointer hover:scale-110 transition-transform" onClick={() => handleEquipCardSelect(player.studentId, eq.id)}>
-                              <CardFace card={eq} selectable small />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {getHand(player.studentId).length > 0 && (
-                      <div>
-                        <p className="text-[10px] text-amber-300 font-bold mb-1">손패 (무작위 뒷면 선택)</p>
-                        <div className="flex gap-1">
-                          {getHand(player.studentId).map((_, i) => (
-                            <div key={i} className="cursor-pointer hover:scale-110" onClick={() => handleHandCardSelect(player.studentId, getHand(player.studentId)[i].id)}>
-                              <CardBack small />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
             );
           })}
         </div>
+
+        {/* Mobile seat order */}
+        <div className="flex gap-3 overflow-x-auto rounded-2xl bg-black/20 p-4 lg:hidden">
+          {tablePlayers.map((player, index) => (
+            <PlayerPanel
+              key={player.studentId}
+              player={player}
+              isCurrentTurn={player.studentId === currentTurnId}
+              isMe={player.studentId === myId}
+              cardCount={getHand(player.studentId).length}
+              equipment={getEquip(player.studentId)}
+              aliveIdx={aliveOrder.indexOf(player.studentId)}
+              totalAlive={aliveOrder.length}
+              myEquip={myEquip}
+              myIdx={myAliveIdx}
+              myCharacter={me?.characterId}
+              isSelectable={isPlayerSelectable(player)}
+              isSelected={selectedTarget === player.studentId}
+              onSelect={() => handlePlayerSelect(player.studentId)}
+              seatNumber={index + 1}
+            />
+          ))}
+        </div>
+
+        {/* Selected player's cards for Panic / Cat Balou */}
+        {selectedTarget !== null && awaitingCardSelect && (() => {
+          const player = room.players.find((item) => item.studentId === selectedTarget);
+          if (!player) return null;
+          return (
+            <div className="rounded-2xl border border-amber-600/40 bg-black/30 p-3">
+              <p className="mb-2 text-xs font-extrabold text-amber-200">{player.name}의 카드 선택</p>
+              {getEquip(player.studentId).length > 0 && (
+                <div className="mb-3">
+                  <p className="mb-1 text-[10px] font-bold text-amber-400">장착 카드</p>
+                  <div className="flex flex-wrap gap-2">
+                    {getEquip(player.studentId).map((equipmentCard) => (
+                      <div key={equipmentCard.id} onClick={() => handleEquipCardSelect(player.studentId, equipmentCard.id)}>
+                        <CardFace card={equipmentCard} selectable small />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {getHand(player.studentId).length > 0 && (
+                <div>
+                  <p className="mb-1 text-[10px] font-bold text-amber-400">손패 · 뒷면 중 1장 선택</p>
+                  <div className="flex gap-1">
+                    {getHand(player.studentId).map((card) => (
+                      <button key={card.id} onClick={() => handleHandCardSelect(player.studentId, card.id)} className="transition-transform hover:-translate-y-1">
+                        <CardBack small />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {pending?.type === "general_store_pick" && (
           <div className="rounded-2xl border border-emerald-400/40 bg-emerald-950/50 p-4">
@@ -601,13 +819,29 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <span className="font-extrabold text-white text-sm">{me?.name ?? "관전자"}</span>
-                {me?.role && <span className="text-xs bg-amber-800 text-amber-200 px-2 py-0.5 rounded-full">{ROLE_LABEL[me.role]}</span>}
+                {me?.role && (
+                  <RoleBadge
+                    role={me.role}
+                    className="rounded-full bg-amber-800 px-2 py-0.5 text-xs text-amber-200"
+                  />
+                )}
                 {isMyTurn && <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full animate-pulse">내 턴!</span>}
               </div>
               {me?.characterId && (
-                <p className="text-xs text-amber-300 mt-1" title={BANG_CHARACTER_BY_ID[me.characterId].ability}>
-                  {BANG_CHARACTER_BY_ID[me.characterId].emoji} {BANG_CHARACTER_BY_ID[me.characterId].name} · {BANG_CHARACTER_BY_ID[me.characterId].ability}
-                </p>
+                <div
+                  className="group relative mt-1 inline-block"
+                  title={`${BANG_CHARACTER_BY_ID[me.characterId].name}: ${BANG_CHARACTER_BY_ID[me.characterId].ability}`}
+                >
+                  <p className="cursor-help text-xs font-semibold text-amber-300">
+                    {BANG_CHARACTER_BY_ID[me.characterId].emoji} {BANG_CHARACTER_BY_ID[me.characterId].name}
+                    <span className="ml-1 text-amber-500">· 마우스를 올려 능력 확인</span>
+                  </p>
+                  <div className="pointer-events-none absolute bottom-full left-0 z-[90] mb-2 hidden w-72 rounded-xl bg-gray-950 p-3 text-xs leading-relaxed text-white shadow-2xl group-hover:block">
+                    <p className="mb-1 font-extrabold text-amber-300">{BANG_CHARACTER_BY_ID[me.characterId].name}</p>
+                    <p className="text-gray-200">{BANG_CHARACTER_BY_ID[me.characterId].ability}</p>
+                    <p className="mt-2 text-[10px] font-semibold text-emerald-300">공식 캐릭터 능력 · 게임 판정 적용</p>
+                  </div>
+                </div>
               )}
               <div className="flex gap-0.5 mt-1">
                 {Array.from({ length: me?.maxLife ?? 5 }).map((_, i) => (
@@ -638,7 +872,13 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
             <div className="flex gap-1.5 flex-wrap">
               <span className="text-[10px] text-amber-400 self-center">장착:</span>
               {myEquip.map(eq => (
-                <BangCardArt key={eq.id} kind={eq.kind} className="w-8 h-8 rounded-md border border-amber-500/50" />
+                <div key={eq.id} className="group relative">
+                  <BangCardArt kind={eq.kind} className="w-8 h-8 rounded-md border border-amber-500/50" />
+                  <div className="pointer-events-none absolute bottom-full left-1/2 z-[90] mb-1 hidden w-52 -translate-x-1/2 rounded-lg bg-gray-950 p-2 text-[10px] leading-relaxed text-white shadow-xl group-hover:block">
+                    <p className="font-extrabold text-amber-300">{CARD_NAME[eq.kind]}</p>
+                    <p className="mt-0.5 text-gray-200">{CARD_DESC[eq.kind]}</p>
+                  </div>
+                </div>
               ))}
               <span className="text-[10px] text-amber-400 self-center ml-1">사거리 {getWeaponRange(myEquip)}</span>
             </div>
@@ -843,6 +1083,42 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
             </span>
           )}
         </button>
+      )}
+
+      {/* Card guide */}
+      {showCardGuide && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/75 px-4 py-6">
+          <div className="flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-amber-200 bg-[#fffaf0] shadow-2xl">
+            <div className="flex items-center gap-3 bg-gradient-to-r from-amber-900 to-orange-700 px-5 py-4 text-white">
+              <CircleHelp className="h-5 w-5" />
+              <div className="flex-1">
+                <h2 className="font-black">전체 카드 설명</h2>
+                <p className="text-[11px] text-amber-100">카드에 마우스를 올려도 같은 설명을 확인할 수 있습니다.</p>
+              </div>
+              <button onClick={() => setShowCardGuide(false)} aria-label="카드 설명 닫기" className="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-white/15">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="grid flex-1 grid-cols-1 gap-3 overflow-y-auto p-4 sm:grid-cols-2 lg:grid-cols-3">
+              {ALL_CARD_KINDS.map((kind) => (
+                <article key={kind} className="flex gap-3 rounded-2xl border border-amber-200 bg-white p-3 shadow-sm">
+                  <BangCardArt kind={kind} className="h-20 w-16 flex-shrink-0 rounded-xl border border-amber-200" />
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-extrabold text-amber-950">{CARD_NAME[kind]}</h3>
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
+                        IS_EQUIPMENT[kind] ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"
+                      }`}>
+                        {IS_EQUIPMENT[kind] ? "장착" : "즉시 사용"}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-gray-600">{CARD_DESC[kind]}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Role reveal modal */}

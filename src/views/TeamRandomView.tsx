@@ -264,7 +264,7 @@ export default function TeamRandomView() {
                         <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-extrabold flex items-center justify-center">{index + 1}</span>
                         <div className="min-w-0">
                           <p className="text-sm font-bold text-gray-800 truncate">{student.name}</p>
-                          <p className="text-[11px] text-gray-500 truncate">@{student.username}</p>
+                          <p className="text-[11px] text-gray-500 truncate">{student.username}</p>
                         </div>
                       </div>
                     ))}

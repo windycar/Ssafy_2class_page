@@ -17,6 +17,7 @@ export interface GameDefinition {
   route: string;
   isAvailable: boolean;
   icon: string;
+  image?: string;
   themeColor: string;
 }
 
