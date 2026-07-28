@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { Gamepad2, Clock, Users, Plus, Lock } from "lucide-react";
 import { GAMES } from "../config/games";
 import { useBangRooms } from "../hooks/useBangRooms";
+import bangHubArt from "../assets/games/bang-hub-art.png";
 
 export default function GameHubView() {
   const { rooms } = useBangRooms();
@@ -11,21 +12,42 @@ export default function GameHubView() {
   return (
     <div className="space-y-6">
       {/* Hero */}
-      <div className="bg-gradient-to-br from-[#1259AA] to-[#0d4a8f] rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden">
-        <div className="absolute right-6 top-1/2 -translate-y-1/2 text-white/10 text-7xl font-black select-none pointer-events-none hidden sm:block">GAME</div>
-        <div className="relative">
+      <div className="relative min-h-[230px] overflow-hidden rounded-3xl border border-amber-200/20 bg-[#082f58] p-6 text-white shadow-[0_18px_45px_rgba(8,47,88,0.20)] sm:p-8">
+        <img
+          src={bangHubArt}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover object-[center_55%] scale-[1.02]"
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(6,35,68,0.98)_0%,rgba(10,64,111,0.90)_42%,rgba(14,63,95,0.48)_72%,rgba(61,32,10,0.22)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_28%,rgba(251,191,36,0.30),transparent_27%),linear-gradient(180deg,rgba(255,255,255,0.04),transparent_38%,rgba(3,22,40,0.30))]" />
+        <div className="absolute -right-12 -top-24 h-56 w-56 rounded-full border border-amber-100/20" />
+        <div className="absolute -right-3 -top-14 h-40 w-40 rounded-full border border-amber-100/15" />
+
+        <div className="absolute right-7 top-6 hidden items-center gap-2 rounded-full border border-amber-100/25 bg-black/15 px-3 py-1.5 text-[10px] font-black tracking-[0.22em] text-amber-100/90 backdrop-blur-sm md:flex">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-300 shadow-[0_0_10px_rgba(252,211,77,0.9)]" />
+          GAME NIGHT
+        </div>
+
+        <div className="relative z-10 max-w-2xl">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/15 shadow-inner backdrop-blur-sm">
               <Gamepad2 className="w-5 h-5" />
             </div>
-            <span className="text-xs font-semibold bg-white/20 border border-white/30 px-3 py-1 rounded-full">광주 2반 전용</span>
+            <span className="rounded-full border border-white/25 bg-white/15 px-3 py-1 text-xs font-semibold shadow-sm backdrop-blur-sm">광주 2반 전용</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold mb-2">광주 2반 게임방</h1>
-          <p className="text-blue-200 text-sm">같이 즐길 게임을 선택하고 참가자를 모집해 보세요.</p>
-          <div className="flex gap-4 mt-4 text-sm">
-            <span className="text-white/70">등록 게임 <span className="font-bold text-white">{GAMES.filter(g => g.isAvailable).length}개</span></span>
-            <span className="text-white/70">모집 중 <span className="font-bold text-white">{recruiting}개</span></span>
-            <span className="text-white/70">진행 중 <span className="font-bold text-white">{playing}개</span></span>
+          <h1 className="mb-2 text-2xl font-black tracking-tight drop-shadow-sm sm:text-3xl">광주 2반 게임방</h1>
+          <p className="text-sm text-blue-100/90">같이 즐길 게임을 선택하고 참가자를 모집해 보세요.</p>
+          <div className="mt-5 flex flex-wrap gap-2 text-xs">
+            <span className="rounded-xl border border-white/15 bg-slate-950/20 px-3 py-2 text-white/75 backdrop-blur-sm">
+              등록 게임 <span className="ml-1 font-extrabold text-white">{GAMES.filter(g => g.isAvailable).length}개</span>
+            </span>
+            <span className="rounded-xl border border-emerald-200/20 bg-emerald-950/20 px-3 py-2 text-emerald-100/80 backdrop-blur-sm">
+              모집 중 <span className="ml-1 font-extrabold text-white">{recruiting}개</span>
+            </span>
+            <span className="rounded-xl border border-amber-200/20 bg-amber-950/20 px-3 py-2 text-amber-100/80 backdrop-blur-sm">
+              진행 중 <span className="ml-1 font-extrabold text-white">{playing}개</span>
+            </span>
           </div>
         </div>
       </div>
