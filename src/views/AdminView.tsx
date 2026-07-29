@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useAdmin } from "../context/AdminContext";
 import { getGalleryPhotos } from "../services/galleryStorage";
 import { getAnonymousPosts, type AnonymousPost } from "../services/anonymousBoard";
+import { bangRoomStorage } from "../services/storage/bangRoomStorage";
 import type { BangRoom } from "../types/bang";
 import type { Photo } from "../types/photo";
 
@@ -49,17 +50,31 @@ export default function AdminView() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [posts, setPosts] = useState<AnonymousPost[]>([]);
   const [rooms, setRooms] = useState<BangRoom[]>([]);
+  const [serverRoomIds, setServerRoomIds] = useState<Set<string>>(() => new Set());
   const [roomsLoading, setRoomsLoading] = useState(false);
   const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
 
   const loadRooms = useCallback(async () => {
     setRoomsLoading(true);
+    const cachedRooms = bangRoomStorage.getRooms();
+    setRooms(cachedRooms);
+
     try {
       const response = await request<BangRoomsResponse>("bang.rooms.list");
-      setRooms(response.rooms);
+      const remoteIds = new Set(response.rooms.map((room) => room.id));
+      const mergedRooms = new Map(cachedRooms.map((room) => [room.id, room]));
+      response.rooms.forEach((room) => mergedRooms.set(room.id, room));
+
+      setServerRoomIds(remoteIds);
+      setRooms([...mergedRooms.values()]);
     } catch (error) {
       console.error(error);
-      toast.error("게임방 목록을 불러오지 못했습니다.");
+      setServerRoomIds(new Set());
+      if (cachedRooms.length > 0) {
+        toast.warning("Supabase 목록을 불러오지 못해 이 브라우저의 게임방을 표시합니다.");
+      } else {
+        toast.error("게임방 목록을 불러오지 못했습니다.");
+      }
     } finally {
       setRoomsLoading(false);
     }
@@ -156,7 +171,13 @@ export default function AdminView() {
     setDeletingRoomId(room.id);
     try {
       await request("bang.room.delete", { id: room.id });
+      bangRoomStorage.deleteCachedRoom(room.id);
       setRooms((list) => list.filter((item) => item.id !== room.id));
+      setServerRoomIds((ids) => {
+        const nextIds = new Set(ids);
+        nextIds.delete(room.id);
+        return nextIds;
+      });
       toast.success("게임방을 삭제했습니다.");
     } catch (error) {
       console.error(error);
@@ -197,7 +218,7 @@ export default function AdminView() {
               </span>
             </div>
             <p className="mt-1 text-xs text-gray-400">
-              Supabase에 저장된 게임방을 최신 순서로 표시합니다.
+              Supabase와 현재 브라우저에 저장된 게임방을 함께 표시합니다.
             </p>
           </div>
           <button
@@ -226,6 +247,7 @@ export default function AdminView() {
           <div className="divide-y divide-gray-100">
             {rooms.map((room) => {
               const status = ROOM_STATUS[room.status] ?? ROOM_STATUS.recruiting;
+              const isServerRoom = serverRoomIds.has(room.id);
               const host =
                 room.players.find((player) => player.studentId === room.hostStudentId)
                   ?.name ?? "알 수 없음";
@@ -243,6 +265,11 @@ export default function AdminView() {
                       >
                         {status.label}
                       </span>
+                      {!isServerRoom && (
+                        <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[11px] font-extrabold text-orange-700">
+                          이 브라우저에만 저장
+                        </span>
+                      )}
                       <h3 className="truncate font-extrabold text-gray-800">
                         {room.title || "이름 없는 게임방"}
                       </h3>

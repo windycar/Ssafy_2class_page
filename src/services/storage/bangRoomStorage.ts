@@ -117,8 +117,12 @@ export const bangRoomStorage = {
     return this.updateRoom(updated);
   },
 
-  deleteRoom(roomId: string): void {
+  deleteCachedRoom(roomId: string): void {
     save(load().filter((room) => room.id !== roomId));
+  },
+
+  deleteRoom(roomId: string): void {
+    this.deleteCachedRoom(roomId);
     if (supabase) {
       void supabase
         .from(TABLE)

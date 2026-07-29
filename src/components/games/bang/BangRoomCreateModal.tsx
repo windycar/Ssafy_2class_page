@@ -24,7 +24,7 @@ export default function BangRoomCreateModal({ hostName, hostStudentId, onClose, 
 
   const [title, setTitle] = useState("광주 2반 뱅 한 판");
   const [description, setDescription] = useState("");
-  const [maxPlayers, setMaxPlayers] = useState(6);
+  const [maxPlayers, setMaxPlayers] = useState(7);
   const [scheduledAt, setScheduledAt] = useState(defaultStart);
   const [locationPreset, setLocationPreset] = useState(LOCATIONS[0]);
   const [locationCustom, setLocationCustom] = useState("");

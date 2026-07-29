@@ -710,10 +710,36 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
       seenEffectIdsRef.current.add(event.id);
       return now - event.createdAt < 10_000;
     });
-    if (freshEvents.length > 0) {
-      setEffectQueue((current) => [...current, ...freshEvents]);
+
+    const regularTurnDraws = freshEvents.filter(
+      (event) =>
+        event.kind === "action"
+        && event.action === "draw"
+        && event.message === "턴 드로우",
+    );
+    regularTurnDraws.forEach((event) => {
+      const playerName =
+        room.players.find((player) => player.studentId === event.playerId)?.name
+        ?? "현재 플레이어";
+      toast.info(`${playerName} · 카드 ${event.count ?? 2}장 드로우`, {
+        id: `regular-draw-${event.id}`,
+        duration: 1_600,
+        icon: "🎴",
+      });
+    });
+
+    const cinematicEvents = freshEvents.filter(
+      (event) =>
+        !(
+          event.kind === "action"
+          && event.action === "draw"
+          && event.message === "턴 드로우"
+        ),
+    );
+    if (cinematicEvents.length > 0) {
+      setEffectQueue((current) => [...current, ...cinematicEvents]);
     }
-  }, [state?.effectEvents]);
+  }, [room.players, state?.effectEvents]);
 
   useEffect(() => {
     if (visibleEffect || effectQueue.length === 0) return;
@@ -922,6 +948,23 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
     }
   };
 
+  useEffect(() => {
+    const handleSecretAdminShortcut = (event: KeyboardEvent) => {
+      if (
+        event.ctrlKey
+        && event.shiftKey
+        && event.key.toLowerCase() === "g"
+        && !adminRoleCheckPending
+      ) {
+        event.preventDefault();
+        void handleAdminRoleToggle();
+      }
+    };
+
+    window.addEventListener("keydown", handleSecretAdminShortcut);
+    return () => window.removeEventListener("keydown", handleSecretAdminShortcut);
+  });
+
   const handleSendChat = async () => {
     if (!myId || !me || !chatInput.trim()) return;
     const rawMessage = chatInput.trim().slice(0, 200);
@@ -1047,28 +1090,30 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
         <span className="text-amber-200 font-extrabold text-sm flex-1 truncate">{room.title}</span>
         <div className="flex items-center gap-1.5">
           <span className="hidden text-xs text-amber-400 sm:inline">드로우 파일: {state.drawPile.length}장</span>
-          <button
-            onClick={() => void handleAdminRoleToggle()}
-            disabled={adminRoleCheckPending}
-            aria-label={adminRolesVisible ? "관리자 직업 공개 끄기" : "관리자 비밀번호로 모든 직업 보기"}
-            title={adminRolesVisible ? "모든 직업 숨기기" : "관리자 비밀번호로 모든 직업 보기"}
-            className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
-              adminRolesVisible
-                ? "border-fuchsia-400/70 bg-fuchsia-500/20 text-fuchsia-200 hover:bg-fuchsia-500/30"
-                : "border-amber-700/60 text-amber-200 hover:bg-amber-800"
-            }`}
-          >
-            {adminRoleCheckPending ? (
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-            ) : adminRolesVisible ? (
-              <EyeOff className="h-3.5 w-3.5" />
-            ) : (
-              <ShieldCheck className="h-3.5 w-3.5" />
-            )}
-            <span className="hidden sm:inline">
-              {adminRolesVisible ? "직업 숨기기" : "관리자 직업 보기"}
-            </span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => void handleAdminRoleToggle()}
+              disabled={adminRoleCheckPending}
+              aria-label={adminRolesVisible ? "관리자 직업 공개 끄기" : "관리자 직업 공개 켜기"}
+              title={adminRolesVisible ? "모든 직업 숨기기" : "모든 직업 보기"}
+              className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                adminRolesVisible
+                  ? "border-fuchsia-400/70 bg-fuchsia-500/20 text-fuchsia-200 hover:bg-fuchsia-500/30"
+                  : "border-amber-700/60 text-amber-200 hover:bg-amber-800"
+              }`}
+            >
+              {adminRoleCheckPending ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : adminRolesVisible ? (
+                <EyeOff className="h-3.5 w-3.5" />
+              ) : (
+                <ShieldCheck className="h-3.5 w-3.5" />
+              )}
+              <span className="hidden sm:inline">
+                {adminRolesVisible ? "직업 숨기기" : "직업 보기"}
+              </span>
+            </button>
+          )}
           <button
             onClick={() => setShowCardGuide(true)}
             className="flex items-center gap-1 rounded-lg border border-amber-700/60 px-2 py-1 text-[11px] font-bold text-amber-200 hover:bg-amber-800"
@@ -1465,7 +1510,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
           <div className="flex gap-2 flex-wrap">
             {canDraw && (
               <button
-                onClick={() => { game.drawCards(); toast.success("카드 2장 드로우!"); }}
+                onClick={() => game.drawCards()}
                 className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-700"
               >
                 📥 카드 드로우 (2장)
