@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { bangRoomStorage } from "../services/storage/bangRoomStorage";
 import { createBangDeck, drawCheck, hasVolcanic, canTarget, effectiveDistance } from "../utils/games/bangDeckBuilder";
-import { IS_EQUIPMENT, WEAPON_KINDS } from "../types/bangCards";
+import { CARD_NAME, IS_EQUIPMENT, WEAPON_KINDS } from "../types/bangCards";
 import type { BangRoom, BangPlayer } from "../types/bang";
 import type { BangCard, BangCardGameState, BangCardKind, BangEffectEvent } from "../types/bangCards";
 
@@ -145,6 +145,13 @@ function drawCheckForPlayer(
   for (const card of drawn) checkedState = discardCard(checkedState, card);
   if (count === 2) {
     checkedState = addLog(checkedState, `🍀 ${player.name} (럭키 듀크) — ${drawn.map(card => `${card.suit}${card.rank}`).join(" / ")} 중 ${chosen.suit}${chosen.rank} 선택`);
+    checkedState = addEffectEvent(checkedState, {
+      kind: "action",
+      action: "ability",
+      playerId: player.studentId,
+      characterId: "lucky_duke",
+      message: `판정 카드 2장 중 유리한 ${chosen.suit}${chosen.rank}을 선택합니다.`,
+    });
   }
   const result = drawCheck(chosen, condition);
   return { chosen, state: checkedState, result };
@@ -158,6 +165,30 @@ function takeRandomCards(cards: BangCard[], count: number): BangCard[] {
     selected.push(pool.splice(index, 1)[0]);
   }
   return selected;
+}
+
+function completeCharacterDraw(
+  state: BangCardGameState,
+  player: BangPlayer,
+  drawnCards: BangCard[],
+  abilityMessage: string,
+): BangCardGameState {
+  let nextState = setHand(state, player.studentId, [...h(state, player.studentId), ...drawnCards]);
+  nextState = addLog(nextState, `${abilityMessage} — 카드 ${drawnCards.length}장 획득`);
+  nextState = addEffectEvent(nextState, {
+    kind: "action",
+    action: "draw",
+    playerId: player.studentId,
+    characterId: player.characterId,
+    count: drawnCards.length,
+    message: abilityMessage,
+  });
+  return {
+    ...nextState,
+    phase: "play",
+    bangUsed: false,
+    pending: undefined,
+  };
 }
 
 // ── damage & death ─────────────────────────────────────────────────────────────
@@ -477,34 +508,44 @@ export function useBangCardGame(initialRoom: BangRoom) {
       }
     }
 
-    // Character draw abilities. Choice-based abilities use a deterministic automatic choice
-    // so asynchronous web play does not block the whole room.
+    // Choice-based character abilities pause only the current draw phase.
+    // The active player makes the actual choice in the shared UI.
     let drawnCards: BangCard[] = [];
     if (player.characterId === "kit_carlson") {
       const result = drawFromPile(state, 3);
       state = result.state;
-      drawnCards = result.drawn.slice(0, 2);
-      state = { ...state, drawPile: [...result.drawn.slice(2), ...state.drawPile] };
-      state = addLog(state, `🦅 ${player.name} (키트 칼슨) — 3장을 확인하고 2장 선택`);
+      state = addLog(state, `🦅 ${player.name} (키트 칼슨) — 공개된 3장 중 2장 선택 대기`);
+      state = {
+        ...state,
+        pending: { type: "kit_carlson_draw", playerId: currentId, cards: result.drawn },
+      };
+      persist({ ...currentRoom, cardState: state });
+      return;
     } else if (player.characterId === "pedro_ramirez" && state.discardPile.length > 0) {
       const topDiscard = state.discardPile[0];
-      state = { ...state, discardPile: state.discardPile.slice(1) };
-      const result = drawFromPile(state, Math.max(0, count - 1));
-      state = result.state;
-      drawnCards = [topDiscard, ...result.drawn];
-      state = addLog(state, `♻️ ${player.name} (페드로 라미레즈) — 버린 카드 더미에서 첫 카드 획득`);
+      state = addLog(state, `♻️ ${player.name} (페드로 라미레즈) — 첫 카드를 버린 더미에서 가져올지 선택 대기`);
+      state = {
+        ...state,
+        pending: {
+          type: "pedro_ramirez_draw",
+          playerId: currentId,
+          discardCardId: topDiscard.id,
+        },
+      };
+      persist({ ...currentRoom, cardState: state });
+      return;
     } else if (player.characterId === "jesse_jones") {
-      const donor = currentRoom.players
+      const eligiblePlayerIds = currentRoom.players
         .filter(other => other.studentId !== currentId && other.status !== "eliminated" && h(state, other.studentId).length > 0)
-        .sort((a, b) => h(state, b.studentId).length - h(state, a.studentId).length)[0];
-      if (donor) {
-        const donorHand = h(state, donor.studentId);
-        const stolen = donorHand[Math.floor(Math.random() * donorHand.length)];
-        state = removeFromHand(state, donor.studentId, stolen.id);
-        const result = drawFromPile(state, Math.max(0, count - 1));
-        state = result.state;
-        drawnCards = [stolen, ...result.drawn];
-        state = addLog(state, `🕵️ ${player.name} (제시 존스) — ${donor.name}에게서 첫 카드 가져옴`);
+        .map(other => other.studentId);
+      if (eligiblePlayerIds.length > 0) {
+        state = addLog(state, `🕵️ ${player.name} (제시 존스) — 첫 카드를 가져올 플레이어 선택 대기`);
+        state = {
+          ...state,
+          pending: { type: "jesse_jones_draw", playerId: currentId, eligiblePlayerIds },
+        };
+        persist({ ...currentRoom, cardState: state });
+        return;
       }
     }
     if (drawnCards.length === 0) {
@@ -531,6 +572,84 @@ export function useBangCardGame(initialRoom: BangRoom) {
     state = { ...state, phase: "play", bangUsed: false };
 
     persist({ ...currentRoom, cardState: state });
+  }, [room, persist]);
+
+  const resolveKitCarlsonDraw = useCallback((playerId: number, selectedCardIds: string[]) => {
+    if (!room.cardState?.pending || room.cardState.pending.type !== "kit_carlson_draw") return;
+    const pending = room.cardState.pending;
+    if (pending.playerId !== playerId || room.currentTurnStudentId !== playerId) return;
+    const uniqueIds = [...new Set(selectedCardIds)];
+    if (uniqueIds.length !== 2) return;
+    const selected = pending.cards.filter(card => uniqueIds.includes(card.id));
+    if (selected.length !== 2) return;
+    const returned = pending.cards.filter(card => !uniqueIds.includes(card.id));
+    const player = room.players.find(item => item.studentId === playerId);
+    if (!player) return;
+
+    let state: BangCardGameState = {
+      ...room.cardState,
+      drawPile: [...returned, ...room.cardState.drawPile],
+    };
+    state = completeCharacterDraw(state, player, selected, `🦅 ${player.name} (키트 칼슨) 능력 발동`);
+    persist({ ...room, cardState: state });
+  }, [room, persist]);
+
+  const resolvePedroRamirezDraw = useCallback((playerId: number, useDiscardPile: boolean) => {
+    if (!room.cardState?.pending || room.cardState.pending.type !== "pedro_ramirez_draw") return;
+    const pending = room.cardState.pending;
+    if (pending.playerId !== playerId || room.currentTurnStudentId !== playerId) return;
+    const player = room.players.find(item => item.studentId === playerId);
+    if (!player) return;
+
+    let state = room.cardState;
+    let drawnCards: BangCard[];
+    const topDiscard = state.discardPile[0];
+    if (useDiscardPile && topDiscard?.id === pending.discardCardId) {
+      state = { ...state, discardPile: state.discardPile.slice(1) };
+      const result = drawFromPile(state, 1);
+      state = result.state;
+      drawnCards = [topDiscard, ...result.drawn];
+    } else {
+      const result = drawFromPile(state, 2);
+      state = result.state;
+      drawnCards = result.drawn;
+    }
+    const choice = useDiscardPile && topDiscard?.id === pending.discardCardId
+      ? "버린 카드 더미의 첫 카드를 선택"
+      : "덱에서 일반 드로우를 선택";
+    state = completeCharacterDraw(state, player, drawnCards, `♻️ ${player.name} (페드로 라미레즈) · ${choice}`);
+    persist({ ...room, cardState: state });
+  }, [room, persist]);
+
+  const resolveJesseJonesDraw = useCallback((playerId: number, targetPlayerId?: number) => {
+    if (!room.cardState?.pending || room.cardState.pending.type !== "jesse_jones_draw") return;
+    const pending = room.cardState.pending;
+    if (pending.playerId !== playerId || room.currentTurnStudentId !== playerId) return;
+    const player = room.players.find(item => item.studentId === playerId);
+    if (!player) return;
+
+    let state = room.cardState;
+    let drawnCards: BangCard[] = [];
+    let choice = "덱에서 일반 드로우를 선택";
+    if (targetPlayerId !== undefined && pending.eligiblePlayerIds.includes(targetPlayerId)) {
+      const donor = room.players.find(item => item.studentId === targetPlayerId);
+      const donorHand = h(state, targetPlayerId);
+      if (donor && donorHand.length > 0) {
+        const stolen = donorHand[Math.floor(Math.random() * donorHand.length)];
+        state = removeFromHand(state, targetPlayerId, stolen.id);
+        const result = drawFromPile(state, 1);
+        state = result.state;
+        drawnCards = [stolen, ...result.drawn];
+        choice = `${donor.name}의 손패에서 첫 카드 획득`;
+      }
+    }
+    if (drawnCards.length === 0) {
+      const result = drawFromPile(state, 2);
+      state = result.state;
+      drawnCards = result.drawn;
+    }
+    state = completeCharacterDraw(state, player, drawnCards, `🕵️ ${player.name} (제시 존스) · ${choice}`);
+    persist({ ...room, cardState: state });
   }, [room, persist]);
 
   // ── Play a card ─────────────────────────────────────────────────────────────
@@ -570,7 +689,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
       }
       state = removeFromHand(state, fromId, cardId);
       state = setEquip(state, fromId, [card, ...playerEquip]);
-      state = addLog(state, `${player.name} 「${card.kind}」 장착`);
+      state = addLog(state, `${player.name} 「${CARD_NAME[card.kind]}」 장착`);
       state = addEffectEvent(state, {
         kind: "action",
         action: "equip",
@@ -589,6 +708,26 @@ export function useBangCardGame(initialRoom: BangRoom) {
         state = addLog(state, "이번 턴에 이미 BANG!을 사용했습니다 (화산총/윌리 더 키드만 무제한)");
         persist({ ...room, cardState: state });
         return;
+      }
+      if (card.kind === "missed" && player.characterId === "calamity_janet") {
+        state = addLog(state, `🔄 ${player.name} (칼라미티 자넷) — Missed!를 BANG!으로 사용`);
+        state = addEffectEvent(state, {
+          kind: "action",
+          action: "ability",
+          playerId: fromId,
+          characterId: "calamity_janet",
+          message: "Missed! 카드를 BANG!으로 바꿔 사용합니다.",
+        });
+      }
+      if (state.bangUsed && player.characterId === "willy_the_kid" && !hasVolcanic(eq(state, fromId))) {
+        state = addLog(state, `🤠 ${player.name} (윌리 더 키드) — BANG! 추가 사용`);
+        state = addEffectEvent(state, {
+          kind: "action",
+          action: "ability",
+          playerId: fromId,
+          characterId: "willy_the_kid",
+          message: "이번 턴에도 BANG!을 계속 사용할 수 있습니다.",
+        });
       }
       state = { ...state, pending: { type: "await_target", action: "bang", cardId, fromId } };
       persist({ ...room, cardState: state });
@@ -672,7 +811,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
         const maxLife = playerMaxLife(p2);
         return { ...p2, life: Math.min(p2.life + 1, maxLife) };
       });
-      state = addLog(state, `${player.name} 살롱! 🏠 모두 체력 +1`);
+      state = addLog(state, `${player.name} 잡화점! 🏠 모두 체력 +1`);
       state = addEffectEvent(state, {
         kind: "action",
         action: "saloon",
@@ -797,6 +936,16 @@ export function useBangCardGame(initialRoom: BangRoom) {
       const barrelAttempts =
         (targetEquip.some(e => e.kind === "barrel") ? 1 : 0)
         + (target.characterId === "jourdonnais" ? 1 : 0);
+      if (target.characterId === "jourdonnais") {
+        state = addLog(state, `🛢️ ${target.name} (주르도네) — 통 판정 1회 추가`);
+        state = addEffectEvent(state, {
+          kind: "action",
+          action: "ability",
+          playerId: targetId,
+          characterId: "jourdonnais",
+          message: "통을 장착한 것처럼 자동 회피 판정을 시도합니다.",
+        });
+      }
       let blockedByBarrel = false;
       for (let attempt = 0; attempt < barrelAttempts; attempt += 1) {
         const check = drawCheckForPlayer(room, state, target, "barrel");
@@ -818,6 +967,14 @@ export function useBangCardGame(initialRoom: BangRoom) {
       if (blockedByBarrel) {
         if (attacker.characterId === "slab_the_killer") {
           state = addLog(state, `💥 ${attacker.name} (슬랩 더 킬러) — Missed!가 1장 더 필요`);
+          state = addEffectEvent(state, {
+            kind: "action",
+            action: "ability",
+            playerId: fromId,
+            targetId,
+            characterId: "slab_the_killer",
+            message: `${target.name}의 통 판정은 첫 회피로 처리됩니다. 회피 카드 1장이 더 필요합니다.`,
+          });
           state = { ...state, pending: { type: "bang_response", fromId, targetId, cardId: card.id, missesNeeded: 2, missesPlayed: 1 } };
         } else {
           state = { ...state, pending: undefined };
@@ -826,6 +983,17 @@ export function useBangCardGame(initialRoom: BangRoom) {
         return;
       }
       state = addLog(state, `${attacker.name} → ${target.name} BANG! 🔫`);
+      if (attacker.characterId === "slab_the_killer") {
+        state = addLog(state, `🎯 ${attacker.name} (슬랩 더 킬러) — 회피 카드 2장 필요`);
+        state = addEffectEvent(state, {
+          kind: "action",
+          action: "ability",
+          playerId: fromId,
+          targetId,
+          characterId: "slab_the_killer",
+          message: `${target.name}은 이 BANG!을 막으려면 회피 카드 2장을 내야 합니다.`,
+        });
+      }
       state = {
         ...state,
         pending: {
@@ -907,7 +1075,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
         target.characterId,
       );
       if (targetPlayerId === fromId || distance !== 1) {
-        state = addLog(state, "패닉은 거리 1인 플레이어에게만 사용할 수 있습니다.");
+        state = addLog(state, "강탈은 거리 1인 플레이어에게만 사용할 수 있습니다.");
         persist({ ...room, cardState: { ...state, pending: undefined } });
         return;
       }
@@ -950,7 +1118,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
         state = removeFromHand(state, targetPlayerId, targetCardId);
       }
       state = setHand(state, fromId, [...h(state, fromId), targetCard]);
-      state = addLog(state, `${attacker.name} 패닉 — ${target.name}의 카드 가져감`);
+      state = addLog(state, `${attacker.name} 강탈 — ${target.name}의 카드 가져감`);
       state = addEffectEvent(state, {
         kind: "action",
         action: "steal",
@@ -958,7 +1126,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
         targetId: targetPlayerId,
         cardKind: targetCard.kind,
         count: 1,
-        message: "패닉",
+        message: "강탈",
       });
     }
 
@@ -998,12 +1166,17 @@ export function useBangCardGame(initialRoom: BangRoom) {
 
   // ── Sid Ketchum ──────────────────────────────────────────────────────────────
 
-  const useSidAbility = useCallback((playerId: number) => {
+  const useSidAbility = useCallback((playerId: number, selectedCardIds: string[]) => {
     if (!room.cardState) return;
     const player = room.players.find(item => item.studentId === playerId);
     if (!player || player.characterId !== "sid_ketchum" || player.life >= playerMaxLife(player)) return;
-    const cards = h(room.cardState, playerId).slice(0, 2);
-    if (cards.length < 2) return;
+    const uniqueIds = [...new Set(selectedCardIds)];
+    if (uniqueIds.length !== 2) return;
+    const playerHand = h(room.cardState, playerId);
+    const cards = uniqueIds
+      .map(cardId => playerHand.find(card => card.id === cardId))
+      .filter((card): card is BangCard => Boolean(card));
+    if (cards.length !== 2) return;
     let state = room.cardState;
     for (const card of cards) {
       state = removeFromHand(state, playerId, card.id);
@@ -1050,6 +1223,16 @@ export function useBangCardGame(initialRoom: BangRoom) {
         if (!missedCard || !canActAsMissed) return;
         state = removeFromHand(state, targetId, cardId);
         state = discardCard(state, missedCard);
+        if (missedCard.kind === "bang" && responder.characterId === "calamity_janet") {
+          state = addLog(state, `🔄 ${responder.name} (칼라미티 자넷) — BANG!을 Missed!로 사용`);
+          state = addEffectEvent(state, {
+            kind: "action",
+            action: "ability",
+            playerId: targetId,
+            characterId: "calamity_janet",
+            message: "BANG! 카드를 Missed!로 바꿔 사용합니다.",
+          });
+        }
         const missesPlayed = pending.missesPlayed + 1;
         state = addEffectEvent(state, {
           kind: "action",
@@ -1096,6 +1279,16 @@ export function useBangCardGame(initialRoom: BangRoom) {
         if (!bangCard || !canActAsBang) return;
         state = removeFromHand(state, targetId, cardId);
         state = discardCard(state, bangCard);
+        if (bangCard.kind === "missed" && responder.characterId === "calamity_janet") {
+          state = addLog(state, `🔄 ${responder.name} (칼라미티 자넷) — Missed!를 BANG!으로 사용`);
+          state = addEffectEvent(state, {
+            kind: "action",
+            action: "ability",
+            playerId: targetId,
+            characterId: "calamity_janet",
+            message: "Missed! 카드를 BANG!으로 바꿔 인디언에 대응합니다.",
+          });
+        }
         state = addLog(state, `${responder.name} BANG! 으로 인디언 대응`);
         state = addEffectEvent(state, {
           kind: "action",
@@ -1138,6 +1331,16 @@ export function useBangCardGame(initialRoom: BangRoom) {
         if (!missedCard || !canActAsMissed) return;
         state = removeFromHand(state, targetId, cardId);
         state = discardCard(state, missedCard);
+        if (missedCard.kind === "bang" && responder.characterId === "calamity_janet") {
+          state = addLog(state, `🔄 ${responder.name} (칼라미티 자넷) — BANG!을 Missed!로 사용`);
+          state = addEffectEvent(state, {
+            kind: "action",
+            action: "ability",
+            playerId: targetId,
+            characterId: "calamity_janet",
+            message: "BANG! 카드를 Missed!로 바꿔 개틀링을 회피합니다.",
+          });
+        }
         state = addLog(state, `${responder.name} Missed! — 개틀링 회피`);
         state = addEffectEvent(state, {
           kind: "action",
@@ -1179,6 +1382,16 @@ export function useBangCardGame(initialRoom: BangRoom) {
         if (!bangCard || !canActAsBang) return;
         state = removeFromHand(state, currentId, cardId);
         state = discardCard(state, bangCard);
+        if (bangCard.kind === "missed" && responder.characterId === "calamity_janet") {
+          state = addLog(state, `🔄 ${responder.name} (칼라미티 자넷) — Missed!를 BANG!으로 사용`);
+          state = addEffectEvent(state, {
+            kind: "action",
+            action: "ability",
+            playerId: currentId,
+            characterId: "calamity_janet",
+            message: "Missed! 카드를 BANG!으로 바꿔 결투를 이어갑니다.",
+          });
+        }
         state = addLog(state, `${responder.name} BANG! — 결투 계속`);
         state = addEffectEvent(state, {
           kind: "action",
@@ -1302,6 +1515,9 @@ export function useBangCardGame(initialRoom: BangRoom) {
     setRoom: persist,
     initCardGame,
     drawCards,
+    resolveKitCarlsonDraw,
+    resolvePedroRamirezDraw,
+    resolveJesseJonesDraw,
     playCard,
     selectTarget,
     selectCardTarget,

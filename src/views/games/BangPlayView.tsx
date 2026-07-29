@@ -199,6 +199,7 @@ function ActionEffectOverlay({
     dodge: "50% 100%",
     steal: "100% 100%",
     discard: "100% 100%",
+    ability: "50% 100%",
   };
 
   const content = (() => {
@@ -215,7 +216,7 @@ function ActionEffectOverlay({
       case "saloon":
         return {
           eyebrow: "전체 회복",
-          title: `${playerName}의 살롱 오픈!`,
+          title: `${playerName}의 잡화점 오픈!`,
           detail: `생존자 ${event.count ?? 0}명의 체력이 회복됩니다.`,
           tone: "heal",
         };
@@ -296,6 +297,15 @@ function ActionEffectOverlay({
           detail: event.message ?? `${event.count ?? 0}장의 카드가 공개됩니다.`,
           tone: "draw",
         };
+      case "ability": {
+        const character = event.characterId ? BANG_CHARACTER_BY_ID[event.characterId] : undefined;
+        return {
+          eyebrow: "캐릭터 능력 발동",
+          title: character ? `${character.emoji} ${playerName} · ${character.name}` : `${playerName}의 능력 발동`,
+          detail: event.message ?? character?.ability ?? "캐릭터 고유 능력이 적용됩니다.",
+          tone: "draw",
+        };
+      }
     }
   })();
 
@@ -474,7 +484,7 @@ function PlayerPanel({
   const distanceModifiers = [
     ...(myEquip.some((card) => card.kind === "scope") ? ["내 조준경 -1"] : []),
     ...(myCharacter === "rose_doolan" ? ["내 로즈 둘란 -1"] : []),
-    ...(equipment.some((card) => card.kind === "mustang") ? ["상대 무스탕 +1"] : []),
+    ...(equipment.some((card) => card.kind === "mustang") ? ["상대 야생마 +1"] : []),
     ...(player.characterId === "paul_regret" ? ["상대 폴 리그렛 +1"] : []),
   ];
   const urgentEquipment = equipment.filter(card => ["dynamite", "jail"].includes(card.kind));
@@ -483,7 +493,7 @@ function PlayerPanel({
   return (
     <div
       onClick={isSelectable ? onSelect : undefined}
-      className={`relative rounded-2xl border-2 p-3 flex flex-col gap-2 transition-all min-w-[120px] max-w-[150px]
+      className={`relative flex w-[142px] min-w-[142px] max-w-[142px] flex-col gap-2 rounded-2xl border-2 p-3 transition-all
         ${isCurrentTurn ? "border-amber-500 bg-amber-50 shadow-lg" : "border-border bg-white"}
         ${isMe ? "border-[#1259AA]/40 bg-[#1259AA]/5" : ""}
         ${eliminated ? "opacity-40 border-gray-200 bg-gray-50" : ""}
@@ -532,14 +542,12 @@ function PlayerPanel({
 
       {character && (
         <div
-          className="group relative rounded-lg bg-amber-100/70 px-2 py-1"
+          className="relative rounded-lg bg-amber-100/70 px-2 py-1"
           title={`${character.name}: ${character.ability}`}
         >
-          <p className="cursor-help truncate text-[10px] font-extrabold text-amber-900">{character.emoji} {character.name}</p>
-          <div className="pointer-events-none absolute bottom-full left-1/2 z-[80] mb-2 hidden w-64 -translate-x-1/2 rounded-xl bg-gray-950 p-3 text-left text-xs leading-relaxed text-white shadow-2xl group-hover:block">
-            <p className="mb-1 font-extrabold text-amber-300">{character.name} · 체력 {character.life}</p>
-            <p className="text-gray-200">{character.ability}</p>
-            <p className="mt-2 text-[10px] font-semibold text-emerald-300">해당 능력은 게임 판정에 적용됩니다.</p>
+          <div className="flex min-w-0 items-center gap-1">
+            <p className="min-w-0 flex-1 truncate text-[10px] font-extrabold text-amber-900">{character.emoji} {character.name}</p>
+            <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-500" aria-label="능력 적용 중" />
           </div>
         </div>
       )}
@@ -574,8 +582,8 @@ function PlayerPanel({
       {/* Card count */}
       <div className="flex items-end gap-1 min-h-14 overflow-hidden">
         <div className="flex items-end pl-1">
-          {Array.from({ length: Math.min(cardCount, 6) }).map((_, i) => (
-            <div key={i} className={i === 0 ? "" : "-ml-6"}>
+          {Array.from({ length: Math.min(cardCount, 5) }).map((_, i) => (
+            <div key={i} className={i === 0 ? "" : "-ml-7"}>
               <CardBack small />
             </div>
           ))}
@@ -589,14 +597,9 @@ function PlayerPanel({
           {standardEquipment.map(eq => (
             <div
               key={eq.id}
-              className="group relative"
               title={`${CARD_NAME[eq.kind]}: ${CARD_DESC[eq.kind]}`}
             >
               <BangCardArt kind={eq.kind} className="w-7 h-7 rounded-md border border-amber-300" />
-              <div className="pointer-events-none absolute bottom-full left-1/2 z-[80] mb-1 hidden w-48 -translate-x-1/2 rounded-lg bg-gray-950 p-2 text-[10px] leading-relaxed text-white shadow-xl group-hover:block">
-                <p className="font-extrabold text-amber-300">{CARD_NAME[eq.kind]}</p>
-                <p className="mt-0.5 text-gray-200">{CARD_DESC[eq.kind]}</p>
-              </div>
             </div>
           ))}
         </div>
@@ -613,16 +616,6 @@ function PlayerPanel({
           {seatDistance !== null && distance !== null && seatDistance !== distance && (
             <span className="text-amber-500">(좌석 {seatDistance})</span>
           )}
-          <div className="pointer-events-none absolute bottom-full right-0 z-[90] mb-2 hidden w-52 rounded-xl bg-gray-950 p-2.5 text-left text-[10px] font-medium leading-relaxed text-white shadow-2xl group-hover:block">
-            <p className="font-extrabold text-amber-300">거리 계산</p>
-            <p className="mt-1">좌석 기준 거리: {seatDistance ?? "?"}</p>
-            {distanceModifiers.map((modifier) => (
-              <p key={modifier}>{modifier}</p>
-            ))}
-            <p className="mt-1 border-t border-white/15 pt-1 font-extrabold text-emerald-300">
-              최종 거리: {distance ?? "?"}
-            </p>
-          </div>
         </div>
       )}
 
@@ -685,6 +678,9 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const [handVisible, setHandVisible] = useState(true);
   const [selectedCard, setSelectedCard] = useState<BangCard | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<number | null>(null);
+  const [kitSelectedCardIds, setKitSelectedCardIds] = useState<string[]>([]);
+  const [sidAbilitySelecting, setSidAbilitySelecting] = useState(false);
+  const [sidSelectedCardIds, setSidSelectedCardIds] = useState<string[]>([]);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
@@ -816,6 +812,9 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const gatlingTargetsMe = pending?.type === "gatling_response" && pending.remaining[0] === myId;
   const duelTargetsMe = pending?.type === "duel_response" && pending.currentId === myId;
   const storePickIsMine = pending?.type === "general_store_pick" && pending.remaining[0] === myId;
+  const kitDrawChoiceIsMine = pending?.type === "kit_carlson_draw" && pending.playerId === myId;
+  const pedroDrawChoiceIsMine = pending?.type === "pedro_ramirez_draw" && pending.playerId === myId;
+  const jesseDrawChoiceIsMine = pending?.type === "jesse_jones_draw" && pending.playerId === myId;
   const iNeedToRespond = bangTargetsMe || indiansTargetsMe || gatlingTargetsMe || duelTargetsMe;
   const bangResponseCards = bangTargetsMe
     ? myHand.filter(card => card.kind === "missed" || (me?.characterId === "calamity_janet" && card.kind === "bang"))
@@ -827,7 +826,29 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const awaitingPanic = pending?.type === "await_panic" && pending.fromId === myId;
   const awaitingCardSelect = awaitingCatBalou || awaitingPanic;
 
+  useEffect(() => {
+    if (!kitDrawChoiceIsMine) setKitSelectedCardIds([]);
+  }, [kitDrawChoiceIsMine]);
+
+  useEffect(() => {
+    if (!canPlay || me?.characterId !== "sid_ketchum") {
+      setSidAbilitySelecting(false);
+      setSidSelectedCardIds([]);
+    }
+  }, [canPlay, me?.characterId]);
+
   const handleCardClick = (card: BangCard) => {
+    if (sidAbilitySelecting) {
+      setSidSelectedCardIds((current) => {
+        if (current.includes(card.id)) return current.filter(id => id !== card.id);
+        if (current.length >= 2) {
+          toast.error("회복에 사용할 카드는 2장만 선택할 수 있습니다.");
+          return current;
+        }
+        return [...current, card.id];
+      });
+      return;
+    }
     if (mustDiscard) {
       game.discardFromHand(myId!, card.id);
       setSelectedCard(null);
@@ -913,7 +934,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const handleAdminRoleToggle = async () => {
     if (adminRolesVisible) {
       setAdminRolesVisible(false);
-      toast.info("관리자 직업 공개를 종료했습니다.");
+      toast.info("관리자 정보 공개를 종료했습니다.");
       return;
     }
 
@@ -931,7 +952,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
       }
 
       if (!verified) {
-        const password = window.prompt("모든 직업을 보려면 관리자 비밀번호를 입력하세요.");
+        const password = window.prompt("모든 직업과 손패를 보려면 관리자 비밀번호를 입력하세요.");
         if (!password) return;
         verified = await adminLogin(password);
       }
@@ -942,7 +963,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
       }
 
       setAdminRolesVisible(true);
-      toast.success("관리자 치트 활성화: 모든 직업을 표시합니다.");
+      toast.success("관리자 치트 활성화: 모든 직업과 손패를 표시합니다.");
     } finally {
       setAdminRoleCheckPending(false);
     }
@@ -1094,8 +1115,8 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
             <button
               onClick={() => void handleAdminRoleToggle()}
               disabled={adminRoleCheckPending}
-              aria-label={adminRolesVisible ? "관리자 직업 공개 끄기" : "관리자 직업 공개 켜기"}
-              title={adminRolesVisible ? "모든 직업 숨기기" : "모든 직업 보기"}
+              aria-label={adminRolesVisible ? "관리자 정보 공개 끄기" : "관리자 정보 공개 켜기"}
+              title={adminRolesVisible ? "모든 직업과 손패 숨기기" : "모든 직업과 손패 보기"}
               className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
                 adminRolesVisible
                   ? "border-fuchsia-400/70 bg-fuchsia-500/20 text-fuchsia-200 hover:bg-fuchsia-500/30"
@@ -1110,7 +1131,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
                 <ShieldCheck className="h-3.5 w-3.5" />
               )}
               <span className="hidden sm:inline">
-                {adminRolesVisible ? "직업 숨기기" : "직업 보기"}
+                {adminRolesVisible ? "정보 숨기기" : "관리자 정보"}
               </span>
             </button>
           )}
@@ -1153,7 +1174,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
       {adminRolesVisible && (
         <div className="flex items-center justify-center gap-2 border-b border-fuchsia-300/30 bg-fuchsia-700 px-4 py-2 text-xs font-extrabold text-white">
           <ShieldCheck className="h-4 w-4" />
-          관리자 치트 활성화 · 모든 플레이어의 직업이 표시됩니다
+          관리자 치트 활성화 · 모든 플레이어의 직업과 손패가 표시됩니다
         </div>
       )}
 
@@ -1178,6 +1199,104 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
         </div>
       )}
 
+      {pending?.type === "kit_carlson_draw" && (
+        <div className="border-b border-sky-300/30 bg-sky-800 px-4 py-3 text-white">
+          <p className="text-center text-sm font-extrabold">🦅 키트 칼슨 능력 · 3장 중 가질 카드 2장을 선택하세요</p>
+          {kitDrawChoiceIsMine ? (
+            <>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                {pending.cards.map(card => (
+                  <button
+                    key={card.id}
+                    type="button"
+                    onClick={() => setKitSelectedCardIds(current =>
+                      current.includes(card.id)
+                        ? current.filter(id => id !== card.id)
+                        : current.length < 2 ? [...current, card.id] : current
+                    )}
+                    className={`rounded-xl p-1 transition ${
+                      kitSelectedCardIds.includes(card.id)
+                        ? "bg-amber-300 ring-4 ring-amber-200"
+                        : "bg-white/10 hover:bg-white/20"
+                    }`}
+                  >
+                    <CardFace card={card} small />
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                disabled={kitSelectedCardIds.length !== 2}
+                onClick={() => game.resolveKitCarlsonDraw(myId!, kitSelectedCardIds)}
+                className="mx-auto mt-3 block rounded-xl bg-amber-500 px-5 py-2 text-xs font-extrabold text-amber-950 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                선택한 2장 가져오기
+              </button>
+            </>
+          ) : (
+            <p className="mt-1 text-center text-xs text-sky-100">현재 플레이어의 선택을 기다리는 중입니다.</p>
+          )}
+        </div>
+      )}
+
+      {pending?.type === "pedro_ramirez_draw" && (
+        <div className="border-b border-emerald-300/30 bg-emerald-800 px-4 py-3 text-white">
+          <p className="text-center text-sm font-extrabold">♻️ 페드로 라미레즈 능력 · 첫 드로우 선택</p>
+          {pedroDrawChoiceIsMine ? (
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
+              {state.discardPile[0]?.id === pending.discardCardId && (
+                <button
+                  type="button"
+                  onClick={() => game.resolvePedroRamirezDraw(myId!, true)}
+                  className="flex items-center gap-2 rounded-xl bg-white/15 p-2 text-left hover:bg-white/25"
+                >
+                  <CardFace card={state.discardPile[0]} small />
+                  <span className="text-xs font-bold">버린 더미의 첫 카드<br />+ 덱 1장</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => game.resolvePedroRamirezDraw(myId!, false)}
+                className="rounded-xl bg-amber-500 px-5 py-3 text-xs font-extrabold text-amber-950 hover:bg-amber-400"
+              >
+                덱에서 2장 뽑기
+              </button>
+            </div>
+          ) : (
+            <p className="mt-1 text-center text-xs text-emerald-100">현재 플레이어의 선택을 기다리는 중입니다.</p>
+          )}
+        </div>
+      )}
+
+      {pending?.type === "jesse_jones_draw" && (
+        <div className="border-b border-violet-300/30 bg-violet-800 px-4 py-3 text-white">
+          <p className="text-center text-sm font-extrabold">🕵️ 제시 존스 능력 · 첫 카드를 가져올 곳을 선택하세요</p>
+          {jesseDrawChoiceIsMine ? (
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              {pending.eligiblePlayerIds.map(playerId => (
+                <button
+                  key={playerId}
+                  type="button"
+                  onClick={() => game.resolveJesseJonesDraw(myId!, playerId)}
+                  className="rounded-xl bg-white/15 px-4 py-2 text-xs font-bold hover:bg-white/25"
+                >
+                  {room.players.find(player => player.studentId === playerId)?.name ?? "상대"}의 손패에서 1장
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => game.resolveJesseJonesDraw(myId!)}
+                className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-extrabold text-amber-950 hover:bg-amber-400"
+              >
+                덱에서 2장 뽑기
+              </button>
+            </div>
+          ) : (
+            <p className="mt-1 text-center text-xs text-violet-100">현재 플레이어의 선택을 기다리는 중입니다.</p>
+          )}
+        </div>
+      )}
+
       {isSelectingTarget && (
         <div className="bg-[#1259AA] px-4 py-2 text-white text-sm font-bold text-center animate-pulse">
           {awaitingTarget && (() => {
@@ -1185,7 +1304,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
             return `🎯 ${a === "bang" ? "BANG! 대상 선택 (사거리 내)" : a === "duel" ? "결투 대상 선택" : "감옥에 넣을 대상 선택"}`;
           })()}
           {awaitingCatBalou && "캣발루: 버릴 카드를 선택하세요 (장착 카드 클릭)"}
-          {awaitingPanic && "패닉: 가져올 카드를 선택하세요 (인접 플레이어의 카드)"}
+          {awaitingPanic && "강탈: 가져올 카드를 선택하세요 (인접 플레이어의 카드)"}
           <button onClick={() => game.cancelPending()} className="ml-3 text-xs underline">취소</button>
         </div>
       )}
@@ -1217,7 +1336,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
         </div>
 
         {/* Desktop round table */}
-        <div className="relative hidden min-h-[610px] overflow-visible rounded-[2rem] border border-amber-800/60 bg-[radial-gradient(circle_at_center,_rgba(146,64,14,0.34)_0,_rgba(69,26,3,0.2)_52%,_rgba(0,0,0,0.22)_100%)] lg:block">
+        <div className="relative hidden min-h-[720px] overflow-visible rounded-[2rem] border border-amber-800/60 bg-[radial-gradient(circle_at_center,_rgba(146,64,14,0.34)_0,_rgba(69,26,3,0.2)_52%,_rgba(0,0,0,0.22)_100%)] lg:block">
           <div className="absolute left-1/2 top-1/2 flex h-[44%] w-[56%] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-[50%] border-[10px] border-amber-950/80 bg-[radial-gradient(ellipse_at_center,_#78350f_0%,_#451a03_72%)] shadow-[inset_0_0_50px_rgba(0,0,0,0.65),0_20px_40px_rgba(0,0,0,0.35)]">
             <div className="absolute inset-3 rounded-[50%] border border-amber-500/20" />
             <p className="relative text-[10px] font-extrabold uppercase tracking-[0.28em] text-amber-500">Round Table</p>
@@ -1251,7 +1370,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
             const total = Math.max(1, tablePlayers.length);
             const angle = (90 + (360 * index) / total) * Math.PI / 180;
             const left = 50 + Math.cos(angle) * 41;
-            const top = 50 + Math.sin(angle) * 34;
+            const top = 50 + Math.sin(angle) * 38;
             const playerAliveIdx = aliveOrder.indexOf(player.studentId);
             return (
               <div
@@ -1308,6 +1427,58 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
             />
           ))}
         </div>
+
+        {adminRolesVisible && (
+          <section className="rounded-2xl border border-fuchsia-400/50 bg-fuchsia-950/55 p-4 shadow-xl">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="flex items-center gap-1.5 text-sm font-extrabold text-fuchsia-100">
+                  <ShieldCheck className="h-4 w-4" />
+                  관리자 전체 손패
+                </p>
+                <p className="mt-0.5 text-[10px] text-fuchsia-300">관리자 인증 화면에서만 실제 카드 앞면이 공개됩니다.</p>
+              </div>
+              <span className="rounded-full bg-fuchsia-400/15 px-2.5 py-1 text-[10px] font-bold text-fuchsia-200">
+                플레이어 {tablePlayers.length}명
+              </span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {tablePlayers.map(player => {
+                const playerHand = getHand(player.studentId);
+                return (
+                  <article key={player.studentId} className="min-w-0 rounded-xl border border-fuchsia-300/20 bg-black/25 p-3">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-fuchsia-400/20 text-xs font-black text-fuchsia-100">
+                        {player.name[0]}
+                      </span>
+                      <p className="min-w-0 flex-1 truncate text-xs font-extrabold text-white">{player.name}</p>
+                      {player.role && (
+                        <RoleBadge
+                          role={player.role}
+                          className="rounded-full bg-fuchsia-100 px-2 py-0.5 text-[9px] font-bold text-fuchsia-800"
+                        />
+                      )}
+                      <span className="text-[10px] font-bold text-fuchsia-300">{playerHand.length}장</span>
+                    </div>
+                    {playerHand.length > 0 ? (
+                      <div className="flex gap-2 overflow-x-auto pb-2">
+                        {playerHand.map(card => (
+                          <div key={card.id} className="flex-shrink-0">
+                            <CardFace card={card} small />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex h-20 items-center justify-center rounded-lg border border-dashed border-fuchsia-300/20 text-[10px] font-semibold text-fuchsia-300/70">
+                        손패 없음
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Selected player's cards for Panic / Cat Balou */}
         {selectedTarget !== null && awaitingCardSelect && (() => {
@@ -1446,8 +1617,8 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
             <div className="space-y-2">
               <div className="flex gap-2 flex-wrap justify-center">
                 {myHand.map(card => {
-                  const isSel = selectedCard?.id === card.id;
-                  const canUse = canPlay || (mustDiscard) || iNeedToRespond;
+                  const isSel = selectedCard?.id === card.id || sidSelectedCardIds.includes(card.id);
+                  const canUse = sidAbilitySelecting || canPlay || (mustDiscard) || iNeedToRespond;
                   const calamity = me?.characterId === "calamity_janet";
                   const isResponse =
                     ((bangTargetsMe || gatlingTargetsMe) && (card.kind === "missed" || (calamity && card.kind === "bang"))) ||
@@ -1458,7 +1629,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
                       card={card}
                       selected={isSel}
                       selectable={canUse}
-                      dim={mustDiscard ? false : iNeedToRespond ? !isResponse : !canPlay}
+                      dim={sidAbilitySelecting || mustDiscard ? false : iNeedToRespond ? !isResponse : !canPlay}
                       onClick={() => {
                         if (iNeedToRespond) {
                           if ((bangTargetsMe || gatlingTargetsMe) && (card.kind === "missed" || (calamity && card.kind === "bang"))) {
@@ -1524,13 +1695,45 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
                 <SkipForward className="w-4 h-4 inline mr-1" />턴 종료
               </button>
             )}
-            {me?.characterId === "sid_ketchum" && myHand.length >= 2 && me.life < (me.maxLife ?? 4) && (
-              <button
-                onClick={() => game.useSidAbility(me.studentId)}
-                className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-sm hover:bg-emerald-700"
-              >
-                💊 손패 2장으로 체력 회복
-              </button>
+            {canPlay && me?.characterId === "sid_ketchum" && myHand.length >= 2 && me.life < (me.maxLife ?? 4) && (
+              sidAbilitySelecting ? (
+                <div className="flex flex-1 gap-2">
+                  <button
+                    type="button"
+                    disabled={sidSelectedCardIds.length !== 2}
+                    onClick={() => {
+                      game.useSidAbility(me.studentId, sidSelectedCardIds);
+                      setSidAbilitySelecting(false);
+                      setSidSelectedCardIds([]);
+                    }}
+                    className="flex-1 rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    💊 선택한 {sidSelectedCardIds.length}/2장 버리고 회복
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSidAbilitySelecting(false);
+                      setSidSelectedCardIds([]);
+                    }}
+                    className="rounded-xl bg-gray-700 px-4 py-2.5 text-sm font-bold text-gray-200 hover:bg-gray-600"
+                  >
+                    취소
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedCard(null);
+                    setSidAbilitySelecting(true);
+                    setSidSelectedCardIds([]);
+                  }}
+                  className="flex-1 rounded-xl bg-emerald-600 py-2.5 text-sm font-bold text-white hover:bg-emerald-700"
+                >
+                  💊 버릴 카드 2장 선택해 회복
+                </button>
+              )
             )}
             {mustDiscard && (
               <div className="w-full text-center">

@@ -1,3 +1,5 @@
+import type { BangCharacterId } from "./bangCharacters";
+
 export type CardSuit = "S" | "H" | "D" | "C"; // Spades Hearts Diamonds Clubs
 export type CardRank = "2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"10"|"J"|"Q"|"K"|"A";
 
@@ -15,13 +17,13 @@ export interface BangCard {
 }
 
 export const CARD_NAME: Record<BangCardKind, string> = {
-  bang: "BANG!", missed: "Missed!", beer: "맥주", saloon: "살롱",
+  bang: "BANG!", missed: "Missed!", beer: "맥주", saloon: "잡화점",
   indians: "인디언", gatling: "개틀링", duel: "결투",
   general_store: "잡화점",
-  stagecoach: "역마차", wells_fargo: "웰스파고", cat_balou: "캣발루", panic: "패닉",
+  stagecoach: "역마차", wells_fargo: "웰스파고", cat_balou: "캣발루", panic: "강탈",
   volcanic: "화산총", schofield: "스코필드", remington: "레밍턴",
   rev_carbine: "회전소총", winchester: "윈체스터",
-  barrel: "통", dynamite: "다이너마이트", jail: "감옥", scope: "조준경", mustang: "무스탕",
+  barrel: "통", dynamite: "다이너마이트", jail: "감옥", scope: "조준경", mustang: "야생마",
 };
 
 export const CARD_DESC: Record<BangCardKind, string> = {
@@ -61,7 +63,7 @@ export const CARD_EMOJI: Record<BangCardKind, string> = {
   bang: "🔫", missed: "💨", beer: "🍺", saloon: "🏠",
   indians: "🪶", gatling: "⚙️", duel: "🤝",
   general_store: "🛒",
-  stagecoach: "🐴", wells_fargo: "🏦", cat_balou: "🐱", panic: "😱",
+  stagecoach: "🐴", wells_fargo: "🏦", cat_balou: "🐱", panic: "🫳",
   volcanic: "🌋", schofield: "🔫", remington: "🔫",
   rev_carbine: "🔫", winchester: "🔫",
   barrel: "🛢️", dynamite: "💣", jail: "⛓️", scope: "🔭", mustang: "🐎",
@@ -84,6 +86,9 @@ export type PendingAction =
   | { type: "await_target"; action: "bang" | "duel" | "jail_on"; cardId: string; fromId: number }
   | { type: "await_cat_balou"; cardId: string; fromId: number }
   | { type: "await_panic"; cardId: string; fromId: number }
+  | { type: "kit_carlson_draw"; playerId: number; cards: BangCard[] }
+  | { type: "pedro_ramirez_draw"; playerId: number; discardCardId: string }
+  | { type: "jesse_jones_draw"; playerId: number; eligiblePlayerIds: number[] }
   | { type: "bang_response"; fromId: number; targetId: number; cardId: string; missesNeeded: number; missesPlayed: number }
   | { type: "indians_response"; fromId: number; remaining: number[] }
   | { type: "gatling_response"; fromId: number; remaining: number[] }
@@ -133,9 +138,11 @@ export type BangEffectEvent =
         | "discard"
         | "jail"
         | "store_pick"
-        | "heal";
+        | "heal"
+        | "ability";
       targetId?: number;
       cardKind?: BangCardKind;
+      characterId?: BangCharacterId;
       count?: number;
       amount?: number;
       lifeBefore?: number;

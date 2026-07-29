@@ -33,7 +33,7 @@ export const BANG_CHARACTERS: BangCharacter[] = [
   { id: "jourdonnais", name: "주르도네", life: 4, emoji: "🛢️", ability: "항상 통(Barrel)을 장착한 것처럼 판정합니다." },
   { id: "kit_carlson", name: "키트 칼슨", life: 4, emoji: "🦅", ability: "드로우할 때 3장을 보고 2장을 가진 뒤 1장을 덱 위에 돌려놓습니다." },
   { id: "lucky_duke", name: "럭키 듀크", life: 4, emoji: "🍀", ability: "드로우! 판정 때 2장을 공개하고 원하는 결과를 고릅니다." },
-  { id: "paul_regret", name: "폴 리그렛", life: 3, emoji: "🐎", ability: "항상 무스탕을 장착한 것처럼 다른 플레이어에게 1 더 멀리 보입니다." },
+  { id: "paul_regret", name: "폴 리그렛", life: 3, emoji: "🐎", ability: "항상 야생마를 장착한 것처럼 다른 플레이어에게 1 더 멀리 보입니다." },
   { id: "pedro_ramirez", name: "페드로 라미레즈", life: 4, emoji: "♻️", ability: "드로우 첫 카드를 버린 카드 더미 맨 위에서 가져올 수 있습니다." },
   { id: "rose_doolan", name: "로즈 둘란", life: 4, emoji: "🔭", ability: "항상 조준경을 장착한 것처럼 다른 플레이어를 1 더 가깝게 봅니다." },
   { id: "sid_ketchum", name: "시드 케첨", life: 4, emoji: "💊", ability: "손패 2장을 버려 생명력 1을 회복할 수 있습니다." },
