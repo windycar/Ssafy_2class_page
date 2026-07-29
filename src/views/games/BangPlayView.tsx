@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useParams, Link, useNavigate } from "react-router";
 import { Heart, RefreshCw, ChevronLeft, Eye, EyeOff, SkipForward, X, MessageCircle, Send, CircleHelp, LogOut, Crosshair, ArrowRight, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -6,7 +7,13 @@ import { bangRoomStorage } from "../../services/storage/bangRoomStorage";
 import { useBangCardGame } from "../../hooks/useBangCardGame";
 import { useAuth } from "../../hooks/useAuth";
 import { useAdmin } from "../../context/AdminContext";
-import { canTarget, effectiveDistance, getWeaponRange } from "../../utils/games/bangDeckBuilder";
+import {
+  BANG_CARD_COUNTS,
+  BANG_DECK_SIZE,
+  canTarget,
+  effectiveDistance,
+  getWeaponRange,
+} from "../../utils/games/bangDeckBuilder";
 import {
   CARD_NAME, CARD_DESC, SUIT_SYMBOL, SUIT_COLOR,
   IS_EQUIPMENT,
@@ -216,7 +223,7 @@ function ActionEffectOverlay({
       case "saloon":
         return {
           eyebrow: "전체 회복",
-          title: `${playerName}의 잡화점 오픈!`,
+          title: `${playerName}의 살롱 오픈!`,
           detail: `생존자 ${event.count ?? 0}명의 체력이 회복됩니다.`,
           tone: "heal",
         };
@@ -472,6 +479,11 @@ function PlayerPanel({
 }) {
   const eliminated = player.status === "eliminated";
   const character = player.characterId ? BANG_CHARACTER_BY_ID[player.characterId] : undefined;
+  const [abilityTooltipSide, setAbilityTooltipSide] = useState<"left" | "right" | null>(null);
+  const showAbilityTooltip = (element: HTMLElement) => {
+    const rect = element.getBoundingClientRect();
+    setAbilityTooltipSide(rect.left + rect.width / 2 < window.innerWidth / 2 ? "right" : "left");
+  };
   const seatDistance = (() => {
     if (aliveIdx < 0 || myIdx < 0 || totalAlive < 1) return null;
     const clockwiseSteps = Math.abs(aliveIdx - myIdx);
@@ -542,13 +554,41 @@ function PlayerPanel({
 
       {character && (
         <div
-          className="relative rounded-lg bg-amber-100/70 px-2 py-1"
+          className="relative rounded-lg bg-amber-100/70 px-2 py-1 outline-none ring-amber-500/40 hover:ring-2 focus:ring-2"
           title={`${character.name}: ${character.ability}`}
+          tabIndex={0}
+          aria-describedby={`ability-tooltip-${player.studentId}`}
+          onMouseEnter={event => showAbilityTooltip(event.currentTarget)}
+          onMouseLeave={() => setAbilityTooltipSide(null)}
+          onFocus={event => showAbilityTooltip(event.currentTarget)}
+          onBlur={() => setAbilityTooltipSide(null)}
         >
           <div className="flex min-w-0 items-center gap-1">
-            <p className="min-w-0 flex-1 truncate text-[10px] font-extrabold text-amber-900">{character.emoji} {character.name}</p>
+            <p className="min-w-0 flex-1 cursor-help truncate text-[10px] font-extrabold text-amber-900">{character.emoji} {character.name}</p>
             <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-500" aria-label="능력 적용 중" />
           </div>
+          {abilityTooltipSide && createPortal(
+            <div
+              id={`ability-tooltip-${player.studentId}`}
+              role="tooltip"
+              className={`pointer-events-none fixed top-20 z-[200] w-[min(21rem,calc(100vw-2rem))] rounded-2xl border border-amber-300/30 bg-gray-950/95 p-4 text-left text-xs leading-relaxed text-white shadow-[0_20px_60px_rgba(0,0,0,0.55)] backdrop-blur ${
+                abilityTooltipSide === "right" ? "right-4" : "left-4"
+              }`}
+            >
+              <div className="mb-2 flex items-center gap-2">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-400/15 text-xl">{character.emoji}</span>
+                <div>
+                  <p className="font-extrabold text-amber-300">{character.name}</p>
+                  <p className="text-[10px] font-semibold text-gray-400">기본 체력 {character.life}</p>
+                </div>
+              </div>
+              <p className="text-gray-100">{character.ability}</p>
+              <p className="mt-2 border-t border-white/10 pt-2 text-[10px] font-semibold text-emerald-300">
+                ● 해당 능력은 게임 판정에 적용 중입니다.
+              </p>
+            </div>,
+            document.body,
+          )}
         </div>
       )}
 
@@ -1013,22 +1053,116 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
 
   // ── Pre-game setup: init card game ──────────────────────────────────────────
   if (!state && room.status === "playing") {
+    const selectedCharacterCount = room.players.filter(player => player.characterId).length;
+    const allCharactersSelected =
+      room.players.length > 0
+      && room.players.every(player => player.characterId && player.maxLife);
+    const myCharacterChoices = (me?.characterOptions ?? [])
+      .map(characterId => BANG_CHARACTER_BY_ID[characterId])
+      .filter(Boolean);
+
     return (
-      <div className="min-h-screen bg-amber-50 flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-xl p-8 text-center space-y-4">
-          <span className="text-5xl">🤠</span>
-          <h2 className="text-xl font-extrabold text-gray-800">카드 게임 준비 중</h2>
-          {isHost ? (
-            <button
-              onClick={() => { game.initCardGame(); toast.success("카드가 배분되었습니다!"); }}
-              className="w-full py-3 bg-amber-700 text-white font-bold rounded-xl hover:bg-amber-800"
-            >
-              🃏 카드 배분하기
-            </button>
-          ) : (
-            <p className="text-sm text-gray-500">방장이 카드를 배분할 때까지 기다려주세요...</p>
-          )}
-          <button onClick={manualRefresh} className="text-xs text-gray-400 underline">새로고침</button>
+      <div className="min-h-screen bg-gradient-to-b from-amber-950 to-amber-900 px-4 py-10">
+        <div className="mx-auto w-full max-w-4xl overflow-hidden rounded-3xl border border-amber-500/30 bg-[#fffaf0] shadow-2xl">
+          <div className="bg-gradient-to-r from-amber-950 via-amber-900 to-orange-900 px-6 py-5 text-center text-white">
+            <span className="text-5xl">🤠</span>
+            <h2 className="mt-2 text-2xl font-black">
+              {me?.characterId ? "캐릭터 선택 완료" : "캐릭터를 선택하세요"}
+            </h2>
+            <p className="mt-1 text-xs text-amber-200">
+              두 캐릭터의 능력을 비교해 이번 게임에 사용할 한 명을 고르세요.
+            </p>
+          </div>
+
+          <div className="p-5 sm:p-7">
+            {me?.role && !me.characterId && (
+              <div className="mx-auto mb-5 flex max-w-sm items-center gap-3 rounded-2xl border border-amber-200 bg-white p-3">
+                <BangRoleArt role={me.role} className="h-12 w-12 rounded-xl border border-amber-300" />
+                <div className="text-left">
+                  <p className="text-[10px] font-bold text-gray-400">이번 게임의 내 직업</p>
+                  <p className="font-extrabold text-amber-900">{ROLE_LABEL[me.role]}</p>
+                </div>
+              </div>
+            )}
+
+            {!me?.characterId && myCharacterChoices.length === 2 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {myCharacterChoices.map(character => {
+                  const maxLife = character.life + (me?.role === "sheriff" ? 1 : 0);
+                  return (
+                    <article key={character.id} className="flex flex-col rounded-3xl border-2 border-amber-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-1 hover:border-amber-500 hover:shadow-xl">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-3xl">{character.emoji}</span>
+                        <div>
+                          <h3 className="text-lg font-black text-amber-950">{character.name}</h3>
+                          <p className="mt-1 flex items-center gap-1 text-xs font-bold text-red-500">
+                            <Heart className="h-3.5 w-3.5 fill-red-400" />
+                            최대 체력 {maxLife}
+                            {me?.role === "sheriff" && <span className="text-[9px] text-amber-600">보안관 +1</span>}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="my-4 flex-1 rounded-2xl bg-amber-50 p-4">
+                        <p className="mb-1 text-[10px] font-extrabold uppercase tracking-wider text-amber-600">고유 능력</p>
+                        <p className="text-sm font-semibold leading-relaxed text-gray-700">{character.ability}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = game.chooseCharacter(me!.studentId, character.id);
+                          if (updated) toast.success(`${character.name} 선택 완료!`);
+                        }}
+                        className="w-full rounded-xl bg-amber-700 py-3 text-sm font-extrabold text-white hover:bg-amber-800"
+                      >
+                        {character.name} 선택
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : me?.characterId ? (
+              <div className="mx-auto max-w-lg text-center">
+                <div className="rounded-3xl border-2 border-emerald-200 bg-emerald-50 p-5">
+                  <span className="text-5xl">{BANG_CHARACTER_BY_ID[me.characterId].emoji}</span>
+                  <h3 className="mt-2 text-xl font-black text-emerald-950">{BANG_CHARACTER_BY_ID[me.characterId].name}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-800">{BANG_CHARACTER_BY_ID[me.characterId].ability}</p>
+                  <p className="mt-2 text-xs font-bold text-red-500">최대 체력 {me.maxLife}</p>
+                </div>
+                <p className="mt-5 text-sm font-extrabold text-amber-900">
+                  선택 완료 {selectedCharacterCount}/{room.players.length}명
+                </p>
+                <div className="mx-auto mt-2 h-2 max-w-sm overflow-hidden rounded-full bg-amber-100">
+                  <div
+                    className="h-full rounded-full bg-emerald-500 transition-all"
+                    style={{ width: `${(selectedCharacterCount / Math.max(room.players.length, 1)) * 100}%` }}
+                  />
+                </div>
+                {isHost && allCharactersSelected ? (
+                  <button
+                    onClick={() => {
+                      const updated = game.initCardGame();
+                      if (updated) toast.success("전원 선택 완료 · 카드가 배분되었습니다!");
+                    }}
+                    className="mt-5 w-full rounded-xl bg-amber-700 py-3 font-bold text-white hover:bg-amber-800"
+                  >
+                    🃏 카드 배분하고 게임 시작
+                  </button>
+                ) : (
+                  <p className="mt-4 text-xs text-gray-500">
+                    {allCharactersSelected
+                      ? "방장이 카드를 배분할 때까지 기다려주세요."
+                      : "다른 플레이어가 캐릭터를 선택하는 중입니다."}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="text-center">
+                <p className="text-sm font-bold text-gray-500">캐릭터 선택 정보를 불러오는 중입니다.</p>
+              </div>
+            )}
+
+            <button onClick={manualRefresh} className="mx-auto mt-6 block text-xs text-gray-400 underline">새로고침</button>
+          </div>
         </div>
       </div>
     );
@@ -1886,7 +2020,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
               <CircleHelp className="h-5 w-5" />
               <div className="flex-1">
                 <h2 className="font-black">전체 카드 설명</h2>
-                <p className="text-[11px] text-amber-100">카드에 마우스를 올려도 같은 설명을 확인할 수 있습니다.</p>
+                <p className="text-[11px] text-amber-100">기본 덱 총 {BANG_DECK_SIZE}장 · 카드별 수량과 효과를 확인할 수 있습니다.</p>
               </div>
               <button onClick={() => setShowCardGuide(false)} aria-label="카드 설명 닫기" className="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-white/15">
                 <X className="h-5 w-5" />
@@ -1897,8 +2031,11 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
                 <article key={kind} className="flex gap-3 rounded-2xl border border-amber-200 bg-white p-3 shadow-sm">
                   <BangCardArt kind={kind} className="h-20 w-16 flex-shrink-0 rounded-xl border border-amber-200" />
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <h3 className="font-extrabold text-amber-950">{CARD_NAME[kind]}</h3>
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-extrabold text-emerald-700">
+                        덱 {BANG_CARD_COUNTS[kind]}장
+                      </span>
                       <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
                         IS_EQUIPMENT[kind] ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"
                       }`}>

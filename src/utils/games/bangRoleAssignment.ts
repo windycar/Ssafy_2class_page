@@ -15,18 +15,19 @@ export function assignBangRoles(players: BangPlayer[]): BangPlayer[] {
   if (!roles) throw new Error(`뱅은 4~7명만 지원합니다. (현재: ${n}명)`);
 
   const shuffledRoles = shuffleArray(roles);
-  const shuffledCharacters = shuffleArray(BANG_CHARACTERS).slice(0, n);
+  const shuffledCharacters = shuffleArray(BANG_CHARACTERS).slice(0, n * 2);
 
   return players.map((p, i) => {
     const role = shuffledRoles[i];
-    const character = shuffledCharacters[i];
-    const maxLife = character.life + (role === "sheriff" ? 1 : 0);
+    const characterOptions = shuffledCharacters
+      .slice(i * 2, i * 2 + 2)
+      .map(character => character.id);
     return {
       ...p,
       role,
-      characterId: character.id,
-      maxLife,
-      life: maxLife,
+      characterOptions,
+      characterId: undefined,
+      maxLife: undefined,
       status: "alive" as const,
     };
   });

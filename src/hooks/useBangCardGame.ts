@@ -4,6 +4,8 @@ import { createBangDeck, drawCheck, hasVolcanic, canTarget, effectiveDistance } 
 import { CARD_NAME, IS_EQUIPMENT, WEAPON_KINDS } from "../types/bangCards";
 import type { BangRoom, BangPlayer } from "../types/bang";
 import type { BangCard, BangCardGameState, BangCardKind, BangEffectEvent } from "../types/bangCards";
+import { BANG_CHARACTER_BY_ID } from "../types/bangCharacters";
+import type { BangCharacterId } from "../types/bangCharacters";
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -410,9 +412,28 @@ export function useBangCardGame(initialRoom: BangRoom) {
     return normalized;
   }, []);
 
+  const chooseCharacter = useCallback((playerId: number, characterId: BangCharacterId) => {
+    if (room.status !== "playing" || room.cardState) return null;
+    const player = room.players.find(item => item.studentId === playerId);
+    if (
+      !player
+      || player.characterId
+      || !player.characterOptions?.includes(characterId)
+    ) return null;
+    const character = BANG_CHARACTER_BY_ID[characterId];
+    const maxLife = character.life + (player.role === "sheriff" ? 1 : 0);
+    const players = room.players.map(item =>
+      item.studentId === playerId
+        ? { ...item, characterId, maxLife, life: maxLife }
+        : item
+    );
+    return persist({ ...room, players });
+  }, [room, persist]);
+
   // ── Initialize card game ────────────────────────────────────────────────────
 
   const initCardGame = useCallback(() => {
+    if (room.players.some(player => !player.characterId || !player.maxLife)) return null;
     const deck = createBangDeck();
     let drawPile = [...deck];
     const hands: Record<string, BangCard[]> = {};
@@ -811,7 +832,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
         const maxLife = playerMaxLife(p2);
         return { ...p2, life: Math.min(p2.life + 1, maxLife) };
       });
-      state = addLog(state, `${player.name} 잡화점! 🏠 모두 체력 +1`);
+      state = addLog(state, `${player.name} 살롱! 🏠 모두 체력 +1`);
       state = addEffectEvent(state, {
         kind: "action",
         action: "saloon",
@@ -1513,6 +1534,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
   return {
     room,
     setRoom: persist,
+    chooseCharacter,
     initCardGame,
     drawCards,
     resolveKitCarlsonDraw,

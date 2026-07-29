@@ -17,7 +17,7 @@ export interface BangCard {
 }
 
 export const CARD_NAME: Record<BangCardKind, string> = {
-  bang: "BANG!", missed: "Missed!", beer: "맥주", saloon: "잡화점",
+  bang: "BANG!", missed: "Missed!", beer: "맥주", saloon: "살롱",
   indians: "인디언", gatling: "개틀링", duel: "결투",
   general_store: "잡화점",
   stagecoach: "역마차", wells_fargo: "웰스파고", cat_balou: "캣발루", panic: "강탈",

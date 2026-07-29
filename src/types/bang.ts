@@ -14,6 +14,7 @@ export interface BangPlayer {
   isReady: boolean;
   status: BangPlayerStatus;
   role?: BangRole;
+  characterOptions?: BangCharacterId[];
   characterId?: BangCharacterId;
   maxLife?: number;
   life: number;

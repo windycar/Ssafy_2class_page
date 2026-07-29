@@ -228,6 +228,7 @@ function BangRoomContent({ initialRoom, currentUserId, currentUserName, navigate
       players: room.players.map((p) => ({
         ...p,
         role: undefined,
+        characterOptions: undefined,
         characterId: undefined,
         maxLife: undefined,
         status: "waiting",
@@ -303,30 +304,39 @@ function BangRoomContent({ initialRoom, currentUserId, currentUserName, navigate
             to={`/games/bang/${room.id}/play`}
             className="w-full flex items-center justify-center gap-2 py-3 bg-amber-700 text-white font-extrabold rounded-xl hover:bg-amber-800 text-sm"
           >
-            🃏 카드 게임 플레이하기
+            {room.cardState ? "🃏 카드 게임 플레이하기" : "🤠 캐릭터 2명 중 선택하기"}
           </Link>
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <p className="text-xs text-gray-400 font-semibold mb-1">현재 턴</p>
-              <p className="text-base font-extrabold text-amber-700">
-                {room.players.find(p => p.studentId === room.currentTurnStudentId)?.name ?? "-"}
-                {room.currentTurnStudentId === currentUserId && <span className="ml-2 text-xs font-bold bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">내 턴!</span>}
-              </p>
-            </div>
-            {isHost && (
-              <div className="flex gap-2 flex-wrap">
-                <button onClick={prevTurn} className="flex items-center gap-1 px-3 py-2 rounded-xl border border-border text-sm font-semibold text-gray-600 hover:bg-gray-50">
-                  <SkipBack className="w-3.5 h-3.5" />이전 턴
-                </button>
-                <button onClick={nextTurn} className="flex items-center gap-1 px-3 py-2 rounded-xl bg-amber-700 text-white text-sm font-bold hover:bg-amber-800">
-                  다음 턴<SkipForward className="w-3.5 h-3.5" />
-                </button>
-                <button onClick={() => setShowEndModal(true)} className="px-3 py-2 rounded-xl border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50">
-                  게임 종료
-                </button>
+          {room.cardState ? (
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div>
+                <p className="text-xs text-gray-400 font-semibold mb-1">현재 턴</p>
+                <p className="text-base font-extrabold text-amber-700">
+                  {room.players.find(p => p.studentId === room.currentTurnStudentId)?.name ?? "-"}
+                  {room.currentTurnStudentId === currentUserId && <span className="ml-2 text-xs font-bold bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">내 턴!</span>}
+                </p>
               </div>
-            )}
-          </div>
+              {isHost && (
+                <div className="flex gap-2 flex-wrap">
+                  <button onClick={prevTurn} className="flex items-center gap-1 px-3 py-2 rounded-xl border border-border text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                    <SkipBack className="w-3.5 h-3.5" />이전 턴
+                  </button>
+                  <button onClick={nextTurn} className="flex items-center gap-1 px-3 py-2 rounded-xl bg-amber-700 text-white text-sm font-bold hover:bg-amber-800">
+                    다음 턴<SkipForward className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={() => setShowEndModal(true)} className="px-3 py-2 rounded-xl border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50">
+                    게임 종료
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl bg-amber-50 px-4 py-3 text-center">
+              <p className="text-sm font-extrabold text-amber-900">
+                캐릭터 선택 완료 {room.players.filter(player => player.characterId).length}/{room.players.length}명
+              </p>
+              <p className="mt-1 text-xs text-amber-700">모든 플레이어가 선택한 뒤 카드가 배분됩니다.</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -350,7 +360,7 @@ function BangRoomContent({ initialRoom, currentUserId, currentUserName, navigate
               isMe={player.studentId === currentUserId}
               isHost={room.hostStudentId === player.studentId}
               isGameHost={isHost}
-              isPlaying={room.status === "playing"}
+              isPlaying={room.status === "playing" && Boolean(room.cardState)}
               isFinished={room.status === "finished"}
               revealAllRoles={revealAllRoles}
               onIncreaseLife={() => changeLife(player.studentId, 1)}

@@ -8,6 +8,34 @@ const c = (kind: BangCardKind, suit: CardSuit, rank: CardRank): BangCard => ({
   kind, suit, rank,
 });
 
+export const BANG_CARD_COUNTS: Record<BangCardKind, number> = {
+  bang: 25,
+  missed: 12,
+  beer: 6,
+  saloon: 1,
+  indians: 2,
+  gatling: 1,
+  duel: 3,
+  general_store: 2,
+  stagecoach: 2,
+  wells_fargo: 1,
+  cat_balou: 4,
+  panic: 4,
+  volcanic: 2,
+  schofield: 3,
+  remington: 1,
+  rev_carbine: 1,
+  winchester: 1,
+  barrel: 2,
+  dynamite: 1,
+  jail: 3,
+  scope: 1,
+  mustang: 2,
+};
+
+export const BANG_DECK_SIZE = Object.values(BANG_CARD_COUNTS)
+  .reduce((total, count) => total + count, 0);
+
 export function createBangDeck(): BangCard[] {
   const deck: BangCard[] = [
     // ── BANG! (25) ──────────────────────────────────────────
