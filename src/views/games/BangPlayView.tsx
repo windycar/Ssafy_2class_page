@@ -10,7 +10,7 @@ import {
   CARD_NAME, CARD_DESC, SUIT_SYMBOL, SUIT_COLOR,
   IS_EQUIPMENT,
 } from "../../types/bangCards";
-import type { BangCard, BangCardKind } from "../../types/bangCards";
+import type { BangCard, BangCardKind, BangEffectEvent } from "../../types/bangCards";
 import type { BangRoom, BangPlayer } from "../../types/bang";
 import type { AuthUser } from "../../types/auth";
 import { BANG_CHARACTER_BY_ID } from "../../types/bangCharacters";
@@ -18,6 +18,8 @@ import { BangCardArt } from "../../components/games/bang/BangCardArt";
 import { BangRoleArt } from "../../components/games/bang/BangRoleArt";
 import { useBangRoomPresence } from "../../hooks/useBangRoomPresence";
 import { useBangChat } from "../../hooks/useBangChat";
+import dynamiteVfxSpriteUrl from "../../assets/games/bang-dynamite-vfx-sprite.jpg";
+import actionVfxAtlasUrl from "../../assets/games/bang-action-vfx-atlas.jpg";
 
 // ── Card component ─────────────────────────────────────────────────────────────
 
@@ -79,6 +81,326 @@ function CardBack({ small }: { small?: boolean }) {
   );
 }
 
+type BangDrawCheckEffectEvent = Exclude<BangEffectEvent, { kind: "action" }>;
+
+function DrawCheckOverlay({
+  event,
+  playerName,
+  onDismiss,
+}: {
+  event: BangDrawCheckEffectEvent;
+  playerName: string;
+  onDismiss: () => void;
+}) {
+  const content = event.kind === "dynamite_check"
+    ? {
+        eyebrow: "다이너마이트 폭발 판정",
+        title: `${playerName}의 운명은?`,
+        equipment: "dynamite" as const,
+        condition: "♠ 2~9가 나오면 폭발",
+        result: event.outcome === "exploded" ? "💥 폭발! 체력 3 피해" : "불발 · 왼쪽 플레이어에게 전달",
+        resultClass: event.outcome === "exploded" ? "text-red-300" : "text-emerald-300",
+      }
+    : event.kind === "jail_check"
+      ? {
+          eyebrow: "감옥 탈출 판정",
+          title: `${playerName}, 철창을 벗어날 수 있을까?`,
+          equipment: "jail" as const,
+          condition: "♥가 나오면 탈출",
+          result: event.outcome === "escaped" ? "🔓 탈출 성공! 턴을 진행합니다" : "⛓️ 탈출 실패 · 이번 턴 스킵",
+          resultClass: event.outcome === "escaped" ? "text-emerald-300" : "text-red-300",
+        }
+      : {
+          eyebrow: "통 자동 회피 판정",
+          title: `${playerName}, 총알을 피할 수 있을까?`,
+          equipment: "barrel" as const,
+          condition: "♥가 나오면 BANG! 회피",
+          result: event.outcome === "dodged" ? "💨 회피 성공!" : "판정 실패 · 직접 대응 필요",
+          resultClass: event.outcome === "dodged" ? "text-emerald-300" : "text-red-300",
+        };
+  const exploded = event.kind === "dynamite_check" && event.outcome === "exploded";
+
+  return (
+    <div className={`bang-effect-overlay ${exploded ? "bang-effect-overlay--exploded" : ""}`} role="dialog" aria-live="assertive" aria-label={content.eyebrow}>
+      <div className="bang-effect-spotlight" />
+      <section className="bang-effect-panel">
+        <button type="button" onClick={onDismiss} className="bang-effect-skip" aria-label="판정 연출 닫기">
+          건너뛰기
+        </button>
+        <div className="bang-effect-heading">
+          <BangCardArt kind={content.equipment} className="h-14 w-14 rounded-xl border-2 border-amber-300 shadow-lg" />
+          <div>
+            <p className="bang-effect-eyebrow">{content.eyebrow}</p>
+            <h2>{content.title}</h2>
+            <p>{content.condition}</p>
+          </div>
+        </div>
+
+        <div className="bang-draw-lane">
+          <div className="bang-draw-deck" aria-hidden="true">
+            <CardBack />
+            <span />
+            <span />
+          </div>
+          <div className="bang-check-card-wrap">
+            <div className="bang-check-card-inner">
+              <div className="bang-check-card-side bang-check-card-back">
+                <CardBack />
+              </div>
+              <div className="bang-check-card-side bang-check-card-face">
+                <CardFace card={event.card} />
+              </div>
+            </div>
+          </div>
+          {exploded && (
+            <div
+              className="bang-dynamite-vfx"
+              style={{ backgroundImage: `url(${dynamiteVfxSpriteUrl})` }}
+              aria-hidden="true"
+            />
+          )}
+        </div>
+
+        <div className={`bang-effect-result ${content.resultClass}`}>
+          <span className="bang-effect-result-card">{SUIT_SYMBOL[event.card.suit]} {event.card.rank}</span>
+          <strong>{content.result}</strong>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+type BangActionEffectEvent = Extract<BangEffectEvent, { kind: "action" }>;
+
+function ActionEffectOverlay({
+  event,
+  playerName,
+  targetName,
+  onDismiss,
+}: {
+  event: BangActionEffectEvent;
+  playerName: string;
+  targetName?: string;
+  onDismiss: () => void;
+}) {
+  const cardName = event.cardKind ? CARD_NAME[event.cardKind] : undefined;
+  const artPosition: Record<BangActionEffectEvent["action"], string> = {
+    beer: "0% 0%",
+    saloon: "50% 0%",
+    heal: "50% 0%",
+    damage: "100% 0%",
+    group_attack: "100% 0%",
+    duel: "100% 0%",
+    jail: "100% 0%",
+    draw: "0% 100%",
+    equip: "0% 100%",
+    store_pick: "0% 100%",
+    dodge: "50% 100%",
+    steal: "100% 100%",
+    discard: "100% 100%",
+  };
+
+  const content = (() => {
+    switch (event.action) {
+      case "beer":
+        return {
+          eyebrow: "회복 카드",
+          title: `${playerName}, 시원하게 한 잔!`,
+          detail: event.amount
+            ? `체력 ${event.lifeBefore ?? "?"} → ${event.lifeAfter ?? "?"}`
+            : event.message ?? "회복 효과가 없습니다.",
+          tone: "heal",
+        };
+      case "saloon":
+        return {
+          eyebrow: "전체 회복",
+          title: `${playerName}의 살롱 오픈!`,
+          detail: `생존자 ${event.count ?? 0}명의 체력이 회복됩니다.`,
+          tone: "heal",
+        };
+      case "heal":
+        return {
+          eyebrow: "체력 회복",
+          title: `${playerName} 체력 +${event.amount ?? 1}`,
+          detail: event.message ?? `체력 ${event.lifeBefore ?? "?"} → ${event.lifeAfter ?? "?"}`,
+          tone: "heal",
+        };
+      case "damage":
+        return {
+          eyebrow: "피격",
+          title: `${playerName} 체력 -${event.amount ?? 1}`,
+          detail: `${event.message ?? cardName ?? "공격"} · ${event.lifeBefore ?? "?"} → ${event.lifeAfter ?? "?"}`,
+          tone: "danger",
+        };
+      case "draw":
+        return {
+          eyebrow: "카드 드로우",
+          title: `${playerName}, 카드 ${event.count ?? 1}장 획득`,
+          detail: event.message ?? "카드가 손패로 이동합니다.",
+          tone: "draw",
+        };
+      case "dodge":
+        return {
+          eyebrow: "공격 회피",
+          title: `${playerName} 회피 성공!`,
+          detail: event.message ?? "총알이 허공을 가릅니다.",
+          tone: "dodge",
+        };
+      case "equip":
+        return {
+          eyebrow: "장비 장착",
+          title: `${playerName}, ${cardName ?? "장비"} 장착`,
+          detail: event.cardKind ? CARD_DESC[event.cardKind] : "장비 효과가 적용됩니다.",
+          tone: "draw",
+        };
+      case "duel":
+        return {
+          eyebrow: event.message ?? "결투 시작",
+          title: `${playerName} ↔ ${targetName ?? "상대"}`,
+          detail: "BANG! 카드를 번갈아 내며 맞섭니다.",
+          tone: "danger",
+        };
+      case "group_attack":
+        return {
+          eyebrow: "전체 공격",
+          title: `${playerName}의 ${cardName ?? "공격"}!`,
+          detail: `${event.count ?? 0}명이 차례대로 대응합니다.`,
+          tone: "danger",
+        };
+      case "steal":
+        return {
+          eyebrow: "카드 이동",
+          title: `${playerName}, 카드 ${event.count ?? 1}장 강탈!`,
+          detail: `${targetName ?? "상대"}에게서 카드를 가져옵니다.${event.message ? ` · ${event.message}` : ""}`,
+          tone: "steal",
+        };
+      case "discard":
+        return {
+          eyebrow: "카드 폐기",
+          title: `${targetName ? `${targetName}의 ` : ""}카드 ${event.count ?? 1}장 버림`,
+          detail: event.message ?? `${playerName}의 카드 효과`,
+          tone: "steal",
+        };
+      case "jail":
+        return {
+          eyebrow: "상태 카드",
+          title: `${targetName ?? "상대"} 감옥 수감!`,
+          detail: `${playerName}이 감옥 카드를 놓았습니다.`,
+          tone: "danger",
+        };
+      case "store_pick":
+        return {
+          eyebrow: "잡화점",
+          title: cardName && event.count === 1 ? `${playerName}, ${cardName} 선택` : "공개 카드 선택 시작",
+          detail: event.message ?? `${event.count ?? 0}장의 카드가 공개됩니다.`,
+          tone: "draw",
+        };
+    }
+  })();
+
+  return (
+    <div className={`bang-action-overlay bang-action-overlay--${content.tone}`} role="dialog" aria-live="assertive" aria-label={content.title}>
+      <section className="bang-action-panel">
+        <button type="button" onClick={onDismiss} className="bang-effect-skip" aria-label="카드 연출 닫기">
+          건너뛰기
+        </button>
+        <p className="bang-action-eyebrow">{content.eyebrow}</p>
+        <h2>{content.title}</h2>
+        <p className="bang-action-detail">{content.detail}</p>
+
+        <div className="bang-action-stage">
+          <div
+            className="bang-action-atlas-art"
+            style={{
+              backgroundImage: `url(${actionVfxAtlasUrl})`,
+              backgroundPosition: artPosition[event.action],
+            }}
+            aria-hidden="true"
+          />
+          {event.cardKind && (
+            <div className="bang-action-card-badge">
+              <BangCardArt kind={event.cardKind} className="h-full w-full rounded-xl" />
+              <span>{CARD_NAME[event.cardKind]}</span>
+            </div>
+          )}
+          {event.action === "draw" && (
+            <div className="bang-action-flying-cards" aria-hidden="true">
+              {Array.from({ length: Math.min(event.count ?? 1, 4) }).map((_, index) => (
+                <div key={index}><CardBack small /></div>
+              ))}
+            </div>
+          )}
+          {(event.action === "beer" || event.action === "heal" || event.action === "saloon") && (
+            <div className="bang-action-hearts" aria-hidden="true">
+              <Heart />
+              <Heart />
+              <Heart />
+            </div>
+          )}
+          {event.action === "damage" && (
+            <div className="bang-action-damage-pips" aria-hidden="true">
+              {Array.from({ length: Math.min(event.amount ?? 1, 3) }).map((_, index) => (
+                <Heart key={index} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function BangIncomingOverlay({
+  attackerName,
+  responseCards,
+  missesRemaining,
+  onRespond,
+  onPass,
+}: {
+  attackerName: string;
+  responseCards: BangCard[];
+  missesRemaining: number;
+  onRespond: (card: BangCard) => void;
+  onPass: () => void;
+}) {
+  return (
+    <div className="bang-incoming-overlay" role="dialog" aria-live="assertive" aria-label="BANG 공격 대응">
+      <div className="bang-impact-flash" aria-hidden="true" />
+      <section className="bang-incoming-panel">
+        <p className="bang-incoming-kicker">긴급 대응</p>
+        <h2>BANG!</h2>
+        <p className="bang-incoming-copy">
+          <strong>{attackerName}</strong> 님이 당신을 쐈습니다.
+          {missesRemaining > 1 && <span> 회피 카드가 {missesRemaining}장 필요합니다.</span>}
+        </p>
+        <div className="bang-shot-scene" aria-hidden="true">
+          <BangCardArt kind="bang" className="bang-shot-card" />
+          <span className="bang-bullet-trail" />
+          <span className="bang-impact-mark">!</span>
+        </div>
+        <div className="bang-response-area">
+          <p>아래에서 바로 대응하세요</p>
+          {responseCards.length > 0 ? (
+            <div className="bang-response-cards">
+              {responseCards.map((card) => (
+                <button key={card.id} type="button" onClick={() => onRespond(card)} aria-label={`${CARD_NAME[card.kind]} 카드로 대응`}>
+                  <CardFace card={card} small />
+                  <span>{CARD_NAME[card.kind]} 사용</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="bang-no-response">사용할 수 있는 회피 카드가 없습니다.</p>
+          )}
+          <button type="button" onClick={onPass} className="bang-take-hit">
+            회피 포기 · 체력 1 피해
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 // ── Player panel ───────────────────────────────────────────────────────────────
 
 const ROLE_LABEL: Record<string, string> = {
@@ -116,7 +438,7 @@ function RoleBadge({
 
 function PlayerPanel({
   player, isCurrentTurn, isMe, cardCount, equipment, aliveIdx, totalAlive,
-  myEquip, myIdx, myCharacter, isSelectable, isSelected, onSelect, seatNumber,
+  myEquip, myIdx, myCharacter, isSelectable, isSelected, isUnderAttack, lifeEffect, onSelect, seatNumber,
 }: {
   player: BangPlayer;
   isCurrentTurn: boolean;
@@ -130,6 +452,8 @@ function PlayerPanel({
   myCharacter?: BangPlayer["characterId"];
   isSelectable: boolean;
   isSelected: boolean;
+  isUnderAttack: boolean;
+  lifeEffect?: "damage" | "heal";
   onSelect: () => void;
   seatNumber?: number;
 }) {
@@ -150,6 +474,8 @@ function PlayerPanel({
     ...(equipment.some((card) => card.kind === "mustang") ? ["상대 무스탕 +1"] : []),
     ...(player.characterId === "paul_regret" ? ["상대 폴 리그렛 +1"] : []),
   ];
+  const urgentEquipment = equipment.filter(card => ["dynamite", "jail"].includes(card.kind));
+  const standardEquipment = equipment.filter(card => !["dynamite", "jail"].includes(card.kind));
 
   return (
     <div
@@ -160,8 +486,16 @@ function PlayerPanel({
         ${eliminated ? "opacity-40 border-gray-200 bg-gray-50" : ""}
         ${isSelectable ? "cursor-pointer hover:border-[#1259AA] hover:scale-105 hover:shadow-md" : ""}
         ${isSelected ? "ring-2 ring-[#1259AA] border-[#1259AA]" : ""}
+        ${isUnderAttack ? "bang-player-under-attack border-red-500 bg-red-50" : ""}
+        ${lifeEffect === "damage" ? "bang-player-life-damage" : ""}
+        ${lifeEffect === "heal" ? "bang-player-life-heal" : ""}
       `}
     >
+      {isUnderAttack && (
+        <div className="absolute -right-2 -top-3 z-30 rounded-full border-2 border-white bg-red-600 px-2 py-1 text-[9px] font-black text-white shadow-lg">
+          🔫 BANG 대응 중
+        </div>
+      )}
       {isCurrentTurn && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
           현재 턴
@@ -211,6 +545,25 @@ function PlayerPanel({
         <span className="text-[10px] font-bold text-gray-500 ml-0.5">{player.life}</span>
       </div>
 
+      {/* Urgent status cards */}
+      {urgentEquipment.length > 0 && (
+        <div className="space-y-1.5">
+          {urgentEquipment.map(card => (
+            <div
+              key={card.id}
+              className={`bang-status-card ${card.kind === "dynamite" ? "bang-status-card--dynamite" : "bang-status-card--jail"}`}
+              title={CARD_DESC[card.kind]}
+            >
+              <BangCardArt kind={card.kind} className="h-10 w-10 flex-shrink-0 rounded-lg border border-white/70 shadow" />
+              <div className="min-w-0">
+                <strong>{card.kind === "dynamite" ? "폭발 위험" : "감옥 수감"}</strong>
+                <span>{card.kind === "dynamite" ? "턴 시작 시 폭발 판정" : "턴 시작 시 탈출 판정"}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Card count */}
       <div className="flex items-end gap-1 min-h-14 overflow-hidden">
         <div className="flex items-end pl-1">
@@ -224,9 +577,9 @@ function PlayerPanel({
       </div>
 
       {/* Equipment */}
-      {equipment.length > 0 && (
+      {standardEquipment.length > 0 && (
         <div className="flex gap-0.5 flex-wrap">
-          {equipment.map(eq => (
+          {standardEquipment.map(eq => (
             <div
               key={eq.id}
               className="group relative"
@@ -330,12 +683,46 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [showCardGuide, setShowCardGuide] = useState(false);
+  const [effectQueue, setEffectQueue] = useState<BangEffectEvent[]>([]);
+  const [visibleEffect, setVisibleEffect] = useState<BangEffectEvent | null>(null);
   const chatListRef = useRef<HTMLDivElement>(null);
   const gameLogRef = useRef<HTMLDivElement>(null);
+  const seenEffectIdsRef = useRef<Set<string>>(new Set());
   const navigate = useNavigate();
   const game = useBangCardGame(initialRoom);
   const { room, getHand, getEquip, getAliveOrder } = game;
   const state = room.cardState;
+
+  useEffect(() => {
+    const now = Date.now();
+    const freshEvents = (state?.effectEvents ?? []).filter((event) => {
+      if (seenEffectIdsRef.current.has(event.id)) return false;
+      seenEffectIdsRef.current.add(event.id);
+      return now - event.createdAt < 10_000;
+    });
+    if (freshEvents.length > 0) {
+      setEffectQueue((current) => [...current, ...freshEvents]);
+    }
+  }, [state?.effectEvents]);
+
+  useEffect(() => {
+    if (visibleEffect || effectQueue.length === 0) return;
+    setVisibleEffect(effectQueue[0]);
+    setEffectQueue((current) => current.slice(1));
+  }, [effectQueue, visibleEffect]);
+
+  useEffect(() => {
+    if (!visibleEffect) return;
+    const duration = visibleEffect.kind === "action"
+      ? visibleEffect.action === "discard"
+        ? 1_800
+        : visibleEffect.action === "damage"
+          ? 2_300
+          : 2_650
+      : 4_000;
+    const timer = window.setTimeout(() => setVisibleEffect(null), duration);
+    return () => window.clearTimeout(timer);
+  }, [visibleEffect]);
 
   useEffect(() => {
     if (!autoRefreshEnabled || !roomId) return;
@@ -394,6 +781,9 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const duelTargetsMe = pending?.type === "duel_response" && pending.currentId === myId;
   const storePickIsMine = pending?.type === "general_store_pick" && pending.remaining[0] === myId;
   const iNeedToRespond = bangTargetsMe || indiansTargetsMe || gatlingTargetsMe || duelTargetsMe;
+  const bangResponseCards = bangTargetsMe
+    ? myHand.filter(card => card.kind === "missed" || (me?.characterId === "calamity_janet" && card.kind === "bang"))
+    : [];
 
   // Target selection mode
   const awaitingTarget = pending?.type === "await_target" && pending.fromId === myId;
@@ -570,6 +960,13 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const tablePlayers = mySeatIndex > 0
     ? [...orderedPlayers.slice(mySeatIndex), ...orderedPlayers.slice(0, mySeatIndex)]
     : orderedPlayers;
+  const getPlayerLifeEffect = (playerId: number): "damage" | "heal" | undefined => {
+    if (visibleEffect?.kind !== "action") return undefined;
+    if (visibleEffect.action === "damage" && visibleEffect.playerId === playerId) return "damage";
+    if (visibleEffect.action === "saloon" && room.players.find(player => player.studentId === playerId)?.status !== "eliminated") return "heal";
+    if (["beer", "heal"].includes(visibleEffect.action) && visibleEffect.playerId === playerId && (visibleEffect.amount ?? 0) > 0) return "heal";
+    return undefined;
+  };
   const isPlayerSelectable = (player: BangPlayer) => {
     const playerAliveIdx = aliveOrder.indexOf(player.studentId);
     return (
@@ -753,6 +1150,8 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
                   myCharacter={me?.characterId}
                   isSelectable={isPlayerSelectable(player)}
                   isSelected={selectedTarget === player.studentId}
+                  isUnderAttack={pending?.type === "bang_response" && pending.targetId === player.studentId}
+                  lifeEffect={getPlayerLifeEffect(player.studentId)}
                   onSelect={() => handlePlayerSelect(player.studentId)}
                   seatNumber={index + 1}
                 />
@@ -778,6 +1177,8 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
               myCharacter={me?.characterId}
               isSelectable={isPlayerSelectable(player)}
               isSelected={selectedTarget === player.studentId}
+              isUnderAttack={pending?.type === "bang_response" && pending.targetId === player.studentId}
+              lifeEffect={getPlayerLifeEffect(player.studentId)}
               onSelect={() => handlePlayerSelect(player.studentId)}
               seatNumber={index + 1}
             />
@@ -1027,6 +1428,39 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
           )}
         </div>
       </div>
+
+      {visibleEffect?.kind === "action" ? (
+        <ActionEffectOverlay
+          event={visibleEffect}
+          playerName={room.players.find(player => player.studentId === visibleEffect.playerId)?.name ?? "플레이어"}
+          targetName={visibleEffect.targetId === undefined
+            ? undefined
+            : room.players.find(player => player.studentId === visibleEffect.targetId)?.name}
+          onDismiss={() => setVisibleEffect(null)}
+        />
+      ) : visibleEffect ? (
+        <DrawCheckOverlay
+          event={visibleEffect}
+          playerName={room.players.find(player => player.studentId === visibleEffect.playerId)?.name ?? "플레이어"}
+          onDismiss={() => setVisibleEffect(null)}
+        />
+      ) : null}
+
+      {bangTargetsMe && !visibleEffect && pending?.type === "bang_response" && myId && (
+        <BangIncomingOverlay
+          attackerName={room.players.find(player => player.studentId === pending.fromId)?.name ?? "상대 플레이어"}
+          responseCards={bangResponseCards}
+          missesRemaining={pending.missesNeeded - pending.missesPlayed}
+          onRespond={(card) => {
+            game.respond("play_missed", myId, card.id);
+            toast.success("💨 Missed!로 대응했습니다.");
+          }}
+          onPass={() => {
+            game.respond("pass", myId);
+            toast.error("BANG! 피해를 받았습니다.");
+          }}
+        />
+      )}
 
       {/* In-game chat */}
       {chatOpen ? (

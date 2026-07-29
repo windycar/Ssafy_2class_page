@@ -3,9 +3,13 @@ import { bangRoomStorage } from "../services/storage/bangRoomStorage";
 import { createBangDeck, drawCheck, hasVolcanic, canTarget, effectiveDistance } from "../utils/games/bangDeckBuilder";
 import { IS_EQUIPMENT, WEAPON_KINDS } from "../types/bangCards";
 import type { BangRoom, BangPlayer } from "../types/bang";
-import type { BangCard, BangCardGameState } from "../types/bangCards";
+import type { BangCard, BangCardGameState, BangCardKind, BangEffectEvent } from "../types/bangCards";
 
 // ── helpers ────────────────────────────────────────────────────────────────────
+
+type BangEffectEventInput = {
+  [Kind in BangEffectEvent["kind"]]: Omit<Extract<BangEffectEvent, { kind: Kind }>, "id" | "createdAt">
+}[BangEffectEvent["kind"]];
 
 function h(state: BangCardGameState, id: number): BangCard[] {
   return state.hands[String(id)] ?? [];
@@ -58,6 +62,21 @@ function addLog(state: BangCardGameState, msg: string): BangCardGameState {
   return { ...state, log: [msg, ...state.log.slice(0, 49)] };
 }
 
+function addEffectEvent(
+  state: BangCardGameState,
+  event: BangEffectEventInput,
+): BangCardGameState {
+  const nextEvent = {
+    ...event,
+    id: `effect-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    createdAt: Date.now(),
+  } as BangEffectEvent;
+  return {
+    ...state,
+    effectEvents: [...(state.effectEvents ?? []).slice(-7), nextEvent],
+  };
+}
+
 function alivePlayers(room: BangRoom): BangPlayer[] {
   return room.players.filter(p => p.status !== "eliminated");
 }
@@ -99,6 +118,13 @@ function triggerSuzy(room: BangRoom): BangRoom {
     const { drawn, state: nextState } = drawFromPile(state, 1);
     state = setHand(nextState, player.studentId, drawn);
     state = addLog(state, `🎴 ${player.name} (수지 라파예트) — 빈 손패가 되어 카드 1장 드로우`);
+    state = addEffectEvent(state, {
+      kind: "action",
+      action: "draw",
+      playerId: player.studentId,
+      count: 1,
+      message: "수지 라파예트 능력",
+    });
   }
   return { ...room, cardState: state };
 }
@@ -151,6 +177,7 @@ function applyDamage(
   amount: number,
   source: string,
   killerId?: number,
+  sourceCard?: BangCardKind,
 ): { room: BangRoom; state: BangCardGameState; died: boolean } {
   const player = room.players.find(p => p.studentId === targetId)!;
   const rawLife = player.life - amount;
@@ -173,6 +200,16 @@ function applyDamage(
     newState = discardCard(newState, beer);
     newState = addLog(newState, `${player.name} 🍺 맥주로 가까스로 살아남음! (자동 사용)`);
   }
+  if (usedBeers.length > 0) {
+    newState = addEffectEvent(newState, {
+      kind: "action",
+      action: "beer",
+      playerId: targetId,
+      cardKind: "beer",
+      amount: usedBeers.length,
+      message: "자동으로 맥주를 마시고 생존했습니다.",
+    });
+  }
 
   const died = remaining <= 0;
   remaining = Math.max(0, remaining);
@@ -184,10 +221,29 @@ function applyDamage(
   newState = addLog(newState, `${player.name} ${source} — 체력 ${player.life} → ${remaining}${died ? " ☠️ 탈락!" : ""}`);
 
   const lostLife = player.life - remaining;
+  if (lostLife > 0) {
+    newState = addEffectEvent(newState, {
+      kind: "action",
+      action: "damage",
+      playerId: targetId,
+      cardKind: sourceCard,
+      amount: lostLife,
+      lifeBefore: player.life,
+      lifeAfter: remaining,
+      message: source,
+    });
+  }
   if (!died && lostLife > 0 && player.characterId === "bart_cassidy") {
     const { drawn, state: nextState } = drawFromPile(newState, lostLife);
     newState = setHand(nextState, targetId, [...h(nextState, targetId), ...drawn]);
     newState = addLog(newState, `🎩 ${player.name} (바트 캐시디) — 카드 ${drawn.length}장 드로우`);
+    newState = addEffectEvent(newState, {
+      kind: "action",
+      action: "draw",
+      playerId: targetId,
+      count: drawn.length,
+      message: "바트 캐시디 능력",
+    });
   }
 
   if (!died && lostLife > 0 && player.characterId === "el_gringo" && killerId !== undefined && killerId !== targetId) {
@@ -196,7 +252,17 @@ function applyDamage(
     const stolen = takeRandomCards(attackerHand, lostLife);
     for (const card of stolen) newState = removeFromHand(newState, killerId, card.id);
     newState = setHand(newState, targetId, [...h(newState, targetId), ...stolen]);
-    if (stolen.length > 0) newState = addLog(newState, `🌵 ${player.name} (엘 그링고) — ${attacker?.name}에게서 카드 ${stolen.length}장 가져옴`);
+    if (stolen.length > 0) {
+      newState = addLog(newState, `🌵 ${player.name} (엘 그링고) — ${attacker?.name}에게서 카드 ${stolen.length}장 가져옴`);
+      newState = addEffectEvent(newState, {
+        kind: "action",
+        action: "steal",
+        playerId: targetId,
+        targetId: killerId,
+        count: stolen.length,
+        message: "엘 그링고 능력",
+      });
+    }
   }
 
   if (died) {
@@ -207,6 +273,14 @@ function applyDamage(
     if (vulture) {
       newState = setHand(newState, vulture.studentId, [...h(newState, vulture.studentId), ...hand2, ...equip2]);
       newState = addLog(newState, `🦅 ${vulture.name} (벌처 샘) — 탈락자의 카드 ${hand2.length + equip2.length}장 획득`);
+      newState = addEffectEvent(newState, {
+        kind: "action",
+        action: "steal",
+        playerId: vulture.studentId,
+        targetId,
+        count: hand2.length + equip2.length,
+        message: "벌처 샘 능력",
+      });
     } else {
       for (const card of [...hand2, ...equip2]) newState = discardCard(newState, card);
     }
@@ -221,6 +295,13 @@ function applyDamage(
         newState = s2;
         newState = setHand(newState, killerId, [...h(newState, killerId), ...drawn]);
         newState = addLog(newState, `💰 ${killer.name} 무법자 처치 보상 — 카드 3장 드로우`);
+        newState = addEffectEvent(newState, {
+          kind: "action",
+          action: "draw",
+          playerId: killerId,
+          count: drawn.length,
+          message: "무법자 처치 보상",
+        });
       }
     }
 
@@ -234,6 +315,13 @@ function applyDamage(
         newState = setHand(newState, killerId, []);
         newState = setEquip(newState, killerId, []);
         newState = addLog(newState, `⚡ ${killer.name} 보안관이 부관을 처치 — 보안관의 모든 카드 폐기`);
+        newState = addEffectEvent(newState, {
+          kind: "action",
+          action: "discard",
+          playerId: killerId,
+          count: sheriffHand.length + sheriffEquip.length,
+          message: "부관 처치 페널티",
+        });
       }
     }
   }
@@ -337,11 +425,17 @@ export function useBangCardGame(initialRoom: BangRoom) {
       state = check.state;
       const topCard = check.chosen;
       const explodes = check.result;
+      state = addEffectEvent(state, {
+        kind: "dynamite_check",
+        playerId: currentId,
+        card: topCard,
+        outcome: explodes ? "exploded" : "passed",
+      });
       state = addLog(state, `${player.name} 다이너마이트 드로우 확인: ${topCard.suit}${topCard.rank} → ${explodes ? "💥 폭발! (3 피해)" : "다음 플레이어에게 전달"}`);
       if (explodes) {
         state = removeFromEquip(state, currentId, dynamite.id);
         state = discardCard(state, dynamite);
-        const result = applyDamage({ ...currentRoom, cardState: state }, state, currentId, 3, "💥 다이너마이트 폭발");
+        const result = applyDamage({ ...currentRoom, cardState: state }, state, currentId, 3, "💥 다이너마이트 폭발", undefined, "dynamite");
         state = result.state;
         currentRoom = result.room;
         const win = checkWin(result.room);
@@ -370,6 +464,12 @@ export function useBangCardGame(initialRoom: BangRoom) {
       state = removeFromEquip(state, currentId, jail.id);
       state = discardCard(state, jail);
       const escape = check.result;
+      state = addEffectEvent(state, {
+        kind: "jail_check",
+        playerId: currentId,
+        card: topCard,
+        outcome: escape ? "escaped" : "trapped",
+      });
       state = addLog(state, `${player.name} 감옥 탈출 시도: ${topCard.suit}${topCard.rank} → ${escape ? "탈출 성공!" : "⛓️ 턴 스킵!"}`);
       if (!escape) {
         persist(advanceTurn(currentRoom, state, currentId));
@@ -421,6 +521,13 @@ export function useBangCardGame(initialRoom: BangRoom) {
     const currentHand = h(state, currentId);
     state = setHand(state, currentId, [...currentHand, ...drawnCards]);
     state = addLog(state, `${player.name} 카드 ${count}장 드로우`);
+    state = addEffectEvent(state, {
+      kind: "action",
+      action: "draw",
+      playerId: currentId,
+      count: drawnCards.length,
+      message: player.characterId === "black_jack" && drawnCards.length > count ? "블랙 잭 추가 드로우" : "턴 드로우",
+    });
     state = { ...state, phase: "play", bangUsed: false };
 
     persist({ ...currentRoom, cardState: state });
@@ -464,6 +571,12 @@ export function useBangCardGame(initialRoom: BangRoom) {
       state = removeFromHand(state, fromId, cardId);
       state = setEquip(state, fromId, [card, ...playerEquip]);
       state = addLog(state, `${player.name} 「${card.kind}」 장착`);
+      state = addEffectEvent(state, {
+        kind: "action",
+        action: "equip",
+        playerId: fromId,
+        cardKind: card.kind,
+      });
       persist({ ...room, cardState: state });
       return;
     }
@@ -511,13 +624,43 @@ export function useBangCardGame(initialRoom: BangRoom) {
       const maxLife = playerMaxLife(p);
       if (aliveOrder.length <= 2) {
         state = addLog(state, `${p.name} 맥주 사용 — 생존자가 2명뿐이라 효과 없음`);
+        state = addEffectEvent(state, {
+          kind: "action",
+          action: "beer",
+          playerId: fromId,
+          cardKind: "beer",
+          amount: 0,
+          lifeBefore: p.life,
+          lifeAfter: p.life,
+          message: "생존자 2명 · 회복 효과 없음",
+        });
       } else if (p.life >= maxLife) {
         state = addLog(state, `${p.name} 이미 최대 체력 — 맥주 효과 없음`);
+        state = addEffectEvent(state, {
+          kind: "action",
+          action: "beer",
+          playerId: fromId,
+          cardKind: "beer",
+          amount: 0,
+          lifeBefore: p.life,
+          lifeAfter: p.life,
+          message: "이미 최대 체력입니다.",
+        });
       } else {
+        const nextLife = Math.min(p.life + 1, maxLife);
         const updatedPlayers = room.players.map(p2 =>
-          p2.studentId === fromId ? { ...p2, life: Math.min(p2.life + 1, maxLife) } : p2
+          p2.studentId === fromId ? { ...p2, life: nextLife } : p2
         );
         state = addLog(state, `${p.name} 맥주 마심 🍺 (+1 체력)`);
+        state = addEffectEvent(state, {
+          kind: "action",
+          action: "beer",
+          playerId: fromId,
+          cardKind: "beer",
+          amount: 1,
+          lifeBefore: p.life,
+          lifeAfter: nextLife,
+        });
         persist({ ...room, players: updatedPlayers, cardState: state });
         return;
       }
@@ -530,6 +673,13 @@ export function useBangCardGame(initialRoom: BangRoom) {
         return { ...p2, life: Math.min(p2.life + 1, maxLife) };
       });
       state = addLog(state, `${player.name} 살롱! 🏠 모두 체력 +1`);
+      state = addEffectEvent(state, {
+        kind: "action",
+        action: "saloon",
+        playerId: fromId,
+        cardKind: "saloon",
+        count: updatedPlayers.filter(item => item.status !== "eliminated").length,
+      });
       persist({ ...room, players: updatedPlayers, cardState: state });
       return;
     }
@@ -539,6 +689,14 @@ export function useBangCardGame(initialRoom: BangRoom) {
       state = s2;
       state = setHand(state, fromId, [...h(state, fromId), ...drawn]);
       state = addLog(state, `${player.name} 역마차 — 카드 2장 드로우`);
+      state = addEffectEvent(state, {
+        kind: "action",
+        action: "draw",
+        playerId: fromId,
+        cardKind: "stagecoach",
+        count: drawn.length,
+        message: "역마차",
+      });
     }
 
     if (card.kind === "wells_fargo") {
@@ -546,6 +704,14 @@ export function useBangCardGame(initialRoom: BangRoom) {
       state = s2;
       state = setHand(state, fromId, [...h(state, fromId), ...drawn]);
       state = addLog(state, `${player.name} 웰스파고 — 카드 3장 드로우`);
+      state = addEffectEvent(state, {
+        kind: "action",
+        action: "draw",
+        playerId: fromId,
+        cardKind: "wells_fargo",
+        count: drawn.length,
+        message: "웰스파고",
+      });
     }
 
     if (card.kind === "general_store") {
@@ -553,18 +719,40 @@ export function useBangCardGame(initialRoom: BangRoom) {
       const result = drawFromPile(state, order.length);
       state = result.state;
       state = addLog(state, `${player.name} 잡화점! 🛒 — 공개 카드에서 차례대로 1장 선택`);
+      state = addEffectEvent(state, {
+        kind: "action",
+        action: "store_pick",
+        playerId: fromId,
+        cardKind: "general_store",
+        count: result.drawn.length,
+        message: "공개 카드 선택 시작",
+      });
       state = { ...state, pending: { type: "general_store_pick", fromId, remaining: order, available: result.drawn } };
     }
 
     if (card.kind === "indians") {
       const targets = aliveOrder.filter(id => id !== fromId);
       state = addLog(state, `${player.name} 인디언! 🪶 — ${targets.map(id => room.players.find(p2 => p2.studentId === id)?.name).join(", ")} BANG! 또는 1 피해`);
+      state = addEffectEvent(state, {
+        kind: "action",
+        action: "group_attack",
+        playerId: fromId,
+        cardKind: "indians",
+        count: targets.length,
+      });
       state = { ...state, pending: { type: "indians_response", fromId, remaining: targets } };
     }
 
     if (card.kind === "gatling") {
       const targets = aliveOrder.filter(id => id !== fromId);
       state = addLog(state, `${player.name} 개틀링! ⚙️ — 모든 플레이어가 Missed! 또는 1 피해`);
+      state = addEffectEvent(state, {
+        kind: "action",
+        action: "group_attack",
+        playerId: fromId,
+        cardKind: "gatling",
+        count: targets.length,
+      });
       state = { ...state, pending: { type: "gatling_response", fromId, remaining: targets } };
     }
 
@@ -615,6 +803,12 @@ export function useBangCardGame(initialRoom: BangRoom) {
         state = check.state;
         const topCard = check.chosen;
         blockedByBarrel = check.result;
+        state = addEffectEvent(state, {
+          kind: "barrel_check",
+          playerId: targetId,
+          card: topCard,
+          outcome: blockedByBarrel ? "dodged" : "failed",
+        });
         state = addLog(
           state,
           `${target.name} 통 판정 ${attempt + 1}/${barrelAttempts}: ${topCard.suit}${topCard.rank} → ${blockedByBarrel ? "💨 회피 성공!" : "실패"}`,
@@ -649,6 +843,13 @@ export function useBangCardGame(initialRoom: BangRoom) {
       state = removeFromHand(state, fromId, cardId);
       state = discardCard(state, card);
       state = addLog(state, `${attacker.name} → ${target.name} 결투! 🤝`);
+      state = addEffectEvent(state, {
+        kind: "action",
+        action: "duel",
+        playerId: fromId,
+        targetId,
+        cardKind: "duel",
+      });
       state = { ...state, pending: { type: "duel_response", p1: fromId, p2: targetId, currentId: targetId } };
     }
 
@@ -668,6 +869,13 @@ export function useBangCardGame(initialRoom: BangRoom) {
       state = removeFromHand(state, fromId, cardId);
       state = setEquip(state, targetId, [card, ...eq(state, targetId)]);
       state = addLog(state, `${attacker.name} → ${target.name} 감옥! ⛓️`);
+      state = addEffectEvent(state, {
+        kind: "action",
+        action: "jail",
+        playerId: fromId,
+        targetId,
+        cardKind: "jail",
+      });
       state = { ...state, pending: undefined };
     }
 
@@ -724,6 +932,15 @@ export function useBangCardGame(initialRoom: BangRoom) {
       }
       state = discardCard(state, targetCard);
       state = addLog(state, `${attacker.name} 캣발루 — ${target.name}의 「${targetCard.kind}」 버림`);
+      state = addEffectEvent(state, {
+        kind: "action",
+        action: "discard",
+        playerId: fromId,
+        targetId: targetPlayerId,
+        cardKind: targetCard.kind,
+        count: 1,
+        message: "캣발루",
+      });
     }
 
     if (pending.type === "await_panic") {
@@ -734,6 +951,15 @@ export function useBangCardGame(initialRoom: BangRoom) {
       }
       state = setHand(state, fromId, [...h(state, fromId), targetCard]);
       state = addLog(state, `${attacker.name} 패닉 — ${target.name}의 카드 가져감`);
+      state = addEffectEvent(state, {
+        kind: "action",
+        action: "steal",
+        playerId: fromId,
+        targetId: targetPlayerId,
+        cardKind: targetCard.kind,
+        count: 1,
+        message: "패닉",
+      });
     }
 
     state = { ...state, pending: undefined };
@@ -753,6 +979,14 @@ export function useBangCardGame(initialRoom: BangRoom) {
     const available = pending.available.filter(card => card.id !== cardId);
     const remaining = pending.remaining.slice(1);
     state = addLog(state, `🛒 ${room.players.find(player => player.studentId === playerId)?.name} 잡화점 카드 선택`);
+    state = addEffectEvent(state, {
+      kind: "action",
+      action: "store_pick",
+      playerId,
+      cardKind: selected.kind,
+      count: 1,
+      message: "잡화점에서 카드를 선택했습니다.",
+    });
     if (remaining.length === 0) {
       for (const card of available) state = discardCard(state, card);
       state = { ...state, pending: undefined };
@@ -779,6 +1013,15 @@ export function useBangCardGame(initialRoom: BangRoom) {
       item.studentId === playerId ? { ...item, life: Math.min(item.life + 1, playerMaxLife(item)) } : item
     );
     state = addLog(state, `💊 ${player.name} (시드 케첨) — 손패 2장을 버리고 체력 1 회복`);
+    state = addEffectEvent(state, {
+      kind: "action",
+      action: "heal",
+      playerId,
+      amount: 1,
+      lifeBefore: player.life,
+      lifeAfter: Math.min(player.life + 1, playerMaxLife(player)),
+      message: "시드 케첨 능력",
+    });
     persist({ ...room, players, cardState: state });
   }, [room, persist]);
 
@@ -808,6 +1051,13 @@ export function useBangCardGame(initialRoom: BangRoom) {
         state = removeFromHand(state, targetId, cardId);
         state = discardCard(state, missedCard);
         const missesPlayed = pending.missesPlayed + 1;
+        state = addEffectEvent(state, {
+          kind: "action",
+          action: "dodge",
+          playerId: targetId,
+          cardKind: missedCard.kind,
+          message: missesPlayed < pending.missesNeeded ? "추가 회피 카드가 필요합니다." : "BANG! 회피 성공",
+        });
         if (missesPlayed < pending.missesNeeded) {
           state = addLog(state, `${responder.name} Missed! 💨 — 슬랩의 BANG!을 막으려면 ${pending.missesNeeded - missesPlayed}장 더 필요`);
           state = { ...state, pending: { ...pending, missesPlayed } };
@@ -821,7 +1071,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
 
       if (action === "pass") {
         state = addLog(state, `${responder.name} 회피 포기 — 1 피해`);
-        const result = applyDamage(currentRoom, state, targetId, 1, `${attacker.name}의 BANG!`, fromId);
+        const result = applyDamage(currentRoom, state, targetId, 1, `${attacker.name}의 BANG!`, fromId, "bang");
         state = result.state;
         currentRoom = result.room;
         state = { ...state, pending: undefined };
@@ -847,6 +1097,13 @@ export function useBangCardGame(initialRoom: BangRoom) {
         state = removeFromHand(state, targetId, cardId);
         state = discardCard(state, bangCard);
         state = addLog(state, `${responder.name} BANG! 으로 인디언 대응`);
+        state = addEffectEvent(state, {
+          kind: "action",
+          action: "dodge",
+          playerId: targetId,
+          cardKind: bangCard.kind,
+          message: "인디언 방어 성공",
+        });
         const newRemaining = remaining.slice(1);
         state = { ...state, pending: newRemaining.length === 0 ? undefined : { ...pending, remaining: newRemaining } };
         persist({ ...currentRoom, cardState: state });
@@ -855,7 +1112,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
 
       if (action === "pass") {
         state = addLog(state, `${responder.name} 인디언 대응 실패 — 1 피해`);
-        const result = applyDamage(currentRoom, state, targetId, 1, `${attacker.name}의 인디언`, fromId);
+        const result = applyDamage(currentRoom, state, targetId, 1, `${attacker.name}의 인디언`, fromId, "indians");
         state = result.state;
         currentRoom = result.room;
         const newRemaining = remaining.slice(1);
@@ -882,6 +1139,13 @@ export function useBangCardGame(initialRoom: BangRoom) {
         state = removeFromHand(state, targetId, cardId);
         state = discardCard(state, missedCard);
         state = addLog(state, `${responder.name} Missed! — 개틀링 회피`);
+        state = addEffectEvent(state, {
+          kind: "action",
+          action: "dodge",
+          playerId: targetId,
+          cardKind: missedCard.kind,
+          message: "개틀링 회피 성공",
+        });
         const newRemaining = remaining.slice(1);
         state = { ...state, pending: newRemaining.length === 0 ? undefined : { ...pending, remaining: newRemaining } };
         persist({ ...currentRoom, cardState: state });
@@ -890,7 +1154,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
 
       if (action === "pass") {
         state = addLog(state, `${responder.name} 개틀링 회피 실패 — 1 피해`);
-        const result = applyDamage(currentRoom, state, targetId, 1, `${attacker.name}의 개틀링`, fromId);
+        const result = applyDamage(currentRoom, state, targetId, 1, `${attacker.name}의 개틀링`, fromId, "gatling");
         state = result.state;
         currentRoom = result.room;
         const newRemaining = remaining.slice(1).filter(id => currentRoom.players.find(player => player.studentId === id)?.status !== "eliminated");
@@ -916,6 +1180,14 @@ export function useBangCardGame(initialRoom: BangRoom) {
         state = removeFromHand(state, currentId, cardId);
         state = discardCard(state, bangCard);
         state = addLog(state, `${responder.name} BANG! — 결투 계속`);
+        state = addEffectEvent(state, {
+          kind: "action",
+          action: "duel",
+          playerId: currentId,
+          targetId: currentId === p2 ? p1 : p2,
+          cardKind: bangCard.kind,
+          message: "결투 반격",
+        });
         state = { ...state, pending: { ...pending, currentId: currentId === p2 ? p1 : p2 } };
         persist({ ...currentRoom, cardState: state });
         return;
@@ -923,7 +1195,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
 
       if (action === "pass") {
         state = addLog(state, `${responder.name} 결투 패배 — 1 피해`);
-        const result = applyDamage(currentRoom, state, currentId, 1, `${attacker.name}의 결투`, attacker.studentId);
+        const result = applyDamage(currentRoom, state, currentId, 1, `${attacker.name}의 결투`, attacker.studentId, "duel");
         state = result.state;
         currentRoom = result.room;
         state = { ...state, pending: undefined };
@@ -953,6 +1225,14 @@ export function useBangCardGame(initialRoom: BangRoom) {
     state = discardCard(state, card);
     const player = room.players.find(p => p.studentId === playerId)!;
     state = addLog(state, `${player.name} 카드 버림: ${card.kind}`);
+    state = addEffectEvent(state, {
+      kind: "action",
+      action: "discard",
+      playerId,
+      cardKind: card.kind,
+      count: 1,
+      message: "손패 제한 초과",
+    });
     const remaining = room.cardState.pending.excess - 1;
     if (remaining > 0) {
       state = { ...state, pending: { type: "discard", playerId, excess: remaining } };

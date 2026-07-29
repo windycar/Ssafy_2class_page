@@ -91,6 +91,59 @@ export type PendingAction =
   | { type: "duel_response"; p1: number; p2: number; currentId: number }
   | { type: "discard"; playerId: number; excess: number };
 
+export type BangEffectEvent =
+  | {
+      id: string;
+      kind: "barrel_check";
+      playerId: number;
+      card: BangCard;
+      outcome: "dodged" | "failed";
+      createdAt: number;
+    }
+  | {
+      id: string;
+      kind: "dynamite_check";
+      playerId: number;
+      card: BangCard;
+      outcome: "exploded" | "passed";
+      createdAt: number;
+    }
+  | {
+      id: string;
+      kind: "jail_check";
+      playerId: number;
+      card: BangCard;
+      outcome: "escaped" | "trapped";
+      createdAt: number;
+    }
+  | {
+      id: string;
+      kind: "action";
+      playerId: number;
+      action:
+        | "draw"
+        | "beer"
+        | "saloon"
+        | "damage"
+        | "dodge"
+        | "equip"
+        | "duel"
+        | "group_attack"
+        | "steal"
+        | "discard"
+        | "jail"
+        | "store_pick"
+        | "heal";
+      targetId?: number;
+      cardKind?: BangCardKind;
+      count?: number;
+      amount?: number;
+      lifeBefore?: number;
+      lifeAfter?: number;
+      message?: string;
+      createdAt: number;
+    };
+
 export interface BangCardGameState {
   drawPile: BangCard[];
   discardPile: BangCard[];
@@ -99,5 +152,6 @@ export interface BangCardGameState {
   phase: "draw" | "play" | "discard" | "done";
   bangUsed: boolean;
   pending?: PendingAction;
+  effectEvents?: BangEffectEvent[];
   log: string[];
 }
