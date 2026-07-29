@@ -40,6 +40,21 @@ async function handleAdminRequest(request: Request) {
   }
 
   const client = createClient(supabaseUrl, serviceKey);
+
+  if (body.action === "bang.rooms.list") {
+    const { data, error } = await client
+      .from("bang_rooms")
+      .select("id, room_data")
+      .order("updated_at", { ascending: false });
+
+    if (error) return new Response(error.message, { status: 400 });
+    const rooms = (data ?? []).map((row) => ({
+      ...(row.room_data as Record<string, unknown>),
+      id: row.id,
+    }));
+    return Response.json({ ok: true, rooms });
+  }
+
   let error = null;
 
   if (body.action === "gallery.update" && body.id) {
@@ -60,6 +75,8 @@ async function handleAdminRequest(request: Request) {
       .eq("id", body.id));
   } else if (body.action === "board.delete" && body.id) {
     ({ error } = await client.from("anonymous_posts").delete().eq("id", body.id));
+  } else if (body.action === "bang.room.delete" && body.id) {
+    ({ error } = await client.from("bang_rooms").delete().eq("id", body.id));
   } else {
     return new Response("Unsupported action", { status: 400 });
   }

@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router";
-import { Heart, RefreshCw, ChevronLeft, Eye, EyeOff, SkipForward, X, MessageCircle, Send, CircleHelp, LogOut, Crosshair, ArrowRight } from "lucide-react";
+import { Heart, RefreshCw, ChevronLeft, Eye, EyeOff, SkipForward, X, MessageCircle, Send, CircleHelp, LogOut, Crosshair, ArrowRight, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { bangRoomStorage } from "../../services/storage/bangRoomStorage";
 import { useBangCardGame } from "../../hooks/useBangCardGame";
 import { useAuth } from "../../hooks/useAuth";
+import { useAdmin } from "../../context/AdminContext";
 import { canTarget, effectiveDistance, getWeaponRange } from "../../utils/games/bangDeckBuilder";
 import {
   CARD_NAME, CARD_DESC, SUIT_SYMBOL, SUIT_COLOR,
@@ -438,7 +439,8 @@ function RoleBadge({
 
 function PlayerPanel({
   player, isCurrentTurn, isMe, cardCount, equipment, aliveIdx, totalAlive,
-  myEquip, myIdx, myCharacter, isSelectable, isSelected, isUnderAttack, lifeEffect, onSelect, seatNumber,
+  myEquip, myIdx, myCharacter, isSelectable, isSelected, isUnderAttack, lifeEffect,
+  revealRole, onSelect, seatNumber,
 }: {
   player: BangPlayer;
   isCurrentTurn: boolean;
@@ -454,6 +456,7 @@ function PlayerPanel({
   isSelected: boolean;
   isUnderAttack: boolean;
   lifeEffect?: "damage" | "heal";
+  revealRole: boolean;
   onSelect: () => void;
   seatNumber?: number;
 }) {
@@ -514,10 +517,14 @@ function PlayerPanel({
         <div className="min-w-0">
           <p className="text-xs font-extrabold text-gray-800 truncate">{player.name}</p>
           {isMe && <span className="text-[9px] bg-[#1259AA]/10 text-[#1259AA] font-bold px-1 py-0.5 rounded-full">나</span>}
-          {(player.role === "sheriff" || eliminated) && player.role && (
+          {(revealRole || player.role === "sheriff" || eliminated) && player.role && (
             <RoleBadge
               role={player.role}
-              className="mt-0.5 block text-[9px] font-bold text-amber-700"
+              className={`mt-0.5 text-[9px] font-bold ${
+                revealRole && player.role !== "sheriff" && !eliminated
+                  ? "rounded-full bg-fuchsia-100 px-1.5 py-0.5 text-fuchsia-700"
+                  : "block text-amber-700"
+              }`}
             />
           )}
         </div>
@@ -683,12 +690,15 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [showCardGuide, setShowCardGuide] = useState(false);
+  const [adminRolesVisible, setAdminRolesVisible] = useState(false);
+  const [adminRoleCheckPending, setAdminRoleCheckPending] = useState(false);
   const [effectQueue, setEffectQueue] = useState<BangEffectEvent[]>([]);
   const [visibleEffect, setVisibleEffect] = useState<BangEffectEvent | null>(null);
   const chatListRef = useRef<HTMLDivElement>(null);
   const gameLogRef = useRef<HTMLDivElement>(null);
   const seenEffectIdsRef = useRef<Set<string>>(new Set());
   const navigate = useNavigate();
+  const { isAdmin, login: adminLogin, logout: adminLogout, request: adminRequest } = useAdmin();
   const game = useBangCardGame(initialRoom);
   const { room, getHand, getEquip, getAliveOrder } = game;
   const state = room.cardState;
@@ -874,6 +884,44 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
     toast.success("새로고침!");
   };
 
+  const handleAdminRoleToggle = async () => {
+    if (adminRolesVisible) {
+      setAdminRolesVisible(false);
+      toast.info("관리자 직업 공개를 종료했습니다.");
+      return;
+    }
+
+    setAdminRoleCheckPending(true);
+    try {
+      let verified = false;
+
+      if (isAdmin) {
+        try {
+          await adminRequest("verify");
+          verified = true;
+        } catch {
+          adminLogout();
+        }
+      }
+
+      if (!verified) {
+        const password = window.prompt("모든 직업을 보려면 관리자 비밀번호를 입력하세요.");
+        if (!password) return;
+        verified = await adminLogin(password);
+      }
+
+      if (!verified) {
+        toast.error("관리자 비밀번호가 올바르지 않습니다.");
+        return;
+      }
+
+      setAdminRolesVisible(true);
+      toast.success("관리자 치트 활성화: 모든 직업을 표시합니다.");
+    } finally {
+      setAdminRoleCheckPending(false);
+    }
+  };
+
   const handleSendChat = async () => {
     if (!myId || !me || !chatInput.trim()) return;
     const rawMessage = chatInput.trim().slice(0, 200);
@@ -997,8 +1045,30 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
           <ChevronLeft className="w-5 h-5" />
         </Link>
         <span className="text-amber-200 font-extrabold text-sm flex-1 truncate">{room.title}</span>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-amber-400">드로우 파일: {state.drawPile.length}장</span>
+        <div className="flex items-center gap-1.5">
+          <span className="hidden text-xs text-amber-400 sm:inline">드로우 파일: {state.drawPile.length}장</span>
+          <button
+            onClick={() => void handleAdminRoleToggle()}
+            disabled={adminRoleCheckPending}
+            aria-label={adminRolesVisible ? "관리자 직업 공개 끄기" : "관리자 비밀번호로 모든 직업 보기"}
+            title={adminRolesVisible ? "모든 직업 숨기기" : "관리자 비밀번호로 모든 직업 보기"}
+            className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+              adminRolesVisible
+                ? "border-fuchsia-400/70 bg-fuchsia-500/20 text-fuchsia-200 hover:bg-fuchsia-500/30"
+                : "border-amber-700/60 text-amber-200 hover:bg-amber-800"
+            }`}
+          >
+            {adminRoleCheckPending ? (
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+            ) : adminRolesVisible ? (
+              <EyeOff className="h-3.5 w-3.5" />
+            ) : (
+              <ShieldCheck className="h-3.5 w-3.5" />
+            )}
+            <span className="hidden sm:inline">
+              {adminRolesVisible ? "직업 숨기기" : "관리자 직업 보기"}
+            </span>
+          </button>
           <button
             onClick={() => setShowCardGuide(true)}
             className="flex items-center gap-1 rounded-lg border border-amber-700/60 px-2 py-1 text-[11px] font-bold text-amber-200 hover:bg-amber-800"
@@ -1034,6 +1104,13 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
           {isMyTurn && <span className="ml-1 bg-white text-amber-700 px-1.5 py-0.5 rounded-full text-[10px]">내 턴!</span>}
         </span>
       </div>
+
+      {adminRolesVisible && (
+        <div className="flex items-center justify-center gap-2 border-b border-fuchsia-300/30 bg-fuchsia-700 px-4 py-2 text-xs font-extrabold text-white">
+          <ShieldCheck className="h-4 w-4" />
+          관리자 치트 활성화 · 모든 플레이어의 직업이 표시됩니다
+        </div>
+      )}
 
       {/* Pending action banner */}
       {iNeedToRespond && (
@@ -1152,6 +1229,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
                   isSelected={selectedTarget === player.studentId}
                   isUnderAttack={pending?.type === "bang_response" && pending.targetId === player.studentId}
                   lifeEffect={getPlayerLifeEffect(player.studentId)}
+                  revealRole={adminRolesVisible}
                   onSelect={() => handlePlayerSelect(player.studentId)}
                   seatNumber={index + 1}
                 />
@@ -1179,6 +1257,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
               isSelected={selectedTarget === player.studentId}
               isUnderAttack={pending?.type === "bang_response" && pending.targetId === player.studentId}
               lifeEffect={getPlayerLifeEffect(player.studentId)}
+              revealRole={adminRolesVisible}
               onSelect={() => handlePlayerSelect(player.studentId)}
               seatNumber={index + 1}
             />
