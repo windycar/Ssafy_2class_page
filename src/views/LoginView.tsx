@@ -9,7 +9,7 @@ export default function LoginView() {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: string })?.from ?? "/games";
+  const from = (location.state as { from?: string })?.from ?? "/study";
 
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<AuthUser | null>(null);
@@ -38,12 +38,12 @@ export default function LoginView() {
           <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mx-auto mb-3">
             <span className="text-white font-black text-xl">S</span>
           </div>
-          <h1 className="text-xl font-extrabold text-white">🎮 게임 참여</h1>
-          <p className="text-blue-200 text-sm mt-1">게임에 참여할 이름을 선택하세요</p>
+          <h1 className="text-xl font-extrabold text-white">클래스 로그인</h1>
+          <p className="text-blue-200 text-sm mt-1">게임과 학습 기록에 사용할 이름을 선택하세요</p>
         </div>
 
         <div className="p-6 space-y-4">
-          <p className="text-sm text-gray-500 text-center">본인의 이름을 선택하면 게임방에 참여할 수 있어요.</p>
+          <p className="text-sm text-gray-500 text-center">본인의 이름으로 게임에 참여하고 학습 기록을 저장할 수 있어요.</p>
 
           {/* Search */}
           <div className="relative">

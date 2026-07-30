@@ -43,7 +43,7 @@ export function AppHeader() {
 
   return (
     <header className="bg-[#fbfdfc]/95 backdrop-blur border-b border-[#1259AA]/10 sticky top-0 z-30 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-6">
+      <div className="max-w-[90rem] mx-auto px-3 sm:px-4 xl:px-6 h-16 flex items-center gap-3 xl:gap-6">
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 flex-shrink-0 group">
@@ -71,7 +71,7 @@ export function AppHeader() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                className={`relative flex items-center gap-1.5 whitespace-nowrap px-2 py-2 xl:px-3 text-[13px] xl:text-sm rounded-xl font-semibold transition-all ${
                   active
                     ? "text-[#1259AA] bg-[#1259AA]/8"
                     : "text-gray-500 hover:text-[#1259AA] hover:bg-[#1259AA]/5"
@@ -90,7 +90,7 @@ export function AppHeader() {
         {/* Right */}
         <div className="ml-auto flex items-center gap-2">
           {/* 교육생 배지 */}
-          <div className="hidden sm:flex items-center gap-1.5 bg-[#1259AA]/8 text-[#1259AA] text-xs font-bold px-3 py-1.5 rounded-full border border-[#1259AA]/20">
+          <div className="hidden 2xl:flex items-center gap-1.5 bg-[#1259AA]/8 text-[#1259AA] text-xs font-bold px-3 py-1.5 rounded-full border border-[#1259AA]/20">
             <Users className="w-3.5 h-3.5" />
             {TOTAL_STUDENTS}명
           </div>
@@ -108,7 +108,7 @@ export function AppHeader() {
               <button
                 onClick={() => setProfileOpen((open) => !open)}
                 className="flex items-center gap-2 p-1 sm:pr-2 rounded-xl hover:bg-[#1259AA]/5 transition-colors"
-                aria-label="게임 사용자 메뉴"
+                aria-label="사용자 메뉴"
               >
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-700 flex items-center justify-center text-white text-xs font-extrabold">
                   {currentUser.name[0]}
@@ -127,7 +127,7 @@ export function AppHeader() {
                     onClick={() => {
                       changeUser();
                       setProfileOpen(false);
-                      navigate("/game-login");
+                      navigate("/login");
                     }}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
                   >
@@ -142,17 +142,17 @@ export function AppHeader() {
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
-                    게임 로그아웃
+                    로그아웃
                   </button>
                 </div>
               )}
             </div>
           ) : (
             <Link
-              to="/game-login"
-              className="hidden xl:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+              to="/login"
+              className="hidden 2xl:flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
             >
-              🎮 게임 참여
+              로그인
             </Link>
           )}
 
@@ -208,16 +208,16 @@ export function AppHeader() {
                 className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50"
               >
                 <LogOut className="w-4 h-4" />
-                게임 로그아웃
+                로그아웃
               </button>
             </div>
           ) : (
             <Link
-              to="/game-login"
+              to="/login"
               onClick={() => setMobileOpen(false)}
               className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold text-amber-700 hover:bg-amber-50"
             >
-              🎮 게임 참여하기
+              로그인하기
             </Link>
           )}
         </div>
