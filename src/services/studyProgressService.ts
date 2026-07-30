@@ -5,6 +5,7 @@ import type {
   StudyCategory,
   StudyDifficulty,
   StudyProgress,
+  StudyQuestionType,
 } from "../types/study";
 
 type StudyAttemptRow = {
@@ -13,7 +14,9 @@ type StudyAttemptRow = {
   question_id: string;
   difficulty: StudyDifficulty;
   category: StudyCategory;
-  selected_answer: number;
+  question_type: StudyQuestionType | null;
+  selected_answer: number | null;
+  response_text: string | null;
   correct: boolean;
   answered_at: string;
 };
@@ -24,7 +27,9 @@ function toAttempt(row: StudyAttemptRow): StudyAttempt {
     questionId: row.question_id,
     difficulty: row.difficulty,
     category: row.category,
+    questionType: row.question_type ?? "multiple-choice",
     selectedAnswer: row.selected_answer,
+    responseText: row.response_text ?? undefined,
     correct: row.correct,
     answeredAt: row.answered_at,
   };
@@ -37,7 +42,9 @@ function toRow(studentId: number, attempt: StudyAttempt) {
     question_id: attempt.questionId,
     difficulty: attempt.difficulty,
     category: attempt.category,
+    question_type: attempt.questionType ?? "multiple-choice",
     selected_answer: attempt.selectedAnswer,
+    response_text: attempt.responseText ?? null,
     correct: attempt.correct,
     answered_at: attempt.answeredAt,
   };

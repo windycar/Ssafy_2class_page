@@ -1,13 +1,14 @@
 import { Link } from "react-router";
 import { Shuffle, Coffee, Camera, Shield, Gamepad2, ArrowRight, GitBranch, GitCommit, Terminal, BookOpenCheck } from "lucide-react";
+import { TOTAL_STUDENTS } from "../config/constants";
 
 const QUICK_MENU = [
   {
     title: "랜덤 팀 편성",
-    description: "21명을 공정하게 무작위 팀으로 편성해요.",
+    description: `${TOTAL_STUDENTS}명을 공정하게 무작위 팀으로 편성해요.`,
     icon: Shuffle,
     path: "/teams",
-    badge: "3명씩 7팀",
+    badge: `${TOTAL_STUDENTS}명 · 7팀`,
     buttonLabel: "팀 만들기",
     colorBg: "bg-[#1259AA]/5",
     colorBorder: "border-[#1259AA]/20",
@@ -74,10 +75,10 @@ const QUICK_MENU = [
   },
   {
     title: "공부 문제",
-    description: "Python 문제를 풀고 내 약점과 오답을 분석해요.",
+    description: "Python 실전형 문제를 풀고 내 약점과 오답을 분석해요.",
     icon: BookOpenCheck,
     path: "/study",
-    badge: "300문제",
+    badge: "400문제",
     buttonLabel: "학습 시작",
     colorBg: "bg-indigo-50",
     colorBorder: "border-indigo-200",
@@ -165,7 +166,7 @@ export default function HomeView() {
               </span>
               <span className="flex items-center gap-1.5">
                 <GitCommit className="w-3.5 h-3.5 text-emerald-400" />
-                교육생 21명
+                교육생 {TOTAL_STUDENTS}명
               </span>
             </div>
           </div>
@@ -243,7 +244,7 @@ export default function HomeView() {
             빠른 메뉴
           </h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {QUICK_MENU.map((item) => {
             const Icon = item.icon;
             return (

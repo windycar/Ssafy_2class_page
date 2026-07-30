@@ -5,6 +5,7 @@ import {
   loadStudyProgress,
   saveStudyAttempt,
 } from "../services/studyProgressService";
+import { gradePythonResponse } from "../utils/studyGrading";
 import type { PythonQuestion, StudyAttempt, StudyCategory } from "../types/study";
 
 export type StudySyncState = "loading" | "synced" | "local";
@@ -44,15 +45,21 @@ export function useStudyProgress() {
     };
   }, [currentUser, userId]);
 
-  const recordAnswer = (question: PythonQuestion, selectedAnswer: number) => {
-    if (!currentUser) return;
+  const recordAnswer = (
+    question: PythonQuestion,
+    response: number | string,
+  ) => {
+    const grade = gradePythonResponse(question, response);
+    if (!currentUser) return grade.correct;
     const attempt: StudyAttempt = {
       id: `${Date.now()}-${question.id}-${Math.random().toString(36).slice(2, 7)}`,
       questionId: question.id,
       difficulty: question.difficulty,
       category: question.category,
-      selectedAnswer,
-      correct: selectedAnswer === question.answer,
+      questionType: question.questionType,
+      selectedAnswer: typeof response === "number" ? response : null,
+      responseText: typeof response === "string" ? response : undefined,
+      correct: grade.correct,
       answeredAt: new Date().toISOString(),
     };
     setProgress(studyProgressStorage.add(currentUser.id, attempt));
@@ -60,6 +67,7 @@ export function useStudyProgress() {
     saveStudyAttempt(currentUser.id)
       .then((saved) => setSyncState(saved ? "synced" : "local"))
       .catch(() => setSyncState("local"));
+    return grade.correct;
   };
 
   const summary = useMemo(() => {

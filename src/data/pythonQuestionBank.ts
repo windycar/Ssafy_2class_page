@@ -2,7 +2,9 @@ import type {
   PythonQuestion,
   StudyCategory,
   StudyDifficulty,
+  StudyQuestionType,
 } from "../types/study";
+import { extremePythonQuestions } from "./extremePythonQuestions";
 
 export const STUDY_CATEGORY_META: Record<
   StudyCategory,
@@ -52,6 +54,30 @@ export const STUDY_CATEGORY_META: Record<
   },
 };
 
+export const STUDY_QUESTION_TYPE_META: Record<
+  StudyQuestionType,
+  { label: string; shortLabel: string; description: string; color: string }
+> = {
+  "multiple-choice": {
+    label: "객관식 4지선다",
+    shortLabel: "객관식",
+    description: "보기에서 정답 하나를 선택합니다.",
+    color: "#4d6ff7",
+  },
+  "short-answer": {
+    label: "단답형",
+    shortLabel: "단답형",
+    description: "대·소문자와 기호까지 정확히 입력합니다.",
+    color: "#0f9f7a",
+  },
+  essay: {
+    label: "서술형",
+    shortLabel: "서술형",
+    description: "결과와 이유를 100자 이상 서술합니다.",
+    color: "#d97706",
+  },
+};
+
 export const DIFFICULTY_META: Record<
   StudyDifficulty,
   {
@@ -87,14 +113,50 @@ export const DIFFICULTY_META: Record<
     gradient: "from-violet-600 to-fuchsia-600",
     expectedMinutes: "문제당 약 90초",
   },
+  extreme: {
+    label: "최고 난이도",
+    eyebrow: "PYTHON EXTREME",
+    description: "메모리, MRO, 디스크립터와 메타프로그래밍까지 도전해요.",
+    color: "#e11d48",
+    gradient: "from-rose-600 to-red-700",
+    expectedMinutes: "문제당 약 2분",
+  },
 };
 
-type QuestionDraft = Omit<PythonQuestion, "id" | "difficulty" | "options" | "answer"> & {
+type QuestionDraft = Omit<
+  PythonQuestion,
+  | "id"
+  | "difficulty"
+  | "questionType"
+  | "options"
+  | "answer"
+  | "acceptedAnswers"
+  | "modelAnswer"
+  | "rubricKeywords"
+  | "minLength"
+> & {
   correct: string;
   distractors: string[];
 };
 
 type QuestionBuilder = (variant: number) => QuestionDraft;
+
+const ESSAY_RUBRIC_KEYWORDS: Record<StudyCategory, string[]> = {
+  operators: ["연산", "우선순위", "형변환"],
+  sequences: ["순서", "인덱스", "슬라이싱"],
+  control: ["조건", "반복", "실행"],
+  functions: ["함수", "인자", "반환"],
+  structures: ["자료구조", "요소", "참조"],
+  oop: ["클래스", "객체", "메서드"],
+  exceptions: ["예외", "오류", "발생"],
+};
+
+function getQuestionType(index: number): StudyQuestionType {
+  const slot = index % 20;
+  if (slot < 12) return "multiple-choice";
+  if (slot < 17) return "short-answer";
+  return "essay";
+}
 
 function withOptions(
   difficulty: StudyDifficulty,
@@ -108,12 +170,31 @@ function withOptions(
   const base = unique.slice(0, 4);
   const shift = index % base.length;
   const options = [...base.slice(shift), ...base.slice(0, shift)];
+  const questionType = getQuestionType(index);
+  const rubricKeywords =
+    questionType === "essay"
+      ? ESSAY_RUBRIC_KEYWORDS[draft.category]
+      : undefined;
+  const expectedResult =
+    draft.correct === "출력 없음"
+      ? "출력되는 내용은 없습니다"
+      : `정답 또는 출력 결과는 ${draft.correct}입니다`;
+  const modelAnswer =
+    questionType === "essay"
+      ? `${expectedResult}. ${draft.explanation} 따라서 답안에는 코드가 평가되는 순서와 값의 변화를 구체적으로 설명하고, 사용된 파이썬 개념이 최종 결과에 어떤 영향을 주는지 함께 서술해야 합니다. 핵심 개념어는 ${rubricKeywords?.join(", ")}입니다.`
+      : undefined;
   return {
     ...draft,
     id: `${difficulty}-${String(index + 1).padStart(3, "0")}`,
     difficulty,
+    questionType,
     options,
     answer: options.indexOf(draft.correct),
+    acceptedAnswers:
+      questionType === "multiple-choice" ? undefined : [draft.correct],
+    modelAnswer,
+    rubricKeywords,
+    minLength: questionType === "essay" ? 100 : undefined,
   };
 }
 
@@ -570,10 +651,47 @@ function buildDifficulty(
   });
 }
 
+type ExtremeQuestionDraft = {
+  category: string;
+  prompt: string;
+  code?: string;
+  correct: string;
+  distractors: string[] | string;
+  explanation: string;
+  hint: string;
+};
+
+const EXTREME_CATEGORY_MAP: Record<string, StudyCategory> = {
+  memory: "structures",
+  scope: "functions",
+  oop: "oop",
+  exception: "exceptions",
+  datastructures: "structures",
+  generators: "sequences",
+  logic: "operators",
+  functions: "functions",
+  meta: "oop",
+  idioms: "control",
+};
+
+function buildExtremeDifficulty(): PythonQuestion[] {
+  return extremePythonQuestions.map((builder, index) => {
+    const generated = builder(7) as ExtremeQuestionDraft;
+    return withOptions("extreme", index, {
+      ...generated,
+      category: EXTREME_CATEGORY_MAP[generated.category] ?? "functions",
+      distractors: Array.isArray(generated.distractors)
+        ? generated.distractors
+        : [generated.distractors],
+    });
+  });
+}
+
 export const PYTHON_QUESTION_BANK: Record<StudyDifficulty, PythonQuestion[]> = {
   easy: buildDifficulty("easy", easyBuilders),
   medium: buildDifficulty("medium", mediumBuilders),
   hard: buildDifficulty("hard", hardBuilders),
+  extreme: buildExtremeDifficulty(),
 };
 
 export const ALL_PYTHON_QUESTIONS = Object.values(PYTHON_QUESTION_BANK).flat();

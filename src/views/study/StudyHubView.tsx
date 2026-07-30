@@ -46,7 +46,7 @@ export default function StudyHubView() {
             실력을 만듭니다.
           </h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-blue-100/75 sm:text-base">
-            난이도를 고르고 바로 도전하세요. 답을 선택하는 순간 정답과 해설을 확인하고,
+            객관식·단답형·서술형을 실제 시험처럼 풀어보세요. 제출 즉시 정답과 해설을 확인하고,
             틀린 유형은 자동으로 약점 리포트에 모입니다.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
@@ -106,14 +106,14 @@ export default function StudyHubView() {
                   <Braces className="h-6 w-6" />
                 </span>
                 <span className="rounded-full bg-emerald-300/20 px-3 py-1 text-[11px] font-black text-emerald-100">
-                  300문제
+                  400문제
                 </span>
               </div>
               <div className="mt-auto">
                 <p className="text-xs font-black tracking-[0.18em] text-blue-100/75">AVAILABLE NOW</p>
                 <h3 className="mt-1 text-3xl font-black">Python</h3>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-blue-100/80">
-                  기초 문법부터 객체 모델까지, 난이도별 100문제로 단계적으로 훈련합니다.
+                  객관식·단답형·서술형이 섞인 4단계 400문제로 실전 감각을 훈련합니다.
                 </p>
                 <span className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold">
                   난이도 선택하기

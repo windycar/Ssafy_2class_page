@@ -20,13 +20,14 @@ import {
   DIFFICULTY_META,
   getPythonQuestion,
   STUDY_CATEGORY_META,
+  STUDY_QUESTION_TYPE_META,
 } from "../../data/pythonQuestionBank";
 import { useAuth } from "../../hooks/useAuth";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
 import type { StudyCategory, StudyDifficulty } from "../../types/study";
 
 const CATEGORIES = Object.keys(STUDY_CATEGORY_META) as StudyCategory[];
-const DIFFICULTIES: StudyDifficulty[] = ["easy", "medium", "hard"];
+const DIFFICULTIES: StudyDifficulty[] = ["easy", "medium", "hard", "extreme"];
 
 export default function StudyReportView() {
   const { currentUser } = useAuth();
@@ -282,6 +283,25 @@ export default function StudyReportView() {
                         </span>
                         <span className="text-[10px] font-bold text-slate-300">
                           {DIFFICULTY_META[attempt.difficulty].label}
+                        </span>
+                        <span
+                          className="text-[10px] font-black"
+                          style={{
+                            color:
+                              STUDY_QUESTION_TYPE_META[
+                                attempt.questionType ??
+                                  question?.questionType ??
+                                  "multiple-choice"
+                              ].color,
+                          }}
+                        >
+                          {
+                            STUDY_QUESTION_TYPE_META[
+                              attempt.questionType ??
+                                question?.questionType ??
+                                "multiple-choice"
+                            ].shortLabel
+                          }
                         </span>
                       </div>
                       <p className="mt-1 truncate text-sm font-bold text-slate-700">{question?.prompt}</p>

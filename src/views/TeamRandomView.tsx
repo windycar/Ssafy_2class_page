@@ -150,11 +150,11 @@ export default function TeamRandomView() {
         </div>
         <div>
           <h1 className="text-xl font-extrabold text-gray-900">랜덤 팀 편성</h1>
-          <p className="text-sm text-gray-500">21명의 교육생을 공정하게 랜덤으로 편성해 보세요.</p>
+          <p className="text-sm text-gray-500">{STUDENTS.length}명의 교육생을 공정하게 랜덤으로 편성해 보세요.</p>
         </div>
         <span className="ml-auto flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-200">
           <Users className="w-3.5 h-3.5" />
-          교육생 21명
+          교육생 {STUDENTS.length}명
         </span>
       </div>
 

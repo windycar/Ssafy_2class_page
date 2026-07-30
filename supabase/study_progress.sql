@@ -5,14 +5,36 @@ create table if not exists public.study_attempts (
   student_id integer not null check (student_id > 0),
   auth_user_id uuid references auth.users(id) on delete set null default auth.uid(),
   question_id text not null,
-  difficulty text not null check (difficulty in ('easy', 'medium', 'hard')),
+  difficulty text not null check (difficulty in ('easy', 'medium', 'hard', 'extreme')),
   category text not null check (
     category in ('operators', 'sequences', 'control', 'functions', 'structures', 'oop', 'exceptions')
   ),
-  selected_answer smallint not null check (selected_answer between 0 and 3),
+  question_type text not null default 'multiple-choice' check (
+    question_type in ('multiple-choice', 'short-answer', 'essay')
+  ),
+  selected_answer smallint check (selected_answer between 0 and 3),
+  response_text text,
   correct boolean not null,
   answered_at timestamptz not null default now()
 );
+
+alter table public.study_attempts
+  add column if not exists question_type text not null default 'multiple-choice';
+alter table public.study_attempts
+  add column if not exists response_text text;
+alter table public.study_attempts
+  alter column selected_answer drop not null;
+alter table public.study_attempts
+  drop constraint if exists study_attempts_question_type_check;
+alter table public.study_attempts
+  add constraint study_attempts_question_type_check
+  check (question_type in ('multiple-choice', 'short-answer', 'essay'));
+
+alter table public.study_attempts
+  drop constraint if exists study_attempts_difficulty_check;
+alter table public.study_attempts
+  add constraint study_attempts_difficulty_check
+  check (difficulty in ('easy', 'medium', 'hard', 'extreme'));
 
 create index if not exists study_attempts_student_answered_idx
   on public.study_attempts (student_id, answered_at desc);
@@ -47,4 +69,3 @@ create policy "Class study attempt create"
   );
 
 grant select, insert on public.study_attempts to anon, authenticated;
-

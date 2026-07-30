@@ -7,6 +7,7 @@ import {
   Check,
   ChevronRight,
   Code2,
+  Flame,
   Gauge,
   Layers3,
   RotateCcw,
@@ -16,23 +17,54 @@ import {
   DIFFICULTY_META,
   PYTHON_QUESTION_BANK,
   STUDY_CATEGORY_META,
+  STUDY_QUESTION_TYPE_META,
 } from "../../data/pythonQuestionBank";
-import type { StudyCategory, StudyDifficulty } from "../../types/study";
+import { useStudyProgress } from "../../hooks/useStudyProgress";
+import type {
+  StudyCategory,
+  StudyDifficulty,
+  StudyQuestionType,
+} from "../../types/study";
 
 const CATEGORIES = Object.keys(STUDY_CATEGORY_META) as StudyCategory[];
 const DIFFICULTIES = Object.keys(DIFFICULTY_META) as StudyDifficulty[];
+const QUESTION_TYPES = Object.keys(
+  STUDY_QUESTION_TYPE_META,
+) as StudyQuestionType[];
 
 export default function PythonStudyView() {
   const navigate = useNavigate();
+  const { progress, syncState } = useStudyProgress();
   const [difficulty, setDifficulty] = useState<StudyDifficulty>("easy");
   const [selectedCategories, setSelectedCategories] = useState<StudyCategory[]>(CATEGORIES);
+  const completedQuestionIds = useMemo(
+    () => new Set(progress.attempts.map((attempt) => attempt.questionId)),
+    [progress.attempts],
+  );
 
-  const questionCount = useMemo(
+  const selectedQuestions = useMemo(
     () =>
       PYTHON_QUESTION_BANK[difficulty].filter((question) =>
         selectedCategories.includes(question.category),
-      ).length,
+      ),
     [difficulty, selectedCategories],
+  );
+  const remainingQuestions = useMemo(
+    () =>
+      selectedQuestions.filter(
+        (question) => !completedQuestionIds.has(question.id),
+      ),
+    [completedQuestionIds, selectedQuestions],
+  );
+  const questionCount = remainingQuestions.length;
+  const questionTypeCounts = QUESTION_TYPES.reduce<Record<StudyQuestionType, number>>(
+    (counts, questionType) => {
+      counts[questionType] = remainingQuestions.filter(
+        (question) => question.questionType === questionType,
+      ).length;
+      return counts;
+    },
+    { "multiple-choice": 0, "short-answer": 0, essay: 0 },
   );
 
   const toggleCategory = (category: StudyCategory) => {
@@ -44,7 +76,7 @@ export default function PythonStudyView() {
   };
 
   const startQuiz = () => {
-    if (!questionCount) return;
+    if (!questionCount || syncState === "loading") return;
     const categories = selectedCategories.join(",");
     navigate(`/study/python/quiz?difficulty=${difficulty}&categories=${categories}`);
   };
@@ -76,7 +108,7 @@ export default function PythonStudyView() {
             </p>
             <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">난이도와 출제 범위를 선택하세요</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-indigo-100/70">
-              모든 문제는 답을 고르는 즉시 결과와 해설을 보여줍니다. 학습 기록은 로그인한 내 이름에 저장됩니다.
+              이미 제출한 문제는 자동으로 제외하고, 남은 문제는 시작할 때마다 무작위 순서로 출제합니다.
             </p>
           </div>
           <div className="hidden h-24 w-24 items-center justify-center rounded-[1.75rem] border border-white/15 bg-white/10 md:flex">
@@ -94,10 +126,13 @@ export default function PythonStudyView() {
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {DIFFICULTIES.map((level) => {
             const meta = DIFFICULTY_META[level];
             const active = difficulty === level;
+            const remainingCount = PYTHON_QUESTION_BANK[level].filter(
+              (question) => !completedQuestionIds.has(question.id),
+            ).length;
             return (
               <button
                 key={level}
@@ -111,7 +146,15 @@ export default function PythonStudyView() {
               >
                 <div className="flex items-start justify-between">
                   <span className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${meta.gradient} text-white shadow-sm`}>
-                    {level === "easy" ? <Sparkles className="h-5 w-5" /> : level === "medium" ? <Layers3 className="h-5 w-5" /> : <Gauge className="h-5 w-5" />}
+                    {level === "easy" ? (
+                      <Sparkles className="h-5 w-5" />
+                    ) : level === "medium" ? (
+                      <Layers3 className="h-5 w-5" />
+                    ) : level === "hard" ? (
+                      <Gauge className="h-5 w-5" />
+                    ) : (
+                      <Flame className="h-5 w-5" />
+                    )}
                   </span>
                   <span className={`flex h-6 w-6 items-center justify-center rounded-full border ${active ? "border-indigo-500 bg-indigo-500 text-white" : "border-slate-200 text-transparent"}`}>
                     <Check className="h-3.5 w-3.5" />
@@ -121,7 +164,7 @@ export default function PythonStudyView() {
                 <h3 className="mt-1 text-xl font-black text-slate-900">{meta.label}</h3>
                 <p className="mt-1.5 text-xs leading-5 text-slate-500">{meta.description}</p>
                 <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-[11px] font-bold text-slate-400">
-                  <span>100문제</span>
+                  <span>미풀이 {remainingCount} / 100</span>
                   <span>{meta.expectedMinutes}</span>
                 </div>
               </button>
@@ -156,8 +199,11 @@ export default function PythonStudyView() {
           {CATEGORIES.map((category) => {
             const meta = STUDY_CATEGORY_META[category];
             const selected = selectedCategories.includes(category);
-            const count = PYTHON_QUESTION_BANK[difficulty].filter(
+            const categoryQuestions = PYTHON_QUESTION_BANK[difficulty].filter(
               (question) => question.category === category,
+            );
+            const count = categoryQuestions.filter(
+              (question) => !completedQuestionIds.has(question.id),
             ).length;
             return (
               <button
@@ -180,8 +226,46 @@ export default function PythonStudyView() {
                   <span className="block truncate text-sm font-black text-slate-800">{meta.label}</span>
                   <span className="block truncate text-[10px] text-slate-400">{meta.description}</span>
                 </span>
-                <span className="shrink-0 text-[10px] font-black text-slate-400">{count}문제</span>
+                <span className="shrink-0 text-[10px] font-black text-slate-400">
+                  미풀이 {count}
+                </span>
               </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+        <div className="mb-5 flex items-center gap-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">03</span>
+          <div>
+            <h2 className="font-black text-slate-900">실전 문제 유형</h2>
+            <p className="text-xs text-slate-400">남은 세 가지 문제 유형을 무작위 순서로 섞어 출제합니다</p>
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {QUESTION_TYPES.map((questionType) => {
+            const typeMeta = STUDY_QUESTION_TYPE_META[questionType];
+            return (
+              <div
+                key={questionType}
+                className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span
+                    className="rounded-full px-2.5 py-1 text-[10px] font-black text-white"
+                    style={{ backgroundColor: typeMeta.color }}
+                  >
+                    {typeMeta.shortLabel}
+                  </span>
+                  <strong className="text-xl font-black text-slate-900">
+                    {questionTypeCounts[questionType]}문제
+                  </strong>
+                </div>
+                <p className="mt-3 text-xs leading-5 text-slate-500">
+                  {typeMeta.description}
+                </p>
+              </div>
             );
           })}
         </div>
@@ -189,9 +273,12 @@ export default function PythonStudyView() {
 
       <section className="sticky bottom-3 z-20 flex flex-col gap-3 rounded-2xl border border-indigo-100 bg-white/95 p-4 shadow-[0_18px_45px_rgba(37,54,110,0.18)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-bold text-slate-400">선택한 문제</p>
+          <p className="text-xs font-bold text-slate-400">
+            {syncState === "loading" ? "학습 기록 확인 중" : "선택한 미풀이 문제"}
+          </p>
           <p className="text-lg font-black text-slate-900">
-            {DIFFICULTY_META[difficulty].label} · {questionCount}문제
+            {DIFFICULTY_META[difficulty].label} ·{" "}
+            {syncState === "loading" ? "잠시만 기다려 주세요" : `${questionCount}문제`}
           </p>
         </div>
         <div className="flex gap-2">
@@ -205,14 +292,18 @@ export default function PythonStudyView() {
           <button
             type="button"
             onClick={startQuiz}
-            disabled={!questionCount}
+            disabled={!questionCount || syncState === "loading"}
             className="inline-flex min-w-[170px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-indigo-200 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            문제 풀기 <ChevronRight className="h-4 w-4" />
+            {syncState === "loading"
+              ? "기록 확인 중"
+              : questionCount
+                ? "랜덤으로 문제 풀기"
+                : "선택 범위 완료"}{" "}
+            <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </section>
     </div>
   );
 }
-
