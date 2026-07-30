@@ -537,7 +537,7 @@ export default function PythonQuizView() {
                       : current.questionType === "multiple-choice"
                         ? `정답은 ${current.answer === null ? "-" : ANSWER_LABELS[current.answer]}입니다.`
                         : current.questionType === "short-answer"
-                          ? `정답은 ${current.acceptedAnswers?.[0] ?? current.options[current.answer]}입니다.`
+                          ? `정답은 ${current.acceptedAnswers?.[0] ?? "-"}입니다.`
                           : "정답 결과 또는 핵심 원인 설명을 보완해 주세요."}
                   </p>
                   <p className="mt-1.5 text-sm leading-6 text-slate-600">{current.explanation}</p>

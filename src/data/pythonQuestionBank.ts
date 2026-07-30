@@ -154,10 +154,19 @@ const ESSAY_RUBRIC_KEYWORDS: Record<StudyCategory, string[]> = {
 };
 
 function getQuestionType(typeSeed: number): StudyQuestionType {
-  const slot = typeSeed % 10;
-  if (slot < 6) return "multiple-choice";
-  if (slot < 8) return "short-answer";
+  const slot = typeSeed % 20;
+  if (slot < 12) return "multiple-choice";
+  if (slot < 17) return "short-answer";
   return "essay";
+}
+
+function removeAnswerOnlyInstruction(prompt: string) {
+  return prompt
+    .replace(
+      /\s*(?:정답|답|값|결과)(?:을|를)?\s*(?:입력|작성)하(?:시오|세요)\.?\s*$/u,
+      "",
+    )
+    .trim();
 }
 
 function getPromptForType(
@@ -165,10 +174,12 @@ function getPromptForType(
   questionType: StudyQuestionType,
 ) {
   if (questionType === "multiple-choice") return prompt;
+  const promptWithoutAnswerOnlyInstruction =
+    removeAnswerOnlyInstruction(prompt);
   if (questionType === "short-answer") {
-    return `${prompt} 선택지 없이 최종 결과를 출력 형식 그대로 입력하세요.`;
+    return `${promptWithoutAnswerOnlyInstruction}\n정답만 출력 형식 그대로 입력하세요.`;
   }
-  return `${prompt} 결과만 적지 말고, 코드의 실행 순서와 그렇게 되는 이유를 100자 이상 서술하세요.`;
+  return `${promptWithoutAnswerOnlyInstruction}\n정답 또는 출력 결과를 먼저 밝히고, 코드의 실행 순서와 그 결과가 나온 이유를 100자 이상 서술하세요.`;
 }
 
 function withOptions(
@@ -681,7 +692,7 @@ function buildDifficulty(
       index,
       builder(variant),
       `${difficulty}-concept-${String(builderIndex + 1).padStart(2, "0")}`,
-      variant,
+      index,
     );
   });
 }
