@@ -6,8 +6,8 @@ import {
   Braces,
   CheckCircle2,
   Clock3,
-  Code2,
-  Database,
+  BrainCircuit,
+  Globe2,
   Lock,
   Sparkles,
   Target,
@@ -50,12 +50,6 @@ export default function StudyHubView() {
             틀린 유형은 자동으로 약점 리포트에 모입니다.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link
-              to="/study/python"
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-[#223a98] shadow-lg shadow-black/10 transition hover:-translate-y-0.5"
-            >
-              Python 시작하기 <ArrowRight className="h-4 w-4" />
-            </Link>
             <Link
               to="/study/report"
               className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15"
@@ -130,16 +124,16 @@ export default function StudyHubView() {
           </Link>
 
           <LockedTrack
-            icon={<Code2 className="h-6 w-6" />}
-            title="JavaScript"
-            description="브라우저와 비동기 흐름을 익히는 트랙"
-            color="amber"
+            icon={<Globe2 className="h-6 w-6" />}
+            title="Web"
+            description="HTML, CSS와 웹 구조를 단계별로 익히는 트랙"
+            color="sky"
           />
           <LockedTrack
-            icon={<Database className="h-6 w-6" />}
-            title="SQL"
-            description="데이터 조회와 모델링을 익히는 트랙"
-            color="emerald"
+            icon={<BrainCircuit className="h-6 w-6" />}
+            title="AI Python"
+            description="Python으로 시작하는 AI와 데이터 활용 트랙"
+            color="violet"
           />
         </div>
       </section>
@@ -188,11 +182,11 @@ function LockedTrack({
   icon: React.ReactNode;
   title: string;
   description: string;
-  color: "amber" | "emerald";
+  color: "sky" | "violet";
 }) {
   const tones = {
-    amber: "bg-amber-50 text-amber-700",
-    emerald: "bg-emerald-50 text-emerald-700",
+    sky: "bg-sky-50 text-sky-700",
+    violet: "bg-violet-50 text-violet-700",
   };
   return (
     <div className="relative min-h-[240px] overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -210,4 +204,3 @@ function LockedTrack({
     </div>
   );
 }
-

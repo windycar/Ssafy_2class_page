@@ -17,6 +17,13 @@ The included storage policy allows public uploads for the class gallery. Add Sup
 
 The same SQL file creates the shared coffee orders, anonymous posts, and Bang game rooms. Run it again after pulling updates to add new tables safely.
 
+## Study progress sync
+
+For an existing Supabase project, run [`supabase/study_progress.sql`](./supabase/study_progress.sql) once in the Supabase SQL Editor.
+Python questions stay versioned in [`src/data/pythonQuestionBank.ts`](./src/data/pythonQuestionBank.ts), while user attempts are synchronized to the `study_attempts` table. The browser keeps a local pending queue and retries when Supabase becomes available.
+
+The current class-member selector is a lightweight profile switch, not secure authentication. The table includes an optional `auth_user_id` column so Supabase Auth and owner-only RLS can be enabled later without replacing the progress model.
+
 ## Bang board game
 
 Open **게임 → 뱅!** and select a class member profile. Game rooms are cached locally and synchronized through the Supabase `bang_rooms` table so classmates on different devices can join the same room.

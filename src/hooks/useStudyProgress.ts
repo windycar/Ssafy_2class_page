@@ -1,12 +1,48 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "./useAuth";
 import { studyProgressStorage } from "../services/storage/studyProgressStorage";
+import {
+  loadStudyProgress,
+  saveStudyAttempt,
+} from "../services/studyProgressService";
 import type { PythonQuestion, StudyAttempt, StudyCategory } from "../types/study";
+
+export type StudySyncState = "loading" | "synced" | "local";
 
 export function useStudyProgress() {
   const { currentUser } = useAuth();
   const userId = currentUser?.id ?? 0;
   const [progress, setProgress] = useState(() => studyProgressStorage.get(userId));
+  const [syncState, setSyncState] = useState<StudySyncState>("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    setProgress(studyProgressStorage.get(userId));
+
+    if (!currentUser) {
+      setSyncState("local");
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setSyncState("loading");
+    loadStudyProgress(currentUser.id)
+      .then((loaded) => {
+        if (cancelled) return;
+        setProgress(loaded);
+        setSyncState("synced");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setProgress(studyProgressStorage.get(currentUser.id));
+        setSyncState("local");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser, userId]);
 
   const recordAnswer = (question: PythonQuestion, selectedAnswer: number) => {
     if (!currentUser) return;
@@ -20,6 +56,10 @@ export function useStudyProgress() {
       answeredAt: new Date().toISOString(),
     };
     setProgress(studyProgressStorage.add(currentUser.id, attempt));
+    setSyncState("loading");
+    saveStudyAttempt(currentUser.id)
+      .then((saved) => setSyncState(saved ? "synced" : "local"))
+      .catch(() => setSyncState("local"));
   };
 
   const summary = useMemo(() => {
@@ -53,6 +93,5 @@ export function useStudyProgress() {
     };
   }, [progress]);
 
-  return { progress, summary, recordAnswer };
+  return { progress, summary, recordAnswer, syncState };
 }
-

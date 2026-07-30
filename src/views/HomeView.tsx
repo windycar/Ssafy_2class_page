@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Shuffle, Coffee, Camera, Shield, Gamepad2, ArrowRight, GitBranch, GitCommit, Terminal } from "lucide-react";
+import { Shuffle, Coffee, Camera, Shield, Gamepad2, ArrowRight, GitBranch, GitCommit, Terminal, BookOpenCheck } from "lucide-react";
 
 const QUICK_MENU = [
   {
@@ -71,6 +71,20 @@ const QUICK_MENU = [
     colorText: "text-orange-700",
     colorBtn: "bg-orange-500 hover:bg-orange-600 text-white",
     shadowColor: "shadow-orange-100",
+  },
+  {
+    title: "공부 문제",
+    description: "Python 문제를 풀고 내 약점과 오답을 분석해요.",
+    icon: BookOpenCheck,
+    path: "/study",
+    badge: "300문제",
+    buttonLabel: "학습 시작",
+    colorBg: "bg-indigo-50",
+    colorBorder: "border-indigo-200",
+    colorIcon: "bg-indigo-600",
+    colorText: "text-indigo-700",
+    colorBtn: "bg-indigo-600 hover:bg-indigo-700 text-white",
+    shadowColor: "shadow-indigo-100",
   },
 ];
 
@@ -229,7 +243,7 @@ export default function HomeView() {
             빠른 메뉴
           </h2>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4">
           {QUICK_MENU.map((item) => {
             const Icon = item.icon;
             return (

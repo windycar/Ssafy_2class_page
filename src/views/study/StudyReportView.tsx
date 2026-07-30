@@ -6,7 +6,10 @@ import {
   BookOpenCheck,
   BrainCircuit,
   CheckCircle2,
+  Cloud,
+  CloudOff,
   Clock3,
+  LoaderCircle,
   RotateCcw,
   Sparkles,
   Target,
@@ -27,7 +30,7 @@ const DIFFICULTIES: StudyDifficulty[] = ["easy", "medium", "hard"];
 
 export default function StudyReportView() {
   const { currentUser } = useAuth();
-  const { progress, summary } = useStudyProgress();
+  const { progress, summary, syncState } = useStudyProgress();
   const categoryRows = CATEGORIES.map((category) => {
     const stats = summary.byCategory[category];
     return {
@@ -94,6 +97,20 @@ export default function StudyReportView() {
               풀이 기록을 유형별로 비교해 지금 가장 먼저 복습할 영역을 알려드립니다.
               문제를 더 풀수록 분석은 정교해집니다.
             </p>
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-bold text-indigo-100">
+              {syncState === "synced" ? (
+                <Cloud className="h-3.5 w-3.5 text-emerald-300" />
+              ) : syncState === "loading" ? (
+                <LoaderCircle className="h-3.5 w-3.5 animate-spin text-blue-200" />
+              ) : (
+                <CloudOff className="h-3.5 w-3.5 text-amber-300" />
+              )}
+              {syncState === "synced"
+                ? "클라우드에 동기화됨"
+                : syncState === "loading"
+                  ? "학습 기록 동기화 중"
+                  : "로컬 임시 저장 · 연결 시 다시 동기화"}
+            </div>
           </div>
           <div className="flex h-28 w-28 flex-col items-center justify-center rounded-[2rem] border border-white/15 bg-white/10 backdrop-blur">
             <span className="text-3xl font-black">{summary.accuracy}%</span>
@@ -321,4 +338,3 @@ function ReportStat({
     </div>
   );
 }
-
