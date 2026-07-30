@@ -13,13 +13,14 @@ export type StudyCategory =
 
 export interface PythonQuestion {
   id: string;
+  conceptId: string;
   difficulty: StudyDifficulty;
   category: StudyCategory;
   questionType: StudyQuestionType;
   prompt: string;
   code?: string;
   options: string[];
-  answer: number;
+  answer: number | null;
   acceptedAnswers?: string[];
   modelAnswer?: string;
   rubricKeywords?: string[];

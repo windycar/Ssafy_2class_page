@@ -126,6 +126,7 @@ export const DIFFICULTY_META: Record<
 type QuestionDraft = Omit<
   PythonQuestion,
   | "id"
+  | "conceptId"
   | "difficulty"
   | "questionType"
   | "options"
@@ -137,6 +138,7 @@ type QuestionDraft = Omit<
 > & {
   correct: string;
   distractors: string[];
+  questionType?: StudyQuestionType;
 };
 
 type QuestionBuilder = (variant: number) => QuestionDraft;
@@ -151,47 +153,73 @@ const ESSAY_RUBRIC_KEYWORDS: Record<StudyCategory, string[]> = {
   exceptions: ["예외", "오류", "발생"],
 };
 
-function getQuestionType(index: number): StudyQuestionType {
-  const slot = index % 20;
-  if (slot < 12) return "multiple-choice";
-  if (slot < 17) return "short-answer";
+function getQuestionType(typeSeed: number): StudyQuestionType {
+  const slot = typeSeed % 10;
+  if (slot < 6) return "multiple-choice";
+  if (slot < 8) return "short-answer";
   return "essay";
+}
+
+function getPromptForType(
+  prompt: string,
+  questionType: StudyQuestionType,
+) {
+  if (questionType === "multiple-choice") return prompt;
+  if (questionType === "short-answer") {
+    return `${prompt} 선택지 없이 최종 결과를 출력 형식 그대로 입력하세요.`;
+  }
+  return `${prompt} 결과만 적지 말고, 코드의 실행 순서와 그렇게 되는 이유를 100자 이상 서술하세요.`;
 }
 
 function withOptions(
   difficulty: StudyDifficulty,
   index: number,
   draft: QuestionDraft,
+  conceptId = `${difficulty}-${String(index + 1).padStart(3, "0")}`,
+  typeSeed = index,
 ): PythonQuestion {
-  const unique = [draft.correct, ...draft.distractors].filter(
+  const {
+    correct,
+    distractors,
+    questionType: preferredQuestionType,
+    ...question
+  } = draft;
+  const unique = [correct, ...distractors].filter(
     (option, optionIndex, options) => options.indexOf(option) === optionIndex,
   );
   while (unique.length < 4) unique.push(`보기 ${unique.length + 1}`);
   const base = unique.slice(0, 4);
   const shift = index % base.length;
-  const options = [...base.slice(shift), ...base.slice(0, shift)];
-  const questionType = getQuestionType(index);
+  const choiceOptions = [...base.slice(shift), ...base.slice(0, shift)];
+  const questionType = preferredQuestionType ?? getQuestionType(typeSeed);
+  const options =
+    questionType === "multiple-choice" ? choiceOptions : [];
   const rubricKeywords =
     questionType === "essay"
-      ? ESSAY_RUBRIC_KEYWORDS[draft.category]
+      ? ESSAY_RUBRIC_KEYWORDS[question.category]
       : undefined;
   const expectedResult =
-    draft.correct === "출력 없음"
+    correct === "출력 없음"
       ? "출력되는 내용은 없습니다"
-      : `정답 또는 출력 결과는 ${draft.correct}입니다`;
+      : `최종 결과는 ${correct}입니다`;
   const modelAnswer =
     questionType === "essay"
-      ? `${expectedResult}. ${draft.explanation} 따라서 답안에는 코드가 평가되는 순서와 값의 변화를 구체적으로 설명하고, 사용된 파이썬 개념이 최종 결과에 어떤 영향을 주는지 함께 서술해야 합니다. 핵심 개념어는 ${rubricKeywords?.join(", ")}입니다.`
+      ? `${expectedResult}. ${question.explanation} 코드가 평가되는 순서와 값의 변화를 차례로 추적하면 이 결과를 확인할 수 있습니다. 이 과정에서 ${rubricKeywords?.join(", ")} 개념이 최종 결과에 어떤 영향을 주는지도 함께 설명해야 합니다.`
       : undefined;
   return {
-    ...draft,
+    ...question,
     id: `${difficulty}-${String(index + 1).padStart(3, "0")}`,
+    conceptId,
     difficulty,
     questionType,
+    prompt: getPromptForType(question.prompt, questionType),
     options,
-    answer: options.indexOf(draft.correct),
+    answer:
+      questionType === "multiple-choice"
+        ? options.indexOf(correct)
+        : null,
     acceptedAnswers:
-      questionType === "multiple-choice" ? undefined : [draft.correct],
+      questionType === "multiple-choice" ? undefined : [correct],
     modelAnswer,
     rubricKeywords,
     minLength: questionType === "essay" ? 100 : undefined,
@@ -645,9 +673,16 @@ function buildDifficulty(
   builders: QuestionBuilder[],
 ): PythonQuestion[] {
   return Array.from({ length: 100 }, (_, index) => {
-    const builder = builders[index % builders.length];
+    const builderIndex = index % builders.length;
+    const builder = builders[builderIndex];
     const variant = Math.floor(index / builders.length);
-    return withOptions(difficulty, index, builder(variant));
+    return withOptions(
+      difficulty,
+      index,
+      builder(variant),
+      `${difficulty}-concept-${String(builderIndex + 1).padStart(2, "0")}`,
+      variant,
+    );
   });
 }
 
@@ -683,7 +718,7 @@ function buildExtremeDifficulty(): PythonQuestion[] {
       distractors: Array.isArray(generated.distractors)
         ? generated.distractors
         : [generated.distractors],
-    });
+    }, `extreme-concept-${String(index + 1).padStart(3, "0")}`);
   });
 }
 
@@ -703,5 +738,38 @@ export function getPythonQuestion(questionId: string) {
 for (const difficulty of Object.keys(PYTHON_QUESTION_BANK) as StudyDifficulty[]) {
   if (PYTHON_QUESTION_BANK[difficulty].length !== 100) {
     throw new Error(`${difficulty} 문제은행은 정확히 100문제여야 합니다.`);
+  }
+}
+
+for (const question of ALL_PYTHON_QUESTIONS) {
+  if (question.questionType === "multiple-choice") {
+    if (
+      question.options.length !== 4 ||
+      new Set(question.options).size !== 4 ||
+      question.answer === null ||
+      question.answer < 0 ||
+      question.answer >= question.options.length
+    ) {
+      throw new Error(`${question.id} 객관식 선택지 또는 정답이 올바르지 않습니다.`);
+    }
+    continue;
+  }
+
+  if (
+    question.options.length > 0 ||
+    question.answer !== null ||
+    !question.acceptedAnswers?.length
+  ) {
+    throw new Error(`${question.id} 주관식 정답 형식이 올바르지 않습니다.`);
+  }
+
+  if (
+    question.questionType === "essay" &&
+    (!question.prompt.includes("서술") ||
+      !question.modelAnswer ||
+      !question.rubricKeywords?.length ||
+      !question.minLength)
+  ) {
+    throw new Error(`${question.id} 서술형 채점 기준이 올바르지 않습니다.`);
   }
 }

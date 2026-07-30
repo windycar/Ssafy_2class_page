@@ -20,6 +20,7 @@ import {
   STUDY_QUESTION_TYPE_META,
 } from "../../data/pythonQuestionBank";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
+import { countDistinctQuestionConcepts } from "../../utils/studyQuestionSelection";
 import type {
   StudyCategory,
   StudyDifficulty,
@@ -57,6 +58,10 @@ export default function PythonStudyView() {
     [completedQuestionIds, selectedQuestions],
   );
   const questionCount = remainingQuestions.length;
+  const roundQuestionCount = useMemo(
+    () => countDistinctQuestionConcepts(remainingQuestions),
+    [remainingQuestions],
+  );
   const questionTypeCounts = QUESTION_TYPES.reduce<Record<StudyQuestionType, number>>(
     (counts, questionType) => {
       counts[questionType] = remainingQuestions.filter(
@@ -274,11 +279,15 @@ export default function PythonStudyView() {
       <section className="sticky bottom-3 z-20 flex flex-col gap-3 rounded-2xl border border-indigo-100 bg-white/95 p-4 shadow-[0_18px_45px_rgba(37,54,110,0.18)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-bold text-slate-400">
-            {syncState === "loading" ? "학습 기록 확인 중" : "선택한 미풀이 문제"}
+            {syncState === "loading"
+              ? "학습 기록 확인 중"
+              : `선택한 미풀이 ${questionCount}문제 중`}
           </p>
           <p className="text-lg font-black text-slate-900">
             {DIFFICULTY_META[difficulty].label} ·{" "}
-            {syncState === "loading" ? "잠시만 기다려 주세요" : `${questionCount}문제`}
+            {syncState === "loading"
+              ? "잠시만 기다려 주세요"
+              : `이번 회차 ${roundQuestionCount}문제`}
           </p>
         </div>
         <div className="flex gap-2">
@@ -298,7 +307,7 @@ export default function PythonStudyView() {
             {syncState === "loading"
               ? "기록 확인 중"
               : questionCount
-                ? "랜덤으로 문제 풀기"
+                ? `개념별 ${roundQuestionCount}문제 풀기`
                 : "선택 범위 완료"}{" "}
             <ChevronRight className="h-4 w-4" />
           </button>
