@@ -827,18 +827,34 @@ export function useBangCardGame(initialRoom: BangRoom) {
     }
 
     if (card.kind === "saloon") {
+      const saloonPlayer = room.players.find(p2 => p2.studentId === fromId)!;
+      const selfLifeBefore = saloonPlayer.life;
+      const selfLifeAfter = Math.min(
+        selfLifeBefore + 1,
+        playerMaxLife(saloonPlayer),
+      );
+      const otherPlayers = room.players.filter(
+        p2 => p2.status !== "eliminated" && p2.studentId !== fromId,
+      );
       const updatedPlayers = room.players.map(p2 => {
         if (p2.status === "eliminated") return p2;
         const maxLife = playerMaxLife(p2);
         return { ...p2, life: Math.min(p2.life + 1, maxLife) };
       });
-      state = addLog(state, `${player.name} 살롱! 🏠 모두 체력 +1`);
+      state = addLog(
+        state,
+        `${player.name} 주점! 🍻 다른 생존자 ${otherPlayers.length}명 + 본인 체력 1 회복`,
+      );
       state = addEffectEvent(state, {
         kind: "action",
         action: "saloon",
         playerId: fromId,
         cardKind: "saloon",
-        count: updatedPlayers.filter(item => item.status !== "eliminated").length,
+        count: otherPlayers.length,
+        amount: selfLifeAfter - selfLifeBefore,
+        lifeBefore: selfLifeBefore,
+        lifeAfter: selfLifeAfter,
+        message: "다른 플레이어 전원 +1 · 본인 +1",
       });
       persist({ ...room, players: updatedPlayers, cardState: state });
       return;

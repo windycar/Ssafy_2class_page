@@ -223,8 +223,8 @@ function ActionEffectOverlay({
       case "saloon":
         return {
           eyebrow: "전체 회복",
-          title: `${playerName}의 살롱 오픈!`,
-          detail: `생존자 ${event.count ?? 0}명의 체력이 회복됩니다.`,
+          title: `${playerName}의 주점 오픈!`,
+          detail: `다른 생존자 ${event.count ?? 0}명 전원 +1 · 본인 ${event.lifeBefore ?? "?"} → ${event.lifeAfter ?? "?"}`,
           tone: "heal",
         };
       case "heal":

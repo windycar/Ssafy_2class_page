@@ -17,7 +17,7 @@ export interface BangCard {
 }
 
 export const CARD_NAME: Record<BangCardKind, string> = {
-  bang: "BANG!", missed: "Missed!", beer: "맥주", saloon: "살롱",
+  bang: "BANG!", missed: "Missed!", beer: "맥주", saloon: "주점",
   indians: "인디언", gatling: "개틀링", duel: "결투",
   general_store: "잡화점",
   stagecoach: "역마차", wells_fargo: "웰스파고", cat_balou: "캣발루", panic: "강탈",
@@ -30,7 +30,7 @@ export const CARD_DESC: Record<BangCardKind, string> = {
   bang: "사거리 내 플레이어 1명에게 1 피해",
   missed: "BANG! 또는 개틀링 1회 회피",
   beer: "자신의 체력을 1 회복",
-  saloon: "모든 플레이어 체력 1 회복",
+  saloon: "다른 모든 플레이어와 자신이 각각 체력 1 회복",
   indians: "자신을 제외한 모든 플레이어가 BANG! 또는 1 피해",
   gatling: "자신을 제외한 모든 플레이어에게 BANG! (Missed!로 막기 가능)",
   duel: "대상 플레이어와 결투. 교대로 BANG! 내고 못 내면 1 피해",
@@ -60,7 +60,7 @@ export const IS_EQUIPMENT: Record<BangCardKind, boolean> = {
 };
 
 export const CARD_EMOJI: Record<BangCardKind, string> = {
-  bang: "🔫", missed: "💨", beer: "🍺", saloon: "🏠",
+  bang: "🔫", missed: "💨", beer: "🍺", saloon: "🍻",
   indians: "🪶", gatling: "⚙️", duel: "🤝",
   general_store: "🛒",
   stagecoach: "🐴", wells_fargo: "🏦", cat_balou: "🐱", panic: "🫳",
