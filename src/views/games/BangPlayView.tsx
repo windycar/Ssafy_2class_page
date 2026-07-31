@@ -5,6 +5,7 @@ import { Heart, RefreshCw, ChevronLeft, Eye, EyeOff, SkipForward, X, MessageCirc
 import { toast } from "sonner";
 import { bangRoomStorage } from "../../services/storage/bangRoomStorage";
 import { useBangCardGame } from "../../hooks/useBangCardGame";
+import { getBangResponseCards, getMissedResponseCards, takeRequiredResponseCards } from "../../utils/games/bangResponseRules";
 import { useAuth } from "../../hooks/useAuth";
 import { useAdmin } from "../../context/AdminContext";
 import {
@@ -51,7 +52,7 @@ function CardFace({
   return (
     <div
       className={`relative overflow-visible rounded-xl border-2 flex flex-col justify-between select-none transition-all shadow-sm ${bg} ${selClass} ${selectedClass} ${dimClass} ${small ? "w-14 h-20 p-1" : "w-24 h-36 p-2"}`}
-      onClick={onClick}
+      onClick={selectable ? onClick : undefined}
       onMouseEnter={() => setShowTip(true)}
       onMouseLeave={() => setShowTip(false)}
       title={`${CARD_NAME[card.kind]}: ${CARD_DESC[card.kind]}`}
@@ -378,9 +379,11 @@ function BangIncomingOverlay({
   attackerName: string;
   responseCards: BangCard[];
   missesRemaining: number;
-  onRespond: (card: BangCard) => void;
+  onRespond: (cards: BangCard[]) => void;
   onPass: () => void;
 }) {
+  const bundledCards = takeRequiredResponseCards(responseCards, missesRemaining);
+
   return (
     <div className="bang-incoming-overlay" role="dialog" aria-live="assertive" aria-label="BANG 공격 대응">
       <div className="bang-impact-flash" aria-hidden="true" />
@@ -398,21 +401,36 @@ function BangIncomingOverlay({
         </div>
         <div className="bang-response-area">
           <p>아래에서 바로 대응하세요</p>
-          {responseCards.length > 0 ? (
+          {bundledCards ? (
             <div className="bang-response-cards">
-              {responseCards.map((card) => (
-                <button key={card.id} type="button" onClick={() => onRespond(card)} aria-label={`${CARD_NAME[card.kind]} 카드로 대응`}>
-                  <CardFace card={card} small />
-                  <span>{CARD_NAME[card.kind]} 사용</span>
+              {missesRemaining > 1 ? (
+                <button
+                  type="button"
+                  onClick={() => onRespond(bundledCards)}
+                  aria-label={`회피 카드 ${missesRemaining}장을 한 번에 사용`}
+                >
+                  <span className="flex items-center -space-x-3">
+                    {bundledCards.map(card => <CardFace key={card.id} card={card} small />)}
+                  </span>
+                  <span>회피 카드 {missesRemaining}장 한 번에 사용</span>
                 </button>
-              ))}
+              ) : (
+                responseCards.map(card => (
+                  <button key={card.id} type="button" onClick={() => onRespond([card])} aria-label={`${CARD_NAME[card.kind]} 카드로 대응`}>
+                    <CardFace card={card} small />
+                    <span>{CARD_NAME[card.kind]} 사용</span>
+                  </button>
+                ))
+              )}
             </div>
           ) : (
-            <p className="bang-no-response">사용할 수 있는 회피 카드가 없습니다.</p>
+            <p className="bang-no-response">회피 카드가 부족하여 자동으로 피해를 처리하고 있습니다.</p>
           )}
-          <button type="button" onClick={onPass} className="bang-take-hit">
-            회피 포기 · 체력 1 피해
-          </button>
+          {bundledCards && (
+            <button type="button" onClick={onPass} className="bang-take-hit">
+              회피 포기 · 체력 1 피해
+            </button>
+          )}
         </div>
       </section>
     </div>
@@ -818,6 +836,20 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const myHand = myId ? getHand(myId) : [];
   const myEquip = myId ? getEquip(myId) : [];
   const pending = state?.pending;
+  useEffect(() => {
+    if (!isHost || !pending || ![
+      "bang_response",
+      "indians_response",
+      "gatling_response",
+      "duel_response",
+    ].includes(pending.type)) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      game.settlePendingResponses();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isHost, pending, game.settlePendingResponses]);
+
   const legacyChatMessages = room.chatMessages ?? [];
   const { messages: chatMessages, sendMessage: sendRealtimeChat } = useBangChat(room.id, legacyChatMessages);
   const latestChatId = chatMessages[chatMessages.length - 1]?.id;
@@ -857,8 +889,12 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const jesseDrawChoiceIsMine = pending?.type === "jesse_jones_draw" && pending.playerId === myId;
   const iNeedToRespond = bangTargetsMe || indiansTargetsMe || gatlingTargetsMe || duelTargetsMe;
   const bangResponseCards = bangTargetsMe
-    ? myHand.filter(card => card.kind === "missed" || (me?.characterId === "calamity_janet" && card.kind === "bang"))
+    ? getMissedResponseCards(myHand, me?.characterId)
     : [];
+  const bangMissesRemaining = pending?.type === "bang_response"
+    ? Math.max(0, pending.missesNeeded - pending.missesPlayed)
+    : 0;
+  const bangNeedsBulkResponse = bangTargetsMe && bangMissesRemaining > 1;
 
   // Target selection mode
   const awaitingTarget = pending?.type === "await_target" && pending.fromId === myId;
@@ -1752,24 +1788,25 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
               <div className="flex gap-2 flex-wrap justify-center">
                 {myHand.map(card => {
                   const isSel = selectedCard?.id === card.id || sidSelectedCardIds.includes(card.id);
-                  const canUse = sidAbilitySelecting || canPlay || (mustDiscard) || iNeedToRespond;
-                  const calamity = me?.characterId === "calamity_janet";
+                  const canUse = sidAbilitySelecting || canPlay || mustDiscard || (iNeedToRespond && !bangNeedsBulkResponse);
+                  const canRespondAsMissed = getMissedResponseCards([card], me?.characterId).length === 1;
+                  const canRespondAsBang = getBangResponseCards([card], me?.characterId).length === 1;
                   const isResponse =
-                    ((bangTargetsMe || gatlingTargetsMe) && (card.kind === "missed" || (calamity && card.kind === "bang"))) ||
-                    ((indiansTargetsMe || duelTargetsMe) && (card.kind === "bang" || (calamity && card.kind === "missed")));
+                    ((bangTargetsMe || gatlingTargetsMe) && canRespondAsMissed) ||
+                    ((indiansTargetsMe || duelTargetsMe) && canRespondAsBang);
                   return (
                     <CardFace
                       key={card.id}
                       card={card}
                       selected={isSel}
-                      selectable={canUse}
+                      selectable={canUse && (!iNeedToRespond || isResponse)}
                       dim={sidAbilitySelecting || mustDiscard ? false : iNeedToRespond ? !isResponse : !canPlay}
                       onClick={() => {
                         if (iNeedToRespond) {
-                          if ((bangTargetsMe || gatlingTargetsMe) && (card.kind === "missed" || (calamity && card.kind === "bang"))) {
+                          if ((bangTargetsMe || gatlingTargetsMe) && canRespondAsMissed) {
                             game.respond("play_missed", myId!, card.id);
                             toast.success("💨 Missed!");
-                          } else if ((indiansTargetsMe || duelTargetsMe) && (card.kind === "bang" || (calamity && card.kind === "missed"))) {
+                          } else if ((indiansTargetsMe || duelTargetsMe) && canRespondAsBang) {
                             game.respond("play_bang", myId!, card.id);
                             toast.success("🔫 BANG!");
                           }
@@ -1783,7 +1820,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
               </div>
 
               {/* Response buttons */}
-              {iNeedToRespond && (
+              {iNeedToRespond && !bangTargetsMe && (
                 <div className="flex gap-2 justify-center">
                   <button
                     onClick={() => { game.respond("pass", myId!); toast.error("😢 피해를 받습니다"); }}
@@ -1911,10 +1948,10 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
         <BangIncomingOverlay
           attackerName={room.players.find(player => player.studentId === pending.fromId)?.name ?? "상대 플레이어"}
           responseCards={bangResponseCards}
-          missesRemaining={pending.missesNeeded - pending.missesPlayed}
-          onRespond={(card) => {
-            game.respond("play_missed", myId, card.id);
-            toast.success("💨 Missed!로 대응했습니다.");
+          missesRemaining={bangMissesRemaining}
+          onRespond={(cards) => {
+            game.respond("play_missed", myId, cards.map(card => card.id));
+            toast.success(cards.length > 1 ? `💨 회피 카드 ${cards.length}장을 한 번에 사용했습니다.` : "💨 Missed!로 대응했습니다.");
           }}
           onPass={() => {
             game.respond("pass", myId);

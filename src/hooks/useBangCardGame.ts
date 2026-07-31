@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { bangRoomStorage } from "../services/storage/bangRoomStorage";
 import { createBangDeck, drawCheck, hasVolcanic, canTarget, effectiveDistance } from "../utils/games/bangDeckBuilder";
+import { getBangResponseCards, getMissedResponseCards } from "../utils/games/bangResponseRules";
 import { CARD_NAME, IS_EQUIPMENT, WEAPON_KINDS } from "../types/bangCards";
 import type { BangRoom, BangPlayer } from "../types/bang";
 import type { BangCard, BangCardGameState, BangCardKind, BangEffectEvent } from "../types/bangCards";
@@ -386,6 +387,135 @@ function checkWin(room: BangRoom): "sheriff_deputy" | "outlaw" | "renegade" | nu
   return null;
 }
 
+/** 응답 카드가 부족한 공격만 즉시 해결하며 현재 플레이어의 턴은 넘기지 않습니다. */
+type ResponseResolutionResult = {
+  room: BangRoom;
+  state: BangCardGameState;
+  winner: "sheriff_deputy" | "outlaw" | "renegade" | null;
+};
+
+function resolveUnanswerableResponses(
+  initialRoom: BangRoom,
+  initialState: BangCardGameState,
+): ResponseResolutionResult {
+  let room = initialRoom;
+  let state = initialState;
+  const maxIterations = Math.max(4, room.players.length * 2 + 2);
+
+  for (let iteration = 0; iteration < maxIterations && state.pending; iteration += 1) {
+    const pending = state.pending;
+
+    if (pending.type === "bang_response") {
+      const responder = room.players.find(player => player.studentId === pending.targetId);
+      if (!responder || responder.status === "eliminated") {
+        state = { ...state, pending: undefined };
+        continue;
+      }
+      const requiredCount = Math.max(0, pending.missesNeeded - pending.missesPlayed);
+      if (requiredCount === 0) {
+        state = { ...state, pending: undefined };
+        continue;
+      }
+      const availableCards = getMissedResponseCards(h(state, pending.targetId), responder.characterId);
+      if (availableCards.length >= requiredCount) break;
+
+      const attacker = room.players.find(player => player.studentId === pending.fromId);
+      state = addLog(
+        state,
+        `${responder.name} 회피 카드 부족 (${availableCards.length}/${requiredCount}) — 카드 소비 없이 자동 피격`,
+      );
+      const result = applyDamage(
+        room,
+        state,
+        pending.targetId,
+        1,
+        `${attacker?.name ?? "상대 플레이어"}의 BANG!`,
+        pending.fromId,
+        "bang",
+      );
+      room = result.room;
+      state = { ...result.state, pending: undefined };
+      return { room, state, winner: checkWin(room) };
+    }
+
+    if (pending.type === "indians_response" || pending.type === "gatling_response") {
+      const remaining = pending.remaining.filter(playerId =>
+        room.players.find(player => player.studentId === playerId)?.status !== "eliminated"
+      );
+      if (remaining.length === 0) {
+        state = { ...state, pending: undefined };
+        continue;
+      }
+
+      const targetId = remaining[0];
+      const responder = room.players.find(player => player.studentId === targetId)!;
+      const responseCards = pending.type === "indians_response"
+        ? getBangResponseCards(h(state, targetId), responder.characterId)
+        : getMissedResponseCards(h(state, targetId), responder.characterId);
+      if (responseCards.length > 0) {
+        const remainingChanged = remaining.length !== pending.remaining.length
+          || remaining.some((playerId, index) => playerId !== pending.remaining[index]);
+        if (remainingChanged) state = { ...state, pending: { ...pending, remaining } };
+        break;
+      }
+
+      const attacker = room.players.find(player => player.studentId === pending.fromId);
+      const cardName = pending.type === "indians_response" ? "인디언" : "개틀링";
+      const requiredCard = pending.type === "indians_response" ? "BANG!" : "회피";
+      state = addLog(state, `${responder.name} ${requiredCard} 카드 없음 — ${cardName} 자동 피격`);
+      const result = applyDamage(
+        room,
+        state,
+        targetId,
+        1,
+        `${attacker?.name ?? "상대 플레이어"}의 ${cardName}`,
+        pending.fromId,
+        pending.type === "indians_response" ? "indians" : "gatling",
+      );
+      room = result.room;
+      const nextRemaining = remaining.slice(1).filter(playerId =>
+        room.players.find(player => player.studentId === playerId)?.status !== "eliminated"
+      );
+      state = {
+        ...result.state,
+        pending: nextRemaining.length > 0 ? { ...pending, remaining: nextRemaining } : undefined,
+      };
+      const winner = checkWin(room);
+      if (winner) return { room, state, winner };
+      continue;
+    }
+
+    if (pending.type === "duel_response") {
+      const responder = room.players.find(player => player.studentId === pending.currentId);
+      if (!responder || responder.status === "eliminated") {
+        state = { ...state, pending: undefined };
+        continue;
+      }
+      if (getBangResponseCards(h(state, pending.currentId), responder.characterId).length > 0) break;
+
+      const attackerId = pending.currentId === pending.p2 ? pending.p1 : pending.p2;
+      const attacker = room.players.find(player => player.studentId === attackerId);
+      state = addLog(state, `${responder.name} BANG! 카드 없음 — 결투 자동 패배`);
+      const result = applyDamage(
+        room,
+        state,
+        pending.currentId,
+        1,
+        `${attacker?.name ?? "상대 플레이어"}의 결투`,
+        attackerId,
+        "duel",
+      );
+      room = result.room;
+      state = { ...result.state, pending: undefined };
+      return { room, state, winner: checkWin(room) };
+    }
+
+    break;
+  }
+
+  return { room, state, winner: null };
+}
+
 // ── end game helper (module-level so it can be called before hook declaration order) ──
 function doEndGame(
   room: BangRoom,
@@ -411,6 +541,29 @@ export function useBangCardGame(initialRoom: BangRoom) {
     setRoom(normalized);
     return normalized;
   }, []);
+
+  const persistResolvedResponses = useCallback((
+    candidateRoom: BangRoom,
+    candidateState: BangCardGameState,
+    skipUnchanged = false,
+  ) => {
+    const resolved = resolveUnanswerableResponses(candidateRoom, candidateState);
+    const changed = resolved.room !== candidateRoom || resolved.state !== candidateState;
+    if (skipUnchanged && !changed) return false;
+
+    const nextRoom = { ...resolved.room, cardState: resolved.state };
+    if (resolved.winner) {
+      doEndGame(nextRoom, resolved.winner, persist);
+      return true;
+    }
+    persist(nextRoom);
+    return true;
+  }, [persist]);
+
+  const settlePendingResponses = useCallback(() => {
+    if (!room.cardState) return false;
+    return persistResolvedResponses(room, room.cardState, true);
+  }, [room, persistResolvedResponses]);
 
   const chooseCharacter = useCallback((playerId: number, characterId: BangCharacterId) => {
     if (room.status !== "playing" || room.cardState) return null;
@@ -932,8 +1085,8 @@ export function useBangCardGame(initialRoom: BangRoom) {
       state = { ...state, pending: { type: "gatling_response", fromId, remaining: targets } };
     }
 
-    persist({ ...room, cardState: state });
-  }, [room, persist]);
+    persistResolvedResponses(room, state);
+  }, [room, persist, persistResolvedResponses]);
 
   // ── Select target (after await_target) ─────────────────────────────────────
 
@@ -1016,7 +1169,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
         } else {
           state = { ...state, pending: undefined };
         }
-        persist({ ...room, cardState: state });
+        persistResolvedResponses(room, state);
         return;
       }
       state = addLog(state, `${attacker.name} → ${target.name} BANG! 🔫`);
@@ -1062,13 +1215,13 @@ export function useBangCardGame(initialRoom: BangRoom) {
       if (target.role === "sheriff") {
         state = addLog(state, "보안관은 감옥에 넣을 수 없습니다!");
         state = { ...state, pending: undefined };
-        persist({ ...room, cardState: state });
+        persistResolvedResponses(room, state);
         return;
       }
       if (targetId === fromId || target.status === "eliminated" || eq(state, targetId).some(item => item.kind === "jail")) {
         state = addLog(state, "유효하지 않은 감옥 대상입니다.");
         state = { ...state, pending: undefined };
-        persist({ ...room, cardState: state });
+        persistResolvedResponses(room, state);
         return;
       }
       state = removeFromHand(state, fromId, cardId);
@@ -1084,8 +1237,8 @@ export function useBangCardGame(initialRoom: BangRoom) {
       state = { ...state, pending: undefined };
     }
 
-    persist({ ...room, cardState: state });
-  }, [room, persist]);
+    persistResolvedResponses(room, state);
+  }, [room, persist, persistResolvedResponses]);
 
   // ── Select card for cat_balou / panic ───────────────────────────────────────
 
@@ -1240,12 +1393,14 @@ export function useBangCardGame(initialRoom: BangRoom) {
   const respond = useCallback((
     action: "play_missed" | "play_bang" | "pass",
     responderId: number,
-    cardId?: string,
+    cardIds?: string | string[],
   ) => {
     if (!room.cardState?.pending) return;
     const pending = room.cardState.pending;
     let state = room.cardState;
     let currentRoom = { ...room };
+    const requestedCardIds = [...new Set(Array.isArray(cardIds) ? cardIds : cardIds ? [cardIds] : [])];
+    const cardId = requestedCardIds[0];
 
     // BANG! response (Missed! or pass)
     if (pending.type === "bang_response") {
@@ -1254,41 +1409,47 @@ export function useBangCardGame(initialRoom: BangRoom) {
       const responder = room.players.find(p => p.studentId === targetId)!;
       const attacker = room.players.find(p => p.studentId === fromId)!;
 
-      if (action === "play_missed" && cardId) {
-        const missedCard = h(state, targetId).find(c => c.id === cardId);
-        const canActAsMissed = missedCard?.kind === "missed" || (missedCard?.kind === "bang" && responder.characterId === "calamity_janet");
-        if (!missedCard || !canActAsMissed) return;
-        state = removeFromHand(state, targetId, cardId);
-        state = discardCard(state, missedCard);
-        if (missedCard.kind === "bang" && responder.characterId === "calamity_janet") {
-          state = addLog(state, `🔄 ${responder.name} (칼라미티 자넷) — BANG!을 Missed!로 사용`);
+      if (action === "play_missed") {
+        const requiredCount = Math.max(0, pending.missesNeeded - pending.missesPlayed);
+        const legalCards = getMissedResponseCards(h(state, targetId), responder.characterId);
+        const requestedCards = requestedCardIds
+          .map(requestedId => legalCards.find(card => card.id === requestedId))
+          .filter((card): card is BangCard => Boolean(card));
+        if (
+          requestedCardIds.length !== requiredCount
+          || requestedCards.length !== requiredCount
+          || legalCards.length < requiredCount
+        ) return;
+
+        for (const responseCard of requestedCards) {
+          state = removeFromHand(state, targetId, responseCard.id);
+          state = discardCard(state, responseCard);
+        }
+        const convertedBangCount = requestedCards.filter(card => card.kind === "bang").length;
+        if (convertedBangCount > 0 && responder.characterId === "calamity_janet") {
+          state = addLog(state, `🔄 ${responder.name} (칼라미티 자넷) — BANG! ${convertedBangCount}장을 Missed!로 사용`);
           state = addEffectEvent(state, {
             kind: "action",
             action: "ability",
             playerId: targetId,
             characterId: "calamity_janet",
+            count: convertedBangCount,
             message: "BANG! 카드를 Missed!로 바꿔 사용합니다.",
           });
         }
-        const missesPlayed = pending.missesPlayed + 1;
+        state = addLog(state, `${responder.name} 회피 카드 ${requiredCount}장 일괄 사용 💨 — BANG! 회피 성공`);
         state = addEffectEvent(state, {
           kind: "action",
           action: "dodge",
           playerId: targetId,
-          cardKind: missedCard.kind,
-          message: missesPlayed < pending.missesNeeded ? "추가 회피 카드가 필요합니다." : "BANG! 회피 성공",
+          cardKind: requestedCards.length === 1 ? requestedCards[0].kind : undefined,
+          count: requiredCount,
+          message: requiredCount > 1 ? `회피 카드 ${requiredCount}장 일괄 사용` : "BANG! 회피 성공",
         });
-        if (missesPlayed < pending.missesNeeded) {
-          state = addLog(state, `${responder.name} Missed! 💨 — 슬랩의 BANG!을 막으려면 ${pending.missesNeeded - missesPlayed}장 더 필요`);
-          state = { ...state, pending: { ...pending, missesPlayed } };
-        } else {
-          state = addLog(state, `${responder.name} Missed! 💨 — 회피 성공`);
-          state = { ...state, pending: undefined };
-        }
-        persist({ ...currentRoom, cardState: state });
+        state = { ...state, pending: undefined };
+        persistResolvedResponses(currentRoom, state);
         return;
       }
-
       if (action === "pass") {
         state = addLog(state, `${responder.name} 회피 포기 — 1 피해`);
         const result = applyDamage(currentRoom, state, targetId, 1, `${attacker.name}의 BANG!`, fromId, "bang");
@@ -1297,7 +1458,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
         state = { ...state, pending: undefined };
         const win = checkWin(currentRoom);
         if (win) { doEndGame({ ...currentRoom, cardState: state }, win, persist); return; }
-        persist({ ...currentRoom, cardState: state });
+        persistResolvedResponses(currentRoom, state);
         return;
       }
     }
@@ -1311,9 +1472,8 @@ export function useBangCardGame(initialRoom: BangRoom) {
       const attacker = room.players.find(p => p.studentId === fromId)!;
 
       if (action === "play_bang" && cardId) {
-        const bangCard = h(state, targetId).find(c => c.id === cardId);
-        const canActAsBang = bangCard?.kind === "bang" || (bangCard?.kind === "missed" && responder.characterId === "calamity_janet");
-        if (!bangCard || !canActAsBang) return;
+        const bangCard = getBangResponseCards(h(state, targetId), responder.characterId).find(c => c.id === cardId);
+        if (!bangCard) return;
         state = removeFromHand(state, targetId, cardId);
         state = discardCard(state, bangCard);
         if (bangCard.kind === "missed" && responder.characterId === "calamity_janet") {
@@ -1336,7 +1496,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
         });
         const newRemaining = remaining.slice(1);
         state = { ...state, pending: newRemaining.length === 0 ? undefined : { ...pending, remaining: newRemaining } };
-        persist({ ...currentRoom, cardState: state });
+        persistResolvedResponses(currentRoom, state);
         return;
       }
 
@@ -1349,7 +1509,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
         state = { ...state, pending: newRemaining.length === 0 ? undefined : { ...pending, remaining: newRemaining } };
         const win = checkWin(currentRoom);
         if (win) { doEndGame({ ...currentRoom, cardState: state }, win, persist); return; }
-        persist({ ...currentRoom, cardState: state });
+        persistResolvedResponses(currentRoom, state);
         return;
       }
     }
@@ -1363,9 +1523,8 @@ export function useBangCardGame(initialRoom: BangRoom) {
       const attacker = room.players.find(p => p.studentId === fromId)!;
 
       if (action === "play_missed" && cardId) {
-        const missedCard = h(state, targetId).find(c => c.id === cardId);
-        const canActAsMissed = missedCard?.kind === "missed" || (missedCard?.kind === "bang" && responder.characterId === "calamity_janet");
-        if (!missedCard || !canActAsMissed) return;
+        const missedCard = getMissedResponseCards(h(state, targetId), responder.characterId).find(c => c.id === cardId);
+        if (!missedCard) return;
         state = removeFromHand(state, targetId, cardId);
         state = discardCard(state, missedCard);
         if (missedCard.kind === "bang" && responder.characterId === "calamity_janet") {
@@ -1388,7 +1547,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
         });
         const newRemaining = remaining.slice(1);
         state = { ...state, pending: newRemaining.length === 0 ? undefined : { ...pending, remaining: newRemaining } };
-        persist({ ...currentRoom, cardState: state });
+        persistResolvedResponses(currentRoom, state);
         return;
       }
 
@@ -1401,7 +1560,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
         state = { ...state, pending: newRemaining.length === 0 ? undefined : { ...pending, remaining: newRemaining } };
         const win = checkWin(currentRoom);
         if (win) { doEndGame({ ...currentRoom, cardState: state }, win, persist); return; }
-        persist({ ...currentRoom, cardState: state });
+        persistResolvedResponses(currentRoom, state);
         return;
       }
     }
@@ -1414,9 +1573,8 @@ export function useBangCardGame(initialRoom: BangRoom) {
       const responder = room.players.find(p => p.studentId === currentId)!;
 
       if (action === "play_bang" && cardId) {
-        const bangCard = h(state, currentId).find(c => c.id === cardId);
-        const canActAsBang = bangCard?.kind === "bang" || (bangCard?.kind === "missed" && responder.characterId === "calamity_janet");
-        if (!bangCard || !canActAsBang) return;
+        const bangCard = getBangResponseCards(h(state, currentId), responder.characterId).find(c => c.id === cardId);
+        if (!bangCard) return;
         state = removeFromHand(state, currentId, cardId);
         state = discardCard(state, bangCard);
         if (bangCard.kind === "missed" && responder.characterId === "calamity_janet") {
@@ -1439,7 +1597,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
           message: "결투 반격",
         });
         state = { ...state, pending: { ...pending, currentId: currentId === p2 ? p1 : p2 } };
-        persist({ ...currentRoom, cardState: state });
+        persistResolvedResponses(currentRoom, state);
         return;
       }
 
@@ -1451,11 +1609,11 @@ export function useBangCardGame(initialRoom: BangRoom) {
         state = { ...state, pending: undefined };
         const win = checkWin(currentRoom);
         if (win) { doEndGame({ ...currentRoom, cardState: state }, win, persist); return; }
-        persist({ ...currentRoom, cardState: state });
+        persistResolvedResponses(currentRoom, state);
         return;
       }
     }
-  }, [room, persist]);
+  }, [room, persist, persistResolvedResponses]);
 
   // ── Cancel pending ──────────────────────────────────────────────────────────
 
@@ -1562,6 +1720,7 @@ export function useBangCardGame(initialRoom: BangRoom) {
     chooseGeneralStoreCard,
     useSidAbility,
     respond,
+    settlePendingResponses,
     cancelPending,
     discardFromHand,
     endTurn,
