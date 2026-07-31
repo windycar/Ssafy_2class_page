@@ -20,7 +20,6 @@ import {
   STUDY_QUESTION_TYPE_META,
 } from "../../data/pythonQuestionBank";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
-import { countDistinctQuestionConcepts } from "../../utils/studyQuestionSelection";
 import type {
   StudyCategory,
   StudyDifficulty,
@@ -58,10 +57,6 @@ export default function PythonStudyView() {
     [completedQuestionIds, selectedQuestions],
   );
   const questionCount = remainingQuestions.length;
-  const roundQuestionCount = useMemo(
-    () => countDistinctQuestionConcepts(remainingQuestions),
-    [remainingQuestions],
-  );
   const questionTypeCounts = QUESTION_TYPES.reduce<Record<StudyQuestionType, number>>(
     (counts, questionType) => {
       counts[questionType] = remainingQuestions.filter(
@@ -287,7 +282,7 @@ export default function PythonStudyView() {
             {DIFFICULTY_META[difficulty].label} ·{" "}
             {syncState === "loading"
               ? "잠시만 기다려 주세요"
-              : `이번 회차 ${roundQuestionCount}문제`}
+              : `이번 회차 ${questionCount}문제`}
           </p>
         </div>
         <div className="flex gap-2">
@@ -307,7 +302,7 @@ export default function PythonStudyView() {
             {syncState === "loading"
               ? "기록 확인 중"
               : questionCount
-                ? `개념별 ${roundQuestionCount}문제 풀기`
+                ? `${questionCount}문제 풀기`
                 : "선택 범위 완료"}{" "}
             <ChevronRight className="h-4 w-4" />
           </button>

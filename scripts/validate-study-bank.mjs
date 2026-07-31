@@ -13,15 +13,13 @@ try {
   const { gradePythonResponse } = await server.ssrLoadModule(
     "/src/utils/studyGrading.ts",
   );
-  const { selectOneQuestionPerConcept } = await server.ssrLoadModule(
-    "/src/utils/studyQuestionSelection.ts",
-  );
-
   const invalidQuestions = [];
   const gradingFailures = [];
   const promptMismatches = [];
   const ungroupedDuplicateVariants = [];
   const bankShapeFailures = [];
+  const duplicateQuestionIds = [];
+  const seenQuestionIds = new Set();
 
   for (const [difficulty, questions] of Object.entries(PYTHON_QUESTION_BANK)) {
     const typeCounts = {
@@ -31,6 +29,10 @@ try {
     };
 
     for (const question of questions) {
+      if (seenQuestionIds.has(question.id)) {
+        duplicateQuestionIds.push(question.id);
+      }
+      seenQuestionIds.add(question.id);
       typeCounts[question.questionType] += 1;
 
       if (
@@ -78,30 +80,22 @@ try {
     const conceptSizes = [...conceptGroups.values()].map(
       (group) => group.length,
     );
-    const selectedQuestions = selectOneQuestionPerConcept(questions);
-    const selectedTypeCounts = {
-      "multiple-choice": 0,
-      "short-answer": 0,
-      essay: 0,
-    };
-    for (const question of selectedQuestions) {
-      selectedTypeCounts[question.questionType] += 1;
-    }
-
     if (
       questions.length !== 100 ||
       typeCounts["multiple-choice"] !== 60 ||
       typeCounts["short-answer"] !== 25 ||
       typeCounts.essay !== 15 ||
-      selectedQuestions.length !== conceptGroups.size
+      conceptGroups.size !== 100
     ) {
       bankShapeFailures.push(difficulty);
     }
 
     const normalizedVariantGroups = new Map();
     for (const question of questions) {
-      const signature = `${question.prompt}\n${question.code ?? ""}`
-        .replace(/\d+/g, "#")
+      const basePrompt = question.prompt.split("\n")[0];
+      const signature = `${basePrompt}\n${question.code ?? ""}`
+        .replace(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g, '"#"')
+        .replace(/-?\d+(?:\.\d+)?/g, "#")
         .replace(/\s+/g, " ")
         .trim();
       const group = normalizedVariantGroups.get(signature) ?? [];
@@ -131,7 +125,6 @@ try {
           min: Math.min(...conceptSizes),
           max: Math.max(...conceptSizes),
         },
-        selectedTypeCounts,
       }),
     );
   }
@@ -143,6 +136,7 @@ try {
       promptMismatches,
       ungroupedDuplicateVariants,
       bankShapeFailures,
+      duplicateQuestionIds,
     }),
   );
 
@@ -151,7 +145,8 @@ try {
     gradingFailures.length > 0 ||
     promptMismatches.length > 0 ||
     ungroupedDuplicateVariants.length > 0 ||
-    bankShapeFailures.length > 0
+    bankShapeFailures.length > 0 ||
+    duplicateQuestionIds.length > 0
   ) {
     throw new Error("학습 문제은행 검증에 실패했습니다.");
   }

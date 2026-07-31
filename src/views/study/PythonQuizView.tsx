@@ -28,7 +28,6 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
 import { gradePythonResponse } from "../../utils/studyGrading";
-import { selectOneQuestionPerConcept } from "../../utils/studyQuestionSelection";
 import type {
   PythonQuestion,
   StudyCategory,
@@ -48,7 +47,6 @@ type QuizSession = {
   key: string;
   questions: PythonQuestion[];
   skippedCount: number;
-  deferredVariantCount: number;
   totalEligible: number;
 };
 
@@ -102,7 +100,6 @@ export default function PythonQuizView() {
 
     let nextQuestions: PythonQuestion[];
     let skippedCount = 0;
-    let deferredVariantCount = 0;
     let totalEligible = 0;
 
     if (mode === "wrong") {
@@ -131,21 +128,14 @@ export default function PythonQuizView() {
       skippedCount = totalEligible - nextQuestions.length;
     }
 
-    const shuffledCandidates = shuffleQuestions(nextQuestions);
-    const conceptDistinctQuestions =
-      selectOneQuestionPerConcept(shuffledCandidates);
-    deferredVariantCount =
-      shuffledCandidates.length - conceptDistinctQuestions.length;
-
     setCurrentIndex(0);
     setAnswers({});
     setDraftAnswers({});
     setHintOpen(false);
     setQuizSession({
       key: sessionKey,
-      questions: shuffleQuestions(conceptDistinctQuestions),
+      questions: shuffleQuestions(nextQuestions),
       skippedCount,
-      deferredVariantCount,
       totalEligible,
     });
   }, [
@@ -313,12 +303,6 @@ export default function PythonQuizView() {
           {mode !== "wrong" && (quizSession?.skippedCount ?? 0) > 0 && (
             <p className="mt-2 text-[11px] font-bold text-indigo-500">
               이전에 푼 {quizSession?.skippedCount}문제는 이번 출제에서 제외했습니다.
-            </p>
-          )}
-          {(quizSession?.deferredVariantCount ?? 0) > 0 && (
-            <p className="mt-2 text-[11px] font-bold text-emerald-600">
-              숫자만 다른 유사 문항 {quizSession?.deferredVariantCount}개는 제외하고,
-              개념별로 한 문제씩 출제했습니다.
             </p>
           )}
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">

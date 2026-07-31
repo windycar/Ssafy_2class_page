@@ -5,6 +5,12 @@ import type {
   StudyQuestionType,
 } from "../types/study";
 import { extremePythonQuestions } from "./extremePythonQuestions";
+import {
+  easyAdditionalQuestionSeeds,
+  hardAdditionalQuestionSeeds,
+  mediumAdditionalQuestionSeeds,
+  type StandardPythonQuestionSeed,
+} from "./standardPythonQuestionSeeds";
 
 export const STUDY_CATEGORY_META: Record<
   StudyCategory,
@@ -188,6 +194,7 @@ function withOptions(
   draft: QuestionDraft,
   conceptId = `${difficulty}-${String(index + 1).padStart(3, "0")}`,
   typeSeed = index,
+  questionId = `${difficulty}-${String(index + 1).padStart(3, "0")}`,
 ): PythonQuestion {
   const {
     correct,
@@ -219,7 +226,7 @@ function withOptions(
       : undefined;
   return {
     ...question,
-    id: `${difficulty}-${String(index + 1).padStart(3, "0")}`,
+    id: questionId,
     conceptId,
     difficulty,
     questionType,
@@ -245,7 +252,7 @@ function numberChoices(answer: number) {
     .map(String);
 }
 
-const easyBuilders: QuestionBuilder[] = [
+const easyCoreBuilders: QuestionBuilder[] = [
   (v) => {
     const a = v + 2;
     const b = v + 3;
@@ -375,7 +382,7 @@ const easyBuilders: QuestionBuilder[] = [
   },
 ];
 
-const mediumBuilders: QuestionBuilder[] = [
+const mediumCoreBuilders: QuestionBuilder[] = [
   (v) => {
     const value = v + 5;
     const result = value > v && value % 2 === (v + 1) % 2;
@@ -528,7 +535,7 @@ const mediumBuilders: QuestionBuilder[] = [
   },
 ];
 
-const hardBuilders: QuestionBuilder[] = [
+const hardCoreBuilders: QuestionBuilder[] = [
   (v) => {
     const value = v % 2 === 0 ? 0 : v;
     const result = value || v + 10;
@@ -679,9 +686,29 @@ const hardBuilders: QuestionBuilder[] = [
   },
 ];
 
+function buildSeedQuestion(seed: StandardPythonQuestionSeed): QuestionBuilder {
+  return () => ({ ...seed });
+}
+
+const easyBuilders: QuestionBuilder[] = [
+  ...easyCoreBuilders,
+  ...easyAdditionalQuestionSeeds.map(buildSeedQuestion),
+];
+
+const mediumBuilders: QuestionBuilder[] = [
+  ...mediumCoreBuilders,
+  ...mediumAdditionalQuestionSeeds.map(buildSeedQuestion),
+];
+
+const hardBuilders: QuestionBuilder[] = [
+  ...hardCoreBuilders,
+  ...hardAdditionalQuestionSeeds.map(buildSeedQuestion),
+];
+
 function buildDifficulty(
   difficulty: StudyDifficulty,
   builders: QuestionBuilder[],
+  preservedQuestionCount: number,
 ): PythonQuestion[] {
   return Array.from({ length: 100 }, (_, index) => {
     const builderIndex = index % builders.length;
@@ -691,8 +718,11 @@ function buildDifficulty(
       difficulty,
       index,
       builder(variant),
-      `${difficulty}-concept-${String(builderIndex + 1).padStart(2, "0")}`,
+      `${difficulty}-concept-${String(builderIndex + 1).padStart(3, "0")}`,
       index,
+      index < preservedQuestionCount
+        ? `${difficulty}-${String(index + 1).padStart(3, "0")}`
+        : `${difficulty}-v2-${String(index + 1).padStart(3, "0")}`,
     );
   });
 }
@@ -734,9 +764,9 @@ function buildExtremeDifficulty(): PythonQuestion[] {
 }
 
 export const PYTHON_QUESTION_BANK: Record<StudyDifficulty, PythonQuestion[]> = {
-  easy: buildDifficulty("easy", easyBuilders),
-  medium: buildDifficulty("medium", mediumBuilders),
-  hard: buildDifficulty("hard", hardBuilders),
+  easy: buildDifficulty("easy", easyBuilders, easyCoreBuilders.length),
+  medium: buildDifficulty("medium", mediumBuilders, mediumCoreBuilders.length),
+  hard: buildDifficulty("hard", hardBuilders, hardCoreBuilders.length),
   extreme: buildExtremeDifficulty(),
 };
 
