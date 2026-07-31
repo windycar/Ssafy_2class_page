@@ -4,6 +4,7 @@ import type {
   StudyDifficulty,
   StudyQuestionType,
 } from "../types/study";
+import { ESSAY_MIN_LENGTH } from "../constants/study";
 import { extremePythonQuestions } from "./extremePythonQuestions";
 import {
   easyAdditionalQuestionSeeds,
@@ -79,7 +80,7 @@ export const STUDY_QUESTION_TYPE_META: Record<
   essay: {
     label: "서술형",
     shortLabel: "서술형",
-    description: "결과와 이유를 100자 이상 서술합니다.",
+    description: `결과와 이유를 ${ESSAY_MIN_LENGTH}자 이상 서술합니다.`,
     color: "#d97706",
   },
 };
@@ -185,7 +186,7 @@ function getPromptForType(
   if (questionType === "short-answer") {
     return `${promptWithoutAnswerOnlyInstruction}\n정답만 출력 형식 그대로 입력하세요.`;
   }
-  return `${promptWithoutAnswerOnlyInstruction}\n정답 또는 출력 결과를 먼저 밝히고, 코드의 실행 순서와 그 결과가 나온 이유를 100자 이상 서술하세요.`;
+  return `${promptWithoutAnswerOnlyInstruction}\n정답 또는 출력 결과를 먼저 밝히고, 코드의 실행 순서와 그 결과가 나온 이유를 ${ESSAY_MIN_LENGTH}자 이상 서술하세요.`;
 }
 
 function withOptions(
@@ -240,7 +241,7 @@ function withOptions(
       questionType === "multiple-choice" ? undefined : [correct],
     modelAnswer,
     rubricKeywords,
-    minLength: questionType === "essay" ? 100 : undefined,
+    minLength: questionType === "essay" ? ESSAY_MIN_LENGTH : undefined,
   };
 }
 

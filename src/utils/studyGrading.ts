@@ -1,4 +1,5 @@
 import type { PythonQuestion } from "../types/study";
+import { ESSAY_MIN_LENGTH } from "../constants/study";
 
 export interface StudyGradeResult {
   correct: boolean;
@@ -52,7 +53,7 @@ export function gradePythonResponse(
   const matchedKeywords = (question.rubricKeywords ?? []).filter((keyword) =>
     normalizedResponse.includes(keyword),
   );
-  const minimumLength = question.minLength ?? 100;
+  const minimumLength = question.minLength ?? ESSAY_MIN_LENGTH;
   const correct =
     normalizedResponse.length >= minimumLength &&
     expectedMatched &&

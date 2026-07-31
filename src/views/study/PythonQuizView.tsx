@@ -18,6 +18,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ESSAY_MIN_LENGTH } from "../../constants/study";
 import {
   DIFFICULTY_META,
   getPythonQuestion,
@@ -179,9 +180,9 @@ export default function PythonQuizView() {
     if (!response.trim()) return;
     if (
       current.questionType === "essay" &&
-      response.trim().length < (current.minLength ?? 100)
+      response.trim().length < (current.minLength ?? ESSAY_MIN_LENGTH)
     ) {
-      toast.error(`서술형 답안은 최소 ${current.minLength ?? 100}자 이상 작성해야 합니다.`);
+      toast.error(`서술형 답안은 최소 ${current.minLength ?? ESSAY_MIN_LENGTH}자 이상 작성해야 합니다.`);
       return;
     }
     const correct = recordAnswer(current, response);
@@ -423,7 +424,7 @@ export default function PythonQuizView() {
                     ? current.acceptedAnswers?.some((answer) => answer.includes("\n"))
                       ? "줄바꿈까지 정확히 입력 · 대/소문자 구분"
                       : "답안만 정확히 입력 · 대/소문자 구분"
-                    : `최소 ${current.minLength ?? 100}자 · 현재 ${currentDraft.trim().length}자`}
+                    : `최소 ${current.minLength ?? ESSAY_MIN_LENGTH}자 · 현재 ${currentDraft.trim().length}자`}
                 </span>
               </div>
               {current.questionType === "short-answer" ? (
@@ -473,7 +474,7 @@ export default function PythonQuizView() {
                     }
                     disabled={answered}
                     rows={8}
-                    placeholder="출력 결과 또는 오류와 그 이유를 실행 순서에 따라 100자 이상 작성하세요."
+                    placeholder={`출력 결과 또는 오류와 그 이유를 실행 순서에 따라 ${ESSAY_MIN_LENGTH}자 이상 작성하세요.`}
                     className="w-full resize-y rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 text-sm font-medium leading-7 text-slate-800 outline-none transition focus:border-amber-400 focus:ring-4 focus:ring-amber-100 disabled:bg-slate-50"
                   />
                   <p className="mt-2 text-xs leading-5 text-amber-700">
@@ -488,7 +489,7 @@ export default function PythonQuizView() {
                   disabled={
                     !currentDraft.trim() ||
                     (current.questionType === "essay" &&
-                      currentDraft.trim().length < (current.minLength ?? 100))
+                      currentDraft.trim().length < (current.minLength ?? ESSAY_MIN_LENGTH))
                   }
                   className="mt-4 inline-flex min-w-[150px] items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-35"
                 >
@@ -528,7 +529,7 @@ export default function PythonQuizView() {
                   {current.questionType === "essay" && gradeDetails && (
                     <>
                       <div className="mt-4 grid gap-2 text-xs sm:grid-cols-3">
-                        <span className={`rounded-lg px-3 py-2 font-bold ${gradeDetails.responseLength >= (current.minLength ?? 100) ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-700"}`}>
+                        <span className={`rounded-lg px-3 py-2 font-bold ${gradeDetails.responseLength >= (current.minLength ?? ESSAY_MIN_LENGTH) ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-700"}`}>
                           글자 수 {gradeDetails.responseLength}자
                         </span>
                         <span className={`rounded-lg px-3 py-2 font-bold ${gradeDetails.expectedMatched ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-700"}`}>

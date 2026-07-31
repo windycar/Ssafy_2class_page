@@ -75,6 +75,16 @@ export default function PythonStudyView() {
     );
   };
 
+  const resetStudyOptions = () => {
+    const confirmed = window.confirm(
+      "난이도와 출제 범위를 모두 초기화할까요?\n학습 기록은 삭제되지 않습니다.",
+    );
+    if (!confirmed) return;
+
+    setDifficulty("easy");
+    setSelectedCategories([...CATEGORIES]);
+  };
+
   const startQuiz = () => {
     if (!questionCount || syncState === "loading") return;
     const categories = selectedCategories.join(",");
@@ -285,11 +295,12 @@ export default function PythonStudyView() {
               : `이번 회차 ${questionCount}문제`}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 sm:flex">
           <button
             type="button"
-            onClick={() => setSelectedCategories(CATEGORIES)}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-500 hover:bg-slate-50"
+            onClick={resetStudyOptions}
+            aria-label="난이도와 출제 범위 초기화"
+            className="inline-flex min-h-11 touch-manipulation select-none items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-500 hover:bg-slate-50"
           >
             <RotateCcw className="h-4 w-4" /> 초기화
           </button>
@@ -297,7 +308,7 @@ export default function PythonStudyView() {
             type="button"
             onClick={startQuiz}
             disabled={!questionCount || syncState === "loading"}
-            className="inline-flex min-w-[170px] items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-indigo-200 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex min-h-11 min-w-0 touch-manipulation select-none items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-indigo-200 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 sm:min-w-[170px]"
           >
             {syncState === "loading"
               ? "기록 확인 중"
