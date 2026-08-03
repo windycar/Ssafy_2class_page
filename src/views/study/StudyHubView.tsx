@@ -14,11 +14,16 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
+import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
 import pythonHero from "../../assets/study/python-study-hero.png";
 
 export default function StudyHubView() {
   const { currentUser } = useAuth();
-  const { summary } = useStudyProgress();
+  const { summary: pythonSummary } = useStudyProgress();
+  const { summary: webSummary } = useWebStudyProgress();
+  const total = pythonSummary.total + webSummary.total;
+  const correct = pythonSummary.correct + webSummary.correct;
+  const accuracy = total ? Math.round((correct / total) * 100) : 0;
 
   return (
     <div className="space-y-7 pb-6">
@@ -64,21 +69,21 @@ export default function StudyHubView() {
         <StatCard
           icon={<BookOpenCheck className="h-5 w-5" />}
           label="누적 풀이"
-          value={`${summary.total}문제`}
+          value={`${total}문제`}
           helper="내 학습 기록"
           tone="blue"
         />
         <StatCard
           icon={<Target className="h-5 w-5" />}
           label="정답률"
-          value={`${summary.accuracy}%`}
-          helper={summary.total ? `${summary.correct}개 정답` : "첫 문제를 풀어보세요"}
+          value={`${accuracy}%`}
+          helper={total ? `${correct}개 정답` : "첫 문제를 풀어보세요"}
           tone="violet"
         />
         <StatCard
           icon={<CheckCircle2 className="h-5 w-5" />}
           label="복습 필요"
-          value={`${summary.incorrect}문제`}
+          value={`${pythonSummary.incorrect + webSummary.incorrect}문제`}
           helper="오답 노트에 자동 저장"
           tone="mint"
         />
@@ -93,7 +98,7 @@ export default function StudyHubView() {
           <span className="hidden text-xs font-semibold text-slate-400 sm:block">새로운 트랙은 계속 추가됩니다</span>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1.35fr_1fr_1fr]">
+        <div className="grid gap-4 lg:grid-cols-3">
           <Link
             to="/study/python"
             className="group relative min-h-[240px] overflow-hidden rounded-3xl border border-indigo-200 bg-gradient-to-br from-[#263f9f] via-[#445fd0] to-[#6d53d7] p-6 text-white shadow-[0_18px_45px_rgba(68,86,184,0.20)] transition hover:-translate-y-1"
@@ -123,12 +128,34 @@ export default function StudyHubView() {
             </div>
           </Link>
 
-          <LockedTrack
-            icon={<Globe2 className="h-6 w-6" />}
-            title="Web"
-            description="HTML, CSS와 웹 구조를 단계별로 익히는 트랙"
-            color="sky"
-          />
+          <Link
+            to="/study/web"
+            className="group relative min-h-[240px] overflow-hidden rounded-3xl border border-cyan-200 bg-gradient-to-br from-[#063f52] via-[#087f92] to-[#12a283] p-6 text-white shadow-[0_18px_45px_rgba(8,116,135,0.20)] transition hover:-translate-y-1"
+          >
+            <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full border-[28px] border-white/5" />
+            <div className="absolute -bottom-14 right-16 h-36 w-36 rounded-full bg-cyan-200/10 blur-2xl" />
+            <div className="relative flex h-full flex-col">
+              <div className="flex items-center justify-between">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+                  <Globe2 className="h-6 w-6" />
+                </span>
+                <span className="rounded-full bg-cyan-100/20 px-3 py-1 text-[11px] font-black text-cyan-50">
+                  300문제
+                </span>
+              </div>
+              <div className="mt-auto">
+                <p className="text-xs font-black tracking-[0.18em] text-cyan-100/75">NEW CLASSROOM</p>
+                <h3 className="mt-1 text-3xl font-black">Web</h3>
+                <p className="mt-2 text-sm leading-6 text-cyan-50/80">
+                  HTML·CSS·Bootstrap·Grid·UX/UI를 범위에 맞춰 훈련합니다.
+                </p>
+                <span className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold">
+                  웹 강의실 입장
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </span>
+              </div>
+            </div>
+          </Link>
           <LockedTrack
             icon={<BrainCircuit className="h-6 w-6" />}
             title="AI Python"
@@ -182,10 +209,9 @@ function LockedTrack({
   icon: React.ReactNode;
   title: string;
   description: string;
-  color: "sky" | "violet";
+  color: "violet";
 }) {
   const tones = {
-    sky: "bg-sky-50 text-sky-700",
     violet: "bg-violet-50 text-violet-700",
   };
   return (

@@ -8,7 +8,8 @@
     "build": "vite build",
     "dev": "vite",
     "test:bang": "node --experimental-strip-types --test tests/bangResponseRules.test.ts",
-    "validate:study": "node scripts/validate-study-bank.mjs"
+    "validate:study": "node scripts/validate-study-bank.mjs",
+    "validate:web-study": "node scripts/validate-web-study-bank.mjs"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

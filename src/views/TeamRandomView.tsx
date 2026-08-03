@@ -1,15 +1,30 @@
 import { useState, useRef } from "react";
-import { Shuffle, ChevronUp, ChevronDown, Check, RefreshCw, Copy, FileJson, RotateCcw, Users } from "lucide-react";
+import { Shuffle, ChevronUp, ChevronDown, Check, RefreshCw, Copy, FileJson, RotateCcw, Users, School, Plus, Pencil, Trash2, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { STUDENTS } from "../data/students";
+import { ADDITIONAL_TEAM_CLASS_ROSTERS } from "../data/teamClassRosters";
 import { buildTeams, fisherYatesShuffle, teamsResultKey } from "../utils/teamShuffle";
 import { copyToClipboard } from "../utils/copyToClipboard";
 import { TeamCard } from "../components/team/TeamCard";
 import { StudentChip } from "../components/team/StudentChip";
 import { EmptyTeamResult } from "../components/team/EmptyTeamResult";
+import { teamClassRosterStorage } from "../services/storage/teamClassRosterStorage";
+import { parseClassRoster, rosterToText } from "../utils/classRoster";
+import type { TeamClassRoster } from "../types/classRoster";
 import type { StudentEntry } from "../types/student";
 import type { Team } from "../types/team";
+
+const DEFAULT_CLASS_ID = "gwangju-class-2";
+const DEFAULT_CLASS_ROSTER: TeamClassRoster = {
+  id: DEFAULT_CLASS_ID,
+  name: "광주 2반",
+  students: STUDENTS,
+};
+
+function withParticipation(students: TeamClassRoster["students"]): StudentEntry[] {
+  return students.map((student) => ({ ...student, included: true }));
+}
 
 function Stepper({ value, onChange, min = 1, max = 20 }: { value: number; onChange: (v: number) => void; min?: number; max?: number }) {
   return (
@@ -42,16 +57,34 @@ function Checkbox({ checked, onChange, label }: { checked: boolean; onChange: ()
 }
 
 export default function TeamRandomView() {
+  const [customRosters, setCustomRosters] = useState<TeamClassRoster[]>(() => teamClassRosterStorage.getRosters());
+  const fileRosters = [DEFAULT_CLASS_ROSTER, ...ADDITIONAL_TEAM_CLASS_ROSTERS];
+  const visibleCustomRosters = customRosters.filter(
+    (customRoster) => !fileRosters.some(
+      (fileRoster) => fileRoster.id === customRoster.id || fileRoster.name === customRoster.name,
+    ),
+  );
+  const classRosters = [...fileRosters, ...visibleCustomRosters];
+  const [selectedClassId, setSelectedClassId] = useState(() => {
+    const savedClassId = teamClassRosterStorage.getSelectedClassId();
+    return classRosters.some((roster) => roster.id === savedClassId) ? savedClassId! : DEFAULT_CLASS_ID;
+  });
+  const selectedClassRoster = classRosters.find((roster) => roster.id === selectedClassId) ?? DEFAULT_CLASS_ROSTER;
+  const selectedClassIsCustom = visibleCustomRosters.some((roster) => roster.id === selectedClassId);
   const [mode, setMode] = useState<"teamCount" | "membersPerTeam">("teamCount");
-  const [teamCount, setTeamCount] = useState(7);
-  const [membersPerTeam, setMembersPerTeam] = useState(3);
+  const [teamCount, setTeamCount] = useState(() => Math.min(7, Math.max(1, selectedClassRoster.students.length)));
+  const [membersPerTeam, setMembersPerTeam] = useState(() => Math.min(3, Math.max(1, selectedClassRoster.students.length)));
   const [options, setOptions] = useState({ differentFromLast: false, sortAlpha: false, autoTeamName: true });
-  const [students, setStudents] = useState<StudentEntry[]>(STUDENTS.map((s) => ({ ...s, included: true })));
+  const [students, setStudents] = useState<StudentEntry[]>(() => withParticipation(selectedClassRoster.students));
   const [teams, setTeams] = useState<Team[] | null>(null);
   const [isShuffling, setIsShuffling] = useState(false);
   const [randomPickCount, setRandomPickCount] = useState(1);
   const [randomPickedStudents, setRandomPickedStudents] = useState<StudentEntry[]>([]);
   const [isPickingPeople, setIsPickingPeople] = useState(false);
+  const [showRosterEditor, setShowRosterEditor] = useState(false);
+  const [editingRosterId, setEditingRosterId] = useState<string | null>(null);
+  const [draftClassName, setDraftClassName] = useState("");
+  const [draftRoster, setDraftRoster] = useState("");
   const lastKey = useRef("");
 
   const included = students.filter((s) => s.included);
@@ -59,6 +92,87 @@ export default function TeamRandomView() {
   const effectiveTeamCount = mode === "teamCount" ? Math.max(1, Math.min(teamCount, includedCount)) : Math.max(1, Math.ceil(includedCount / Math.max(1, membersPerTeam)));
   const effectiveMembersBase = effectiveTeamCount > 0 ? Math.floor(includedCount / effectiveTeamCount) : 0;
   const remainder = effectiveTeamCount > 0 ? includedCount % effectiveTeamCount : 0;
+  const draftStudentCount = parseClassRoster(draftRoster, draftClassName.trim() || "새 반", 0).length;
+
+  const activateRoster = (roster: TeamClassRoster) => {
+    setSelectedClassId(roster.id);
+    teamClassRosterStorage.setSelectedClassId(roster.id);
+    setStudents(withParticipation(roster.students));
+    setTeams(null);
+    setRandomPickedStudents([]);
+    setRandomPickCount(1);
+    setTeamCount(Math.min(7, Math.max(1, roster.students.length)));
+    setMembersPerTeam(Math.min(3, Math.max(1, roster.students.length)));
+    lastKey.current = "";
+  };
+
+  const handleClassChange = (classId: string) => {
+    const roster = classRosters.find((item) => item.id === classId);
+    if (roster) activateRoster(roster);
+  };
+
+  const openNewRosterEditor = () => {
+    setEditingRosterId(null);
+    setDraftClassName("");
+    setDraftRoster("");
+    setShowRosterEditor(true);
+  };
+
+  const openRosterEditor = () => {
+    if (!selectedClassIsCustom) return;
+    setEditingRosterId(selectedClassRoster.id);
+    setDraftClassName(selectedClassRoster.name);
+    setDraftRoster(rosterToText(selectedClassRoster.students));
+    setShowRosterEditor(true);
+  };
+
+  const handleSaveRoster = () => {
+    const className = draftClassName.trim();
+    if (!className) {
+      toast.error("반 이름을 입력해 주세요.");
+      return;
+    }
+
+    const duplicate = classRosters.some(
+      (roster) => roster.id !== editingRosterId && roster.name.toLocaleLowerCase("ko") === className.toLocaleLowerCase("ko"),
+    );
+    if (duplicate) {
+      toast.error("이미 같은 이름의 반이 있습니다.");
+      return;
+    }
+
+    const parsedStudents = parseClassRoster(draftRoster, className);
+    if (parsedStudents.length === 0) {
+      toast.error("교육생 이름을 한 명 이상 입력해 주세요.");
+      return;
+    }
+
+    const roster: TeamClassRoster = {
+      id: editingRosterId ?? `custom-class-${Date.now()}`,
+      name: className,
+      students: parsedStudents,
+    };
+    const nextRosters = editingRosterId
+      ? customRosters.map((item) => (item.id === editingRosterId ? roster : item))
+      : [...customRosters, roster];
+
+    setCustomRosters(nextRosters);
+    teamClassRosterStorage.setRosters(nextRosters);
+    activateRoster(roster);
+    setShowRosterEditor(false);
+    toast.success(editingRosterId ? `${className} 명단을 수정했습니다.` : `${className} 명단을 추가했습니다.`);
+  };
+
+  const handleDeleteRoster = () => {
+    if (!selectedClassIsCustom) return;
+    if (!window.confirm(`${selectedClassRoster.name} 명단을 삭제하시겠습니까?`)) return;
+
+    const nextRosters = customRosters.filter((roster) => roster.id !== selectedClassId);
+    setCustomRosters(nextRosters);
+    teamClassRosterStorage.setRosters(nextRosters);
+    activateRoster(DEFAULT_CLASS_ROSTER);
+    toast.success("반 명단을 삭제했습니다.");
+  };
 
   const handleShuffle = async () => {
     if (includedCount === 0) { toast.error("참여할 교육생이 없습니다."); return; }
@@ -128,10 +242,10 @@ export default function TeamRandomView() {
 
   const handleReset = () => {
     setTeams(null);
-    setStudents(STUDENTS.map((s) => ({ ...s, included: true })));
+    setStudents(withParticipation(selectedClassRoster.students));
     setMode("teamCount");
-    setTeamCount(7);
-    setMembersPerTeam(3);
+    setTeamCount(Math.min(7, Math.max(1, selectedClassRoster.students.length)));
+    setMembersPerTeam(Math.min(3, Math.max(1, selectedClassRoster.students.length)));
     setOptions({ differentFromLast: false, sortAlpha: false, autoTeamName: true });
     setRandomPickCount(1);
     setRandomPickedStudents([]);
@@ -150,13 +264,66 @@ export default function TeamRandomView() {
         </div>
         <div>
           <h1 className="text-xl font-extrabold text-gray-900">랜덤 팀 편성</h1>
-          <p className="text-sm text-gray-500">{STUDENTS.length}명의 교육생을 공정하게 랜덤으로 편성해 보세요.</p>
+          <p className="text-sm text-gray-500">선택한 반의 교육생만 공정하게 랜덤으로 편성합니다.</p>
         </div>
         <span className="ml-auto flex items-center gap-1.5 bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1.5 rounded-full border border-blue-200">
           <Users className="w-3.5 h-3.5" />
-          교육생 {STUDENTS.length}명
+          {selectedClassRoster.name} · {students.length}명
         </span>
       </div>
+
+      <section className="rounded-2xl border border-[#1259AA]/15 bg-gradient-to-br from-white to-blue-50/60 p-4 sm:p-5 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex-1">
+            <div className="mb-2 flex items-center gap-2">
+              <School className="h-4 w-4 text-[#1259AA]" />
+              <label htmlFor="team-class-select" className="text-sm font-extrabold text-gray-800">편성할 반</label>
+            </div>
+            <select
+              id="team-class-select"
+              value={selectedClassId}
+              onChange={(event) => handleClassChange(event.target.value)}
+              className="w-full rounded-xl border border-[#1259AA]/20 bg-white px-4 py-3 text-sm font-bold text-gray-800 shadow-sm outline-none transition focus:border-[#1259AA] focus:ring-2 focus:ring-[#1259AA]/15 lg:max-w-md"
+            >
+              {classRosters.map((roster) => (
+                <option key={roster.id} value={roster.id}>{roster.name} ({roster.students.length}명)</option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs font-medium text-[#1259AA]">
+              현재 {selectedClassRoster.name} 명단만 사용합니다. 2반을 제외한 다른 반을 선택하면 2반 20명은 편성 후보에 포함되지 않습니다.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={openNewRosterEditor}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#1259AA] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#0d4a8f]"
+            >
+              <Plus className="h-4 w-4" />다른 반 추가
+            </button>
+            {selectedClassIsCustom && (
+              <>
+                <button
+                  type="button"
+                  onClick={openRosterEditor}
+                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50"
+                >
+                  <Pencil className="h-4 w-4" />명단 수정
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteRoster}
+                  className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-3 py-2.5 text-sm font-bold text-red-500 transition hover:bg-red-50"
+                  aria-label={`${selectedClassRoster.name} 삭제`}
+                >
+                  <Trash2 className="h-4 w-4" />삭제
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Settings Card */}
@@ -284,7 +451,10 @@ export default function TeamRandomView() {
         {/* Student List */}
         <div className="bg-white rounded-2xl border border-border shadow-sm p-5 flex flex-col">
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
-            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">참여 교육생</h2>
+            <div>
+              <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wide">참여 교육생</h2>
+              <p className="mt-0.5 text-xs font-semibold text-[#1259AA]">{selectedClassRoster.name}</p>
+            </div>
             <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${includedCount === students.length ? "bg-blue-50 text-blue-600 border-blue-200" : "bg-amber-50 text-amber-600 border-amber-200"}`}>
               {includedCount} / {students.length}명
             </span>
@@ -334,6 +504,81 @@ export default function TeamRandomView() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {showRosterEditor && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="roster-editor-title"
+        >
+          <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div className="flex items-start justify-between border-b border-border px-5 py-4 sm:px-6">
+              <div>
+                <h2 id="roster-editor-title" className="text-lg font-extrabold text-gray-900">
+                  {editingRosterId ? "반 명단 수정" : "다른 반 추가"}
+                </h2>
+                <p className="mt-1 text-xs text-gray-500">저장한 명단은 이 기기의 랜덤 팀 편성에서만 사용됩니다.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRosterEditor(false)}
+                className="rounded-xl p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+                aria-label="명단 편집 닫기"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 px-5 py-5 sm:px-6">
+              <div>
+                <label htmlFor="class-name" className="mb-2 block text-sm font-bold text-gray-700">반 이름</label>
+                <input
+                  id="class-name"
+                  value={draftClassName}
+                  onChange={(event) => setDraftClassName(event.target.value)}
+                  placeholder="예: 광주 1반"
+                  className="w-full rounded-xl border border-border px-3.5 py-2.5 text-sm outline-none transition focus:border-[#1259AA] focus:ring-2 focus:ring-[#1259AA]/15"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <label htmlFor="class-roster" className="text-sm font-bold text-gray-700">교육생 명단</label>
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-[#1259AA]">{draftStudentCount}명</span>
+                </div>
+                <textarea
+                  id="class-roster"
+                  value={draftRoster}
+                  onChange={(event) => setDraftRoster(event.target.value)}
+                  placeholder={"한 줄에 한 명씩 입력하세요.\n김싸피\n이싸피, @ssafy02\n박싸피"}
+                  rows={10}
+                  className="w-full resize-y rounded-xl border border-border px-3.5 py-3 font-mono text-sm leading-6 outline-none transition focus:border-[#1259AA] focus:ring-2 focus:ring-[#1259AA]/15"
+                />
+                <p className="mt-2 text-xs text-gray-500">아이디는 선택 사항입니다. 입력하려면 “이름, @아이디” 형식을 사용하세요.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 border-t border-border bg-gray-50 px-5 py-4 sm:px-6">
+              <button
+                type="button"
+                onClick={() => setShowRosterEditor(false)}
+                className="flex-1 rounded-xl border border-border bg-white py-2.5 text-sm font-bold text-gray-600 transition hover:bg-gray-100"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveRoster}
+                className="flex-1 rounded-xl bg-[#1259AA] py-2.5 text-sm font-bold text-white transition hover:bg-[#0d4a8f]"
+              >
+                {editingRosterId ? "수정 내용 저장" : "반 명단 추가"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
