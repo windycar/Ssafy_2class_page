@@ -15,7 +15,8 @@ export const ADDITIONAL_TEAM_CLASS_ROSTERS: TeamClassRoster[] = [
     students: [
       // 아래 형식을 복사해서 명단을 채워 주세요.
       // { id: 1001, name: "홍길동", username: "@g1_hong", class: "광주_1반" },
-      { id: 1001, name: "김동민", username: "@dodoking99", class: "광주_1반" }
+      { id: 1001, name: "김동민", username: "@dodoking99", class: "광주_1반" },
+      { id: 1002, name: "김수현", username: "@k_sh4770", class: "광주_1반" },
     ],
   },
   {
