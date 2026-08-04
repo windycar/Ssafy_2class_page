@@ -3,26 +3,23 @@ import {
   ArrowRight,
   BarChart3,
   BookOpenCheck,
-  Braces,
   CheckCircle2,
-  Clock3,
-  BrainCircuit,
-  Globe2,
-  Lock,
   Sparkles,
   Target,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
+import { useAiPythonStudyProgress } from "../../hooks/useAiPythonStudyProgress";
 import pythonHero from "../../assets/study/python-study-hero.png";
 
 export default function StudyHubView() {
   const { currentUser } = useAuth();
   const { summary: pythonSummary } = useStudyProgress();
   const { summary: webSummary } = useWebStudyProgress();
-  const total = pythonSummary.total + webSummary.total;
-  const correct = pythonSummary.correct + webSummary.correct;
+  const { summary: aiPythonSummary } = useAiPythonStudyProgress();
+  const total = pythonSummary.total + webSummary.total + aiPythonSummary.total;
+  const correct = pythonSummary.correct + webSummary.correct + aiPythonSummary.correct;
   const accuracy = total ? Math.round((correct / total) * 100) : 0;
 
   return (
@@ -83,7 +80,7 @@ export default function StudyHubView() {
         <StatCard
           icon={<CheckCircle2 className="h-5 w-5" />}
           label="복습 필요"
-          value={`${pythonSummary.incorrect + webSummary.incorrect}문제`}
+          value={`${pythonSummary.incorrect + webSummary.incorrect + aiPythonSummary.incorrect}문제`}
           helper="오답 노트에 자동 저장"
           tone="mint"
         />
@@ -93,7 +90,7 @@ export default function StudyHubView() {
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
             <p className="text-xs font-black tracking-[0.16em] text-[#536cc7]">LEARNING TRACKS</p>
-            <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900">학습 언어를 선택하세요</h2>
+            <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-900">학습 과목을 선택하세요</h2>
           </div>
           <span className="hidden text-xs font-semibold text-slate-400 sm:block">새로운 트랙은 계속 추가됩니다</span>
         </div>
@@ -101,20 +98,23 @@ export default function StudyHubView() {
         <div className="grid gap-4 lg:grid-cols-3">
           <Link
             to="/study/python"
-            className="group relative min-h-[240px] overflow-hidden rounded-3xl border border-indigo-200 bg-gradient-to-br from-[#263f9f] via-[#445fd0] to-[#6d53d7] p-6 text-white shadow-[0_18px_45px_rgba(68,86,184,0.20)] transition hover:-translate-y-1"
+            className="group relative min-h-[290px] overflow-hidden rounded-3xl border border-indigo-200 bg-gradient-to-br from-[#263f9f] via-[#445fd0] to-[#6d53d7] p-6 text-white shadow-[0_18px_45px_rgba(68,86,184,0.20)] transition hover:-translate-y-1"
           >
             <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full border-[28px] border-white/5" />
             <div className="absolute -bottom-14 right-16 h-36 w-36 rounded-full bg-cyan-300/10 blur-2xl" />
+            <img
+              src="/images/study-tracks/python-fundamentals.png"
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute -bottom-1 right-0 h-[116px] w-[116px] object-contain drop-shadow-[0_14px_24px_rgba(20,25,75,0.32)] transition duration-300 group-hover:-translate-y-1 group-hover:scale-105 sm:h-[132px] sm:w-[132px] lg:h-[128px] lg:w-[128px] xl:h-[142px] xl:w-[142px]"
+            />
             <div className="relative flex h-full flex-col">
-              <div className="flex items-center justify-between">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
-                  <Braces className="h-6 w-6" />
-                </span>
+              <div className="flex justify-end">
                 <span className="rounded-full bg-emerald-300/20 px-3 py-1 text-[11px] font-black text-emerald-100">
                   400문제
                 </span>
               </div>
-              <div className="mt-auto">
+              <div className="relative z-10 mt-auto max-w-[68%] sm:max-w-[70%] lg:max-w-[62%] xl:max-w-[65%]">
                 <p className="text-xs font-black tracking-[0.18em] text-blue-100/75">AVAILABLE NOW</p>
                 <h3 className="mt-1 text-3xl font-black">Python</h3>
                 <p className="mt-2 max-w-sm text-sm leading-6 text-blue-100/80">
@@ -130,20 +130,23 @@ export default function StudyHubView() {
 
           <Link
             to="/study/web"
-            className="group relative min-h-[240px] overflow-hidden rounded-3xl border border-cyan-200 bg-gradient-to-br from-[#063f52] via-[#087f92] to-[#12a283] p-6 text-white shadow-[0_18px_45px_rgba(8,116,135,0.20)] transition hover:-translate-y-1"
+            className="group relative min-h-[290px] overflow-hidden rounded-3xl border border-cyan-200 bg-gradient-to-br from-[#063f52] via-[#087f92] to-[#12a283] p-6 text-white shadow-[0_18px_45px_rgba(8,116,135,0.20)] transition hover:-translate-y-1"
           >
             <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full border-[28px] border-white/5" />
             <div className="absolute -bottom-14 right-16 h-36 w-36 rounded-full bg-cyan-200/10 blur-2xl" />
+            <img
+              src="/images/study-tracks/web-fundamentals.png"
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute -bottom-1 right-0 h-[116px] w-[116px] object-contain drop-shadow-[0_14px_24px_rgba(4,52,61,0.32)] transition duration-300 group-hover:-translate-y-1 group-hover:scale-105 sm:h-[132px] sm:w-[132px] lg:h-[128px] lg:w-[128px] xl:h-[142px] xl:w-[142px]"
+            />
             <div className="relative flex h-full flex-col">
-              <div className="flex items-center justify-between">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
-                  <Globe2 className="h-6 w-6" />
-                </span>
+              <div className="flex justify-end">
                 <span className="rounded-full bg-cyan-100/20 px-3 py-1 text-[11px] font-black text-cyan-50">
                   300문제
                 </span>
               </div>
-              <div className="mt-auto">
+              <div className="relative z-10 mt-auto max-w-[68%] sm:max-w-[70%] lg:max-w-[62%] xl:max-w-[65%]">
                 <p className="text-xs font-black tracking-[0.18em] text-cyan-100/75">NEW CLASSROOM</p>
                 <h3 className="mt-1 text-3xl font-black">Web</h3>
                 <p className="mt-2 text-sm leading-6 text-cyan-50/80">
@@ -156,12 +159,37 @@ export default function StudyHubView() {
               </div>
             </div>
           </Link>
-          <LockedTrack
-            icon={<BrainCircuit className="h-6 w-6" />}
-            title="AI Python"
-            description="Python으로 시작하는 AI와 데이터 활용 트랙"
-            color="violet"
-          />
+          <Link
+            to="/study/ai-python"
+            className="group relative min-h-[290px] overflow-hidden rounded-3xl border border-violet-200 bg-gradient-to-br from-[#241044] via-[#6324ae] to-[#315fd3] p-6 text-white shadow-[0_18px_45px_rgba(91,48,170,0.20)] transition hover:-translate-y-1"
+          >
+            <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full border-[28px] border-white/5" />
+            <div className="absolute -bottom-14 right-16 h-36 w-36 rounded-full bg-blue-200/10 blur-2xl" />
+            <img
+              src="/images/study-tracks/ai-python-data.png"
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute -bottom-1 right-0 h-[116px] w-[116px] object-contain drop-shadow-[0_14px_24px_rgba(35,17,71,0.34)] transition duration-300 group-hover:-translate-y-1 group-hover:scale-105 sm:h-[132px] sm:w-[132px] lg:h-[128px] lg:w-[128px] xl:h-[142px] xl:w-[142px]"
+            />
+            <div className="relative flex h-full flex-col">
+              <div className="flex justify-end">
+                <span className="rounded-full bg-violet-100/20 px-3 py-1 text-[11px] font-black text-violet-50">
+                  100문제
+                </span>
+              </div>
+              <div className="relative z-10 mt-auto max-w-[68%] sm:max-w-[70%] lg:max-w-[62%] xl:max-w-[65%]">
+                <p className="text-xs font-black tracking-[0.18em] text-violet-100/75">NEW CLASSROOM</p>
+                <h3 className="mt-1 whitespace-nowrap text-2xl font-black sm:text-3xl">AI Python 기초</h3>
+                <p className="mt-2 text-sm leading-6 text-violet-50/80">
+                  Python·API·NumPy·Pandas·시각화와 EDA를 한 흐름으로 풉니다.
+                </p>
+                <span className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold">
+                  출제 범위 선택하기
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </span>
+              </div>
+            </div>
+          </Link>
         </div>
       </section>
     </div>
@@ -195,37 +223,6 @@ function StatCard({
         <p className="text-xs font-bold text-slate-400">{label}</p>
         <p className="mt-0.5 text-xl font-black text-slate-900">{value}</p>
         <p className="mt-0.5 text-[11px] text-slate-400">{helper}</p>
-      </div>
-    </div>
-  );
-}
-
-function LockedTrack({
-  icon,
-  title,
-  description,
-  color,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  color: "violet";
-}) {
-  const tones = {
-    violet: "bg-violet-50 text-violet-700",
-  };
-  return (
-    <div className="relative min-h-[240px] overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="absolute right-5 top-5 flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-black text-slate-400">
-        <Lock className="h-3 w-3" /> 준비 중
-      </div>
-      <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${tones[color]}`}>{icon}</span>
-      <div className="mt-14">
-        <h3 className="text-xl font-black text-slate-700">{title}</h3>
-        <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
-        <p className="mt-4 flex items-center gap-1.5 text-xs font-bold text-slate-300">
-          <Clock3 className="h-3.5 w-3.5" /> 다음 업데이트
-        </p>
       </div>
     </div>
   );

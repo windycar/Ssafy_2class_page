@@ -20,8 +20,8 @@ export const CARD_NAME: Record<BangCardKind, string> = {
   bang: "BANG!", missed: "Missed!", beer: "맥주", saloon: "주점",
   indians: "인디언", gatling: "개틀링", duel: "결투",
   general_store: "잡화점",
-  stagecoach: "역마차", wells_fargo: "웰스파고", cat_balou: "캣발루", panic: "강탈",
-  volcanic: "화산총", schofield: "스코필드", remington: "레밍턴",
+  stagecoach: "역마차", wells_fargo: "웰스파고 은행 ", cat_balou: "캣발루", panic: "강탈",
+  volcanic: "볼캐닉", schofield: "스코필드", remington: "레밍턴",
   rev_carbine: "회전소총", winchester: "윈체스터",
   barrel: "통", dynamite: "다이너마이트", jail: "감옥", scope: "조준경", mustang: "야생마",
 };

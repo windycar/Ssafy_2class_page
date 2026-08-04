@@ -19,9 +19,9 @@ The same SQL file creates the shared coffee orders, anonymous posts, and Bang ga
 
 ## Study progress sync
 
-For an existing Supabase project, run [`supabase/study_progress.sql`](./supabase/study_progress.sql) and [`supabase/web_study_progress.sql`](./supabase/web_study_progress.sql) once in the Supabase SQL Editor. New projects receive both tables from [`supabase/schema.sql`](./supabase/schema.sql).
+For an existing Supabase project, run [`supabase/study_progress.sql`](./supabase/study_progress.sql), [`supabase/web_study_progress.sql`](./supabase/web_study_progress.sql), and [`supabase/ai_python_study_progress.sql`](./supabase/ai_python_study_progress.sql) once in the Supabase SQL Editor. New projects receive all three tables from [`supabase/schema.sql`](./supabase/schema.sql).
 
-Python questions stay versioned in [`src/data/pythonQuestionBank.ts`](./src/data/pythonQuestionBank.ts), and Web questions stay versioned in [`src/data/webQuestionBank.ts`](./src/data/webQuestionBank.ts). Multiple-choice, short-answer, and essay responses are synchronized to `study_attempts` and `web_study_attempts`. The browser saves immediately to local storage, keeps a pending queue, and retries when Supabase becomes available.
+Python questions stay versioned in [`src/data/pythonQuestionBank.ts`](./src/data/pythonQuestionBank.ts), Web questions in [`src/data/webQuestionBank.ts`](./src/data/webQuestionBank.ts), and AI Python questions in [`src/data/aiPythonQuestionBank.ts`](./src/data/aiPythonQuestionBank.ts). Responses are synchronized to `study_attempts`, `web_study_attempts`, and `ai_python_study_attempts`. The browser saves immediately to local storage, keeps a pending queue, and retries when Supabase becomes available.
 
 The current class-member selector is a lightweight profile switch, not secure authentication. The table includes an optional `auth_user_id` column so Supabase Auth and owner-only RLS can be enabled later without replacing the progress model.
 
