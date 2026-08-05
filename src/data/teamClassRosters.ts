@@ -31,6 +31,7 @@ export const ADDITIONAL_TEAM_CLASS_ROSTERS: TeamClassRoster[] = [
     name: "광주 4반",
     students: [
       // { id: 4001, name: "홍길동", username: "@g4_hong", class: "광주_4반" },
+        { id: 4001, name: "안준영", username: "@dev.jun0321", class: "광주_4반" },
     ],
   },
   {
@@ -38,13 +39,6 @@ export const ADDITIONAL_TEAM_CLASS_ROSTERS: TeamClassRoster[] = [
     name: "광주 5반",
     students: [
       // { id: 5001, name: "홍길동", username: "@g5_hong", class: "광주_5반" },
-    ],
-  },
-  {
-    id: "gwangju-class-6",
-    name: "광주 6반",
-    students: [
-      // { id: 6001, name: "홍길동", username: "@g6_hong", class: "광주_6반" },
     ],
   },
 ];
