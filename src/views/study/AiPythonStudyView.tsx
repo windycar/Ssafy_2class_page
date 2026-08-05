@@ -12,7 +12,10 @@ import {
   Database,
   Grid3X3,
   LineChart,
+  RotateCcw,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   AI_PYTHON_CATEGORY_META,
   AI_PYTHON_QUESTION_BANK,
@@ -46,7 +49,7 @@ const CATEGORY_ICONS: Record<AiPythonCategory, React.ReactNode> = {
 
 export default function AiPythonStudyView() {
   const navigate = useNavigate();
-  const { progress, syncState } = useAiPythonStudyProgress();
+  const { progress, resetProgress, syncState } = useAiPythonStudyProgress();
   const [selectedCategories, setSelectedCategories] =
     useState<AiPythonCategory[]>(CATEGORIES);
 
@@ -82,6 +85,13 @@ export default function AiPythonStudyView() {
     (total, category) => total + scopeCounts[category].remaining,
     0,
   );
+  const resettableCount = useMemo(
+    () =>
+      progress.attempts.filter((attempt) =>
+        selectedCategories.includes(attempt.category),
+      ).length,
+    [progress.attempts, selectedCategories],
+  );
   const allSelected = selectedCategories.length === CATEGORIES.length;
   const canStart =
     selectedCategories.length > 0 && selectedRemaining > 0 && syncState !== "loading";
@@ -97,6 +107,21 @@ export default function AiPythonStudyView() {
   const startQuiz = () => {
     if (!canStart) return;
     navigate(`/study/ai-python/quiz?categories=${selectedCategories.join(",")}`);
+  };
+
+  const resetSelectedProgress = async () => {
+    if (!resettableCount || !selectedCategories.length || syncState === "loading") return;
+    const confirmed = window.confirm(
+      `현재 선택한 학생의 ${selectedCategories.length}개 범위 풀이 기록 ${resettableCount}개를 영구 삭제하고 초기화할까요?\n삭제한 기록은 복구할 수 없습니다.`,
+    );
+    if (!confirmed) return;
+
+    const reset = await resetProgress(selectedCategories);
+    if (reset) {
+      toast.success(`현재 학생의 선택 범위 풀이 기록 ${resettableCount}개를 영구 초기화했습니다.`);
+    } else {
+      toast.error("풀이 기록을 초기화하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    }
   };
 
   return (
@@ -227,14 +252,32 @@ export default function AiPythonStudyView() {
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={startQuiz}
-          disabled={!canStart}
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-40 sm:mt-0 sm:w-auto"
-        >
-          문제 풀이 시작 <ArrowRight className="h-4 w-4" />
-        </button>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-0 sm:flex sm:flex-wrap sm:justify-end">
+          <button
+            type="button"
+            onClick={() => setSelectedCategories(CATEGORIES)}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-50"
+          >
+            <RotateCcw className="h-3.5 w-3.5" /> 선택 초기화
+          </button>
+          <button
+            type="button"
+            onClick={resetSelectedProgress}
+            disabled={!resettableCount || !selectedCategories.length || syncState === "loading"}
+            aria-label={`선택한 범위의 풀이 기록 ${resettableCount}개 초기화`}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 px-3 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> 풀이 기록 {resettableCount}개 초기화
+          </button>
+          <button
+            type="button"
+            onClick={startQuiz}
+            disabled={!canStart}
+            className="col-span-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-40 sm:col-span-1 sm:w-auto"
+          >
+            문제 풀이 시작 <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
       </section>
     </div>
   );

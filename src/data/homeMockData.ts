@@ -5,7 +5,7 @@ export const MOCK_ACTIVITIES: Activity[] = [
   {
     id: "act-1",
     type: "team",
-    message: `새로운 팀 편성 결과가 생성되었습니다. (7개 팀, ${TOTAL_STUDENTS}명)`,
+    message: `새로운 팀 편성 결과가 생성되었습니다. (5개 팀, ${TOTAL_STUDENTS}명)`,
     createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
   },
   {

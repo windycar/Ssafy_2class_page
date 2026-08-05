@@ -235,7 +235,17 @@ create policy "Class study attempt create"
     )
   );
 
-grant select, insert on public.study_attempts to anon, authenticated;
+drop policy if exists "Class study attempt delete" on public.study_attempts;
+create policy "Class study attempt delete"
+  on public.study_attempts
+  for delete
+  to anon, authenticated
+  using (
+    auth_user_id is null
+    or (select auth.uid()) = auth_user_id
+  );
+
+grant select, insert, delete on public.study_attempts to anon, authenticated;
 
 -- Web 학습 문제는 앱 코드에서 관리하고, 사용자별 풀이 기록만 저장합니다.
 create table if not exists public.web_study_attempts (
@@ -288,7 +298,17 @@ create policy "Class web study attempt create"
     )
   );
 
-grant select, insert on public.web_study_attempts to anon, authenticated;
+drop policy if exists "Class web study attempt delete" on public.web_study_attempts;
+create policy "Class web study attempt delete"
+  on public.web_study_attempts
+  for delete
+  to anon, authenticated
+  using (
+    auth_user_id is null
+    or (select auth.uid()) = auth_user_id
+  );
+
+grant select, insert, delete on public.web_study_attempts to anon, authenticated;
 -- AI 파이썬 기초 문제 풀이 기록을 저장하기 위해 SQL Editor에서 한 번 실행하세요.
 create table if not exists public.ai_python_study_attempts (
   id text primary key,
@@ -337,4 +357,15 @@ create policy "Class AI Python study attempt create"
     )
   );
 
-grant select, insert on public.ai_python_study_attempts to anon, authenticated;
+drop policy if exists "Class AI Python study attempt delete"
+  on public.ai_python_study_attempts;
+create policy "Class AI Python study attempt delete"
+  on public.ai_python_study_attempts
+  for delete
+  to anon, authenticated
+  using (
+    auth_user_id is null
+    or (select auth.uid()) = auth_user_id
+  );
+
+grant select, insert, delete on public.ai_python_study_attempts to anon, authenticated;

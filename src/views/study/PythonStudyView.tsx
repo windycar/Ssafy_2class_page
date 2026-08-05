@@ -12,7 +12,9 @@ import {
   Layers3,
   RotateCcw,
   Sparkles,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   DIFFICULTY_META,
   PYTHON_QUESTION_BANK,
@@ -34,7 +36,7 @@ const QUESTION_TYPES = Object.keys(
 
 export default function PythonStudyView() {
   const navigate = useNavigate();
-  const { progress, syncState } = useStudyProgress();
+  const { progress, resetProgress, syncState } = useStudyProgress();
   const [difficulty, setDifficulty] = useState<StudyDifficulty>("easy");
   const [selectedCategories, setSelectedCategories] = useState<StudyCategory[]>(CATEGORIES);
   const completedQuestionIds = useMemo(
@@ -57,6 +59,15 @@ export default function PythonStudyView() {
     [completedQuestionIds, selectedQuestions],
   );
   const questionCount = remainingQuestions.length;
+  const resettableCount = useMemo(
+    () =>
+      progress.attempts.filter(
+        (attempt) =>
+          attempt.difficulty === difficulty &&
+          selectedCategories.includes(attempt.category),
+      ).length,
+    [difficulty, progress.attempts, selectedCategories],
+  );
   const questionTypeCounts = QUESTION_TYPES.reduce<Record<StudyQuestionType, number>>(
     (counts, questionType) => {
       counts[questionType] = remainingQuestions.filter(
@@ -83,6 +94,21 @@ export default function PythonStudyView() {
 
     setDifficulty("easy");
     setSelectedCategories([...CATEGORIES]);
+  };
+
+  const resetSelectedProgress = async () => {
+    if (!resettableCount || !selectedCategories.length || syncState === "loading") return;
+    const confirmed = window.confirm(
+      `현재 선택한 학생의 ${DIFFICULTY_META[difficulty].label} · 선택한 ${selectedCategories.length}개 범위 풀이 기록 ${resettableCount}개를 영구 삭제하고 초기화할까요?\n삭제한 기록은 복구할 수 없습니다.`,
+    );
+    if (!confirmed) return;
+
+    const reset = await resetProgress(difficulty, selectedCategories);
+    if (reset) {
+      toast.success(`현재 학생의 선택 범위 풀이 기록 ${resettableCount}개를 영구 초기화했습니다.`);
+    } else {
+      toast.error("풀이 기록을 초기화하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    }
   };
 
   const startQuiz = () => {
@@ -295,20 +321,29 @@ export default function PythonStudyView() {
               : `이번 회차 ${questionCount}문제`}
           </p>
         </div>
-        <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2 sm:flex">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
           <button
             type="button"
             onClick={resetStudyOptions}
-            aria-label="난이도와 출제 범위 초기화"
+            aria-label="난이도와 출제 범위 선택 초기화"
             className="inline-flex min-h-11 touch-manipulation select-none items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-500 hover:bg-slate-50"
           >
-            <RotateCcw className="h-4 w-4" /> 초기화
+            <RotateCcw className="h-4 w-4" /> 선택 초기화
+          </button>
+          <button
+            type="button"
+            onClick={resetSelectedProgress}
+            disabled={!resettableCount || !selectedCategories.length || syncState === "loading"}
+            aria-label={`선택한 범위의 풀이 기록 ${resettableCount}개 초기화`}
+            className="inline-flex min-h-11 touch-manipulation select-none items-center justify-center gap-1.5 rounded-xl border border-rose-200 px-4 py-3 text-sm font-bold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Trash2 className="h-4 w-4" /> 풀이 기록 {resettableCount}개 초기화
           </button>
           <button
             type="button"
             onClick={startQuiz}
             disabled={!questionCount || syncState === "loading"}
-            className="inline-flex min-h-11 min-w-0 touch-manipulation select-none items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-indigo-200 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 sm:min-w-[170px]"
+            className="col-span-2 inline-flex min-h-11 min-w-0 touch-manipulation select-none items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-indigo-200 transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40 sm:col-span-1 sm:min-w-[170px]"
           >
             {syncState === "loading"
               ? "기록 확인 중"

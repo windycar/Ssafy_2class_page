@@ -8,7 +8,7 @@ const QUICK_MENU = [
     description: `${TOTAL_STUDENTS}명을 공정하게 무작위 팀으로 편성해요.`,
     icon: Shuffle,
     path: "/teams",
-    badge: `${TOTAL_STUDENTS}명 · 7팀`,
+    badge: `${TOTAL_STUDENTS}명 · 5팀`,
     buttonLabel: "팀 만들기",
     colorBg: "bg-[#1259AA]/5",
     colorBorder: "border-[#1259AA]/20",

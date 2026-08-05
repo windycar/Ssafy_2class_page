@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "./useAuth";
 import { webStudyProgressStorage } from "../services/storage/webStudyProgressStorage";
 import {
   loadWebStudyProgress,
+  resetWebStudyProgress,
   saveWebStudyAttempt,
 } from "../services/webStudyProgressService";
 import { gradeWebResponse } from "../utils/webStudyGrading";
@@ -23,6 +24,7 @@ export function useWebStudyProgress() {
   const userId = currentUser?.id ?? 0;
   const [progress, setProgress] = useState(() => webStudyProgressStorage.get(userId));
   const [syncState, setSyncState] = useState<StudySyncState>("loading");
+  const resetInFlight = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,6 +77,36 @@ export function useWebStudyProgress() {
     return grade.correct;
   };
 
+  const resetProgress = async (
+    difficulty: WebQuestion["difficulty"],
+    categories: WebCategory[],
+  ) => {
+    if (!currentUser || !categories.length || syncState === "loading" || resetInFlight.current) {
+      return false;
+    }
+
+    const hasMatchingAttempt = progress.attempts.some(
+      (attempt) =>
+        attempt.difficulty === difficulty && categories.includes(attempt.category),
+    );
+    if (!hasMatchingAttempt) return true;
+
+    const previousSyncState = syncState;
+    resetInFlight.current = true;
+    setSyncState("loading");
+    try {
+      const result = await resetWebStudyProgress(currentUser.id, difficulty, categories);
+      setProgress(result.progress);
+      setSyncState(result.synced ? "synced" : "local");
+      return true;
+    } catch {
+      setSyncState(previousSyncState);
+      return false;
+    } finally {
+      resetInFlight.current = false;
+    }
+  };
+
   const summary = useMemo(() => {
     const total = progress.attempts.length;
     const correct = progress.attempts.filter((attempt) => attempt.correct).length;
@@ -101,5 +133,5 @@ export function useWebStudyProgress() {
     };
   }, [progress]);
 
-  return { progress, summary, recordAnswer, syncState };
+  return { progress, summary, recordAnswer, resetProgress, syncState };
 }

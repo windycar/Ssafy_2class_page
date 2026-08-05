@@ -46,5 +46,15 @@ create policy "Class AI Python study attempt create"
     )
   );
 
-grant select, insert on public.ai_python_study_attempts to anon, authenticated;
+drop policy if exists "Class AI Python study attempt delete"
+  on public.ai_python_study_attempts;
+create policy "Class AI Python study attempt delete"
+  on public.ai_python_study_attempts
+  for delete
+  to anon, authenticated
+  using (
+    auth_user_id is null
+    or (select auth.uid()) = auth_user_id
+  );
 
+grant select, insert, delete on public.ai_python_study_attempts to anon, authenticated;

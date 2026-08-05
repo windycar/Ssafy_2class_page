@@ -1,8 +1,14 @@
-import type { WebStudyAttempt, WebStudyProgress } from "../../types/webStudy";
+import type {
+  WebCategory,
+  WebDifficulty,
+  WebStudyAttempt,
+  WebStudyProgress,
+} from "../../types/webStudy";
 
 const STORAGE_VERSION = "v1";
 const KEY_PREFIX = `ssafy-gwangju-2-web-study-progress:${STORAGE_VERSION}`;
 const PENDING_KEY_PREFIX = `ssafy-gwangju-2-web-study-pending:${STORAGE_VERSION}`;
+const TOMBSTONE_KEY_PREFIX = `ssafy-gwangju-2-web-study-reset-tombstones:${STORAGE_VERSION}`;
 const EMPTY_PROGRESS: WebStudyProgress = { attempts: [] };
 const CACHE_LIMIT = 2000;
 
@@ -14,8 +20,34 @@ function pendingKeyFor(userId: number) {
   return `${PENDING_KEY_PREFIX}:${userId}`;
 }
 
+function tombstoneKeyFor(userId: number) {
+  return `${TOMBSTONE_KEY_PREFIX}:${userId}`;
+}
+
+function getTombstoneIds(userId: number): string[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(tombstoneKeyFor(userId)) ?? "[]") as string[];
+    return Array.isArray(parsed) ? parsed.slice(-CACHE_LIMIT) : [];
+  } catch {
+    return [];
+  }
+}
+
+function addTombstones(userId: number, attemptIds: string[]) {
+  const next = [...new Set([...getTombstoneIds(userId), ...attemptIds])].slice(-CACHE_LIMIT);
+  localStorage.setItem(tombstoneKeyFor(userId), JSON.stringify(next));
+}
+
+function suppressTombstones(userId: number, progress: WebStudyProgress): WebStudyProgress {
+  const tombstones = new Set(getTombstoneIds(userId));
+  return {
+    attempts: progress.attempts.filter((attempt) => !tombstones.has(attempt.id)),
+  };
+}
+
 function write(userId: number, progress: WebStudyProgress) {
-  const next = { attempts: progress.attempts.slice(-CACHE_LIMIT) };
+  const visible = suppressTombstones(userId, progress);
+  const next = { attempts: visible.attempts.slice(-CACHE_LIMIT) };
   try {
     localStorage.setItem(keyFor(userId), JSON.stringify(next));
   } catch {
@@ -32,13 +64,29 @@ function safeSet(key: string, value: string) {
   }
 }
 
+export function getWebStudyResetAttemptIds(
+  progress: WebStudyProgress,
+  difficulty: WebDifficulty,
+  categories: WebCategory[],
+) {
+  const selectedCategories = new Set(categories);
+  return progress.attempts
+    .filter(
+      (attempt) =>
+        attempt.difficulty === difficulty && selectedCategories.has(attempt.category),
+    )
+    .map((attempt) => attempt.id);
+}
+
 export const webStudyProgressStorage = {
   get(userId: number): WebStudyProgress {
     try {
       const raw = localStorage.getItem(keyFor(userId));
       if (!raw) return EMPTY_PROGRESS;
       const parsed = JSON.parse(raw) as WebStudyProgress;
-      return { attempts: Array.isArray(parsed.attempts) ? parsed.attempts : [] };
+      return suppressTombstones(userId, {
+        attempts: Array.isArray(parsed.attempts) ? parsed.attempts : [],
+      });
     } catch {
       return EMPTY_PROGRESS;
     }
@@ -55,6 +103,26 @@ export const webStudyProgressStorage = {
   },
   replace(userId: number, progress: WebStudyProgress): WebStudyProgress {
     return write(userId, progress);
+  },
+  remove(userId: number, attemptIds: string[]): WebStudyProgress {
+    const current = this.get(userId);
+    const requestedIds = new Set(attemptIds);
+    const removedIds = new Set(
+      current.attempts
+        .filter((attempt) => requestedIds.has(attempt.id))
+        .map((attempt) => attempt.id),
+    );
+    addTombstones(userId, [...removedIds]);
+    const next = write(userId, {
+      attempts: current.attempts.filter((attempt) => !removedIds.has(attempt.id)),
+    });
+    safeSet(
+      pendingKeyFor(userId),
+      JSON.stringify(
+        this.getPendingIds(userId).filter((id) => !removedIds.has(id)),
+      ),
+    );
+    return next;
   },
   getPendingIds(userId: number): string[] {
     try {

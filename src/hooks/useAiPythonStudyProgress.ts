@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "./useAuth";
 import { aiPythonStudyProgressStorage } from "../services/storage/aiPythonStudyProgressStorage";
 import {
   loadAiPythonStudyProgress,
+  resetAiPythonStudyProgress,
   saveAiPythonStudyAttempt,
 } from "../services/aiPythonStudyProgressService";
 import type {
@@ -30,6 +31,7 @@ export function useAiPythonStudyProgress() {
     aiPythonStudyProgressStorage.get(userId),
   );
   const [syncState, setSyncState] = useState<StudySyncState>("loading");
+  const resetInFlight = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +82,32 @@ export function useAiPythonStudyProgress() {
     return correct;
   };
 
+  const resetProgress = async (categories: AiPythonCategory[]) => {
+    if (!currentUser || !categories.length || syncState === "loading" || resetInFlight.current) {
+      return false;
+    }
+
+    const hasMatchingAttempt = progress.attempts.some((attempt) =>
+      categories.includes(attempt.category),
+    );
+    if (!hasMatchingAttempt) return true;
+
+    const previousSyncState = syncState;
+    resetInFlight.current = true;
+    setSyncState("loading");
+    try {
+      const result = await resetAiPythonStudyProgress(currentUser.id, categories);
+      setProgress(result.progress);
+      setSyncState(result.synced ? "synced" : "local");
+      return true;
+    } catch {
+      setSyncState(previousSyncState);
+      return false;
+    } finally {
+      resetInFlight.current = false;
+    }
+  };
+
   const summary = useMemo(() => {
     let correct = 0;
     const byCategory = Object.fromEntries(
@@ -104,5 +132,5 @@ export function useAiPythonStudyProgress() {
     };
   }, [progress.attempts]);
 
-  return { progress, summary, recordAnswer, syncState };
+  return { progress, summary, recordAnswer, resetProgress, syncState };
 }

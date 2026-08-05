@@ -3,7 +3,7 @@ import { STUDENTS } from "../data/students";
 export const CLASS_NAME = "SSAFY 광주 2반";
 export const SLOGAN = "함께 배우고, 함께 성장하는 우리 반";
 export const TOTAL_STUDENTS = STUDENTS.length;
-export const DEFAULT_TEAM_COUNT = 7;
+export const DEFAULT_TEAM_COUNT = 5;
 export const DEFAULT_MEMBERS_PER_TEAM = 3;
 
 export const GROUND_RULE_CATEGORIES = [

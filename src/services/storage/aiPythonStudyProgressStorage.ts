@@ -1,4 +1,5 @@
 import type {
+  AiPythonCategory,
   AiPythonStudyAttempt,
   AiPythonStudyProgress,
 } from "../../types/aiPythonStudy";
@@ -6,6 +7,7 @@ import type {
 const STORAGE_VERSION = "v1";
 const KEY_PREFIX = `ssafy-gwangju-2-ai-python-study-progress:${STORAGE_VERSION}`;
 const PENDING_KEY_PREFIX = `ssafy-gwangju-2-ai-python-study-pending:${STORAGE_VERSION}`;
+const TOMBSTONE_KEY_PREFIX = `ssafy-gwangju-2-ai-python-study-reset-tombstones:${STORAGE_VERSION}`;
 const EMPTY_PROGRESS: AiPythonStudyProgress = { attempts: [] };
 const CACHE_LIMIT = 2000;
 
@@ -17,6 +19,34 @@ function pendingKeyFor(userId: number) {
   return `${PENDING_KEY_PREFIX}:${userId}`;
 }
 
+function tombstoneKeyFor(userId: number) {
+  return `${TOMBSTONE_KEY_PREFIX}:${userId}`;
+}
+
+function getTombstoneIds(userId: number): string[] {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(tombstoneKeyFor(userId)) ?? "[]") as string[];
+    return Array.isArray(parsed) ? parsed.slice(-CACHE_LIMIT) : [];
+  } catch {
+    return [];
+  }
+}
+
+function addTombstones(userId: number, attemptIds: string[]) {
+  const next = [...new Set([...getTombstoneIds(userId), ...attemptIds])].slice(-CACHE_LIMIT);
+  localStorage.setItem(tombstoneKeyFor(userId), JSON.stringify(next));
+}
+
+function suppressTombstones(
+  userId: number,
+  progress: AiPythonStudyProgress,
+): AiPythonStudyProgress {
+  const tombstones = new Set(getTombstoneIds(userId));
+  return {
+    attempts: progress.attempts.filter((attempt) => !tombstones.has(attempt.id)),
+  };
+}
+
 function safeSet(key: string, value: string) {
   try {
     localStorage.setItem(key, value);
@@ -26,9 +56,20 @@ function safeSet(key: string, value: string) {
 }
 
 function write(userId: number, progress: AiPythonStudyProgress) {
-  const next = { attempts: progress.attempts.slice(-CACHE_LIMIT) };
+  const visible = suppressTombstones(userId, progress);
+  const next = { attempts: visible.attempts.slice(-CACHE_LIMIT) };
   safeSet(keyFor(userId), JSON.stringify(next));
   return next;
+}
+
+export function getAiPythonStudyResetAttemptIds(
+  progress: AiPythonStudyProgress,
+  categories: AiPythonCategory[],
+) {
+  const selectedCategories = new Set(categories);
+  return progress.attempts
+    .filter((attempt) => selectedCategories.has(attempt.category))
+    .map((attempt) => attempt.id);
 }
 
 export const aiPythonStudyProgressStorage = {
@@ -37,7 +78,9 @@ export const aiPythonStudyProgressStorage = {
       const raw = localStorage.getItem(keyFor(userId));
       if (!raw) return EMPTY_PROGRESS;
       const parsed = JSON.parse(raw) as AiPythonStudyProgress;
-      return { attempts: Array.isArray(parsed.attempts) ? parsed.attempts : [] };
+      return suppressTombstones(userId, {
+        attempts: Array.isArray(parsed.attempts) ? parsed.attempts : [],
+      });
     } catch {
       return EMPTY_PROGRESS;
     }
@@ -55,6 +98,26 @@ export const aiPythonStudyProgressStorage = {
   },
   replace(userId: number, progress: AiPythonStudyProgress): AiPythonStudyProgress {
     return write(userId, progress);
+  },
+  remove(userId: number, attemptIds: string[]): AiPythonStudyProgress {
+    const current = this.get(userId);
+    const requestedIds = new Set(attemptIds);
+    const removedIds = new Set(
+      current.attempts
+        .filter((attempt) => requestedIds.has(attempt.id))
+        .map((attempt) => attempt.id),
+    );
+    addTombstones(userId, [...removedIds]);
+    const next = write(userId, {
+      attempts: current.attempts.filter((attempt) => !removedIds.has(attempt.id)),
+    });
+    safeSet(
+      pendingKeyFor(userId),
+      JSON.stringify(
+        this.getPendingIds(userId).filter((id) => !removedIds.has(id)),
+      ),
+    );
+    return next;
   },
   getPendingIds(userId: number): string[] {
     try {

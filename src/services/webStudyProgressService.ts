@@ -1,5 +1,13 @@
 import { supabase } from "../lib/supabase";
-import { webStudyProgressStorage } from "./storage/webStudyProgressStorage";
+import {
+  getWebStudyResetAttemptIds,
+  webStudyProgressStorage,
+} from "./storage/webStudyProgressStorage";
+import {
+  resetScopedStudyProgress,
+  STUDY_ATTEMPT_TABLES,
+  type ScopedStudyDeleteClient,
+} from "./scopedStudyProgressReset";
 import type {
   WebCategory,
   WebDifficulty,
@@ -105,4 +113,24 @@ export async function saveWebStudyAttempt(studentId: number): Promise<boolean> {
   if (!supabase) return false;
   await uploadPending(studentId);
   return webStudyProgressStorage.getPendingIds(studentId).length === 0;
+}
+
+export async function resetWebStudyProgress(
+  studentId: number,
+  difficulty: WebDifficulty,
+  categories: WebCategory[],
+): Promise<{ progress: WebStudyProgress; synced: boolean }> {
+  const current = webStudyProgressStorage.get(studentId);
+  if (!categories.length) return { progress: current, synced: false };
+
+  const attemptIds = getWebStudyResetAttemptIds(current, difficulty, categories);
+  if (!attemptIds.length) return { progress: current, synced: false };
+
+  return resetScopedStudyProgress(
+    supabase as unknown as ScopedStudyDeleteClient | null,
+    STUDY_ATTEMPT_TABLES.web,
+    studentId,
+    attemptIds,
+    () => webStudyProgressStorage.remove(studentId, attemptIds),
+  );
 }

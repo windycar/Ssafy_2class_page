@@ -15,7 +15,9 @@ import {
   MonitorSmartphone,
   RotateCcw,
   Sparkles,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   WEB_CATEGORY_META,
   WEB_DIFFICULTY_META,
@@ -32,7 +34,7 @@ const QUESTION_TYPES = Object.keys(WEB_QUESTION_TYPE_META) as StudyQuestionType[
 
 export default function WebStudyView() {
   const navigate = useNavigate();
-  const { progress, syncState } = useWebStudyProgress();
+  const { progress, resetProgress, syncState } = useWebStudyProgress();
   const [difficulty, setDifficulty] = useState<WebDifficulty>("easy");
   const [selectedCategories, setSelectedCategories] = useState<WebCategory[]>(CATEGORIES);
 
@@ -50,6 +52,15 @@ export default function WebStudyView() {
   const remainingQuestions = useMemo(
     () => selectedQuestions.filter((question) => !completedQuestionIds.has(question.id)),
     [completedQuestionIds, selectedQuestions],
+  );
+  const resettableCount = useMemo(
+    () =>
+      progress.attempts.filter(
+        (attempt) =>
+          attempt.difficulty === difficulty &&
+          selectedCategories.includes(attempt.category),
+      ).length,
+    [difficulty, progress.attempts, selectedCategories],
   );
   const questionTypeCounts = QUESTION_TYPES.reduce<Record<StudyQuestionType, number>>(
     (counts, questionType) => {
@@ -74,6 +85,21 @@ export default function WebStudyView() {
     navigate(
       `/study/web/quiz?difficulty=${difficulty}&categories=${selectedCategories.join(",")}`,
     );
+  };
+
+  const resetSelectedProgress = async () => {
+    if (!resettableCount || !selectedCategories.length || syncState === "loading") return;
+    const confirmed = window.confirm(
+      `현재 선택한 학생의 ${WEB_DIFFICULTY_META[difficulty].label} · 선택한 ${selectedCategories.length}개 범위 풀이 기록 ${resettableCount}개를 영구 삭제하고 초기화할까요?\n삭제한 기록은 복구할 수 없습니다.`,
+    );
+    if (!confirmed) return;
+
+    const reset = await resetProgress(difficulty, selectedCategories);
+    if (reset) {
+      toast.success(`현재 학생의 선택 범위 풀이 기록 ${resettableCount}개를 영구 초기화했습니다.`);
+    } else {
+      toast.error("풀이 기록을 초기화하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    }
   };
 
   return (
@@ -257,7 +283,7 @@ export default function WebStudyView() {
             <p className="text-xs text-slate-500">미풀이 {remainingQuestions.length}문제를 무작위 출제</p>
           </div>
         </div>
-        <div className="mt-3 flex gap-2 sm:mt-0">
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-0 sm:flex sm:flex-wrap sm:justify-end">
           <button
             type="button"
             onClick={() => {
@@ -266,13 +292,22 @@ export default function WebStudyView() {
             }}
             className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-50"
           >
-            <RotateCcw className="h-3.5 w-3.5" /> 초기화
+            <RotateCcw className="h-3.5 w-3.5" /> 선택 초기화
+          </button>
+          <button
+            type="button"
+            onClick={resetSelectedProgress}
+            disabled={!resettableCount || !selectedCategories.length || syncState === "loading"}
+            aria-label={`선택한 범위의 풀이 기록 ${resettableCount}개 초기화`}
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 px-3 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> 풀이 기록 {resettableCount}개 초기화
           </button>
           <button
             type="button"
             onClick={startQuiz}
             disabled={!remainingQuestions.length || !selectedCategories.length || syncState === "loading"}
-            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none"
+            className="col-span-2 inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-40 sm:col-span-1 sm:flex-none"
           >
             문제 풀이 시작 <ArrowRight className="h-4 w-4" />
           </button>

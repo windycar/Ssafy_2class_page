@@ -1,5 +1,13 @@
 import { supabase } from "../lib/supabase";
-import { studyProgressStorage } from "./storage/studyProgressStorage";
+import {
+  getStudyResetAttemptIds,
+  studyProgressStorage,
+} from "./storage/studyProgressStorage";
+import {
+  resetScopedStudyProgress,
+  STUDY_ATTEMPT_TABLES,
+  type ScopedStudyDeleteClient,
+} from "./scopedStudyProgressReset";
 import type {
   StudyAttempt,
   StudyCategory,
@@ -105,4 +113,24 @@ export async function saveStudyAttempt(studentId: number): Promise<boolean> {
   if (!supabase) return false;
   await uploadPending(studentId);
   return studyProgressStorage.getPendingIds(studentId).length === 0;
+}
+
+export async function resetStudyProgress(
+  studentId: number,
+  difficulty: StudyDifficulty,
+  categories: StudyCategory[],
+): Promise<{ progress: StudyProgress; synced: boolean }> {
+  const current = studyProgressStorage.get(studentId);
+  if (!categories.length) return { progress: current, synced: false };
+
+  const attemptIds = getStudyResetAttemptIds(current, difficulty, categories);
+  if (!attemptIds.length) return { progress: current, synced: false };
+
+  return resetScopedStudyProgress(
+    supabase as unknown as ScopedStudyDeleteClient | null,
+    STUDY_ATTEMPT_TABLES.python,
+    studentId,
+    attemptIds,
+    () => studyProgressStorage.remove(studentId, attemptIds),
+  );
 }

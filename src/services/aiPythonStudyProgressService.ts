@@ -1,5 +1,13 @@
 import { supabase } from "../lib/supabase";
-import { aiPythonStudyProgressStorage } from "./storage/aiPythonStudyProgressStorage";
+import {
+  aiPythonStudyProgressStorage,
+  getAiPythonStudyResetAttemptIds,
+} from "./storage/aiPythonStudyProgressStorage";
+import {
+  resetScopedStudyProgress,
+  STUDY_ATTEMPT_TABLES,
+  type ScopedStudyDeleteClient,
+} from "./scopedStudyProgressReset";
 import type {
   AiPythonCategory,
   AiPythonStudyAttempt,
@@ -95,4 +103,23 @@ export async function saveAiPythonStudyAttempt(studentId: number) {
   if (!supabase) return false;
   await uploadPending(studentId);
   return aiPythonStudyProgressStorage.getPendingIds(studentId).length === 0;
+}
+
+export async function resetAiPythonStudyProgress(
+  studentId: number,
+  categories: AiPythonCategory[],
+): Promise<{ progress: AiPythonStudyProgress; synced: boolean }> {
+  const current = aiPythonStudyProgressStorage.get(studentId);
+  if (!categories.length) return { progress: current, synced: false };
+
+  const attemptIds = getAiPythonStudyResetAttemptIds(current, categories);
+  if (!attemptIds.length) return { progress: current, synced: false };
+
+  return resetScopedStudyProgress(
+    supabase as unknown as ScopedStudyDeleteClient | null,
+    STUDY_ATTEMPT_TABLES.aiPython,
+    studentId,
+    attemptIds,
+    () => aiPythonStudyProgressStorage.remove(studentId, attemptIds),
+  );
 }

@@ -68,4 +68,14 @@ create policy "Class study attempt create"
     )
   );
 
-grant select, insert on public.study_attempts to anon, authenticated;
+drop policy if exists "Class study attempt delete" on public.study_attempts;
+create policy "Class study attempt delete"
+  on public.study_attempts
+  for delete
+  to anon, authenticated
+  using (
+    auth_user_id is null
+    or (select auth.uid()) = auth_user_id
+  );
+
+grant select, insert, delete on public.study_attempts to anon, authenticated;

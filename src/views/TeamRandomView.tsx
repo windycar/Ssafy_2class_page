@@ -72,7 +72,7 @@ export default function TeamRandomView() {
   const selectedClassRoster = classRosters.find((roster) => roster.id === selectedClassId) ?? DEFAULT_CLASS_ROSTER;
   const selectedClassIsCustom = visibleCustomRosters.some((roster) => roster.id === selectedClassId);
   const [mode, setMode] = useState<"teamCount" | "membersPerTeam">("teamCount");
-  const [teamCount, setTeamCount] = useState(() => Math.min(7, Math.max(1, selectedClassRoster.students.length)));
+  const [teamCount, setTeamCount] = useState(() => Math.min(5, Math.max(1, selectedClassRoster.students.length)));
   const [membersPerTeam, setMembersPerTeam] = useState(() => Math.min(3, Math.max(1, selectedClassRoster.students.length)));
   const [options, setOptions] = useState({ differentFromLast: false, sortAlpha: false, autoTeamName: true });
   const [students, setStudents] = useState<StudentEntry[]>(() => withParticipation(selectedClassRoster.students));
@@ -101,7 +101,7 @@ export default function TeamRandomView() {
     setTeams(null);
     setRandomPickedStudents([]);
     setRandomPickCount(1);
-    setTeamCount(Math.min(7, Math.max(1, roster.students.length)));
+    setTeamCount(Math.min(5, Math.max(1, roster.students.length)));
     setMembersPerTeam(Math.min(3, Math.max(1, roster.students.length)));
     lastKey.current = "";
   };
@@ -244,7 +244,7 @@ export default function TeamRandomView() {
     setTeams(null);
     setStudents(withParticipation(selectedClassRoster.students));
     setMode("teamCount");
-    setTeamCount(Math.min(7, Math.max(1, selectedClassRoster.students.length)));
+    setTeamCount(Math.min(5, Math.max(1, selectedClassRoster.students.length)));
     setMembersPerTeam(Math.min(3, Math.max(1, selectedClassRoster.students.length)));
     setOptions({ differentFromLast: false, sortAlpha: false, autoTeamName: true });
     setRandomPickCount(1);
