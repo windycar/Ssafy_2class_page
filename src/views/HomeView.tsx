@@ -1,12 +1,18 @@
 import { Link } from "react-router";
-import { Shuffle, Coffee, Camera, Shield, Gamepad2, ArrowRight, GitBranch, GitCommit, Terminal, BookOpenCheck } from "lucide-react";
+import { Shuffle, Coffee, ArrowRight, GitBranch, GitCommit, Terminal, HardHat } from "lucide-react";
 import { TOTAL_STUDENTS } from "../config/constants";
+import teamQuickMenuArt from "../assets/home/quick-menu/team.png";
+import coffeeQuickMenuArt from "../assets/home/quick-menu/coffee.png";
+import galleryQuickMenuArt from "../assets/home/quick-menu/gallery.png";
+import rulesQuickMenuArt from "../assets/home/quick-menu/rules.png";
+import gameQuickMenuArt from "../assets/home/quick-menu/game.png";
+import studyQuickMenuArt from "../assets/home/quick-menu/study.png";
 
 const QUICK_MENU = [
   {
     title: "랜덤 팀 편성",
     description: `${TOTAL_STUDENTS}명을 공정하게 무작위 팀으로 편성해요.`,
-    icon: Shuffle,
+    imageSrc: teamQuickMenuArt,
     path: "/teams",
     badge: `${TOTAL_STUDENTS}명 · 5팀`,
     buttonLabel: "팀 만들기",
@@ -20,7 +26,7 @@ const QUICK_MENU = [
   {
     title: "같이 공구",
     description: "커피, 음식, 물품 등 뭐든 함께 주문해요.",
-    icon: Coffee,
+    imageSrc: coffeeQuickMenuArt,
     path: "/coffee",
     badge: "공구 진행 중",
     buttonLabel: "공구 참여",
@@ -34,7 +40,7 @@ const QUICK_MENU = [
   {
     title: "우리 반 사진첩",
     description: "광주 2반의 활동과 추억을 기록해요.",
-    icon: Camera,
+    imageSrc: galleryQuickMenuArt,
     path: "/gallery",
     badge: "사진 5장",
     buttonLabel: "사진 보기",
@@ -48,7 +54,7 @@ const QUICK_MENU = [
   {
     title: "그라운드 룰",
     description: "함께 정한 약속을 확인하고 새 규칙을 추가해요.",
-    icon: Shield,
+    imageSrc: rulesQuickMenuArt,
     path: "/ground-rules",
     badge: "규칙 8개",
     buttonLabel: "규칙 확인",
@@ -62,9 +68,10 @@ const QUICK_MENU = [
   {
     title: "우리 반 게임",
     description: "뱅! 보드게임을 반 친구들과 함께 즐겨요.",
-    icon: Gamepad2,
+    imageSrc: gameQuickMenuArt,
     path: "/games",
-    badge: "🤠 뱅!",
+    badge: "뱅!",
+    badgeIcon: HardHat,
     buttonLabel: "게임 참여",
     colorBg: "bg-orange-50",
     colorBorder: "border-orange-200",
@@ -76,7 +83,7 @@ const QUICK_MENU = [
   {
     title: "공부 문제",
     description: "Python 실전형 문제를 풀고 내 약점과 오답을 분석해요.",
-    icon: BookOpenCheck,
+    imageSrc: studyQuickMenuArt,
     path: "/study",
     badge: "400문제",
     buttonLabel: "학습 시작",
@@ -246,7 +253,6 @@ export default function HomeView() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {QUICK_MENU.map((item) => {
-            const Icon = item.icon;
             return (
               <div
                 key={item.path}
@@ -254,10 +260,20 @@ export default function HomeView() {
               >
                 <div className="flex items-start justify-between">
                   <div className={`w-11 h-11 ${item.colorIcon} rounded-xl flex items-center justify-center shadow-md`}>
-                    <Icon className="w-5 h-5 text-white" />
+                    <img
+                      src={item.imageSrc}
+                      alt=""
+                      className="w-10 h-10 object-contain drop-shadow-sm"
+                      draggable={false}
+                    />
                   </div>
                   <span className={`text-xs font-bold ${item.colorText} bg-white px-2.5 py-1 rounded-full shadow-sm border border-current/10`}>
-                    {item.badge}
+                    {item.badgeIcon ? (
+                      <span className="inline-flex items-center gap-1">
+                        <item.badgeIcon className="w-3.5 h-3.5 text-white" aria-hidden="true" />
+                        {item.badge}
+                      </span>
+                    ) : item.badge}
                   </span>
                 </div>
                 <div>

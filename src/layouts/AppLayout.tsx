@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useLocation } from "react-router";
 import { AppHeader } from "../components/layout/AppHeader";
 import { AppFooter } from "../components/layout/AppFooter";
 
@@ -7,6 +8,11 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
+  const { pathname } = useLocation();
+  const isLogin = pathname === "/login" || pathname === "/game-login";
+
+  if (isLogin) return <>{children}</>;
+
   return (
     <div className="min-h-screen bg-[linear-gradient(135deg,#edf4ef_0%,#f7f9fc_50%,#eaf0f9_100%)] flex flex-col">
       <AppHeader />

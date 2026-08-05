@@ -10,4 +10,8 @@ export interface GroundRule {
   isPinned: boolean;
   tags: string[];
   createdAt: string;
+  updatedAt?: string;
+  createdBy?: string | null;
+  createdByMemberId?: number | null;
+  isLiked?: boolean;
 }

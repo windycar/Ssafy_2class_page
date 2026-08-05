@@ -16,8 +16,8 @@ function PageLoader() {
 
 export default function Root() {
   return (
-    <AdminProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <AdminProvider>
         <AppProvider>
           <AppLayout>
             <Suspense fallback={<PageLoader />}>
@@ -26,7 +26,7 @@ export default function Root() {
           </AppLayout>
           <Toaster position="top-right" richColors />
         </AppProvider>
-      </AuthProvider>
-    </AdminProvider>
+      </AdminProvider>
+    </AuthProvider>
   );
 }

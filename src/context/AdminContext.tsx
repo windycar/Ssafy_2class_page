@@ -1,70 +1,60 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../hooks/useAuth";
 
 type AdminContextValue = {
   isAdmin: boolean;
-  login: (password: string) => Promise<boolean>;
-  logout: () => void;
-  request: <T = { ok: boolean }>(
-    action: string,
-    payload?: Record<string, unknown>,
-  ) => Promise<T>;
+  login: (password?: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  request: <T = { ok: boolean }>(action: string, payload?: Record<string, unknown>) => Promise<T>;
 };
 
 const AdminContext = createContext<AdminContextValue | null>(null);
 
-async function adminFetch<T>(
-  action: string,
-  password: string,
-  payload?: Record<string, unknown>,
-): Promise<T> {
+async function adminFetch<T>(action: string, payload?: Record<string, unknown>): Promise<T> {
+  if (!supabase) throw new Error("Supabase 연결 설정이 필요합니다.");
+  const { data } = await supabase.auth.getSession();
+  const accessToken = data.session?.access_token;
+  if (!accessToken) throw new Error("관리자 로그인이 필요합니다.");
+
   const response = await fetch("/api/admin", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "x-admin-password": password },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
     body: JSON.stringify({ action, ...payload }),
   });
-  const responseBody = await response.text();
-  if (!response.ok) {
-    const fallbackMessage =
-      response.status === 401
-        ? "관리자 비밀번호가 올바르지 않습니다."
-        : response.status === 500
-          ? "관리자 서버 환경 변수를 확인해 주세요."
-          : "관리자 요청을 처리하지 못했습니다.";
-    throw new Error(responseBody || fallbackMessage);
-  }
-
-  if (!responseBody) return undefined as T;
-  try {
-    return JSON.parse(responseBody) as T;
-  } catch {
-    return undefined as T;
-  }
+  const result = await response.json().catch(() => ({})) as T & { error?: string };
+  if (!response.ok) throw new Error(result.error || "관리자 요청을 처리하지 못했습니다.");
+  return result;
 }
-
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const [password, setPassword] = useState(() => sessionStorage.getItem("g2-admin-password") ?? "");
-  const isAdmin = Boolean(password);
+  const { currentUser, logout: authLogout } = useAuth();
+  const isAdmin = currentUser?.role === "admin";
 
-  const login = async (nextPassword: string) => {
+  const request = useCallback(<T,>(action: string, payload?: Record<string, unknown>) => (
+    adminFetch<T>(action, payload)
+  ), []);
+
+  const login = useCallback(async () => {
+    if (!isAdmin) return false;
     try {
-      await adminFetch<{ ok: boolean }>("verify", nextPassword);
-      sessionStorage.setItem("g2-admin-password", nextPassword);
-      setPassword(nextPassword);
+      await request("verify");
       return true;
     } catch {
       return false;
     }
-  };
+  }, [isAdmin, request]);
 
-  const logout = () => {
-    sessionStorage.removeItem("g2-admin-password");
-    setPassword("");
-  };
+  const value = useMemo<AdminContextValue>(() => ({
+    isAdmin,
+    login,
+    logout: authLogout,
+    request,
+  }), [authLogout, isAdmin, login, request]);
 
-  const request = <T,>(action: string, payload?: Record<string, unknown>) =>
-    adminFetch<T>(action, password, payload);
-
-  return <AdminContext.Provider value={{ isAdmin, login, logout, request }}>{children}</AdminContext.Provider>;
+  return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
 }
 
 export function useAdmin() {

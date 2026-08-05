@@ -369,3 +369,5 @@ create policy "Class AI Python study attempt delete"
   );
 
 grant select, insert, delete on public.ai_python_study_attempts to anon, authenticated;
+-- 회원 인증과 커뮤니티 소유권/RLS의 최신 스키마는
+-- supabase/migrations/20260805_auth_community.sql 에서 관리합니다.

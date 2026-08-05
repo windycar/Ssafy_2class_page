@@ -16,6 +16,9 @@ type OrderRow = {
   account_holder: string;
   created_at: string;
   is_active: boolean;
+  created_by: string | null;
+  created_by_member_id: number | null;
+  creator_name: string | null;
 };
 
 type ItemRow = {
@@ -28,6 +31,9 @@ type ItemRow = {
   price: number;
   note: string;
   payment_status: PaymentStatus;
+  participant_user_id: string | null;
+  participant_member_id: number | null;
+  created_at: string;
 };
 
 const toOrder = (order: OrderRow): CoffeeOrder => ({
@@ -45,6 +51,9 @@ const toOrder = (order: OrderRow): CoffeeOrder => ({
   accountHolder: order.account_holder,
   createdAt: order.created_at,
   isActive: order.is_active,
+  createdBy: order.created_by,
+  createdByMemberId: order.created_by_member_id,
+  creatorName: order.creator_name,
 });
 
 const toItem = (item: ItemRow): CoffeeMenuItem => ({
@@ -57,6 +66,9 @@ const toItem = (item: ItemRow): CoffeeMenuItem => ({
   price: item.price,
   note: item.note,
   paymentStatus: item.payment_status,
+  participantUserId: item.participant_user_id,
+  participantMemberId: item.participant_member_id,
+  createdAt: item.created_at,
 });
 
 const orderPayload = (order: CoffeeOrder) => ({
@@ -74,6 +86,9 @@ const orderPayload = (order: CoffeeOrder) => ({
   account_holder: order.accountHolder,
   created_at: order.createdAt,
   is_active: order.isActive,
+  created_by: order.createdBy,
+  created_by_member_id: order.createdByMemberId,
+  creator_name: order.creatorName,
 });
 
 const itemPayload = (item: CoffeeMenuItem) => ({
@@ -86,6 +101,8 @@ const itemPayload = (item: CoffeeMenuItem) => ({
   price: item.price,
   note: item.note,
   payment_status: item.paymentStatus,
+  participant_user_id: item.participantUserId,
+  participant_member_id: item.participantMemberId,
 });
 
 export async function getActiveCoffeeOrder() {
@@ -112,11 +129,7 @@ export async function getActiveCoffeeOrder() {
 }
 
 export async function createCoffeeOrder(order: CoffeeOrder) {
-  const client = requireSupabase();
-  const { error: closeError } = await client.from("coffee_orders").update({ is_active: false }).eq("is_active", true);
-  if (closeError) throw closeError;
-
-  const { error } = await client.from("coffee_orders").insert(orderPayload(order));
+  const { error } = await requireSupabase().from("coffee_orders").insert(orderPayload(order));
   if (error) throw error;
 }
 
@@ -126,7 +139,14 @@ export async function createCoffeeMenuItem(item: CoffeeMenuItem) {
 }
 
 export async function updateCoffeeMenuItem(item: CoffeeMenuItem) {
-  const { error } = await requireSupabase().from("coffee_order_items").update(itemPayload(item)).eq("id", item.id);
+  const { error } = await requireSupabase().from("coffee_order_items").update({
+    menu_name: item.menuName,
+    options: item.options,
+    quantity: item.quantity,
+    price: item.price,
+    note: item.note,
+    payment_status: item.paymentStatus,
+  }).eq("id", item.id);
   if (error) throw error;
 }
 

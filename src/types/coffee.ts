@@ -17,6 +17,9 @@ export interface CoffeeOrder {
   accountHolder: string;
   createdAt: string;
   isActive: boolean;
+  createdBy?: string | null;
+  createdByMemberId?: number | null;
+  creatorName?: string | null;
 }
 
 export interface CoffeeMenuItem {
@@ -29,4 +32,7 @@ export interface CoffeeMenuItem {
   price: number;
   note: string;
   paymentStatus: PaymentStatus;
+  participantUserId?: string | null;
+  participantMemberId?: number | null;
+  createdAt?: string;
 }

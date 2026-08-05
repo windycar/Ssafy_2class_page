@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { ShoppingBag, Plus, Trash2, Edit2, Check, X, Copy, RotateCcw, Clock, Users, AlertCircle, CreditCard, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
-import { STUDENTS } from "../data/students";
 import { calcMenuTotal, calcDeliveryPerPerson, calcGrandTotal } from "../utils/coffeeCalculator";
 import { formatCurrency } from "../utils/formatCurrency";
 import { formatTimeLeft } from "../utils/formatDate";
@@ -10,6 +9,8 @@ import { createId } from "../utils/createId";
 import { PAYMENT_STATUS_LABELS, PAYMENT_STATUS_COLORS } from "../config/constants";
 import type { CoffeeOrder, CoffeeMenuItem, PaymentStatus, OrderCategory } from "../types/coffee";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../hooks/useAuth";
+import { useAdmin } from "../context/AdminContext";
 import {
   closeCoffeeOrder,
   createCoffeeMenuItem,
@@ -102,12 +103,14 @@ const EMPTY_ORDER: OrderFormState = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CoffeeOrderView() {
+  const { currentUser } = useAuth();
+  const { isAdmin } = useAdmin();
   const [order, setOrder] = useState<CoffeeOrder | null>(null);
   const [items, setItems] = useState<CoffeeMenuItem[]>([]);
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [showMenuForm, setShowMenuForm] = useState(false);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  const [menuForm, setMenuForm] = useState<MenuFormState>(EMPTY_MENU);
+  const [menuForm, setMenuForm] = useState<MenuFormState>(() => ({ ...EMPTY_MENU, participantName: currentUser?.name ?? "" }));
   const [orderForm, setOrderForm] = useState<OrderFormState>(EMPTY_ORDER);
   const [showAccount, setShowAccount] = useState(false);
 
@@ -132,6 +135,10 @@ export default function CoffeeOrderView() {
   const deliveryShare = order ? calcDeliveryPerPerson(order.deliveryFee, items.length) : 0;
   const grandTotal = order ? calcGrandTotal(items, order.deliveryFee) : 0;
   const paidCount = items.filter((i) => i.paymentStatus !== "unpaid").length;
+  const canManageOrder = Boolean(order && currentUser && (isAdmin || order.createdBy === currentUser.authId));
+  const canManageItem = (item: CoffeeMenuItem) => Boolean(
+    currentUser && (isAdmin || item.participantUserId === currentUser.authId || order?.createdBy === currentUser.authId),
+  );
 
   const resolvedBank =
     orderForm.accountBank === "직접입력" ? orderForm.accountBankCustom : orderForm.accountBank;
@@ -156,6 +163,9 @@ export default function CoffeeOrderView() {
       accountHolder: orderForm.accountHolder,
       createdAt: new Date().toISOString(),
       isActive: true,
+      createdBy: currentUser?.authId ?? null,
+      createdByMemberId: currentUser?.memberId ?? null,
+      creatorName: currentUser?.name ?? null,
     };
     if (!ensureSupabase()) return;
     try {
@@ -174,7 +184,7 @@ export default function CoffeeOrderView() {
   // ── Menu actions ───────────────────────────────────────────
 
   const handleAddMenu = async () => {
-    if (!menuForm.participantName) { toast.error("참여자를 선택해 주세요."); return; }
+    if (!currentUser) { toast.error("로그인이 필요합니다."); return; }
     if (!menuForm.menuName.trim()) { toast.error("상품/메뉴명을 입력해 주세요."); return; }
     if (!menuForm.price || parseInt(menuForm.price) <= 0) { toast.error("금액을 입력해 주세요."); return; }
     if (editingItemId) {
@@ -208,6 +218,10 @@ export default function CoffeeOrderView() {
         ...menuForm,
         price: parseInt(menuForm.price),
         paymentStatus: "unpaid",
+        participantName: currentUser.name,
+        participantUserId: currentUser.authId,
+        participantMemberId: currentUser.memberId,
+        createdAt: new Date().toISOString(),
       };
       if (!ensureSupabase()) return;
       try {
@@ -219,11 +233,12 @@ export default function CoffeeOrderView() {
       setItems((prev) => [...prev, newItem]);
       toast.success("항목이 추가되었습니다.");
     }
-    setMenuForm(EMPTY_MENU);
+    setMenuForm({ ...EMPTY_MENU, participantName: currentUser.name });
     setShowMenuForm(false);
   };
 
   const handleEditItem = (item: CoffeeMenuItem) => {
+    if (!canManageItem(item)) return toast.error("본인의 주문 항목만 수정할 수 있습니다.");
     setMenuForm({
       participantName: item.participantName,
       menuName: item.menuName,
@@ -237,6 +252,8 @@ export default function CoffeeOrderView() {
   };
 
   const handleDeleteItem = async (id: string) => {
+    const item = items.find((entry) => entry.id === id);
+    if (!item || !canManageItem(item)) return toast.error("본인의 주문 항목만 삭제할 수 있습니다.");
     if (!ensureSupabase()) return;
     try {
       await deleteCoffeeMenuItem(id);
@@ -250,6 +267,7 @@ export default function CoffeeOrderView() {
 
   const handleToggleStatus = async (id: string) => {
     const currentItem = items.find((item) => item.id === id);
+    if (currentItem && !canManageItem(currentItem)) return toast.error("이 항목의 상태를 변경할 권한이 없습니다.");
     if (!currentItem || !ensureSupabase()) return;
     const updatedItem = { ...currentItem, paymentStatus: nextStatus(currentItem.paymentStatus) };
     try {
@@ -298,6 +316,7 @@ export default function CoffeeOrderView() {
   };
 
   const handleClose = async () => {
+    if (!canManageOrder) return toast.error("공구 개설자 또는 관리자만 마감할 수 있습니다.");
     if (!window.confirm("공구를 마감할까요?")) return;
     if (!order || !ensureSupabase()) return;
     try {
@@ -312,6 +331,7 @@ export default function CoffeeOrderView() {
   };
 
   const handleReset = async () => {
+    if (!canManageOrder) return toast.error("공구 개설자 또는 관리자만 초기화할 수 있습니다.");
     if (!window.confirm("전체 초기화할까요?")) return;
     if (!order || !ensureSupabase()) return;
     try {
@@ -355,6 +375,7 @@ export default function CoffeeOrderView() {
                 현재 진행 중인 공구가 없습니다.
               </h3>
               <p className="text-sm text-gray-300 mb-6">새로운 공구를 시작해 보세요.</p>
+              <p className="mb-4 rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">{currentUser?.name} 계정으로 개설됩니다.</p>
               <button
                 onClick={() => setShowOrderForm(true)}
                 className="flex items-center gap-2 bg-amber-500 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-600 transition-colors text-sm"
@@ -539,6 +560,7 @@ export default function CoffeeOrderView() {
                   <h2 className="font-extrabold text-gray-800">{order.title}</h2>
                 </div>
                 <p className="text-sm text-gray-500 mb-3">{order.storeName}</p>
+                {order.creatorName && <p className="mb-2 text-xs font-semibold text-amber-700">개설자 {order.creatorName}</p>}
                 {order.notice && (
                   <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-100 rounded-xl px-3 py-2 w-fit">
                     <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
@@ -622,7 +644,7 @@ export default function CoffeeOrderView() {
                 <span className="text-sm font-semibold text-gray-400 ml-2">({items.length}명)</span>
               </h2>
               <button
-                onClick={() => { setMenuForm(EMPTY_MENU); setEditingItemId(null); setShowMenuForm(true); }}
+                onClick={() => { setMenuForm({ ...EMPTY_MENU, participantName: currentUser?.name ?? "" }); setEditingItemId(null); setShowMenuForm(true); }}
                 className="flex items-center gap-2 bg-amber-500 text-white font-semibold px-3.5 py-2 rounded-xl hover:bg-amber-600 transition-colors text-sm"
               >
                 <Plus className="w-4 h-4" />
@@ -638,17 +660,12 @@ export default function CoffeeOrderView() {
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 block mb-1">참여자 *</label>
-                    <select
+                    <label className="text-xs font-semibold text-gray-500 block mb-1">참여자 (로그인 계정)</label>
+                    <input
                       value={menuForm.participantName}
-                      onChange={(e) => setMenuForm((p) => ({ ...p, participantName: e.target.value }))}
-                      className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 bg-white"
-                    >
-                      <option value="">선택</option>
-                      {STUDENTS.map((s) => (
-                        <option key={s.id} value={s.name}>{s.name}</option>
-                      ))}
-                    </select>
+                      readOnly
+                      className="w-full border border-amber-200 rounded-xl px-3 py-2 text-sm font-bold text-amber-800 bg-amber-100/60"
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-gray-500 block mb-1">상품 / 메뉴 *</label>
@@ -754,25 +771,14 @@ export default function CoffeeOrderView() {
                       </span>
                       <button
                         onClick={() => handleToggleStatus(item.id)}
-                        className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors cursor-pointer ${PAYMENT_STATUS_COLORS[item.paymentStatus]}`}
+                        disabled={!canManageItem(item)}
+                        className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${canManageItem(item) ? "cursor-pointer" : "cursor-not-allowed opacity-60"} ${PAYMENT_STATUS_COLORS[item.paymentStatus]}`}
                         title="클릭하여 상태 변경"
                       >
                         {PAYMENT_STATUS_LABELS[item.paymentStatus]}
                       </button>
-                      <button
-                        onClick={() => handleEditItem(item)}
-                        className="text-gray-300 hover:text-blue-500 transition-colors"
-                        aria-label="수정"
-                      >
-                        <Edit2 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteItem(item.id)}
-                        className="text-gray-300 hover:text-red-500 transition-colors"
-                        aria-label="삭제"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {canManageItem(item) && <button onClick={() => handleEditItem(item)} className="text-gray-300 hover:text-blue-500 transition-colors" aria-label="수정"><Edit2 className="w-3.5 h-3.5" /></button>}
+                      {canManageItem(item) && <button onClick={() => handleDeleteItem(item.id)} className="text-gray-300 hover:text-red-500 transition-colors" aria-label="삭제"><Trash2 className="w-3.5 h-3.5" /></button>}
                     </div>
                   </div>
                 ))}
@@ -788,19 +794,8 @@ export default function CoffeeOrderView() {
                 <Copy className="w-4 h-4" />
                 주문 내용 복사
               </button>
-              <button
-                onClick={handleClose}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-600 rounded-xl text-sm font-semibold hover:bg-amber-50 transition-colors"
-              >
-                공구 마감
-              </button>
-              <button
-                onClick={handleReset}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-semibold hover:bg-red-50 transition-colors ml-auto"
-              >
-                <RotateCcw className="w-4 h-4" />
-                초기화
-              </button>
+              {canManageOrder && <button onClick={handleClose} className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 text-amber-600 rounded-xl text-sm font-semibold hover:bg-amber-50 transition-colors">공구 마감</button>}
+              {canManageOrder && <button onClick={handleReset} className="flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-500 rounded-xl text-sm font-semibold hover:bg-red-50 transition-colors ml-auto"><RotateCcw className="w-4 h-4" />초기화</button>}
             </div>
           </div>
         </>

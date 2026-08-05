@@ -1,92 +1,214 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
+import { normalizeLoginId, providerPassword } from "./auth";
 
 type AdminRequest = {
   action?: string;
-  id?: string;
+  id?: string | number;
   title?: string;
   content?: string;
   description?: string;
+  name?: string;
+  loginId?: string;
+  username?: string;
+  className?: string;
+  studentId?: number | null;
+  isActive?: boolean;
 };
 
-async function handleAdminRequest(request: Request) {
-  if (request.method !== "POST") {
-    return new Response("Method not allowed", {
-      status: 405,
-      headers: { Allow: "POST" },
-    });
+type AdminIdentity = {
+  id: number;
+  auth_user_id: string;
+  name: string;
+  role: "admin";
+};
+
+function jsonError(message: string, status: number) {
+  return Response.json({ error: message }, { status });
+}
+
+function getBearerToken(request: Request) {
+  const value = request.headers.get("authorization") ?? "";
+  return value.startsWith("Bearer ") ? value.slice(7).trim() : "";
+}
+
+async function verifyAdmin(client: SupabaseClient, request: Request) {
+  const token = getBearerToken(request);
+  if (!token) return { error: jsonError("관리자 로그인이 필요합니다.", 401) } as const;
+
+  const { data: authData, error: authError } = await client.auth.getUser(token);
+  if (authError || !authData.user) {
+    return { error: jsonError("로그인 세션이 만료되었습니다.", 401) } as const;
   }
 
-  const password = request.headers.get("x-admin-password");
-  const expectedPassword = process.env.ADMIN_PASSWORD;
+  const { data, error } = await client
+    .from("members")
+    .select("id, auth_user_id, name, role")
+    .eq("auth_user_id", authData.user.id)
+    .eq("role", "admin")
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (error || !data) return { error: jsonError("관리자 권한이 없습니다.", 403) } as const;
+  return { admin: data as AdminIdentity, user: authData.user as User } as const;
+}
+
+export async function handleAdminRequest(request: Request) {
+  if (request.method !== "POST") {
+    return new Response("Method not allowed", { status: 405, headers: { Allow: "POST" } });
+  }
+
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!expectedPassword || !supabaseUrl || !serviceKey) {
-    return new Response("Server configuration missing", { status: 500 });
-  }
-  if (!password || password !== expectedPassword) {
-    return new Response("Unauthorized", { status: 401 });
-  }
+  if (!supabaseUrl || !serviceKey) return jsonError("관리자 서버 설정이 누락되었습니다.", 500);
 
   let body: AdminRequest;
   try {
     body = await request.json() as AdminRequest;
   } catch {
-    return new Response("Invalid JSON", { status: 400 });
+    return jsonError("요청 형식이 올바르지 않습니다.", 400);
   }
 
-  if (body.action === "verify") {
-    return Response.json({ ok: true });
+  const client = createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+  });
+  const verified = await verifyAdmin(client, request);
+  if ("error" in verified) return verified.error;
+
+  if (body.action === "verify") return Response.json({ ok: true });
+
+  if (body.action === "members.list") {
+    const { data, error } = await client
+      .from("members")
+      .select("id, student_id, name, username, login_id, class_name, role, auth_user_id, is_active, must_change_password, password_changed_at, last_login_at, created_at")
+      .order("role", { ascending: true })
+      .order("class_name", { ascending: true })
+      .order("name", { ascending: true });
+    if (error) return jsonError(error.message, 400);
+    return Response.json({
+      ok: true,
+      members: (data ?? []).map(({ auth_user_id, ...member }) => ({
+        ...member,
+        auth_provisioned: Boolean(auth_user_id),
+      })),
+    });
   }
 
-  const client = createClient(supabaseUrl, serviceKey);
+  if (body.action === "members.create") {
+    const name = (body.name ?? "").trim();
+    const loginId = normalizeLoginId(body.loginId ?? "");
+    const className = (body.className ?? "광주_2반").trim();
+    const username = (body.username ?? `@${loginId}`).trim();
+    if (!name || !className) return jsonError("이름과 반을 입력하세요.", 400);
+    if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(loginId)) {
+      return jsonError("아이디는 영문 소문자와 숫자, 점, 밑줄, 하이픈으로 3~32자 입력하세요.", 400);
+    }
+
+    const { data, error } = await client
+      .from("members")
+      .insert({
+        student_id: Number.isInteger(body.studentId) ? body.studentId : null,
+        name,
+        username: username.startsWith("@") ? username : `@${username}`,
+        login_id: loginId,
+        class_name: className,
+        role: "member",
+        is_active: true,
+        must_change_password: true,
+      })
+      .select("id, student_id, name, username, login_id, class_name, role, is_active, must_change_password, created_at")
+      .single();
+    if (error) {
+      const message = error.code === "23505" ? "이미 사용 중인 아이디 또는 교육생 번호입니다." : error.message;
+      return jsonError(message, 409);
+    }
+    return Response.json({ ok: true, member: { ...data, auth_provisioned: false } });
+  }
+
+  if (body.action === "members.setActive") {
+    const memberId = Number(body.id);
+    if (!Number.isInteger(memberId) || typeof body.isActive !== "boolean") {
+      return jsonError("회원 상태 요청이 올바르지 않습니다.", 400);
+    }
+    if (memberId === verified.admin.id && !body.isActive) {
+      return jsonError("현재 관리자 계정은 비활성화할 수 없습니다.", 400);
+    }
+    const { error } = await client.from("members").update({ is_active: body.isActive }).eq("id", memberId);
+    return error ? jsonError(error.message, 400) : Response.json({ ok: true });
+  }
+
+  if (body.action === "members.resetPassword") {
+    const memberId = Number(body.id);
+    if (!Number.isInteger(memberId)) return jsonError("회원 번호가 올바르지 않습니다.", 400);
+    const { data: member, error: findError } = await client
+      .from("members")
+      .select("id, role, auth_user_id")
+      .eq("id", memberId)
+      .maybeSingle();
+    if (findError || !member) return jsonError("회원을 찾을 수 없습니다.", 404);
+    if (member.role === "admin") return jsonError("관리자 비밀번호는 내정보에서 변경하세요.", 400);
+
+    if (member.auth_user_id) {
+      const { error: authError } = await client.auth.admin.updateUserById(member.auth_user_id, {
+        password: providerPassword("1234"),
+      });
+      if (authError) return jsonError("인증 비밀번호를 초기화하지 못했습니다.", 500);
+    }
+    const { error } = await client
+      .from("members")
+      .update({ must_change_password: true, password_changed_at: null })
+      .eq("id", memberId);
+    return error ? jsonError(error.message, 400) : Response.json({ ok: true });
+  }
+
+  if (body.action === "board.list") {
+    const [{ data: posts, error: postsError }, { data: authors, error: authorsError }] = await Promise.all([
+      client.from("anonymous_posts").select("id, title, content, created_at, updated_at").order("created_at", { ascending: false }),
+      client.from("anonymous_post_authors").select("post_id, member_id"),
+    ]);
+    if (postsError || authorsError) return jsonError(postsError?.message || authorsError?.message || "게시글을 불러오지 못했습니다.", 400);
+
+    const memberIds = [...new Set((authors ?? []).map((author) => author.member_id))];
+    const { data: members, error: membersError } = memberIds.length
+      ? await client.from("members").select("id, name, username, login_id, class_name").in("id", memberIds)
+      : { data: [], error: null };
+    if (membersError) return jsonError(membersError.message, 400);
+
+    const authorByPost = new Map((authors ?? []).map((author) => [author.post_id, author.member_id]));
+    const memberById = new Map((members ?? []).map((member) => [member.id, member]));
+    return Response.json({
+      ok: true,
+      posts: (posts ?? []).map((post) => {
+        const memberId = authorByPost.get(post.id);
+        return { ...post, author: memberId ? memberById.get(memberId) ?? null : null };
+      }),
+    });
+  }
 
   if (body.action === "bang.rooms.list") {
-    const { data, error } = await client
-      .from("bang_rooms")
-      .select("id, room_data")
-      .order("updated_at", { ascending: false });
-
-    if (error) return new Response(error.message, { status: 400 });
-    const rooms = (data ?? []).map((row) => ({
-      ...(row.room_data as Record<string, unknown>),
-      id: row.id,
-    }));
-    return Response.json({ ok: true, rooms });
+    const { data, error } = await client.from("bang_rooms").select("id, room_data").order("updated_at", { ascending: false });
+    if (error) return jsonError(error.message, 400);
+    return Response.json({
+      ok: true,
+      rooms: (data ?? []).map((row) => ({ ...(row.room_data as Record<string, unknown>), id: row.id })),
+    });
   }
 
   let error = null;
-
   if (body.action === "gallery.update" && body.id) {
-    ({ error } = await client
-      .from("gallery_photos")
-      .update({ title: body.title, description: body.description })
-      .eq("id", body.id));
+    ({ error } = await client.from("gallery_photos").update({ title: body.title, description: body.description }).eq("id", body.id));
   } else if (body.action === "gallery.delete" && body.id) {
     ({ error } = await client.from("gallery_photos").delete().eq("id", body.id));
   } else if (body.action === "board.update" && body.id) {
-    ({ error } = await client
-      .from("anonymous_posts")
-      .update({
-        title: body.title,
-        content: body.content,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", body.id));
+    ({ error } = await client.from("anonymous_posts").update({ title: body.title, content: body.content, updated_at: new Date().toISOString() }).eq("id", body.id));
   } else if (body.action === "board.delete" && body.id) {
     ({ error } = await client.from("anonymous_posts").delete().eq("id", body.id));
   } else if (body.action === "bang.room.delete" && body.id) {
     ({ error } = await client.from("bang_rooms").delete().eq("id", body.id));
   } else {
-    return new Response("Unsupported action", { status: 400 });
+    return jsonError("지원하지 않는 관리자 요청입니다.", 400);
   }
 
-  return error
-    ? new Response(error.message, { status: 400 })
-    : Response.json({ ok: true });
+  return error ? jsonError(error.message, 400) : Response.json({ ok: true });
 }
 
-// Vercel의 Node.js Web Handler 형식입니다.
-export default {
-  fetch: handleAdminRequest,
-};
+export default { fetch: handleAdminRequest };

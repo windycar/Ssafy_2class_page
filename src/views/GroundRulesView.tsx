@@ -1,250 +1,161 @@
-import { useState } from "react";
-import { Shield, Heart, Plus, Trash2, Edit2, Check, X, Search, Pin, ChevronDown } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Check, ChevronDown, Edit2, Heart, LoaderCircle, Pin, Plus, Search, Shield, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { INITIAL_GROUND_RULES } from "../data/groundRules";
-import { STUDENTS } from "../data/students";
-import { useLocalStorage } from "../hooks/useLocalStorage";
 import { GROUND_RULE_CATEGORIES } from "../config/constants";
-import { createId } from "../utils/createId";
-import type { GroundRule, GroundRuleCategory } from "../types/groundRule";
+import { useAdmin } from "../context/AdminContext";
+import { useAuth } from "../hooks/useAuth";
+import { createGroundRule, deleteGroundRule, getGroundRules, setGroundRuleLike, updateGroundRule } from "../services/groundRules";
 import type { SortOrder } from "../types/common";
+import type { GroundRule, GroundRuleCategory } from "../types/groundRule";
+import { createId } from "../utils/createId";
+import rulesImage from "../assets/home/quick-menu/rules.png";
 
 const CAT_COLORS: Record<GroundRuleCategory, string> = {
-  time: "bg-blue-100 text-blue-700",
-  life: "bg-emerald-100 text-emerald-700",
-  care: "bg-rose-100 text-rose-700",
-  social: "bg-amber-100 text-amber-700",
-  facility: "bg-violet-100 text-violet-700",
-  etc: "bg-gray-100 text-gray-600",
+  time: "bg-blue-100 text-blue-700", life: "bg-emerald-100 text-emerald-700",
+  care: "bg-rose-100 text-rose-700", social: "bg-amber-100 text-amber-700",
+  facility: "bg-violet-100 text-violet-700", etc: "bg-gray-100 text-gray-600",
 };
-
-const catLabel = (cat: GroundRuleCategory) => GROUND_RULE_CATEGORIES.find((c) => c.value === cat)?.label ?? cat;
-
-interface RuleFormState {
-  content: string;
-  author: string;
-  category: GroundRuleCategory;
-  tags: string;
-}
-
-const EMPTY_FORM: RuleFormState = { content: "", author: "", category: "etc", tags: "" };
-
+const catLabel = (category: GroundRuleCategory) => GROUND_RULE_CATEGORIES.find((item) => item.value === category)?.label ?? category;
 const VISIBLE_STEP = 8;
+type RuleForm = { content: string; category: GroundRuleCategory; tags: string };
+const EMPTY_FORM: RuleForm = { content: "", category: "etc", tags: "" };
 
 export default function GroundRulesView() {
-  const [rules, setRules] = useLocalStorage<GroundRule[]>("ground-rules", INITIAL_GROUND_RULES);
+  const { currentUser } = useAuth();
+  const { isAdmin } = useAdmin();
+  const [rules, setRules] = useState<GroundRule[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<GroundRuleCategory | "all">("all");
   const [sort, setSort] = useState<SortOrder>("latest");
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<RuleFormState>(EMPTY_FORM);
+  const [form, setForm] = useState<RuleForm>(EMPTY_FORM);
   const [visible, setVisible] = useState(VISIBLE_STEP);
+  const [workingId, setWorkingId] = useState<string | null>(null);
 
-  const filtered = rules
-    .filter((r) => {
-      const catMatch = filter === "all" || r.category === filter;
-      const searchMatch = !search || r.content.includes(search) || r.author.includes(search);
-      return catMatch && searchMatch;
-    })
+  useEffect(() => {
+    if (!currentUser) return;
+    getGroundRules(currentUser.authId)
+      .then(setRules)
+      .catch(() => toast.error("그라운드 룰을 불러오지 못했습니다."))
+      .finally(() => setLoading(false));
+  }, [currentUser]);
+
+  const filtered = useMemo(() => rules
+    .filter((rule) => (filter === "all" || rule.category === filter) && (!search || rule.content.includes(search) || rule.author.includes(search)))
     .sort((a, b) => {
       if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
       if (sort === "likes") return b.likes - a.likes;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
+    }), [filter, rules, search, sort]);
   const visibleRules = filtered.slice(0, visible);
+  const canManage = (rule: GroundRule) => Boolean(currentUser && (isAdmin || rule.createdBy === currentUser.authId));
 
-  const handleSubmit = () => {
-    if (!form.content.trim()) { toast.error("규칙 내용을 입력해 주세요."); return; }
-    if (!form.author) { toast.error("작성자를 선택해 주세요."); return; }
-    const tags = form.tags.split(/\s+/).filter(Boolean).map((t) => t.startsWith("#") ? t : `#${t}`);
+  if (!currentUser) return null;
 
-    if (editingId) {
-      setRules((prev) => prev.map((r) => r.id === editingId ? { ...r, content: form.content, author: form.author, category: form.category, tags } : r));
-      toast.success("규칙이 수정되었습니다.");
+  const handleSubmit = async () => {
+    if (!form.content.trim()) return toast.error("규칙 내용을 입력해 주세요.");
+    const tags = form.tags.split(/\s+/).filter(Boolean).map((tag) => tag.startsWith("#") ? tag : `#${tag}`);
+    setWorkingId(editingId ?? "new");
+    try {
+      if (editingId) {
+        const existing = rules.find((rule) => rule.id === editingId);
+        if (!existing || !canManage(existing)) throw new Error("수정 권한이 없습니다.");
+        const updated = { ...existing, content: form.content.trim(), category: form.category, tags };
+        await updateGroundRule(updated);
+        setRules((list) => list.map((rule) => rule.id === editingId ? updated : rule));
+        toast.success("규칙을 수정했습니다.");
+      } else {
+        const now = new Date().toISOString();
+        const newRule: GroundRule = {
+          id: createId("gr"), content: form.content.trim(), author: currentUser.name,
+          category: form.category, likes: 0, likedBy: [], isPinned: false, tags,
+          createdAt: now, updatedAt: now, createdBy: currentUser.authId,
+          createdByMemberId: currentUser.memberId, isLiked: false,
+        };
+        await createGroundRule(newRule);
+        setRules((list) => [newRule, ...list]);
+        toast.success("새 그라운드 룰을 제안했습니다.");
+      }
+      setForm(EMPTY_FORM);
       setEditingId(null);
-    } else {
-      const newRule: GroundRule = {
-        id: createId("gr"),
-        content: form.content,
-        author: form.author,
-        category: form.category,
-        likes: 0,
-        likedBy: [],
-        isPinned: false,
-        tags,
-        createdAt: new Date().toISOString(),
-      };
-      setRules((prev) => [newRule, ...prev]);
-      toast.success("새 그라운드 룰이 추가되었습니다!");
-    }
-    setForm(EMPTY_FORM);
-    setShowForm(false);
+      setShowForm(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "규칙을 저장하지 못했습니다.");
+    } finally { setWorkingId(null); }
   };
 
   const handleEdit = (rule: GroundRule) => {
-    setForm({ content: rule.content, author: rule.author, category: rule.category, tags: rule.tags.join(" ") });
+    if (!canManage(rule)) return toast.error("작성자 또는 관리자만 수정할 수 있습니다.");
+    setForm({ content: rule.content, category: rule.category, tags: rule.tags.join(" ") });
     setEditingId(rule.id);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (rule: GroundRule) => {
+    if (!canManage(rule)) return toast.error("작성자 또는 관리자만 삭제할 수 있습니다.");
     if (!window.confirm("이 규칙을 삭제할까요?")) return;
-    setRules((prev) => prev.filter((r) => r.id !== id));
-    toast.success("삭제되었습니다.");
+    setWorkingId(rule.id);
+    try {
+      await deleteGroundRule(rule.id);
+      setRules((list) => list.filter((item) => item.id !== rule.id));
+      toast.success("규칙을 삭제했습니다.");
+    } catch { toast.error("규칙을 삭제하지 못했습니다."); }
+    finally { setWorkingId(null); }
   };
 
-  const handleLike = (id: string) => {
-    setRules((prev) => prev.map((r) => r.id === id ? { ...r, likes: r.likes + 1 } : r));
+  const handleLike = async (rule: GroundRule) => {
+    if (workingId === `like-${rule.id}`) return;
+    const nextLiked = !rule.isLiked;
+    setWorkingId(`like-${rule.id}`);
+    setRules((list) => list.map((item) => item.id === rule.id ? { ...item, isLiked: nextLiked, likes: item.likes + (nextLiked ? 1 : -1) } : item));
+    try {
+      await setGroundRuleLike(rule.id, currentUser.memberId, currentUser.authId, nextLiked);
+    } catch {
+      setRules((list) => list.map((item) => item.id === rule.id ? { ...item, isLiked: !nextLiked, likes: item.likes + (nextLiked ? -1 : 1) } : item));
+      toast.error("공감을 저장하지 못했습니다.");
+    } finally { setWorkingId(null); }
   };
 
-  const handlePin = (id: string) => {
-    setRules((prev) => prev.map((r) => r.id === id ? { ...r, isPinned: !r.isPinned } : r));
+  const handlePin = async (rule: GroundRule) => {
+    if (!canManage(rule)) return;
+    const updated = { ...rule, isPinned: !rule.isPinned };
+    try {
+      await updateGroundRule(updated);
+      setRules((list) => list.map((item) => item.id === rule.id ? updated : item));
+      toast.success(updated.isPinned ? "중요 규칙으로 고정했습니다." : "고정을 해제했습니다.");
+    } catch { toast.error("고정 상태를 저장하지 못했습니다."); }
   };
 
   return (
     <div className="space-y-6">
-      {/* Hero */}
-      <div className="relative bg-gradient-to-br from-violet-600 via-violet-700 to-purple-800 rounded-3xl p-6 sm:p-8 overflow-hidden">
-        <div className="hidden sm:block absolute right-8 top-1/2 -translate-y-1/2 text-white/10 text-6xl font-black select-none">
-          Rule
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-violet-600 via-violet-700 to-purple-900 p-6 text-white shadow-lg sm:p-8">
+        <div className="absolute -right-8 top-1/2 hidden h-48 w-48 -translate-y-1/2 rounded-full bg-white/10 sm:block" />
+        <img src={rulesImage} alt="" className="absolute right-5 top-1/2 hidden h-40 w-40 -translate-y-1/2 object-contain drop-shadow-2xl sm:block" />
+        <div className="relative max-w-xl">
+          <div className="mb-3 flex items-center gap-2"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15"><Shield className="h-5 w-5" /></div><span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold">광주 2반, 함께 지키는 약속</span></div>
+          <h1 className="text-2xl font-black sm:text-3xl">광주 2반 그라운드 룰</h1>
+          <p className="mt-2 text-sm text-violet-200">제안과 공감이 계정에 연결되어 안전하게 저장됩니다.</p>
+          <p className="mt-4 text-sm text-white/70">총 <b className="text-white">{rules.length}개</b> 규칙</p>
         </div>
-        {/* Tiger mascot (SVG) */}
-        <div className="hidden sm:flex absolute right-16 top-4 bottom-4 items-center justify-center">
-          <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center text-5xl select-none">
-            🐯
-          </div>
-        </div>
-        <div className="relative max-w-lg">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
-            <div className="bg-white/20 rounded-full px-3 py-1 text-xs font-semibold text-white border border-white/30">
-              광주 2반, 오늘도 화이팅!
-            </div>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-2">광주 2반 그라운드 룰</h1>
-          <p className="text-violet-200 text-sm">우리 반이 함께 정하고 함께 지키는 약속</p>
-          <div className="flex items-center gap-3 mt-4">
-            <span className="text-white/70 text-sm">총 <span className="font-bold text-white">{rules.length}개</span> 규칙</span>
-          </div>
-        </div>
+      </section>
+
+      {showForm && <section className="space-y-3 rounded-2xl border border-violet-200 bg-violet-50 p-5">
+        <div className="flex items-center justify-between"><h2 className="text-sm font-black text-gray-800">{editingId ? "규칙 수정" : "새로운 규칙 제안"}</h2><span className="text-xs font-bold text-violet-600">작성자 {currentUser.name}</span></div>
+        <input value={form.content} onChange={(event) => setForm((value) => ({ ...value, content: event.target.value }))} maxLength={300} placeholder="예: 수업 중 휴대폰은 무음으로..." className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-100" />
+        <div className="grid gap-3 sm:grid-cols-2"><select value={form.category} onChange={(event) => setForm((value) => ({ ...value, category: event.target.value as GroundRuleCategory }))} className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm">{GROUND_RULE_CATEGORIES.map((category) => <option key={category.value} value={category.value}>{category.label}</option>)}</select><input value={form.tags} onChange={(event) => setForm((value) => ({ ...value, tags: event.target.value }))} placeholder="#배려 #친목" className="rounded-xl border border-gray-200 px-3 py-2.5 text-sm" /></div>
+        <div className="flex gap-2"><button onClick={() => void handleSubmit()} disabled={workingId !== null} className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-60">{workingId ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}{editingId ? "수정 완료" : "추가하기"}</button><button onClick={() => { setShowForm(false); setEditingId(null); setForm(EMPTY_FORM); }} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-600"><X className="h-4 w-4" />취소</button></div>
+      </section>}
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative max-w-xs flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="규칙 검색" className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-3 text-sm" /></div>
+        <div className="flex flex-wrap gap-1.5"><button onClick={() => setFilter("all")} className={`rounded-xl px-3 py-2 text-xs font-bold ${filter === "all" ? "bg-violet-600 text-white" : "border border-gray-200 bg-white text-gray-600"}`}>전체</button>{GROUND_RULE_CATEGORIES.map((category) => <button key={category.value} onClick={() => setFilter(category.value as GroundRuleCategory)} className={`rounded-xl px-3 py-2 text-xs font-bold ${filter === category.value ? "bg-violet-600 text-white" : "border border-gray-200 bg-white text-gray-600"}`}>{category.label}</button>)}</div>
+        <div className="ml-auto flex gap-2"><select value={sort} onChange={(event) => setSort(event.target.value as SortOrder)} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm"><option value="latest">최신순</option><option value="likes">공감순</option></select>{!showForm && <button onClick={() => { setForm(EMPTY_FORM); setEditingId(null); setShowForm(true); }} className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white"><Plus className="h-4 w-4" />규칙 추가</button>}</div>
       </div>
 
-      {/* Form */}
-      {showForm && (
-        <div className="bg-violet-50 border border-violet-200 rounded-2xl p-5 space-y-3">
-          <h2 className="font-bold text-gray-800 text-sm">{editingId ? "규칙 수정" : "새로운 그라운드 룰 제안하기"}</h2>
-          <div>
-            <label className="text-xs font-semibold text-gray-500 block mb-1">규칙 내용 *</label>
-            <input value={form.content} onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))} className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300" placeholder="예: 수업 중 핸드폰은 무음으로..." />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-gray-500 block mb-1">작성자 *</label>
-              <select value={form.author} onChange={(e) => setForm((p) => ({ ...p, author: e.target.value }))} className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 bg-white">
-                <option value="">선택</option>
-                {STUDENTS.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 block mb-1">카테고리</label>
-              <select value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value as GroundRuleCategory }))} className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 bg-white">
-                {GROUND_RULE_CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 block mb-1">태그 (선택)</label>
-              <input value={form.tags} onChange={(e) => setForm((p) => ({ ...p, tags: e.target.value }))} className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300" placeholder="#친목 #배려" />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={handleSubmit} className="flex items-center gap-1.5 bg-violet-600 text-white font-semibold px-4 py-2 rounded-xl text-sm hover:bg-violet-700 transition-colors">
-              <Check className="w-3.5 h-3.5" />{editingId ? "수정 완료" : "추가하기"}
-            </button>
-            <button onClick={() => { setShowForm(false); setEditingId(null); setForm(EMPTY_FORM); }} className="flex items-center gap-1.5 bg-white border border-border text-gray-600 font-semibold px-4 py-2 rounded-xl text-sm hover:bg-gray-50 transition-colors">
-              <X className="w-3.5 h-3.5" />취소
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-        <div className="relative flex-1 max-w-xs">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2.5 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 bg-white" placeholder="규칙 내용 검색..." />
-        </div>
-        <div className="flex gap-1.5 flex-wrap">
-          <button onClick={() => setFilter("all")} className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all ${filter === "all" ? "bg-violet-600 text-white" : "bg-white border border-border text-gray-600 hover:bg-violet-50"}`}>전체</button>
-          {GROUND_RULE_CATEGORIES.map((cat) => (
-            <button key={cat.value} onClick={() => setFilter(cat.value as GroundRuleCategory)} className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all ${filter === cat.value ? "bg-violet-600 text-white" : "bg-white border border-border text-gray-600 hover:bg-violet-50"}`}>{cat.label}</button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2 ml-auto">
-          <select value={sort} onChange={(e) => setSort(e.target.value as SortOrder)} className="border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 bg-white">
-            <option value="latest">최신순</option>
-            <option value="likes">공감순</option>
-          </select>
-          {!showForm && (
-            <button onClick={() => { setForm(EMPTY_FORM); setEditingId(null); setShowForm(true); }} className="flex items-center gap-2 bg-violet-600 text-white font-semibold px-4 py-2 rounded-xl hover:bg-violet-700 transition-colors text-sm shadow-sm">
-              <Plus className="w-4 h-4" />규칙 추가
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Rule List */}
-      {filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-border p-12 flex flex-col items-center text-center">
-          <Shield className="w-10 h-10 text-gray-200 mb-3" />
-          <p className="text-sm text-gray-400">해당하는 규칙이 없습니다.</p>
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          {visibleRules.map((rule, idx) => (
-            <div key={rule.id} className={`bg-white rounded-2xl border ${rule.isPinned ? "border-violet-300 bg-violet-50/30" : "border-border"} shadow-sm p-4 sm:p-5 flex items-start gap-4`}>
-              <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center font-extrabold text-violet-700 text-sm">
-                {idx + 1}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start gap-2 flex-wrap">
-                  {rule.isPinned && <Pin className="w-3.5 h-3.5 text-violet-500 flex-shrink-0 mt-1" />}
-                  <p className="text-sm sm:text-base font-semibold text-gray-800">{rule.content}</p>
-                </div>
-                <div className="flex items-center gap-2 mt-2 flex-wrap">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${CAT_COLORS[rule.category]}`}>{catLabel(rule.category)}</span>
-                  <span className="text-xs text-gray-400">{rule.author}</span>
-                  {rule.tags.map((tag) => <span key={tag} className="text-xs text-violet-500 font-medium">{tag}</span>)}
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <button onClick={() => handleLike(rule.id)} className="flex items-center gap-1 text-xs font-semibold text-rose-400 hover:text-rose-500 transition-colors px-2 py-1 rounded-lg hover:bg-rose-50">
-                  <Heart className="w-3.5 h-3.5" />{rule.likes}
-                </button>
-                <button onClick={() => handlePin(rule.id)} className={`p-1.5 rounded-lg hover:bg-violet-50 transition-colors ${rule.isPinned ? "text-violet-500" : "text-gray-300 hover:text-violet-400"}`} aria-label="중요 표시">
-                  <Pin className="w-3.5 h-3.5" />
-                </button>
-                <button onClick={() => handleEdit(rule)} className="p-1.5 rounded-lg text-gray-300 hover:text-blue-500 hover:bg-blue-50 transition-colors" aria-label="수정">
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
-                <button onClick={() => handleDelete(rule.id)} className="p-1.5 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors" aria-label="삭제">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
-
-          {filtered.length > visible && (
-            <button onClick={() => setVisible((v) => v + VISIBLE_STEP)} className="w-full py-3 bg-white border border-border rounded-2xl text-sm font-semibold text-gray-500 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
-              <ChevronDown className="w-4 h-4" />더보기 ({filtered.length - visible}개)
-            </button>
-          )}
-        </div>
-      )}
+      {loading ? <div className="flex items-center justify-center gap-2 py-20 text-sm text-gray-400"><LoaderCircle className="h-5 w-5 animate-spin" />규칙을 불러오는 중입니다.</div> : filtered.length === 0 ? <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center text-sm text-gray-400">해당하는 규칙이 없습니다.</div> : <div className="space-y-2.5">{visibleRules.map((rule, index) => <article key={rule.id} className={`flex items-start gap-4 rounded-2xl border bg-white p-4 shadow-sm sm:p-5 ${rule.isPinned ? "border-violet-300 ring-1 ring-violet-100" : "border-gray-200"}`}><div className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-violet-100 text-sm font-black text-violet-700">{index + 1}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-start gap-2">{rule.isPinned && <Pin className="mt-1 h-3.5 w-3.5 text-violet-500" />}<p className="font-bold text-gray-800">{rule.content}</p></div><div className="mt-2 flex flex-wrap items-center gap-2"><span className={`rounded-full px-2 py-0.5 text-xs font-bold ${CAT_COLORS[rule.category]}`}>{catLabel(rule.category)}</span><span className="text-xs text-gray-400">{rule.author}</span>{rule.tags.map((tag) => <span key={tag} className="text-xs font-bold text-violet-500">{tag}</span>)}</div></div><div className="flex flex-none items-center gap-1"><button onClick={() => void handleLike(rule)} className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold ${rule.isLiked ? "bg-rose-50 text-rose-600" : "text-rose-400 hover:bg-rose-50"}`}><Heart className={`h-3.5 w-3.5 ${rule.isLiked ? "fill-current" : ""}`} />{rule.likes}</button>{canManage(rule) && <button onClick={() => void handlePin(rule)} className={`rounded-lg p-1.5 ${rule.isPinned ? "text-violet-600" : "text-gray-300 hover:text-violet-500"}`} aria-label="고정"><Pin className="h-3.5 w-3.5" /></button>}{canManage(rule) && <button onClick={() => handleEdit(rule)} className="rounded-lg p-1.5 text-gray-300 hover:text-blue-500" aria-label="수정"><Edit2 className="h-3.5 w-3.5" /></button>}{canManage(rule) && <button onClick={() => void handleDelete(rule)} className="rounded-lg p-1.5 text-gray-300 hover:text-red-500" aria-label="삭제"><Trash2 className="h-3.5 w-3.5" /></button>}</div></article>)}{filtered.length > visible && <button onClick={() => setVisible((count) => count + VISIBLE_STEP)} className="flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white py-3 text-sm font-bold text-gray-500"><ChevronDown className="h-4 w-4" />더보기 ({filtered.length - visible}개)</button>}</div>}
     </div>
   );
 }

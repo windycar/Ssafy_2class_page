@@ -1,0 +1,31 @@
+{
+  "task_id": "T-003",
+  "loop_number": 1,
+  "verdict": "revision_required",
+  "checks": {
+    "code_actually_changed": { "result": "pass", "evidence": "git diff와 신규 API, 화면, 서비스, 마이그레이션 파일을 직접 확인함." },
+    "feature_wired_into_flow": { "result": "pass", "evidence": "routes, providers, local API handler, Supabase RPC와 각 화면 서비스 호출을 직접 추적함." },
+    "tests_actually_executed": { "result": "pass", "evidence": "신규 5개, Bang 3개, study reset 7개 테스트의 실제 출력과 exit 0을 확인함." },
+    "test_results_match_report": { "result": "pass", "evidence": "implementation report의 출력 발췌가 실제 pnpm 출력과 일치함." },
+    "no_fake_or_placeholder_success": { "result": "pass", "evidence": "DB migration 도구가 success:true를 반환했고 실패한 build는 실패로 기록함." },
+    "no_regressions": { "result": "pass", "evidence": "게임과 문제풀이 회귀 테스트 10개가 통과했고 기존 URL을 유지함." },
+    "interfaces_preserved": { "result": "pass", "evidence": "기존 게임/학습 라우트와 Supabase client 인터페이스를 유지하고 AdminContext 사용부를 새 인증에 맞게 갱신함." },
+    "no_out_of_scope_changes": { "result": "pass", "evidence": "사용자 소유 AGENTS.md 삭제, HomeView 수정, home 이미지 변경을 보존했고 건드리지 않음." },
+    "error_handling_present": { "result": "pass", "evidence": "API 상태 코드/JSON 오류, UI toast, 비활성 회원과 세션 만료, 관리자 권한 오류를 처리함." },
+    "completion_criteria_met": { "result": "fail", "evidence": "production build와 브라우저 흐름 검증이 환경 권한 때문에 완료되지 않음." }
+  },
+  "failure_reasons": ["completion_criteria_unmet", "not_runnable"],
+  "revision_instructions": [
+    {
+      "instruction": "권한이 허용된 환경에서 pnpm run build를 실행하고 로그인, 첫 비밀번호 변경, 관리자 회원관리, 익명 작성자, 공구 소유권, 그라운드룰 공감 흐름을 브라우저로 확인한다.",
+      "target_files": ["vite.config.ts", "src/views/LoginView.tsx", "src/views/AdminView.tsx", "src/views/AnonymousBoardView.tsx", "src/views/CoffeeOrderView.tsx", "src/views/GroundRulesView.tsx"],
+      "evidence": "현재 빌드 출력: Cannot read directory ../../../..: Access is denied. 확장 실행은 Codex 사용량 제한으로 거절됨."
+    }
+  ],
+  "additional_tests_required": [
+    "pnpm run build",
+    "브라우저에서 일반 회원/관리자 핵심 시나리오 수동 검증",
+    "Supabase security/performance advisor 재실행"
+  ],
+  "notes": "구현 결함으로 판정하지 않고 실행 환경 차단으로 인해 승인만 보류한다."
+}

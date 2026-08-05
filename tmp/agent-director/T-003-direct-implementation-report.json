@@ -1,0 +1,73 @@
+{
+  "task_id": "T-003",
+  "status": "partial",
+  "summary": "Director takeover로 Supabase Auth 기반 로그인, 초기 비밀번호 1234의 지연 계정 생성, 내정보 비밀번호 변경, 관리자 회원관리 및 익명 작성자 감사, 공구 소유권, 그라운드룰 DB, RLS/권한, 전용 UI 일러스트를 구현하고 실제 DB 마이그레이션을 적용했다.",
+  "files_changed": [
+    { "path": "api/auth.ts", "change_type": "added", "description": "회원 로그인, 프로필, 비밀번호 변경 API" },
+    { "path": "api/admin.ts", "change_type": "modified", "description": "Bearer 관리자 검증, 회원관리와 익명 작성자 조회 API" },
+    { "path": "supabase/migrations/20260805_auth_community.sql", "change_type": "added", "description": "회원·익명 감사·공구·그라운드룰 스키마와 RLS/권한" },
+    { "path": "src/context/AuthContext.tsx", "change_type": "modified", "description": "Supabase 세션 기반 인증 상태" },
+    { "path": "src/views/LoginView.tsx", "change_type": "modified", "description": "아이디/비밀번호 로그인 UI" },
+    { "path": "src/views/MyInfoView.tsx", "change_type": "added", "description": "회원 정보 및 비밀번호 변경 UI" },
+    { "path": "src/views/AdminView.tsx", "change_type": "modified", "description": "회원관리 및 익명 작성자 감사 UI" },
+    { "path": "src/views/AnonymousBoardView.tsx", "change_type": "modified", "description": "등록일 자동화와 인증 익명 글 UI" },
+    { "path": "src/views/CoffeeOrderView.tsx", "change_type": "modified", "description": "로그인 사용자 자동 참여와 소유권 UI" },
+    { "path": "src/views/GroundRulesView.tsx", "change_type": "modified", "description": "DB 규칙/공감/소유권 UI" },
+    { "path": "src/assets/board/anonymous-board.png", "change_type": "added", "description": "익명게시판 전용 생성 일러스트" }
+  ],
+  "tests_added": [
+    "tests/authHelpers.test.ts",
+    "tests/communityServices.test.ts"
+  ],
+  "test_executions": [
+    {
+      "command": "pnpm run test:auth-community",
+      "exit_code": 0,
+      "passed": 5,
+      "failed": 0,
+      "skipped": 0,
+      "output_excerpt": "✔ 로그인 아이디는 @, 공백, 대문자를 정규화한다\n✔ 사용자에게 보이는 4자리 비밀번호는 Auth 공급자용 긴 비밀번호로 변환된다\n✔ 익명 글 문장 끝맺음은 중복 문장부호 없이 정리된다\n✔ 커뮤니티 마이그레이션은 익명 접근을 제거하고 작성자 감사 테이블을 분리한다\n✔ 회원·공구·그라운드룰 테이블에 RLS와 명시적 권한이 선언된다"
+    },
+    {
+      "command": "pnpm run test:bang",
+      "exit_code": 0,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0,
+      "output_excerpt": "✔ 일반 캐릭터는 카드 종류에 맞는 대응 카드만 사용할 수 있다\n✔ 칼라미티 자넷은 BANG과 Missed를 서로 바꿔 대응할 수 있다\n✔ 필요한 대응 카드가 부족하면 일부 카드를 소비하지 않는다"
+    },
+    {
+      "command": "pnpm run test:study-reset",
+      "exit_code": 0,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "output_excerpt": "✔ 원격 초기화는 student_id와 정확한 attempt ID를 함께 제한한 뒤 로컬을 삭제한다\n✔ 원격 삭제 실패 시 로컬 기록과 pending ID를 그대로 보존한다\n✔ 한 과목의 초기화는 다른 과목 저장소를 변경하지 않는다"
+    },
+    {
+      "command": "pnpm run build",
+      "exit_code": 1,
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "output_excerpt": "Cannot read directory ../../../..: Access is denied. Could not resolve vite.config.ts"
+    }
+  ],
+  "completion_criteria_status": [
+    { "criterion": "기존 23명 명단과 관리자 계정이 DB에 존재하며 초기 비밀번호 로그인을 지원한다.", "met": true, "evidence": "실제 Supabase 프로젝트에 auth_community_integration 마이그레이션 적용 성공; members 시드와 api/auth.ts 지연 프로비저닝 구현." },
+    { "criterion": "비로그인 사용자는 로그인 화면 외 사이트 기능에 접근할 수 없다.", "met": true, "evidence": "src/app/routes.ts의 전체 기능이 ProtectedRoute 아래 배치되고 첫 비밀번호 변경 강제 경로가 연결됨." },
+    { "criterion": "내정보에서 비밀번호 변경과 로그아웃이 동작한다.", "met": true, "evidence": "MyInfoView, AuthContext.changePassword, api/auth.ts change-password가 연결됨." },
+    { "criterion": "관리자 회원관리와 익명 작성자 확인이 동작한다.", "met": true, "evidence": "AdminView의 회원관리 탭과 api/admin.ts members.*, board.list가 Bearer/DB role 검증 뒤 연결됨." },
+    { "criterion": "익명게시판 날짜는 서버 등록일이고 감사 정보가 분리 저장된다.", "met": true, "evidence": "날짜 입력 UI 제거, security definer RPC가 now()와 anonymous_post_authors를 원자 저장하며 일반 권한은 철회됨." },
+    { "criterion": "공구가 로그인 사용자와 권한에 연결된다.", "met": true, "evidence": "created_by/participant_user_id 컬럼, 소유권 RLS, 현재 사용자 자동 입력 UI 연결." },
+    { "criterion": "그라운드룰이 DB와 로그인 사용자에 연결된다.", "met": true, "evidence": "ground_rules/ground_rule_likes 마이그레이션, 서비스와 UI, 소유자/관리자 RLS 연결." },
+    { "criterion": "빌드, 회귀 테스트, 브라우저 핵심 흐름 확인이 모두 통과한다.", "met": false, "evidence": "15개 테스트는 통과했지만 Vite 빌드는 현재 Codex 샌드박스의 상위 경로 Access is denied로 시작 전 차단되었고 확장 실행은 사용량 제한으로 거절됨." }
+  ],
+  "out_of_scope_issues": [
+    "Codex 실행 환경의 상위 경로 권한과 사용량 제한 때문에 production build 및 브라우저 실행 검증을 이 세션에서 완료하지 못함."
+  ],
+  "deviations": [
+    "codex exec implementer가 기본/확장 권한 모두 Access is denied로 시작하지 못해 기록된 takeover로 직접 구현함."
+  ]
+}
+

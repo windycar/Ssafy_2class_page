@@ -3,6 +3,7 @@ import path from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv, type Plugin } from "vite";
+import authFunction from "./api/auth";
 import adminFunction from "./api/admin";
 import bangLeaveFunction from "./api/bang-leave";
 
@@ -12,6 +13,7 @@ const LOCAL_API_ENV_KEYS = [
   "ADMIN_PASSWORD",
   "VITE_SUPABASE_URL",
   "SUPABASE_SERVICE_ROLE_KEY",
+  "AUTH_PASSWORD_PEPPER",
 ] as const;
 
 function figmaAssetResolver(): Plugin {
@@ -57,6 +59,7 @@ async function sendWebResponse(response: Response, target: ServerResponse) {
 
 function localVercelApi(env: Record<string, string>): Plugin {
   const handlers: Record<string, WebHandler> = {
+    "/api/auth": authFunction.fetch,
     "/api/admin": adminFunction.fetch,
     "/api/bang-leave": bangLeaveFunction.fetch,
   };

@@ -752,7 +752,7 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
   const gameLogRef = useRef<HTMLDivElement>(null);
   const seenEffectIdsRef = useRef<Set<string>>(new Set());
   const navigate = useNavigate();
-  const { isAdmin, login: adminLogin, logout: adminLogout, request: adminRequest } = useAdmin();
+  const { isAdmin, request: adminRequest } = useAdmin();
   const game = useBangCardGame(initialRoom);
   const { room, getHand, getEquip, getAliveOrder } = game;
   const state = room.cardState;
@@ -1016,30 +1016,17 @@ function BangPlayContent({ initialRoom, roomId, currentUser }: {
 
     setAdminRoleCheckPending(true);
     try {
-      let verified = false;
-
-      if (isAdmin) {
-        try {
-          await adminRequest("verify");
-          verified = true;
-        } catch {
-          adminLogout();
-        }
-      }
-
-      if (!verified) {
-        const password = window.prompt("모든 직업과 손패를 보려면 관리자 비밀번호를 입력하세요.");
-        if (!password) return;
-        verified = await adminLogin(password);
-      }
-
-      if (!verified) {
-        toast.error("관리자 비밀번호가 올바르지 않습니다.");
+      if (!isAdmin) {
+        toast.error("관리자 계정으로 로그인해야 사용할 수 있습니다.");
         return;
       }
 
+      await adminRequest("verify");
+
       setAdminRolesVisible(true);
       toast.success("관리자 치트 활성화: 모든 직업과 손패를 표시합니다.");
+    } catch {
+      toast.error("관리자 권한을 확인하지 못했습니다.");
     } finally {
       setAdminRoleCheckPending(false);
     }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
-import { Menu, X, Bell, Users, LogOut, RefreshCw, ChevronDown } from "lucide-react";
+import { Menu, X, Bell, Users, LogOut, RefreshCw, ChevronDown, UserRound } from "lucide-react";
 import { NAV_ITEMS, type NavItem } from "../../config/navigation";
 import { TOTAL_STUDENTS } from "../../config/constants";
 import { useAdmin } from "../../context/AdminContext";
@@ -12,16 +12,10 @@ export function AppHeader() {
   const profileRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { isAdmin, login } = useAdmin();
+  const { isAdmin } = useAdmin();
   const { currentUser, isAuthenticated, logout, changeUser } = useAuth();
 
-  const openAdmin = async () => {
-    if (isAdmin) return navigate("/admin");
-    const password = window.prompt("G2 관리자 비밀번호");
-    if (!password) return;
-    if (await login(password)) navigate("/admin");
-    else window.alert("비밀번호가 올바르지 않거나 관리자 설정이 없습니다.");
-  };
+  const openAdmin = () => navigate("/admin");
 
   const isActive = (item: NavItem) =>
     item.matchPrefix
@@ -125,18 +119,28 @@ export function AppHeader() {
                   </div>
                   <button
                     onClick={() => {
-                      changeUser();
+                      setProfileOpen(false);
+                      navigate("/me");
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    <UserRound className="w-4 h-4 text-gray-400" />
+                    내정보
+                  </button>
+                  <button
+                    onClick={() => {
+                      void changeUser();
                       setProfileOpen(false);
                       navigate("/login");
                     }}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors"
                   >
                     <RefreshCw className="w-4 h-4 text-gray-400" />
-                    다른 사용자로 변경
+                    다른 계정으로 로그인
                   </button>
                   <button
                     onClick={() => {
-                      logout();
+                      void logout();
                       setProfileOpen(false);
                     }}
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors"
@@ -156,10 +160,12 @@ export function AppHeader() {
             </Link>
           )}
 
-          {/* 관리자 */}
-          <button onClick={openAdmin} title={isAdmin ? "관리자 페이지" : "G2 관리자 로그인"} className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1259AA] to-[#0a3f7f] flex items-center justify-center text-white text-[11px] font-black cursor-pointer shadow-sm select-none">
-            G2
-          </button>
+          {/* 관리자 계정에만 노출 */}
+          {isAdmin && (
+            <button onClick={openAdmin} title="관리자 페이지" className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1259AA] to-[#0a3f7f] flex items-center justify-center text-white text-[11px] font-black cursor-pointer shadow-sm select-none">
+              G2
+            </button>
+          )}
 
           {/* 모바일 햄버거 */}
           <button
@@ -200,9 +206,17 @@ export function AppHeader() {
                 <p className="text-xs font-extrabold text-gray-700">{currentUser.name}</p>
                 <p className="text-xs text-gray-400">{currentUser.username}</p>
               </div>
+              <Link
+                to="/me"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50"
+              >
+                <UserRound className="w-4 h-4" />
+                내정보
+              </Link>
               <button
                 onClick={() => {
-                  logout();
+                  void logout();
                   setMobileOpen(false);
                 }}
                 className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-50"
