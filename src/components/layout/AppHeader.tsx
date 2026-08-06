@@ -14,7 +14,7 @@ export function AppHeader() {
   const navigate = useNavigate();
   const { isAdmin } = useAdmin();
   const { currentUser, isAuthenticated, logout, changeUser } = useAuth();
-
+  const [adminButtonVisible, setAdminButtonVisible] = useState(false);
   const openAdmin = () => navigate("/admin");
 
   const isActive = (item: NavItem) =>
@@ -25,15 +25,23 @@ export function AppHeader() {
         : pathname.startsWith(item.path);
 
   useEffect(() => {
-    const closeProfile = (event: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-        setProfileOpen(false);
-      }
-    };
+  const handleAdminButton = (event: Event) => {
+    const customEvent = event as CustomEvent<boolean>;
+    setAdminButtonVisible(customEvent.detail);
+  };
 
-    document.addEventListener("mousedown", closeProfile);
-    return () => document.removeEventListener("mousedown", closeProfile);
-  }, []);
+  window.addEventListener(
+    "toggle-admin-button",
+    handleAdminButton,
+  );
+
+  return () => {
+    window.removeEventListener(
+      "toggle-admin-button",
+      handleAdminButton,
+    );
+  };
+}, []);
 
   return (
     <header className="bg-[#fbfdfc]/95 backdrop-blur border-b border-[#1259AA]/10 sticky top-0 z-30 shadow-sm">
@@ -160,12 +168,16 @@ export function AppHeader() {
             </Link>
           )}
 
-          {/* 관리자 계정에만 노출 */}
-          {isAdmin && (
-            <button onClick={openAdmin} title="관리자 페이지" className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1259AA] to-[#0a3f7f] flex items-center justify-center text-white text-[11px] font-black cursor-pointer shadow-sm select-none">
-              G2
-            </button>
-          )}
+          {/* 관리자 계정 + 익명 게시판 특수 버튼 활성화 시에만 노출 */}
+{isAdmin && adminButtonVisible && (
+  <button
+    onClick={openAdmin}
+    title="관리자 페이지"
+    className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#1259AA] to-[#0a3f7f] flex items-center justify-center text-white text-[11px] font-black cursor-pointer shadow-sm select-none"
+  >
+    G2
+  </button>
+)}
 
           {/* 모바일 햄버거 */}
           <button
