@@ -7,7 +7,13 @@ import galleryQuickMenuArt from "../assets/home/quick-menu/gallery.png";
 import rulesQuickMenuArt from "../assets/home/quick-menu/rules.png";
 import gameQuickMenuArt from "../assets/home/quick-menu/game.png";
 import studyQuickMenuArt from "../assets/home/quick-menu/study.png";
-
+import { ALL_PYTHON_QUESTIONS } from "../data/pythonQuestionBank";
+import { ALL_WEB_QUESTIONS } from "../data/webQuestionBank";
+import { AI_PYTHON_QUESTION_BANK } from "../data/aiPythonQuestionBank";
+const TOTAL_STUDY_QUESTIONS =
+  ALL_PYTHON_QUESTIONS.length +
+  ALL_WEB_QUESTIONS.length +
+  AI_PYTHON_QUESTION_BANK.length;
 const QUICK_MENU = [
   {
     title: "랜덤 팀 편성",
@@ -85,7 +91,7 @@ const QUICK_MENU = [
     description: "Python 실전형 문제를 풀고 내 약점과 오답을 분석해요.",
     imageSrc: studyQuickMenuArt,
     path: "/study",
-    badge: "400문제",
+    badge: `${TOTAL_STUDY_QUESTIONS}문제`,
     buttonLabel: "학습 시작",
     colorBg: "bg-indigo-50",
     colorBorder: "border-indigo-200",

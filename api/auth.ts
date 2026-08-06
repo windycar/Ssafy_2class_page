@@ -26,22 +26,48 @@ type AuthRequestBody = {
   newPassword?: string;
 };
 
+const MEMBER_SELECT = `
+  id,
+  student_id,
+  name,
+  username,
+  login_id,
+  class_name,
+  role,
+  auth_user_id,
+  auth_email,
+  is_active,
+  must_change_password,
+  password_changed_at,
+  last_login_at
+`;
+
 export function normalizeLoginId(value: string) {
   return value.trim().replace(/^@/, "").toLocaleLowerCase("en-US");
 }
 
 export function providerPassword(rawPassword: string) {
-  const pepper = process.env.AUTH_PASSWORD_PEPPER || "ssafy-g2-community-v1";
+  const pepper =
+    process.env.AUTH_PASSWORD_PEPPER || "ssafy-g2-community-v1";
+
   return `G2@${rawPassword}::${pepper}`;
 }
 
 function memberEmail(loginId: string) {
   const safeId = loginId.replace(/[^a-z0-9._-]/g, "-");
+
   return `${safeId}@members.g2.local`;
 }
 
 function jsonError(message: string, status: number) {
-  return Response.json({ error: message }, { status });
+  return Response.json(
+    {
+      error: message,
+    },
+    {
+      status,
+    },
+  );
 }
 
 function toProfile(member: MemberRow) {
@@ -63,169 +89,662 @@ function toProfile(member: MemberRow) {
 
 function bearerToken(request: Request) {
   const value = request.headers.get("authorization") ?? "";
-  return value.startsWith("Bearer ") ? value.slice(7).trim() : "";
+
+  return value.startsWith("Bearer ")
+    ? value.slice(7).trim()
+    : "";
 }
 
-async function verifiedMember(client: SupabaseClient, request: Request) {
-  const token = bearerToken(request);
-  if (!token) return { error: jsonError("로그인이 필요합니다.", 401) } as const;
+/**
+ * 중요
+ *
+ * service_role용 client와
+ * 일반 사용자 로그인(signInWithPassword)용 client를
+ * 절대로 같이 사용하지 않습니다.
+ *
+ * signInWithPassword()를 호출하면 해당 client가
+ * 일반 사용자의 세션을 가지게 되므로 이후 DB 요청이
+ * authenticated 권한으로 실행될 수 있습니다.
+ */
+function createServerClient(
+  supabaseUrl: string,
+  serviceKey: string,
+) {
+  return createClient(supabaseUrl, serviceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+}
 
-  const { data: userData, error: userError } = await client.auth.getUser(token);
-  if (userError || !userData.user) {
-    return { error: jsonError("로그인 세션이 만료되었습니다.", 401) } as const;
+async function verifiedMember(
+  adminClient: SupabaseClient,
+  request: Request,
+) {
+  const token = bearerToken(request);
+
+  if (!token) {
+    return {
+      error: jsonError("로그인이 필요합니다.", 401),
+    } as const;
   }
 
-  const { data, error } = await client
+  const {
+    data: userData,
+    error: userError,
+  } = await adminClient.auth.getUser(token);
+
+  if (userError || !userData.user) {
+    return {
+      error: jsonError(
+        "로그인 세션이 만료되었습니다.",
+        401,
+      ),
+    } as const;
+  }
+
+  const {
+    data,
+    error,
+  } = await adminClient
     .from("members")
-    .select("id, student_id, name, username, login_id, class_name, role, auth_user_id, auth_email, is_active, must_change_password, password_changed_at, last_login_at")
+    .select(MEMBER_SELECT)
     .eq("auth_user_id", userData.user.id)
     .maybeSingle();
 
-  if (error || !data) return { error: jsonError("등록된 회원 정보를 찾을 수 없습니다.", 403) } as const;
+  if (error) {
+    console.error(
+      "회원 조회 실패:",
+      error,
+    );
+
+    return {
+      error: jsonError(
+        "등록된 회원 정보를 찾을 수 없습니다.",
+        403,
+      ),
+    } as const;
+  }
+
+  if (!data) {
+    return {
+      error: jsonError(
+        "등록된 회원 정보를 찾을 수 없습니다.",
+        403,
+      ),
+    } as const;
+  }
+
   const member = data as MemberRow;
-  if (!member.is_active) return { error: jsonError("비활성화된 계정입니다. 관리자에게 문의하세요.", 403) } as const;
-  return { member, token } as const;
+
+  if (!member.is_active) {
+    return {
+      error: jsonError(
+        "비활성화된 계정입니다. 관리자에게 문의하세요.",
+        403,
+      ),
+    } as const;
+  }
+
+  return {
+    member,
+    token,
+  } as const;
 }
 
 export async function handleAuthRequest(request: Request) {
   if (request.method !== "POST") {
-    return new Response("Method not allowed", { status: 405, headers: { Allow: "POST" } });
+    return new Response(
+      "Method not allowed",
+      {
+        status: 405,
+        headers: {
+          Allow: "POST",
+        },
+      },
+    );
   }
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!supabaseUrl || !serviceKey) return jsonError("인증 서버 설정이 누락되었습니다.", 500);
+  const supabaseUrl =
+    process.env.VITE_SUPABASE_URL;
+
+  const serviceKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceKey) {
+    console.error(
+      "Supabase 서버 환경변수가 없습니다.",
+      {
+        hasUrl: Boolean(supabaseUrl),
+        hasServiceKey: Boolean(serviceKey),
+      },
+    );
+
+    return jsonError(
+      "인증 서버 설정이 누락되었습니다.",
+      500,
+    );
+  }
 
   let body: AuthRequestBody;
+
   try {
-    body = await request.json() as AuthRequestBody;
+    body =
+      (await request.json()) as AuthRequestBody;
   } catch {
-    return jsonError("요청 형식이 올바르지 않습니다.", 400);
+    return jsonError(
+      "요청 형식이 올바르지 않습니다.",
+      400,
+    );
   }
 
-  const client = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
+  /**
+   * 핵심
+   *
+   * adminClient
+   * - service_role 권한 유지
+   * - members SELECT / UPDATE
+   * - auth.admin.*
+   *
+   * sessionClient
+   * - signInWithPassword 전용
+   * - 로그인 후 authenticated 세션을 가져도 상관없음
+   *
+   * 두 client를 절대 합치지 않습니다.
+   */
+  const adminClient = createServerClient(
+    supabaseUrl,
+    serviceKey,
+  );
+
+  const sessionClient = createServerClient(
+    supabaseUrl,
+    serviceKey,
+  );
+
+  // ==========================================================
+  // LOGIN
+  // ==========================================================
 
   if (body.action === "login") {
-    const loginId = normalizeLoginId(body.loginId ?? "");
-    const rawPassword = body.password ?? "";
-    if (!loginId || !rawPassword) return jsonError("아이디와 비밀번호를 입력하세요.", 400);
+    const loginId =
+      normalizeLoginId(body.loginId ?? "");
 
-    const { data, error } = await client
+    const rawPassword =
+      body.password ?? "";
+
+    if (!loginId || !rawPassword) {
+      return jsonError(
+        "아이디와 비밀번호를 입력하세요.",
+        400,
+      );
+    }
+
+    /**
+     * members 조회는 반드시 adminClient
+     */
+    const {
+      data,
+      error,
+    } = await adminClient
       .from("members")
-      .select("id, student_id, name, username, login_id, class_name, role, auth_user_id, auth_email, is_active, must_change_password, password_changed_at, last_login_at")
+      .select(MEMBER_SELECT)
       .eq("login_id", loginId)
       .maybeSingle();
 
-    if (error) return jsonError("회원 정보를 확인하지 못했습니다.", 500);
-    if (!data || !(data as MemberRow).is_active) {
-      return jsonError("아이디 또는 비밀번호가 올바르지 않습니다.", 401);
+    if (error) {
+      console.error(
+        "로그인 회원 조회 실패:",
+        error,
+      );
+
+      return jsonError(
+        "회원 정보를 확인하지 못했습니다.",
+        500,
+      );
+    }
+
+    if (
+      !data ||
+      !(data as MemberRow).is_active
+    ) {
+      return jsonError(
+        "아이디 또는 비밀번호가 올바르지 않습니다.",
+        401,
+      );
     }
 
     let member = data as MemberRow;
-    let authUserId = member.auth_user_id;
-    const email = member.auth_email || memberEmail(member.login_id);
+
+    let authUserId =
+      member.auth_user_id;
+
+    const email =
+      member.auth_email ||
+      memberEmail(member.login_id);
+
+    // --------------------------------------------------------
+    // 아직 Supabase Auth 사용자가 연결되지 않은 경우
+    // --------------------------------------------------------
 
     if (!authUserId) {
-      const initialPasswordValid = member.role === "admin"
-        ? Boolean(process.env.ADMIN_PASSWORD) && rawPassword === process.env.ADMIN_PASSWORD
-        : rawPassword === "1234";
-      if (!initialPasswordValid) return jsonError("아이디 또는 비밀번호가 올바르지 않습니다.", 401);
+      const initialPasswordValid =
+        member.role === "admin"
+          ? Boolean(process.env.ADMIN_PASSWORD) &&
+            rawPassword ===
+              process.env.ADMIN_PASSWORD
+          : rawPassword === "1234";
 
-      const { data: created, error: createError } = await client.auth.admin.createUser({
-        email,
-        password: providerPassword(rawPassword),
-        email_confirm: true,
-        user_metadata: { name: member.name, login_id: member.login_id },
-        app_metadata: { member_id: member.id, role: member.role },
-      });
-      if (createError || !created.user) {
-        return jsonError("계정을 준비하지 못했습니다. 관리자에게 문의하세요.", 500);
+      if (!initialPasswordValid) {
+        return jsonError(
+          "아이디 또는 비밀번호가 올바르지 않습니다.",
+          401,
+        );
       }
 
-      authUserId = created.user.id;
-      const { data: updated, error: updateError } = await client
+      /**
+       * 관리자 작업이므로 adminClient 사용
+       */
+      const {
+        data: created,
+        error: createError,
+      } =
+        await adminClient.auth.admin.createUser({
+          email,
+          password:
+            providerPassword(rawPassword),
+          email_confirm: true,
+
+          user_metadata: {
+            name: member.name,
+            login_id: member.login_id,
+          },
+
+          app_metadata: {
+            member_id: member.id,
+            role: member.role,
+          },
+        });
+
+      if (
+        createError ||
+        !created.user
+      ) {
+        console.error(
+          "Supabase Auth 사용자 생성 실패:",
+          createError,
+        );
+
+        return jsonError(
+          "계정을 준비하지 못했습니다. 관리자에게 문의하세요.",
+          500,
+        );
+      }
+
+      authUserId =
+        created.user.id;
+
+      /**
+       * members UPDATE 역시 adminClient 사용
+       */
+      const {
+        data: updated,
+        error: updateError,
+      } = await adminClient
         .from("members")
-        .update({ auth_user_id: authUserId, auth_email: email })
+        .update({
+          auth_user_id: authUserId,
+          auth_email: email,
+        })
         .eq("id", member.id)
         .is("auth_user_id", null)
-        .select("id, student_id, name, username, login_id, class_name, role, auth_user_id, auth_email, is_active, must_change_password, password_changed_at, last_login_at")
+        .select(MEMBER_SELECT)
         .single();
 
-      if (updateError || !updated) {
-        await client.auth.admin.deleteUser(authUserId);
-        return jsonError("회원 계정 연결에 실패했습니다. 다시 시도하세요.", 409);
+      if (
+        updateError ||
+        !updated
+      ) {
+        console.error(
+          "회원 Auth 연결 실패:",
+          updateError,
+        );
+
+        /**
+         * DB 연결 실패하면 만들어진 Auth 사용자도 삭제
+         */
+        await adminClient.auth.admin
+          .deleteUser(authUserId)
+          .catch(() => undefined);
+
+        return jsonError(
+          updateError?.message ||
+            "회원 계정 연결에 실패했습니다. 다시 시도하세요.",
+          409,
+        );
       }
-      member = updated as MemberRow;
+
+      member =
+        updated as MemberRow;
     }
 
-    const { data: sessionData, error: loginError } = await client.auth.signInWithPassword({
-      email,
-      password: providerPassword(rawPassword),
+    // --------------------------------------------------------
+    // 사용자 로그인
+    // --------------------------------------------------------
+
+    /**
+     * 여기서 adminClient를 사용하면 안 됩니다.
+     *
+     * signInWithPassword를 호출하면 client가
+     * 일반 사용자 세션을 가지게 됩니다.
+     */
+    const {
+      data: sessionData,
+      error: loginError,
+    } =
+      await sessionClient.auth.signInWithPassword({
+        email,
+        password:
+          providerPassword(rawPassword),
+      });
+
+    if (
+      loginError ||
+      !sessionData.session
+    ) {
+      return jsonError(
+        "아이디 또는 비밀번호가 올바르지 않습니다.",
+        401,
+      );
+    }
+
+    // --------------------------------------------------------
+    // 마지막 로그인 시간
+    // --------------------------------------------------------
+
+    const loginAt =
+      new Date().toISOString();
+
+    /**
+     * DB UPDATE는 다시 adminClient.
+     *
+     * sessionClient로 하면 authenticated 권한이므로
+     * permission denied가 발생할 수 있습니다.
+     */
+    const {
+      error: loginTimeError,
+    } = await adminClient
+      .from("members")
+      .update({
+        last_login_at: loginAt,
+      })
+      .eq("id", member.id);
+
+    if (loginTimeError) {
+      /**
+       * 마지막 로그인 기록 실패 때문에
+       * 로그인 자체를 실패시키지는 않습니다.
+       */
+      console.error(
+        "last_login_at 갱신 실패:",
+        loginTimeError,
+      );
+    }
+
+    member = {
+      ...member,
+      auth_user_id: authUserId,
+      auth_email: email,
+      last_login_at: loginAt,
+    };
+
+    return Response.json({
+      session:
+        sessionData.session,
+
+      profile:
+        toProfile(member),
     });
-    if (loginError || !sessionData.session) {
-      return jsonError("아이디 또는 비밀번호가 올바르지 않습니다.", 401);
-    }
-
-    const loginAt = new Date().toISOString();
-    await client.from("members").update({ last_login_at: loginAt }).eq("id", member.id);
-    member = { ...member, auth_user_id: authUserId, auth_email: email, last_login_at: loginAt };
-
-    return Response.json({ session: sessionData.session, profile: toProfile(member) });
   }
+
+  // ==========================================================
+  // PROFILE
+  // ==========================================================
 
   if (body.action === "profile") {
-    const verified = await verifiedMember(client, request);
-    if ("error" in verified) return verified.error;
-    return Response.json({ profile: toProfile(verified.member) });
+    const verified =
+      await verifiedMember(
+        adminClient,
+        request,
+      );
+
+    if ("error" in verified) {
+      return verified.error;
+    }
+
+    return Response.json({
+      profile:
+        toProfile(verified.member),
+    });
   }
 
-  if (body.action === "change-password") {
-    const verified = await verifiedMember(client, request);
-    if ("error" in verified) return verified.error;
+  // ==========================================================
+  // CHANGE PASSWORD
+  // ==========================================================
 
-    const currentPassword = body.currentPassword ?? "";
-    const newPassword = body.newPassword ?? "";
-    if (!currentPassword) return jsonError("현재 비밀번호를 입력하세요.", 400);
-    if (newPassword.length < 4) return jsonError("새 비밀번호는 4자 이상이어야 합니다.", 400);
-    if (newPassword === "1234") return jsonError("초기 비밀번호 1234는 새 비밀번호로 사용할 수 없습니다.", 400);
-    if (newPassword === currentPassword) return jsonError("현재 비밀번호와 다른 비밀번호를 입력하세요.", 400);
+  if (
+    body.action ===
+    "change-password"
+  ) {
+    const verified =
+      await verifiedMember(
+        adminClient,
+        request,
+      );
 
-    const email = verified.member.auth_email || memberEmail(verified.member.login_id);
-    const { error: currentError } = await client.auth.signInWithPassword({
-      email,
-      password: providerPassword(currentPassword),
-    });
-    if (currentError) return jsonError("현재 비밀번호가 올바르지 않습니다.", 401);
+    if ("error" in verified) {
+      return verified.error;
+    }
 
-    const { error: updateAuthError } = await client.auth.admin.updateUserById(
-      verified.member.auth_user_id as string,
-      { password: providerPassword(newPassword) },
-    );
-    if (updateAuthError) return jsonError("비밀번호를 변경하지 못했습니다.", 500);
+    const currentPassword =
+      body.currentPassword ?? "";
 
-    const changedAt = new Date().toISOString();
-    const { data: updated, error: updateMemberError } = await client
+    const newPassword =
+      body.newPassword ?? "";
+
+    if (!currentPassword) {
+      return jsonError(
+        "현재 비밀번호를 입력하세요.",
+        400,
+      );
+    }
+
+    if (
+      newPassword.length < 4
+    ) {
+      return jsonError(
+        "새 비밀번호는 4자 이상이어야 합니다.",
+        400,
+      );
+    }
+
+    if (
+      newPassword === "1234"
+    ) {
+      return jsonError(
+        "초기 비밀번호 1234는 새 비밀번호로 사용할 수 없습니다.",
+        400,
+      );
+    }
+
+    if (
+      newPassword === currentPassword
+    ) {
+      return jsonError(
+        "현재 비밀번호와 다른 비밀번호를 입력하세요.",
+        400,
+      );
+    }
+
+    const email =
+      verified.member.auth_email ||
+      memberEmail(
+        verified.member.login_id,
+      );
+
+    // --------------------------------------------------------
+    // 현재 비밀번호 확인
+    // --------------------------------------------------------
+
+    /**
+     * 중요:
+     * 현재 비밀번호 확인은 sessionClient로 합니다.
+     *
+     * adminClient에서 signInWithPassword하면 안 됩니다.
+     */
+    const {
+      error: currentError,
+    } =
+      await sessionClient.auth.signInWithPassword({
+        email,
+        password:
+          providerPassword(
+            currentPassword,
+          ),
+      });
+
+    if (currentError) {
+      return jsonError(
+        "현재 비밀번호가 올바르지 않습니다.",
+        401,
+      );
+    }
+
+    // --------------------------------------------------------
+    // 실제 비밀번호 변경
+    // --------------------------------------------------------
+
+    /**
+     * service_role 권한을 계속 유지하고 있는
+     * adminClient로 비밀번호 변경
+     */
+    const {
+      error: updateAuthError,
+    } =
+      await adminClient.auth.admin.updateUserById(
+        verified.member
+          .auth_user_id as string,
+        {
+          password:
+            providerPassword(
+              newPassword,
+            ),
+        },
+      );
+
+    if (updateAuthError) {
+      console.error(
+        "Supabase Auth 비밀번호 변경 실패:",
+        updateAuthError,
+      );
+
+      return jsonError(
+        "비밀번호를 변경하지 못했습니다.",
+        500,
+      );
+    }
+
+    // --------------------------------------------------------
+    // members 상태 갱신
+    // --------------------------------------------------------
+
+    const changedAt =
+      new Date().toISOString();
+
+    /**
+     * 중요:
+     * 여기 역시 sessionClient가 아니라
+     * adminClient를 사용합니다.
+     */
+    const {
+      data: updated,
+      error: updateMemberError,
+    } = await adminClient
       .from("members")
-      .update({ must_change_password: false, password_changed_at: changedAt })
-      .eq("id", verified.member.id)
-      .select("id, student_id, name, username, login_id, class_name, role, auth_user_id, auth_email, is_active, must_change_password, password_changed_at, last_login_at")
+      .update({
+        must_change_password: false,
+        password_changed_at:
+          changedAt,
+      })
+      .eq(
+        "id",
+        verified.member.id,
+      )
+      .select(MEMBER_SELECT)
       .single();
-    if (updateMemberError || !updated) {
-  console.error("비밀번호 변경 후 members 갱신 실패:", updateMemberError);
+
+    if (
+      updateMemberError ||
+      !updated
+    ) {
+      console.error(
+        "비밀번호 변경 후 members 갱신 실패:",
+        updateMemberError,
+      );
+
+      /**
+       * Auth 비밀번호는 이미 변경됐기 때문에
+       * members 갱신이 실패하면 기존 비밀번호로 되돌립니다.
+       *
+       * 이렇게 해야
+       * "비밀번호는 바뀌었는데 화면에서는 실패"
+       * 상태가 생기지 않습니다.
+       */
+      const {
+        error: rollbackError,
+      } =
+        await adminClient.auth.admin.updateUserById(
+          verified.member
+            .auth_user_id as string,
+          {
+            password:
+              providerPassword(
+                currentPassword,
+              ),
+          },
+        );
+
+      if (rollbackError) {
+        console.error(
+          "비밀번호 롤백 실패:",
+          rollbackError,
+        );
+      }
+
+      return jsonError(
+        updateMemberError?.message ??
+          "회원 정보를 갱신하지 못했습니다.",
+        500,
+      );
+    }
+
+    return Response.json({
+      ok: true,
+      profile:
+        toProfile(
+          updated as MemberRow,
+        ),
+    });
+  }
 
   return jsonError(
-    updateMemberError?.message ?? "회원 정보를 갱신하지 못했습니다.",
-    500,
+    "지원하지 않는 인증 요청입니다.",
+    400,
   );
 }
 
-    return Response.json({ ok: true, profile: toProfile(updated as MemberRow) });
-  }
-
-  return jsonError("지원하지 않는 인증 요청입니다.", 400);
-}
-
-export default { fetch: handleAuthRequest };
-
+export default {
+  fetch: handleAuthRequest,
+};
