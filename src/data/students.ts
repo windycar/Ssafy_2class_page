@@ -18,7 +18,7 @@ export const STUDENTS: Student[] = [
   { id: 14, name: "이예빈", username: "@eee912", class: "광주_2반" },
   { id: 15, name: "이재훈", username: "@5613ljh", class: "광주_2반" },
   { id: 16, name: "이혜령", username: "@zzangu1206", class: "광주_2반" },
-  { id: 17, name: "임진석", username: "@seogi523", class: "광주_2반" },
+  { id: 17, name: "임진석", username: "@wlstjr46", class: "광주_2반" },
   { id: 18, name: "전준혁", username: "@jys6041", class: "광주_2반" },
   { id: 19, name: "정용철", username: "@jyc686397", class: "광주_2반" },
   { id: 20, name: "조민정", username: "@iop11232", class: "광주_2반" },

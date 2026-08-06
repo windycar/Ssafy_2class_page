@@ -1,6 +1,5 @@
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
-import { normalizeLoginId, providerPassword } from "./auth";
-
+import { normalizeLoginId, providerPassword } from "./auth.js";
 type AdminRequest = {
   action?: string;
   id?: string | number;
