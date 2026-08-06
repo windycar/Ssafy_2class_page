@@ -212,7 +212,14 @@ export async function handleAuthRequest(request: Request) {
       .eq("id", verified.member.id)
       .select("id, student_id, name, username, login_id, class_name, role, auth_user_id, auth_email, is_active, must_change_password, password_changed_at, last_login_at")
       .single();
-    if (updateMemberError || !updated) return jsonError("회원 정보를 갱신하지 못했습니다.", 500);
+    if (updateMemberError || !updated) {
+  console.error("비밀번호 변경 후 members 갱신 실패:", updateMemberError);
+
+  return jsonError(
+    updateMemberError?.message ?? "회원 정보를 갱신하지 못했습니다.",
+    500,
+  );
+}
 
     return Response.json({ ok: true, profile: toProfile(updated as MemberRow) });
   }
