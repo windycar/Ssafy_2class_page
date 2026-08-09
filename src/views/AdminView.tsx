@@ -29,6 +29,8 @@ import { toast } from "sonner";
 
 import { useAdmin } from "../context/AdminContext";
 
+import { TOTAL_QUESTION_COUNT } from "../data/questionBanks";
+
 import { getGalleryPhotos } from "../services/galleryStorage";
 
 import { bangRoomStorage } from "../services/storage/bangRoomStorage";
@@ -61,6 +63,7 @@ type AdminMember = {
   last_login_at: string | null;
   created_at: string;
   auth_provisioned: boolean;
+  solved_question_count: number;
 };
 
 type AdminPost = {
@@ -1410,6 +1413,35 @@ export default function AdminView() {
                     </p>
 
                   </div>
+
+                  {member.role !==
+                    "admin" && (
+                    <div className="w-full flex-none rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2 lg:w-56">
+                      <div className="flex items-center justify-between gap-3 text-[11px]">
+                        <span className="font-bold text-gray-500">
+                          전체 문제 풀이
+                        </span>
+                        <b className="text-[#1259AA]">
+                          {member.solved_question_count.toLocaleString()}
+                          {" / "}
+                          {TOTAL_QUESTION_COUNT.toLocaleString()}
+                        </b>
+                      </div>
+                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-blue-100">
+                        <div
+                          className="h-full rounded-full bg-[#1259AA] transition-[width]"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              (member.solved_question_count /
+                                TOTAL_QUESTION_COUNT) *
+                                100,
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {member.role !==
                     "admin" && (

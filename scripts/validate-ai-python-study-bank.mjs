@@ -8,7 +8,7 @@ const server = await createServer({
 
 try {
   const { AI_PYTHON_CATEGORY_META, AI_PYTHON_QUESTION_BANK } =
-    await server.ssrLoadModule("/src/data/aiPythonQuestionBank.ts");
+    await server.ssrLoadModule("/src/data/questionBanks/aiPythonQuestionBank.ts");
   const memoryStorage = new Map();
   globalThis.localStorage = {
     getItem: (key) => memoryStorage.get(key) ?? null,

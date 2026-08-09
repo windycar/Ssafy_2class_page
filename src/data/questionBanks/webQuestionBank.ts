@@ -1,10 +1,10 @@
-import type { StudyQuestionType } from "../types/study";
+import type { StudyQuestionType } from "../../types/study";
 import type {
   WebCategory,
   WebDifficulty,
   WebQuestion,
-} from "../types/webStudy";
-import { WEB_ESSAY_MIN_LENGTH } from "../utils/webStudyGrading";
+} from "../../types/webStudy";
+import { WEB_ESSAY_MIN_LENGTH } from "../../utils/webStudyGrading";
 
 export const WEB_CATEGORY_META: Record<
   WebCategory,

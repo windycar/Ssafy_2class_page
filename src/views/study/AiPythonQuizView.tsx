@@ -21,7 +21,7 @@ import {
   AI_PYTHON_CATEGORY_META,
   AI_PYTHON_QUESTION_BANK,
   getAiPythonQuestion,
-} from "../../data/aiPythonQuestionBank";
+} from "../../data/questionBanks/aiPythonQuestionBank";
 import { useAiPythonStudyProgress } from "../../hooks/useAiPythonStudyProgress";
 import { useAuth } from "../../hooks/useAuth";
 import { shuffleArray } from "../../utils/shuffleArray";

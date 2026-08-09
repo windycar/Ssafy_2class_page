@@ -8,7 +8,7 @@ const server = await createServer({
 
 try {
   const { PYTHON_QUESTION_BANK } = await server.ssrLoadModule(
-    "/src/data/pythonQuestionBank.ts",
+    "/src/data/questionBanks/pythonQuestionBank.ts",
   );
   const { gradePythonResponse } = await server.ssrLoadModule(
     "/src/utils/studyGrading.ts",

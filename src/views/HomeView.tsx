@@ -7,13 +7,15 @@ import galleryQuickMenuArt from "../assets/home/quick-menu/gallery.png";
 import rulesQuickMenuArt from "../assets/home/quick-menu/rules.png";
 import gameQuickMenuArt from "../assets/home/quick-menu/game.png";
 import studyQuickMenuArt from "../assets/home/quick-menu/study.png";
-import { ALL_PYTHON_QUESTIONS } from "../data/pythonQuestionBank";
-import { ALL_WEB_QUESTIONS } from "../data/webQuestionBank";
-import { AI_PYTHON_QUESTION_BANK } from "../data/aiPythonQuestionBank";
+import { ALL_PYTHON_QUESTIONS } from "../data/questionBanks/pythonQuestionBank";
+import { ALL_WEB_QUESTIONS } from "../data/questionBanks/webQuestionBank";
+import { AI_PYTHON_QUESTION_BANK } from "../data/questionBanks/aiPythonQuestionBank";
+import { AI_PYTHON_WEEK_TOTAL_QUESTIONS } from "../data/questionBanks/aiPythonWeekMeta";
 const TOTAL_STUDY_QUESTIONS =
   ALL_PYTHON_QUESTIONS.length +
   ALL_WEB_QUESTIONS.length +
-  AI_PYTHON_QUESTION_BANK.length;
+  AI_PYTHON_QUESTION_BANK.length +
+  AI_PYTHON_WEEK_TOTAL_QUESTIONS;
 const QUICK_MENU = [
   {
     title: "랜덤 팀 편성",

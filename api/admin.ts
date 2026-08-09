@@ -1,5 +1,10 @@
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { normalizeLoginId, providerPassword } from "./auth.js";
+import {
+  countUniqueSolvedQuestions,
+  type AttemptQuestionRow,
+} from "./adminStudyProgress.js";
+import { AI_PYTHON_WEEK_ATTEMPT_ID_PREFIX } from "../src/types/aiPythonWeekStudy.js";
 type AdminRequest = {
   action?: string;
   id?: string | number;
@@ -20,6 +25,44 @@ type AdminIdentity = {
   name: string;
   role: "admin";
 };
+
+const ATTEMPT_TABLES = [
+  "study_attempts",
+  "web_study_attempts",
+  "ai_python_study_attempts",
+  "ai_python_week_attempts",
+] as const;
+const ATTEMPT_PAGE_SIZE = 1000;
+
+async function loadAttemptQuestionRows(
+  client: SupabaseClient,
+  table: (typeof ATTEMPT_TABLES)[number],
+) {
+  const rows: AttemptQuestionRow[] = [];
+  let from = 0;
+
+  while (true) {
+    let query = client
+      .from(table)
+      .select("student_id, question_id")
+      .order("id", { ascending: true });
+    if (table === "ai_python_week_attempts") {
+      query = query.like("id", `${AI_PYTHON_WEEK_ATTEMPT_ID_PREFIX}%`);
+    }
+    const { data, error } = await query.range(
+      from,
+      from + ATTEMPT_PAGE_SIZE - 1,
+    );
+
+    if (error) throw error;
+    const page = (data ?? []) as AttemptQuestionRow[];
+    rows.push(...page);
+    if (page.length < ATTEMPT_PAGE_SIZE) break;
+    from += ATTEMPT_PAGE_SIZE;
+  }
+
+  return rows;
+}
 
 function jsonError(message: string, status: number) {
   return Response.json({ error: message }, { status });
@@ -83,11 +126,32 @@ export async function handleAdminRequest(request: Request) {
       .order("class_name", { ascending: true })
       .order("name", { ascending: true });
     if (error) return jsonError(error.message, 400);
+
+    let solvedByStudent: Map<number, number>;
+    try {
+      const rowsByTable = await Promise.all(
+        ATTEMPT_TABLES.map((table) => loadAttemptQuestionRows(client, table)),
+      );
+      solvedByStudent = countUniqueSolvedQuestions(rowsByTable);
+    } catch (attemptError) {
+      const message =
+        typeof attemptError === "object" &&
+        attemptError !== null &&
+        "message" in attemptError
+          ? String(attemptError.message)
+          : "풀이 기록을 불러오지 못했습니다.";
+      return jsonError(message, 400);
+    }
+
     return Response.json({
       ok: true,
       members: (data ?? []).map(({ auth_user_id, ...member }) => ({
         ...member,
         auth_provisioned: Boolean(auth_user_id),
+        solved_question_count:
+          solvedByStudent.get(
+            member.student_id ?? 900_000_000 + member.id,
+          ) ?? 0,
       })),
     });
   }
@@ -120,7 +184,14 @@ export async function handleAdminRequest(request: Request) {
       const message = error.code === "23505" ? "이미 사용 중인 아이디 또는 교육생 번호입니다." : error.message;
       return jsonError(message, 409);
     }
-    return Response.json({ ok: true, member: { ...data, auth_provisioned: false } });
+    return Response.json({
+      ok: true,
+      member: {
+        ...data,
+        auth_provisioned: false,
+        solved_question_count: 0,
+      },
+    });
   }
 
   if (body.action === "members.setActive") {

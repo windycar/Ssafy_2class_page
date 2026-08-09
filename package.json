@@ -9,10 +9,12 @@
     "dev": "vite",
     "test:bang": "node --experimental-strip-types --test tests/bangResponseRules.test.ts",
     "test:study-reset": "node --experimental-strip-types --test tests/studyProgressReset.test.ts",
+    "test:admin-study": "node --experimental-strip-types --test tests/adminStudyProgress.test.ts",
     "test:auth-community": "node --experimental-strip-types --test tests/authHelpers.test.ts tests/communityServices.test.ts",
     "validate:study": "node scripts/validate-study-bank.mjs",
     "validate:web-study": "node scripts/validate-web-study-bank.mjs",
-    "validate:ai-python-study": "node scripts/validate-ai-python-study-bank.mjs"
+    "validate:ai-python-study": "node scripts/validate-ai-python-study-bank.mjs",
+    "validate:ai-python-weeks": "node scripts/validate-ai-python-week-banks.mjs"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

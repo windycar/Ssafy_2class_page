@@ -11,6 +11,8 @@ import { useAuth } from "../../hooks/useAuth";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
 import { useAiPythonStudyProgress } from "../../hooks/useAiPythonStudyProgress";
+import { useAiPythonWeekProgress } from "../../hooks/useAiPythonWeekProgress";
+import { AI_PYTHON_WEEK_META } from "../../data/questionBanks/aiPythonWeekMeta";
 import pythonHero from "../../assets/study/python-study-hero.png";
 
 export default function StudyHubView() {
@@ -18,8 +20,17 @@ export default function StudyHubView() {
   const { summary: pythonSummary } = useStudyProgress();
   const { summary: webSummary } = useWebStudyProgress();
   const { summary: aiPythonSummary } = useAiPythonStudyProgress();
-  const total = pythonSummary.total + webSummary.total + aiPythonSummary.total;
-  const correct = pythonSummary.correct + webSummary.correct + aiPythonSummary.correct;
+  const { summary: aiPythonWeekSummary } = useAiPythonWeekProgress();
+  const total =
+    pythonSummary.total +
+    webSummary.total +
+    aiPythonSummary.total +
+    aiPythonWeekSummary.total;
+  const correct =
+    pythonSummary.correct +
+    webSummary.correct +
+    aiPythonSummary.correct +
+    aiPythonWeekSummary.correct;
   const accuracy = total ? Math.round((correct / total) * 100) : 0;
 
   return (
@@ -80,7 +91,7 @@ export default function StudyHubView() {
         <StatCard
           icon={<CheckCircle2 className="h-5 w-5" />}
           label="복습 필요"
-          value={`${pythonSummary.incorrect + webSummary.incorrect + aiPythonSummary.incorrect}문제`}
+          value={`${pythonSummary.incorrect + webSummary.incorrect + aiPythonSummary.incorrect + aiPythonWeekSummary.incorrect}문제`}
           helper="오답 노트에 자동 저장"
           tone="mint"
         />
@@ -190,6 +201,48 @@ export default function StudyHubView() {
               </div>
             </div>
           </Link>
+
+          {(["week1", "week2"] as const).map((week) => {
+            const meta = AI_PYTHON_WEEK_META[week];
+            return (
+              <Link
+                key={week}
+                to={`/study/ai-python/${week}`}
+                className={`group relative min-h-[290px] overflow-hidden rounded-3xl border border-violet-200 bg-gradient-to-br ${meta.gradient} p-6 text-white shadow-[0_18px_45px_rgba(91,48,170,0.20)] transition hover:-translate-y-1`}
+              >
+                <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full border-[28px] border-white/5" />
+                <div className="absolute -bottom-14 right-16 h-36 w-36 rounded-full bg-blue-200/10 blur-2xl" />
+                <img
+                  src={meta.imageSrc}
+                  alt=""
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -bottom-1 right-0 h-[116px] w-[116px] object-contain drop-shadow-[0_14px_24px_rgba(35,17,71,0.34)] transition duration-300 group-hover:-translate-y-1 group-hover:scale-105 sm:h-[132px] sm:w-[132px] lg:h-[128px] lg:w-[128px] xl:h-[142px] xl:w-[142px]"
+                />
+                <div className="relative flex h-full flex-col">
+                  <div className="flex justify-end">
+                    <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-black text-white">
+                      300문제
+                    </span>
+                  </div>
+                  <div className="relative z-10 mt-auto max-w-[68%] sm:max-w-[70%] lg:max-w-[62%] xl:max-w-[65%]">
+                    <p className="text-xs font-black tracking-[0.18em] text-violet-100/75">
+                      {meta.weekLabel.toUpperCase()} CLASSROOM
+                    </p>
+                    <h3 className="mt-1 whitespace-nowrap text-2xl font-black sm:text-3xl">
+                      {meta.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-violet-50/80">
+                      {meta.topics}
+                    </p>
+                    <span className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold">
+                      난이도 선택하기
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
     </div>

@@ -20,7 +20,7 @@ import {
   WEB_CATEGORY_META,
   WEB_DIFFICULTY_META,
   WEB_QUESTION_TYPE_META,
-} from "../../data/webQuestionBank";
+} from "../../data/questionBanks/webQuestionBank";
 import { useAuth } from "../../hooks/useAuth";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
 import type { WebCategory, WebDifficulty } from "../../types/webStudy";

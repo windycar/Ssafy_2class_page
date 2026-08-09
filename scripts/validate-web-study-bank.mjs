@@ -8,7 +8,7 @@ const server = await createServer({
 
 try {
   const { WEB_QUESTION_BANK, WEB_CATEGORY_META } = await server.ssrLoadModule(
-    "/src/data/webQuestionBank.ts",
+    "/src/data/questionBanks/webQuestionBank.ts",
   );
   const { gradeWebResponse, WEB_ESSAY_MIN_LENGTH } = await server.ssrLoadModule(
     "/src/utils/webStudyGrading.ts",

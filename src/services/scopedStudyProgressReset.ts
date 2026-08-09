@@ -12,6 +12,7 @@ export const STUDY_ATTEMPT_TABLES = {
   python: "study_attempts",
   web: "web_study_attempts",
   aiPython: "ai_python_study_attempts",
+  aiPythonWeek: "ai_python_week_attempts",
 } as const;
 
 export type StudyAttemptTable =

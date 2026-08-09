@@ -25,7 +25,7 @@ import {
   PYTHON_QUESTION_BANK,
   STUDY_CATEGORY_META,
   STUDY_QUESTION_TYPE_META,
-} from "../../data/pythonQuestionBank";
+} from "../../data/questionBanks/pythonQuestionBank";
 import { useAuth } from "../../hooks/useAuth";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
 import { gradePythonResponse } from "../../utils/studyGrading";

@@ -1,4 +1,4 @@
-import type { StudyCategory } from "../types/study";
+import type { StudyCategory } from "../../types/study";
 
 export type StandardPythonQuestionSeed = {
   category: StudyCategory;

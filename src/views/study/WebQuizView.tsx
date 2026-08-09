@@ -25,7 +25,7 @@ import {
   WEB_DIFFICULTY_META,
   WEB_QUESTION_BANK,
   WEB_QUESTION_TYPE_META,
-} from "../../data/webQuestionBank";
+} from "../../data/questionBanks/webQuestionBank";
 import { useAuth } from "../../hooks/useAuth";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
 import { gradeWebResponse, WEB_ESSAY_MIN_LENGTH } from "../../utils/webStudyGrading";

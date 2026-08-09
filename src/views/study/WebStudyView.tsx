@@ -23,7 +23,7 @@ import {
   WEB_DIFFICULTY_META,
   WEB_QUESTION_BANK,
   WEB_QUESTION_TYPE_META,
-} from "../../data/webQuestionBank";
+} from "../../data/questionBanks/webQuestionBank";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
 import type { StudyQuestionType } from "../../types/study";
 import type { WebCategory, WebDifficulty } from "../../types/webStudy";

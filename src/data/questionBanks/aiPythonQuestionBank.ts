@@ -1,4 +1,4 @@
-import type { AiPythonCategory, AiPythonQuestion } from "../types/aiPythonStudy";
+import type { AiPythonCategory, AiPythonQuestion } from "../../types/aiPythonStudy";
 
 export const AI_PYTHON_CATEGORY_META: Record<
   AiPythonCategory,

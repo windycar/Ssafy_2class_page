@@ -12,9 +12,14 @@ import {
   aiPythonStudyProgressStorage,
   getAiPythonStudyResetAttemptIds,
 } from "../src/services/storage/aiPythonStudyProgressStorage.ts";
+import {
+  aiPythonWeekProgressStorage,
+  getAiPythonWeekResetAttemptIds,
+} from "../src/services/storage/aiPythonWeekProgressStorage.ts";
 import type { StudyAttempt } from "../src/types/study.ts";
 import type { WebStudyAttempt } from "../src/types/webStudy.ts";
 import type { AiPythonStudyAttempt } from "../src/types/aiPythonStudy.ts";
+import type { AiPythonWeekAttempt } from "../src/types/aiPythonWeekStudy.ts";
 import {
   resetScopedStudyProgress,
   STUDY_ATTEMPT_TABLES,
@@ -128,6 +133,25 @@ function aiAttempt(
   };
 }
 
+function aiWeekAttempt(
+  id: string,
+  week: AiPythonWeekAttempt["week"],
+  difficulty: AiPythonWeekAttempt["difficulty"],
+  category: string,
+): AiPythonWeekAttempt {
+  return {
+    id,
+    week,
+    questionId: `ai-week-${id}`,
+    difficulty,
+    category,
+    questionType: "multiple-choice",
+    selectedAnswer: 0,
+    correct: true,
+    answeredAt,
+  };
+}
+
 beforeEach(() => localStorageMock.clear());
 
 test("원격 초기화는 student_id와 정확한 attempt ID를 함께 제한한 뒤 로컬을 삭제한다", async () => {
@@ -204,6 +228,48 @@ test("Supabase가 없으면 AI Python을 로컬에서 초기화하고 synced fal
 
   assert.equal(result.synced, false);
   assert.deepEqual(result.progress.attempts, []);
+});
+
+test("AI Python 주차 기록은 선택한 주차·난이도·범위만 서버와 로컬에서 초기화한다", async () => {
+  const userId = 14;
+  aiPythonWeekProgressStorage.add(
+    userId,
+    aiWeekAttempt("week1-match", "week1", "easy", "AI 기초"),
+  );
+  aiPythonWeekProgressStorage.add(
+    userId,
+    aiWeekAttempt("week1-hard", "week1", "hard", "AI 기초"),
+  );
+  aiPythonWeekProgressStorage.add(
+    userId,
+    aiWeekAttempt("week2-easy", "week2", "easy", "NLP 기초"),
+  );
+
+  const attemptIds = getAiPythonWeekResetAttemptIds(
+    aiPythonWeekProgressStorage.get(userId),
+    "week1",
+    "easy",
+    ["AI 기초"],
+  );
+  const { call, client } = createDeleteClient();
+  const result = await resetScopedStudyProgress(
+    client,
+    STUDY_ATTEMPT_TABLES.aiPythonWeek,
+    userId,
+    attemptIds,
+    () => aiPythonWeekProgressStorage.remove(userId, attemptIds),
+  );
+
+  assert.equal(result.synced, true);
+  assert.deepEqual(call, {
+    table: "ai_python_week_attempts",
+    eq: ["student_id", userId],
+    in: ["id", ["week1-match"]],
+  });
+  assert.deepEqual(
+    result.progress.attempts.map(({ id }) => id),
+    ["week1-hard", "week2-easy"],
+  );
 });
 
 test("Python은 현재 난이도와 선택 범위에 일치하는 기록만 초기화한다", () => {

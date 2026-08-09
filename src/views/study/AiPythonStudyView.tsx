@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import {
   AI_PYTHON_CATEGORY_META,
   AI_PYTHON_QUESTION_BANK,
-} from "../../data/aiPythonQuestionBank";
+} from "../../data/questionBanks/aiPythonQuestionBank";
 import { useAiPythonStudyProgress } from "../../hooks/useAiPythonStudyProgress";
 import type { AiPythonCategory } from "../../types/aiPythonStudy";
 

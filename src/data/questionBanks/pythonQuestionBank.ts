@@ -3,8 +3,8 @@ import type {
   StudyCategory,
   StudyDifficulty,
   StudyQuestionType,
-} from "../types/study";
-import { ESSAY_MIN_LENGTH } from "../constants/study";
+} from "../../types/study";
+import { ESSAY_MIN_LENGTH } from "../../constants/study";
 import { extremePythonQuestions } from "./extremePythonQuestions";
 import {
   easyAdditionalQuestionSeeds,
