@@ -34,6 +34,8 @@ import type { BaseballRoom, BaseballRoomPlayer } from "../../types/baseballRoom"
 import {
   applyPlateOutcome,
   createGameState,
+  createPitchFlightDuration,
+  createPitchTrajectory,
   inningLabel,
   isPitchInStrikeZone,
   judgeCpuPitchResult,
@@ -43,6 +45,7 @@ import {
   type ContactPoint,
   type GameTransition,
   type PlateOutcome,
+  type PitchVisualKind,
   type TeamIndex,
 } from "../../utils/games/baseballEngine";
 
@@ -52,10 +55,9 @@ type ActionMode = "batting" | "pitching";
 type PitchPhase = "idle" | "aiming" | "windup" | "flight" | "resolved";
 
 interface PitchType {
-  id: string;
+  id: PitchVisualKind;
   name: string;
   speed: [number, number];
-  curve: number;
   color: string;
 }
 
@@ -102,13 +104,13 @@ type OnlineGameEvent =
 
 const CENTER_POINT: ContactPoint = { x: 0.5, y: 0.5 };
 const PITCH_TYPES: PitchType[] = [
-  { id: "fastball", name: "직구", speed: [145, 153], curve: 0, color: "#ef4444" },
-  { id: "curve", name: "커브", speed: [119, 128], curve: -1, color: "#60a5fa" },
-  { id: "slider", name: "슬라이더", speed: [132, 141], curve: 1, color: "#a78bfa" },
-  { id: "changeup", name: "체인지업", speed: [113, 122], curve: -0.45, color: "#34d399" },
+  { id: "fastball", name: "직구", speed: [145, 153], color: "#ef4444" },
+  { id: "curve", name: "커브", speed: [119, 128], color: "#60a5fa" },
+  { id: "slider", name: "슬라이더", speed: [132, 141], color: "#a78bfa" },
+  { id: "changeup", name: "체인지업", speed: [113, 122], color: "#34d399" },
 ];
 
-const PITCH_SPRITES: Record<string, string> = {
+const PITCH_SPRITES: Record<PitchVisualKind, string> = {
   fastball: baseballFastballSprites,
   curve: baseballCurveSprites,
   slider: baseballSliderSprites,
@@ -415,7 +417,7 @@ export default function BaseballGameView() {
     clearPitchTimers();
     const pitchType = randomPitchType();
     const windupDuration = 850 + Math.round(Math.random() * 300);
-    const flightDuration = 820 + Math.round(Math.random() * 260);
+    const flightDuration = createPitchFlightDuration(pitchType.id);
     const nextPitch: ActivePitch = {
       id: ++pitchIdRef.current,
       startedAt: performance.now(),
@@ -584,7 +586,7 @@ export default function BaseballGameView() {
       y: clampPoint(aim.y + Math.sin(angle) * jitter),
     };
     const windupDuration = 780;
-    const flightDuration = 760 + Math.round(Math.random() * 170);
+    const flightDuration = createPitchFlightDuration(selectedPitch.id);
     const nextPitch: ActivePitch = {
       id: ++pitchIdRef.current,
       startedAt: performance.now(),
@@ -718,20 +720,21 @@ export default function BaseballGameView() {
   const pitchStyle = useMemo(() => {
     if (!pitch) return undefined;
     const batting = actionMode === "batting";
-    const pitchDrop = pitch.pitchType.id === "curve"
-      ? 10
-      : pitch.pitchType.id === "changeup"
-        ? 7
-        : pitch.pitchType.id === "slider"
-          ? 2
-          : 0;
+    const target = {
+      x: (batting ? 41 : 43) + pitch.target.x * (batting ? 18 : 14),
+      y: (batting ? 44 : 25) + pitch.target.y * (batting ? 32 : 24),
+    };
+    const start = batting ? { x: 44, y: 51 } : { x: 31, y: 68 };
+    const trajectory = createPitchTrajectory(pitch.pitchType.id, start, target);
     return {
       "--windup-duration": `${pitch.windupDuration}ms`,
       "--flight-duration": `${pitch.flightDuration}ms`,
-      "--pitch-target-left": `${(batting ? 41 : 43) + pitch.target.x * (batting ? 18 : 14)}%`,
-      "--pitch-target-top": `${(batting ? 44 : 25) + pitch.target.y * (batting ? 32 : 24)}%`,
-      "--pitch-curve": `${pitch.pitchType.curve * (batting ? 10 : 7)}%`,
-      "--pitch-drop": `${pitchDrop * (batting ? 1 : 0.7)}%`,
+      "--pitch-target-left": `${trajectory.end.x}%`,
+      "--pitch-target-top": `${trajectory.end.y}%`,
+      "--pitch-mid-one-left": `${trajectory.first.x}%`,
+      "--pitch-mid-one-top": `${trajectory.first.y}%`,
+      "--pitch-mid-two-left": `${trajectory.second.x}%`,
+      "--pitch-mid-two-top": `${trajectory.second.y}%`,
       "--pitch-color": pitch.pitchType.color,
       "--pitch-sprite": `url("${PITCH_SPRITES[pitch.pitchType.id]}")`,
     } as CSSProperties;
@@ -894,7 +897,7 @@ export default function BaseballGameView() {
             <>
               <span
                 key={`ball-${pitch.id}`}
-                className={`baseball-live-ball is-${actionMode} is-${pitchPhase}`}
+                className={`baseball-live-ball is-${actionMode} is-${pitchPhase} is-${pitch.pitchType.id}`}
                 style={pitchStyle}
                 aria-hidden="true"
               ><i /></span>

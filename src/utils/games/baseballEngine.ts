@@ -1,6 +1,7 @@
 export type TeamIndex = 0 | 1;
 export type InningHalf = "top" | "bottom";
 export type GameStatus = "playing" | "finished";
+export type PitchVisualKind = "fastball" | "curve" | "slider" | "changeup";
 
 export interface ContactPoint {
   x: number;
@@ -72,6 +73,64 @@ export const EMPTY_BASES: BaseballBases = {
   second: false,
   third: false,
 };
+
+interface PitchTrajectory {
+  first: ContactPoint;
+  second: ContactPoint;
+  end: ContactPoint;
+}
+
+const PITCH_BREAK: Record<PitchVisualKind, {
+  first: ContactPoint;
+  second: ContactPoint;
+}> = {
+  fastball: { first: { x: 0, y: 0 }, second: { x: 0, y: 0 } },
+  curve: { first: { x: -2.5, y: -1 }, second: { x: -7.5, y: -8 } },
+  slider: { first: { x: 1, y: -0.3 }, second: { x: 8, y: -1.8 } },
+  changeup: { first: { x: -0.4, y: -0.8 }, second: { x: -1.5, y: -5.5 } },
+};
+
+const PITCH_DURATION_RANGE: Record<PitchVisualKind, [number, number]> = {
+  fastball: [430, 500],
+  slider: [560, 640],
+  curve: [650, 750],
+  changeup: [720, 820],
+};
+
+function pointOnLine(start: ContactPoint, end: ContactPoint, progress: number): ContactPoint {
+  return {
+    x: start.x + (end.x - start.x) * progress,
+    y: start.y + (end.y - start.y) * progress,
+  };
+}
+
+export function createPitchTrajectory(
+  kind: PitchVisualKind,
+  start: ContactPoint,
+  target: ContactPoint,
+): PitchTrajectory {
+  const first = pointOnLine(start, target, 0.35);
+  const second = pointOnLine(start, target, 0.72);
+  const pitchBreak = PITCH_BREAK[kind];
+
+  return {
+    first: {
+      x: first.x + pitchBreak.first.x,
+      y: first.y + pitchBreak.first.y,
+    },
+    second: {
+      x: second.x + pitchBreak.second.x,
+      y: second.y + pitchBreak.second.y,
+    },
+    end: { ...target },
+  };
+}
+
+export function createPitchFlightDuration(kind: PitchVisualKind, randomValue = Math.random()) {
+  const [minimum, maximum] = PITCH_DURATION_RANGE[kind];
+  const normalized = Math.min(1, Math.max(0, randomValue));
+  return minimum + Math.round((maximum - minimum) * normalized);
+}
 
 const CONTACT_RESULTS: Record<
   "homeRun" | "triple" | "double" | "single" | "foul" | "out" | "swingingStrike",

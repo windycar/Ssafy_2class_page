@@ -771,6 +771,22 @@
   animation: baseball-ball-outgoing var(--flight-duration) cubic-bezier(0.24, 0.6, 0.42, 1) var(--windup-duration) both;
 }
 
+.baseball-live-ball.is-fastball {
+  animation-timing-function: linear;
+}
+
+.baseball-live-ball.is-curve {
+  animation-timing-function: cubic-bezier(0.32, 0.02, 0.58, 1);
+}
+
+.baseball-live-ball.is-slider {
+  animation-timing-function: cubic-bezier(0.3, 0.12, 0.48, 1);
+}
+
+.baseball-live-ball.is-changeup {
+  animation-timing-function: cubic-bezier(0.24, 0.08, 0.58, 1);
+}
+
 .baseball-pitch-readout {
   position: absolute;
   z-index: 10;
@@ -1242,15 +1258,15 @@
 
 @keyframes baseball-ball-incoming {
   0% { top: 51%; left: 44%; opacity: 0.72; transform: translate(-50%, -50%) scale(0.22); }
-  32% { top: 49%; left: calc(47% + var(--pitch-curve)); opacity: 0.9; transform: translate(-50%, -50%) scale(0.46); }
-  70% { top: calc(var(--pitch-target-top) - 15% - var(--pitch-drop)); left: calc(var(--pitch-target-left) + var(--pitch-curve)); opacity: 1; transform: translate(-50%, -50%) scale(0.78); }
+  35% { top: var(--pitch-mid-one-top); left: var(--pitch-mid-one-left); opacity: 0.9; transform: translate(-50%, -50%) scale(0.46); }
+  72% { top: var(--pitch-mid-two-top); left: var(--pitch-mid-two-left); opacity: 1; transform: translate(-50%, -50%) scale(0.78); }
   100% { top: var(--pitch-target-top); left: var(--pitch-target-left); opacity: 1; transform: translate(-50%, -50%) scale(1.12); }
 }
 
 @keyframes baseball-ball-outgoing {
   0% { top: 68%; left: 31%; opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-  38% { top: 53%; left: calc(41% + var(--pitch-curve)); transform: translate(-50%, -50%) scale(0.78); }
-  72% { top: calc(var(--pitch-target-top) + 12% + var(--pitch-drop)); left: calc(var(--pitch-target-left) + var(--pitch-curve)); transform: translate(-50%, -50%) scale(0.48); }
+  35% { top: var(--pitch-mid-one-top); left: var(--pitch-mid-one-left); transform: translate(-50%, -50%) scale(0.78); }
+  72% { top: var(--pitch-mid-two-top); left: var(--pitch-mid-two-left); transform: translate(-50%, -50%) scale(0.48); }
   100% { top: var(--pitch-target-top); left: var(--pitch-target-left); opacity: 0.9; transform: translate(-50%, -50%) scale(0.25); }
 }
 

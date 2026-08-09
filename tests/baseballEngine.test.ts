@@ -4,6 +4,8 @@ import test from "node:test";
 import {
   applyPlateOutcome,
   createGameState,
+  createPitchFlightDuration,
+  createPitchTrajectory,
   isPitchInStrikeZone,
   judgeCpuPitchResult,
   judgeSwingContact,
@@ -100,4 +102,37 @@ test("CPU batter takes many pitches outside the zone", () => {
   assert.equal(judgeCpuPitchResult({ x: 0.1, y: 0.5 }, 0.2, 0.9), "ball");
   assert.equal(judgeCpuPitchResult({ x: 0.5, y: 0.5 }, 0.1, 0.9), "calledStrike");
   assert.equal(judgeCpuPitchResult({ x: 0.5, y: 0.5 }, 0.8, 0.99), "homeRun");
+});
+
+test("직구는 목표까지 일직선으로 빠르게 이동한다", () => {
+  const start = { x: 44, y: 51 };
+  const target = { x: 56, y: 68 };
+  const trajectory = createPitchTrajectory("fastball", start, target);
+
+  assert.deepEqual(trajectory.first, {
+    x: start.x + (target.x - start.x) * 0.35,
+    y: start.y + (target.y - start.y) * 0.35,
+  });
+  assert.deepEqual(trajectory.second, {
+    x: start.x + (target.x - start.x) * 0.72,
+    y: start.y + (target.y - start.y) * 0.72,
+  });
+  assert.deepEqual(trajectory.end, target);
+  assert.equal(createPitchFlightDuration("fastball", 0), 430);
+  assert.equal(createPitchFlightDuration("fastball", 1), 500);
+});
+
+test("변화구는 중간에서만 휘고 마지막에는 설정한 목표에 도착한다", () => {
+  const start = { x: 44, y: 51 };
+  const target = { x: 52, y: 62 };
+  const straightSecondX = start.x + (target.x - start.x) * 0.72;
+
+  for (const kind of ["curve", "slider", "changeup"] as const) {
+    const trajectory = createPitchTrajectory(kind, start, target);
+    assert.notEqual(trajectory.second.x, straightSecondX);
+    assert.deepEqual(trajectory.end, target);
+  }
+
+  assert.ok(createPitchFlightDuration("curve", 0.5) > createPitchFlightDuration("fastball", 0.5));
+  assert.ok(createPitchFlightDuration("changeup", 0.5) > createPitchFlightDuration("slider", 0.5));
 });
