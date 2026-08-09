@@ -91,13 +91,26 @@ function SignaturePad({ value, onChange }: { value: string; onChange: (value: st
   };
 
   const startDrawing = (event: ReactPointerEvent<HTMLCanvasElement>) => {
-    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+    if (event.currentTarget.setPointerCapture) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
     drawingRef.current = true;
-    previousPointRef.current = pointFromEvent(event);
+    const point = pointFromEvent(event);
+    previousPointRef.current = point;
+
+    const context = canvasRef.current?.getContext("2d");
+    if (context) {
+      context.beginPath();
+      context.arc(point.x, point.y, 1.5, 0, Math.PI * 2);
+      context.fillStyle = "#111827";
+      context.fill();
+    }
   };
 
   const draw = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (!drawingRef.current) return;
+    event.preventDefault();
     const canvas = canvasRef.current!;
     const context = canvas.getContext("2d");
     if (!context) return;
@@ -139,6 +152,7 @@ function SignaturePad({ value, onChange }: { value: string; onChange: (value: st
         onPointerMove={draw}
         onPointerUp={finishDrawing}
         onPointerCancel={finishDrawing}
+        onPointerLeave={finishDrawing}
       />
       <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50 px-3 py-2">
         <span className="text-xs text-gray-400">마우스나 손가락으로 서명하세요.</span>
@@ -286,7 +300,10 @@ export default function AttendanceDocumentView() {
               </div>
               <Field label="사유"><input className={inputClass} maxLength={46} value={confirmation.reason} onChange={(event) => setConfirmation({ ...confirmation, reason: event.target.value })} placeholder="예: SSAFY 채용 면접 참석" /></Field>
               <Field label="세부 내용"><textarea className={`${inputClass} min-h-24 resize-y`} maxLength={140} value={confirmation.detail} onChange={(event) => setConfirmation({ ...confirmation, detail: event.target.value })} placeholder="결석 사유를 구체적으로 작성하세요." /></Field>
-              <Field label="서명"><SignaturePad value={confirmation.signatureUrl} onChange={(signatureUrl) => setConfirmation((form) => ({ ...form, signatureUrl }))} /></Field>
+              <div>
+                <p className={labelClass}>서명</p>
+                <SignaturePad value={confirmation.signatureUrl} onChange={(signatureUrl) => setConfirmation((form) => ({ ...form, signatureUrl }))} />
+              </div>
               <label className={labelClass}>
                 <span>증빙자료 <b className="font-medium text-gray-400">(선택)</b></span>
                 <span className="mt-1.5 flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-blue-200 bg-blue-50/50 px-4 py-4 text-sm text-[#1259AA] hover:bg-blue-50">
@@ -316,7 +333,10 @@ export default function AttendanceDocumentView() {
                 </div>
               </div>
               <Field label="변경 상세 사유"><textarea className={`${inputClass} min-h-28 resize-y`} maxLength={140} value={change.detail} onChange={(event) => setChange({ ...change, detail: event.target.value })} placeholder="변경이 필요한 이유를 구체적으로 작성하세요." /></Field>
-              <Field label="서명"><SignaturePad value={change.signatureUrl} onChange={(signatureUrl) => setChange((form) => ({ ...form, signatureUrl }))} /></Field>
+              <div>
+                <p className={labelClass}>서명</p>
+                <SignaturePad value={change.signatureUrl} onChange={(signatureUrl) => setChange((form) => ({ ...form, signatureUrl }))} />
+              </div>
             </div>
           )}
 
