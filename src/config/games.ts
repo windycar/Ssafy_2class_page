@@ -1,5 +1,6 @@
 import type { GameDefinition } from "../types/game";
 import bangHubArt from "../assets/games/bang-hub-art.png";
+import baseballArena from "../assets/games/baseball-arena-facing.png";
 
 export const GAMES: GameDefinition[] = [
   {
@@ -15,6 +16,20 @@ export const GAMES: GameDefinition[] = [
     icon: "🤠",
     image: bangHubArt,
     themeColor: "#b45309",
+  },
+  {
+    id: "baseball",
+    name: "광주 2반 야구",
+    description: "타격 커서를 맞춰 장타를 노리는 1인·2인 캐주얼 야구게임",
+    minPlayers: 1,
+    maxPlayers: 2,
+    estimatedMinutes: "3~5",
+    category: ["아케이드", "대전"],
+    route: "/games/baseball",
+    isAvailable: true,
+    icon: "⚾",
+    image: baseballArena,
+    themeColor: "#1259AA",
   },
 ];
 

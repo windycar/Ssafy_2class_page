@@ -16,6 +16,9 @@ const GameHubView = lazy(() => import("../views/GameHubView"));
 const BangGameView = lazy(() => import("../views/games/BangGameView"));
 const BangRoomView = lazy(() => import("../views/games/BangRoomView"));
 const BangPlayView = lazy(() => import("../views/games/BangPlayView"));
+const BaseballGameView = lazy(() => import("../views/games/BaseballGameView"));
+const BaseballRoomsView = lazy(() => import("../views/games/BaseballRoomsView"));
+const BaseballRoomView = lazy(() => import("../views/games/BaseballRoomView"));
 const StudyHubView = lazy(() => import("../views/study/StudyHubView"));
 const PythonStudyView = lazy(() => import("../views/study/PythonStudyView"));
 const PythonQuizView = lazy(() => import("../views/study/PythonQuizView"));
@@ -56,6 +59,10 @@ export const router = createBrowserRouter([
           { path: "games/bang", Component: BangGameView },
           { path: "games/bang/:roomId", Component: BangRoomView },
           { path: "games/bang/:roomId/play", Component: BangPlayView },
+          { path: "games/baseball", Component: BaseballGameView },
+          { path: "games/baseball/rooms", Component: BaseballRoomsView },
+          { path: "games/baseball/rooms/:roomId", Component: BaseballRoomView },
+          { path: "games/baseball/rooms/:roomId/play", Component: BaseballGameView },
           { path: "study", Component: StudyHubView },
           { path: "study/python", Component: PythonStudyView },
           { path: "study/python/quiz", Component: PythonQuizView },
