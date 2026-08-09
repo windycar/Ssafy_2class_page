@@ -25,6 +25,7 @@ const WebQuizView = lazy(() => import("../views/study/WebQuizView"));
 const WebStudyReportView = lazy(() => import("../views/study/WebStudyReportView"));
 const AiPythonStudyView = lazy(() => import("../views/study/AiPythonStudyView"));
 const AiPythonQuizView = lazy(() => import("../views/study/AiPythonQuizView"));
+const AttendanceDocumentView = lazy(() => import("../views/AttendanceDocumentView"));
 const NotFoundView = lazy(() => import("../views/NotFoundView"));
 
 export const router = createBrowserRouter([
@@ -58,6 +59,7 @@ export const router = createBrowserRouter([
           { path: "study/web/report", Component: WebStudyReportView },
           { path: "study/ai-python", Component: AiPythonStudyView },
           { path: "study/ai-python/quiz", Component: AiPythonQuizView },
+          { path: "attendance", Component: AttendanceDocumentView },
           { path: "*", Component: NotFoundView },
         ],
       },

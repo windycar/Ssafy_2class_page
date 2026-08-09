@@ -1099,3 +1099,38 @@
     animation-iteration-count: 1 !important;
   }
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .attendance-print-root,
+  .attendance-print-root * {
+    visibility: visible !important;
+  }
+
+  .attendance-print-root {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    max-width: none !important;
+    padding: 18mm 16mm !important;
+    box-shadow: none !important;
+    border: 0 !important;
+  }
+
+  .attendance-no-print {
+    display: none !important;
+  }
+}
