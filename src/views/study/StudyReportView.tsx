@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import {
   ArrowLeft,
@@ -22,9 +23,16 @@ import {
   STUDY_CATEGORY_META,
   STUDY_QUESTION_TYPE_META,
 } from "../../data/questionBanks/pythonQuestionBank";
+import { STUDY_REVIEW_TRACKS } from "../../config/studyReviewTracks";
 import { useAuth } from "../../hooks/useAuth";
+import { useAiPythonStudyProgress } from "../../hooks/useAiPythonStudyProgress";
+import { useAiPythonWeekProgress } from "../../hooks/useAiPythonWeekProgress";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
-import { getLatestAttemptsByQuestion } from "../../utils/studyProgressStats";
+import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
+import {
+  countUnresolvedMistakes,
+  getLatestAttemptsByQuestion,
+} from "../../utils/studyProgressStats";
 import type { StudyCategory, StudyDifficulty } from "../../types/study";
 
 const CATEGORIES = Object.keys(STUDY_CATEGORY_META) as StudyCategory[];
@@ -32,7 +40,11 @@ const DIFFICULTIES: StudyDifficulty[] = ["easy", "medium", "hard", "extreme"];
 
 export default function StudyReportView() {
   const { currentUser } = useAuth();
-  const { progress, summary, syncState } = useStudyProgress();
+  const { progress, summary, syncState: pythonSyncState } = useStudyProgress();
+  const web = useWebStudyProgress();
+  const aiPython = useAiPythonStudyProgress();
+  const aiPythonWeek = useAiPythonWeekProgress();
+  const [selectedReviewId, setSelectedReviewId] = useState("python");
   const categoryRows = CATEGORIES.map((category) => {
     const stats = summary.byCategory[category];
     return {
@@ -64,6 +76,37 @@ export default function StudyReportView() {
     .map((attempt) => ({ attempt, question: getPythonQuestion(attempt.questionId) }))
     .filter((item) => item.question);
   const uniqueWrongCount = unresolvedMistakes.length;
+  const reviewOptions = STUDY_REVIEW_TRACKS.map((track) => {
+    let attempts: Array<{ questionId: string; correct: boolean }>;
+    if (track.source === "python") {
+      attempts = progress.attempts;
+    } else if (track.source === "web") {
+      attempts = web.progress.attempts;
+    } else if (track.source === "ai-python") {
+      attempts = aiPython.progress.attempts;
+    } else {
+      attempts = aiPythonWeek.progress.attempts.filter(
+        (attempt) => attempt.week === track.week,
+      );
+    }
+    return {
+      ...track,
+      wrongCount: countUnresolvedMistakes(attempts),
+    };
+  });
+  const selectedReview =
+    reviewOptions.find((option) => option.id === selectedReviewId) ?? reviewOptions[0];
+  const syncStates = [
+    pythonSyncState,
+    web.syncState,
+    aiPython.syncState,
+    aiPythonWeek.syncState,
+  ];
+  const syncState = syncStates.some((state) => state === "loading")
+    ? "loading"
+    : syncStates.some((state) => state === "local")
+      ? "local"
+      : "synced";
 
   return (
     <div className="space-y-6 pb-8">
@@ -91,10 +134,10 @@ export default function StudyReportView() {
               <BrainCircuit className="h-4 w-4" /> PERSONAL LEARNING REPORT
             </p>
             <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
-              {currentUser?.name} 님의 약점 분석
+              {currentUser?.name} 님의 Python 약점 분석
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-indigo-100/75">
-              풀이 기록을 유형별로 비교해 지금 가장 먼저 복습할 영역을 알려드립니다.
+              Python 기본 풀이 기록을 유형별로 비교해 가장 먼저 복습할 영역을 알려드립니다.
               문제를 더 풀수록 분석은 정교해집니다.
             </p>
             <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[11px] font-bold text-indigo-100">
@@ -122,21 +165,21 @@ export default function StudyReportView() {
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <ReportStat
           icon={<BookOpenCheck className="h-5 w-5" />}
-          label="누적 풀이"
+          label="Python 누적 풀이"
           value={`${summary.total}`}
           suffix="문제"
           tone="blue"
         />
         <ReportStat
           icon={<CheckCircle2 className="h-5 w-5" />}
-          label="맞힌 문제"
+          label="Python 맞힌 문제"
           value={`${summary.correct}`}
           suffix="개"
           tone="emerald"
         />
         <ReportStat
           icon={<XCircle className="h-5 w-5" />}
-          label="복습할 오답"
+          label="Python 복습 오답"
           value={`${uniqueWrongCount}`}
           suffix="개"
           tone="red"
@@ -252,20 +295,83 @@ export default function StudyReportView() {
             </div>
           </section>
 
+          <section className="rounded-3xl border border-violet-200 bg-[linear-gradient(145deg,#faf8ff,#ffffff)] p-5 shadow-sm sm:p-7">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-black tracking-[0.14em] text-violet-500">SELECT REVIEW SET</p>
+                <h2 className="mt-1 text-xl font-black text-slate-900">틀린 문제 다시 풀기</h2>
+                <p className="mt-2 text-sm text-slate-500">
+                  복습할 문제 세트를 선택하면 현재 남아 있는 오답만 출제됩니다.
+                </p>
+              </div>
+              <span className="rounded-full bg-violet-100 px-3 py-1.5 text-xs font-black text-violet-700">
+                총 {reviewOptions.reduce((sum, option) => sum + option.wrongCount, 0)}문제
+              </span>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {reviewOptions.map((option) => {
+                const selected = selectedReview.id === option.id;
+                const toneClasses = {
+                  indigo: "bg-indigo-50 text-indigo-700",
+                  cyan: "bg-cyan-50 text-cyan-700",
+                  violet: "bg-violet-50 text-violet-700",
+                  pink: "bg-pink-50 text-pink-700",
+                  blue: "bg-blue-50 text-blue-700",
+                };
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setSelectedReviewId(option.id)}
+                    aria-pressed={selected}
+                    className={`rounded-2xl border-2 p-4 text-left transition ${
+                      selected
+                        ? "border-violet-500 bg-white shadow-[0_10px_25px_rgba(124,58,237,0.10)]"
+                        : "border-slate-100 bg-white/80 hover:border-violet-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-black ${toneClasses[option.tone]}`}>
+                        {option.wrongCount}문제
+                      </span>
+                      <span className={`h-4 w-4 rounded-full border-4 ${selected ? "border-violet-500 bg-white" : "border-slate-200 bg-white"}`} />
+                    </div>
+                    <h3 className="mt-3 text-sm font-black text-slate-800">{option.label}</h3>
+                    <p className="mt-1 text-[11px] leading-5 text-slate-400">{option.description}</p>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-900 px-4 py-4 text-white sm:px-5">
+              <div>
+                <p className="text-[10px] font-black tracking-[0.12em] text-violet-300">SELECTED</p>
+                <p className="mt-1 text-sm font-black">
+                  {selectedReview.label} · 오답 {selectedReview.wrongCount}문제
+                </p>
+              </div>
+              {selectedReview.wrongCount > 0 ? (
+                <Link
+                  to={selectedReview.href}
+                  className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-extrabold text-violet-800"
+                >
+                  <RotateCcw className="h-4 w-4" /> 선택한 오답 복습
+                </Link>
+              ) : (
+                <span className="rounded-xl bg-white/10 px-4 py-2.5 text-sm font-bold text-slate-300">
+                  복습할 오답 없음
+                </span>
+              )}
+            </div>
+          </section>
+
           <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-black tracking-[0.14em] text-red-500">WRONG ANSWERS</p>
-                <h2 className="mt-1 text-xl font-black text-slate-900">최근 오답</h2>
+                <h2 className="mt-1 text-xl font-black text-slate-900">최근 Python 오답</h2>
               </div>
-              {uniqueWrongCount > 0 && (
-                <Link
-                  to="/study/python/quiz?mode=wrong"
-                  className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-extrabold text-red-700 hover:bg-red-100"
-                >
-                  <RotateCcw className="h-4 w-4" /> 오답 다시 풀기
-                </Link>
-              )}
             </div>
 
             {recentMistakes.length ? (

@@ -19,7 +19,6 @@ const BangPlayView = lazy(() => import("../views/games/BangPlayView"));
 const StudyHubView = lazy(() => import("../views/study/StudyHubView"));
 const PythonStudyView = lazy(() => import("../views/study/PythonStudyView"));
 const PythonQuizView = lazy(() => import("../views/study/PythonQuizView"));
-const StudyOverviewReportView = lazy(() => import("../views/study/StudyOverviewReportView"));
 const StudyReportView = lazy(() => import("../views/study/StudyReportView"));
 const WebStudyView = lazy(() => import("../views/study/WebStudyView"));
 const WebQuizView = lazy(() => import("../views/study/WebQuizView"));
@@ -60,8 +59,7 @@ export const router = createBrowserRouter([
           { path: "study", Component: StudyHubView },
           { path: "study/python", Component: PythonStudyView },
           { path: "study/python/quiz", Component: PythonQuizView },
-          { path: "study/report", Component: StudyOverviewReportView },
-          { path: "study/python/report", Component: StudyReportView },
+          { path: "study/report", Component: StudyReportView },
           { path: "study/web", Component: WebStudyView },
           { path: "study/web/quiz", Component: WebQuizView },
           { path: "study/web/report", Component: WebStudyReportView },

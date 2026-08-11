@@ -127,7 +127,7 @@ export default function PythonStudyView() {
           <ArrowLeft className="h-4 w-4" /> 학습 언어 목록
         </Link>
         <Link
-          to="/study/python/report"
+          to="/study/report"
           className="inline-flex items-center gap-2 rounded-xl border border-indigo-100 bg-white px-4 py-2.5 text-sm font-extrabold text-indigo-700 shadow-sm transition hover:bg-indigo-50"
         >
           <BarChart3 className="h-4 w-4" /> 내 약점 분석
