@@ -78,7 +78,36 @@ create policy ai_python_week_attempts_delete_self
     )
   );
 
+drop policy if exists ai_python_week_attempts_update_self
+  on public.ai_python_week_attempts;
+create policy ai_python_week_attempts_update_self
+  on public.ai_python_week_attempts
+  for update
+  to authenticated
+  using (
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1
+      from public.members m
+      where m.auth_user_id = (select auth.uid())
+        and m.is_active = true
+        and coalesce(m.student_id::bigint, 900000000 + m.id)
+          = ai_python_week_attempts.student_id
+    )
+  )
+  with check (
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1
+      from public.members m
+      where m.auth_user_id = (select auth.uid())
+        and m.is_active = true
+        and coalesce(m.student_id::bigint, 900000000 + m.id)
+          = ai_python_week_attempts.student_id
+    )
+  );
+
 revoke all on table public.ai_python_week_attempts from anon, authenticated;
-grant select, insert, delete on table public.ai_python_week_attempts to authenticated;
+grant select, insert, update, delete on table public.ai_python_week_attempts to authenticated;
 grant select, insert, update, delete on table public.ai_python_week_attempts to service_role;
 

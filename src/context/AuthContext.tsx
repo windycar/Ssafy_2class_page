@@ -1,6 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { supabase } from "../lib/supabase";
 import type { AuthContextValue, AuthUser, MemberRole } from "../types/auth";
+import {
+  profileMatchesSession,
+  shouldRefreshProfileForAuthEvent,
+} from "../utils/authSession";
 
 type ServerProfile = {
   memberId: number;
@@ -81,6 +85,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await authRequest({ action: "profile" }, accessToken);
       if (!response.profile) throw new Error("회원 정보를 받지 못했습니다.");
+
+      const { data: latestSessionData } = await supabase.auth.getSession();
+      if (!profileMatchesSession(
+        response.profile.authId,
+        latestSessionData.session?.user.id,
+      )) {
+        return null;
+      }
+
       const user = toAuthUser(response.profile);
       setCurrentUser(user);
       return user;
@@ -96,24 +109,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void refreshProfile().catch(() => undefined);
     if (!supabase) return;
-    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") {
+    let refreshTimer: number | undefined;
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session || event === "SIGNED_OUT") {
+        if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
         setCurrentUser(null);
         setIsLoading(false);
+        return;
+      }
+
+      if (shouldRefreshProfileForAuthEvent(event, true)) {
+        if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
+        refreshTimer = window.setTimeout(() => {
+          void refreshProfile().catch(() => undefined);
+        }, 0);
       }
     });
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
+      listener.subscription.unsubscribe();
+    };
   }, [refreshProfile]);
 
   const login = useCallback(async (loginId: string, password: string) => {
     if (!supabase) throw new Error("Supabase 연결 설정이 필요합니다.");
     const response = await authRequest({ action: "login", loginId, password });
     if (!response.session || !response.profile) throw new Error("로그인 응답이 올바르지 않습니다.");
-    const { error } = await supabase.auth.setSession({
+    const { data, error } = await supabase.auth.setSession({
       access_token: response.session.access_token,
       refresh_token: response.session.refresh_token,
     });
     if (error) throw error;
+    if (!profileMatchesSession(response.profile.authId, data.user?.id)) {
+      await supabase.auth.signOut().catch(() => undefined);
+      throw new Error("로그인 계정과 회원 정보가 일치하지 않습니다.");
+    }
     const user = toAuthUser(response.profile);
     setCurrentUser(user);
     setIsLoading(false);
