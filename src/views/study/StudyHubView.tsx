@@ -12,15 +12,16 @@ import { useStudyProgress } from "../../hooks/useStudyProgress";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
 import { useAiPythonStudyProgress } from "../../hooks/useAiPythonStudyProgress";
 import { useAiPythonWeekProgress } from "../../hooks/useAiPythonWeekProgress";
+import { countUnresolvedMistakes } from "../../utils/studyProgressStats";
 import { AI_PYTHON_WEEK_META } from "../../data/questionBanks/aiPythonWeekMeta";
 import pythonHero from "../../assets/study/python-study-hero.png";
 
 export default function StudyHubView() {
   const { currentUser } = useAuth();
-  const { summary: pythonSummary } = useStudyProgress();
-  const { summary: webSummary } = useWebStudyProgress();
-  const { summary: aiPythonSummary } = useAiPythonStudyProgress();
-  const { summary: aiPythonWeekSummary } = useAiPythonWeekProgress();
+  const { progress: pythonProgress, summary: pythonSummary } = useStudyProgress();
+  const { progress: webProgress, summary: webSummary } = useWebStudyProgress();
+  const { progress: aiPythonProgress, summary: aiPythonSummary } = useAiPythonStudyProgress();
+  const { progress: aiPythonWeekProgress, summary: aiPythonWeekSummary } = useAiPythonWeekProgress();
   const total =
     pythonSummary.total +
     webSummary.total +
@@ -32,6 +33,11 @@ export default function StudyHubView() {
     aiPythonSummary.correct +
     aiPythonWeekSummary.correct;
   const accuracy = total ? Math.round((correct / total) * 100) : 0;
+  const reviewCount =
+    countUnresolvedMistakes(pythonProgress.attempts) +
+    countUnresolvedMistakes(webProgress.attempts) +
+    countUnresolvedMistakes(aiPythonProgress.attempts) +
+    countUnresolvedMistakes(aiPythonWeekProgress.attempts);
 
   return (
     <div className="space-y-7 pb-6">
@@ -91,7 +97,7 @@ export default function StudyHubView() {
         <StatCard
           icon={<CheckCircle2 className="h-5 w-5" />}
           label="복습 필요"
-          value={`${pythonSummary.incorrect + webSummary.incorrect + aiPythonSummary.incorrect + aiPythonWeekSummary.incorrect}문제`}
+          value={`${reviewCount}문제`}
           helper="오답 노트에 자동 저장"
           tone="mint"
         />

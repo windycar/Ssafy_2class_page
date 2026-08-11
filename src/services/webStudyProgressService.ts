@@ -3,6 +3,7 @@ import {
   getWebStudyResetAttemptIds,
   webStudyProgressStorage,
 } from "./storage/webStudyProgressStorage";
+import { reconcileRemoteProgress } from "./storage/reconcileStudyProgress";
 import {
   resetScopedStudyProgress,
   STUDY_ATTEMPT_TABLES,
@@ -58,18 +59,6 @@ function toRow(studentId: number, attempt: WebStudyAttempt) {
   };
 }
 
-function mergeProgress(...progressList: WebStudyProgress[]): WebStudyProgress {
-  const attempts = new Map<string, WebStudyAttempt>();
-  progressList.forEach((progress) => {
-    progress.attempts.forEach((attempt) => attempts.set(attempt.id, attempt));
-  });
-  return {
-    attempts: [...attempts.values()].sort(
-      (a, b) => new Date(a.answeredAt).getTime() - new Date(b.answeredAt).getTime(),
-    ),
-  };
-}
-
 async function uploadPending(studentId: number) {
   if (!supabase) return;
   const pending = webStudyProgressStorage.getPending(studentId);
@@ -92,6 +81,7 @@ async function uploadPending(studentId: number) {
 export async function loadWebStudyProgress(studentId: number): Promise<WebStudyProgress> {
   const local = webStudyProgressStorage.get(studentId);
   if (!supabase) return local;
+  const localIdsBeforeSync = new Set(local.attempts.map((attempt) => attempt.id));
 
   await uploadPending(studentId);
 
@@ -99,14 +89,21 @@ export async function loadWebStudyProgress(studentId: number): Promise<WebStudyP
     .from("web_study_attempts")
     .select("*")
     .eq("student_id", studentId)
-    .order("answered_at", { ascending: true })
+    .order("answered_at", { ascending: false })
     .limit(2000);
 
   if (error) throw error;
   const remote: WebStudyProgress = {
-    attempts: ((data ?? []) as WebStudyAttemptRow[]).map(toAttempt),
+    attempts: ((data ?? []) as WebStudyAttemptRow[]).map(toAttempt).reverse(),
   };
-  return webStudyProgressStorage.replace(studentId, mergeProgress(local, remote));
+  return webStudyProgressStorage.replace(
+    studentId,
+    reconcileRemoteProgress(
+      remote,
+      webStudyProgressStorage.get(studentId),
+      localIdsBeforeSync,
+    ),
+  );
 }
 
 export async function saveWebStudyAttempt(studentId: number): Promise<boolean> {

@@ -415,3 +415,17 @@ test("한 과목의 초기화는 다른 과목 저장소를 변경하지 않는�
   ]);
   assert.deepEqual(aiPythonStudyProgressStorage.get(userId).attempts, []);
 });
+
+test("서버 동기화 결과로 교체하면 다른 기기에서 삭제된 로컬 기록이 되살아나지 않는다", () => {
+  const userId = 5;
+  studyProgressStorage.add(userId, pythonAttempt("stale-local", "easy", "operators"));
+  studyProgressStorage.markSynced(userId, ["stale-local"]);
+
+  const remote = {
+    attempts: [pythonAttempt("remote-kept", "medium", "functions")],
+  };
+  const next = studyProgressStorage.replace(userId, remote);
+
+  assert.deepEqual(next.attempts.map(({ id }) => id), ["remote-kept"]);
+  assert.deepEqual(studyProgressStorage.getPendingIds(userId), []);
+});

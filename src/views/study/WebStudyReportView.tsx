@@ -23,6 +23,7 @@ import {
 } from "../../data/questionBanks/webQuestionBank";
 import { useAuth } from "../../hooks/useAuth";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
+import { getLatestAttemptsByQuestion } from "../../utils/studyProgressStats";
 import type { WebCategory, WebDifficulty } from "../../types/webStudy";
 
 const CATEGORIES = Object.keys(WEB_CATEGORY_META) as WebCategory[];
@@ -52,15 +53,14 @@ export default function WebStudyReportView() {
       accuracy: attempts.length ? Math.round((correct / attempts.length) * 100) : 0,
     };
   });
-  const recentMistakes = progress.attempts
-    .filter((attempt) => !attempt.correct)
-    .reverse()
+  const unresolvedMistakes = getLatestAttemptsByQuestion(progress.attempts).filter(
+    (attempt) => !attempt.correct,
+  );
+  const recentMistakes = unresolvedMistakes
     .slice(0, 6)
     .map((attempt) => ({ attempt, question: getWebQuestion(attempt.questionId) }))
     .filter((item) => item.question);
-  const uniqueWrongCount = new Set(
-    progress.attempts.filter((attempt) => !attempt.correct).map((attempt) => attempt.questionId),
-  ).size;
+  const uniqueWrongCount = unresolvedMistakes.length;
 
   return (
     <div className="space-y-6 pb-10">

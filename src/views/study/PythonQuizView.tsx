@@ -198,7 +198,7 @@ export default function PythonQuizView() {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    navigate("/study/report");
+    navigate("/study/python/report");
   };
 
   if (!sessionReady) {
@@ -262,7 +262,7 @@ export default function PythonQuizView() {
     <div className="mx-auto max-w-5xl pb-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Link
-          to={mode === "wrong" ? "/study/report" : "/study/python"}
+          to={mode === "wrong" ? "/study/python/report" : "/study/python"}
           className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-500 transition hover:text-indigo-600"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -276,7 +276,7 @@ export default function PythonQuizView() {
             <Check className="mr-1 inline h-3.5 w-3.5" /> {correctCount}
           </span>
           <Link
-            to="/study/report"
+            to="/study/python/report"
             aria-label="약점 분석 보기"
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-indigo-600"
           >

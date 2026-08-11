@@ -24,6 +24,7 @@ import {
 } from "../../data/questionBanks/pythonQuestionBank";
 import { useAuth } from "../../hooks/useAuth";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
+import { getLatestAttemptsByQuestion } from "../../utils/studyProgressStats";
 import type { StudyCategory, StudyDifficulty } from "../../types/study";
 
 const CATEGORIES = Object.keys(STUDY_CATEGORY_META) as StudyCategory[];
@@ -55,16 +56,14 @@ export default function StudyReportView() {
     };
   });
 
-  const recentMistakes = progress.attempts
-    .filter((attempt) => !attempt.correct)
-    .reverse()
+  const unresolvedMistakes = getLatestAttemptsByQuestion(progress.attempts).filter(
+    (attempt) => !attempt.correct,
+  );
+  const recentMistakes = unresolvedMistakes
     .slice(0, 5)
     .map((attempt) => ({ attempt, question: getPythonQuestion(attempt.questionId) }))
     .filter((item) => item.question);
-
-  const uniqueWrongCount = new Set(
-    progress.attempts.filter((attempt) => !attempt.correct).map((attempt) => attempt.questionId),
-  ).size;
+  const uniqueWrongCount = unresolvedMistakes.length;
 
   return (
     <div className="space-y-6 pb-8">

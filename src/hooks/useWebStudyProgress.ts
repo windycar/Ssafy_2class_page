@@ -6,6 +6,7 @@ import {
   resetWebStudyProgress,
   saveWebStudyAttempt,
 } from "../services/webStudyProgressService";
+import { subscribeToStudyProgressRefresh } from "../utils/studyProgressSync";
 import { gradeWebResponse } from "../utils/webStudyGrading";
 import type { WebCategory, WebQuestion, WebStudyAttempt } from "../types/webStudy";
 import type { StudySyncState } from "./useStudyProgress";
@@ -28,6 +29,7 @@ export function useWebStudyProgress() {
 
   useEffect(() => {
     let cancelled = false;
+    let refreshInFlight = false;
     setProgress(webStudyProgressStorage.get(userId));
 
     if (!currentUser) {
@@ -37,21 +39,34 @@ export function useWebStudyProgress() {
       };
     }
 
-    setSyncState("loading");
-    loadWebStudyProgress(currentUser.id)
-      .then((loaded) => {
+    const activeUserId = currentUser.id;
+    const refresh = async (showLoading = false) => {
+      if (refreshInFlight) return;
+      refreshInFlight = true;
+      if (showLoading) setSyncState("loading");
+      try {
+        const loaded = await loadWebStudyProgress(activeUserId);
         if (cancelled) return;
         setProgress(loaded);
         setSyncState("synced");
-      })
-      .catch(() => {
+      } catch {
         if (cancelled) return;
-        setProgress(webStudyProgressStorage.get(currentUser.id));
+        setProgress(webStudyProgressStorage.get(activeUserId));
         setSyncState("local");
-      });
+      } finally {
+        refreshInFlight = false;
+      }
+    };
+
+    void refresh(true);
+    const unsubscribe = subscribeToStudyProgressRefresh(
+      "ssafy-gwangju-2-web-study-",
+      () => void refresh(),
+    );
 
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, [currentUser, userId]);
 

@@ -3,6 +3,7 @@ import {
   aiPythonWeekProgressStorage,
   getAiPythonWeekResetAttemptIds,
 } from "./storage/aiPythonWeekProgressStorage";
+import { reconcileRemoteProgress } from "./storage/reconcileStudyProgress";
 import {
   resetScopedStudyProgress,
   STUDY_ATTEMPT_TABLES,
@@ -62,19 +63,6 @@ function toRow(studentId: number, attempt: AiPythonWeekAttempt) {
   };
 }
 
-function mergeProgress(...items: AiPythonWeekProgress[]): AiPythonWeekProgress {
-  const attempts = new Map<string, AiPythonWeekAttempt>();
-  items.forEach((progress) => {
-    progress.attempts.forEach((attempt) => attempts.set(attempt.id, attempt));
-  });
-  return {
-    attempts: [...attempts.values()].sort(
-      (a, b) =>
-        new Date(a.answeredAt).getTime() - new Date(b.answeredAt).getTime(),
-    ),
-  };
-}
-
 function currentBankProgress(
   progress: AiPythonWeekProgress,
 ): AiPythonWeekProgress {
@@ -111,24 +99,29 @@ export async function loadAiPythonWeekProgress(
     aiPythonWeekProgressStorage.get(studentId),
   );
   if (!supabase) return local;
+  const localIdsBeforeSync = new Set(local.attempts.map((attempt) => attempt.id));
 
   await uploadPending(studentId);
   const { data, error } = await supabase
     .from("ai_python_week_attempts")
     .select("*")
     .eq("student_id", studentId)
-    .order("answered_at", { ascending: true })
+    .order("answered_at", { ascending: false })
     .limit(3000);
 
   if (error) throw error;
   const remote: AiPythonWeekProgress = {
     attempts: currentBankProgress({
-      attempts: ((data ?? []) as AiPythonWeekAttemptRow[]).map(toAttempt),
+      attempts: ((data ?? []) as AiPythonWeekAttemptRow[]).map(toAttempt).reverse(),
     }).attempts,
   };
   return aiPythonWeekProgressStorage.replace(
     studentId,
-    mergeProgress(local, remote),
+    reconcileRemoteProgress(
+      remote,
+      currentBankProgress(aiPythonWeekProgressStorage.get(studentId)),
+      localIdsBeforeSync,
+    ),
   );
 }
 

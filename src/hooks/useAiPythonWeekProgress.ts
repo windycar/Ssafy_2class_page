@@ -7,6 +7,7 @@ import {
 } from "../services/aiPythonWeekProgressService";
 import { aiPythonWeekProgressStorage } from "../services/storage/aiPythonWeekProgressStorage";
 import { gradeAiPythonWeekResponse } from "../utils/aiPythonWeekGrading";
+import { subscribeToStudyProgressRefresh } from "../utils/studyProgressSync";
 import type {
   AiPythonWeek,
   AiPythonWeekAttempt,
@@ -27,6 +28,7 @@ export function useAiPythonWeekProgress() {
 
   useEffect(() => {
     let cancelled = false;
+    let refreshInFlight = false;
     setProgress(aiPythonWeekProgressStorage.get(userId));
 
     if (!currentUser) {
@@ -36,21 +38,34 @@ export function useAiPythonWeekProgress() {
       };
     }
 
-    setSyncState("loading");
-    loadAiPythonWeekProgress(currentUser.id)
-      .then((loaded) => {
+    const activeUserId = currentUser.id;
+    const refresh = async (showLoading = false) => {
+      if (refreshInFlight) return;
+      refreshInFlight = true;
+      if (showLoading) setSyncState("loading");
+      try {
+        const loaded = await loadAiPythonWeekProgress(activeUserId);
         if (cancelled) return;
         setProgress(loaded);
         setSyncState("synced");
-      })
-      .catch(() => {
+      } catch {
         if (cancelled) return;
-        setProgress(aiPythonWeekProgressStorage.get(currentUser.id));
+        setProgress(aiPythonWeekProgressStorage.get(activeUserId));
         setSyncState("local");
-      });
+      } finally {
+        refreshInFlight = false;
+      }
+    };
+
+    void refresh(true);
+    const unsubscribe = subscribeToStudyProgressRefresh(
+      "ssafy-gwangju-2-ai-python-week-",
+      () => void refresh(),
+    );
 
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, [currentUser, userId]);
 

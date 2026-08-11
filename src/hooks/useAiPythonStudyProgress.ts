@@ -6,6 +6,7 @@ import {
   resetAiPythonStudyProgress,
   saveAiPythonStudyAttempt,
 } from "../services/aiPythonStudyProgressService";
+import { subscribeToStudyProgressRefresh } from "../utils/studyProgressSync";
 import type {
   AiPythonCategory,
   AiPythonQuestion,
@@ -35,6 +36,7 @@ export function useAiPythonStudyProgress() {
 
   useEffect(() => {
     let cancelled = false;
+    let refreshInFlight = false;
     setProgress(aiPythonStudyProgressStorage.get(userId));
 
     if (!currentUser) {
@@ -44,21 +46,34 @@ export function useAiPythonStudyProgress() {
       };
     }
 
-    setSyncState("loading");
-    loadAiPythonStudyProgress(currentUser.id)
-      .then((loaded) => {
+    const activeUserId = currentUser.id;
+    const refresh = async (showLoading = false) => {
+      if (refreshInFlight) return;
+      refreshInFlight = true;
+      if (showLoading) setSyncState("loading");
+      try {
+        const loaded = await loadAiPythonStudyProgress(activeUserId);
         if (cancelled) return;
         setProgress(loaded);
         setSyncState("synced");
-      })
-      .catch(() => {
+      } catch {
         if (cancelled) return;
-        setProgress(aiPythonStudyProgressStorage.get(currentUser.id));
+        setProgress(aiPythonStudyProgressStorage.get(activeUserId));
         setSyncState("local");
-      });
+      } finally {
+        refreshInFlight = false;
+      }
+    };
+
+    void refresh(true);
+    const unsubscribe = subscribeToStudyProgressRefresh(
+      "ssafy-gwangju-2-ai-python-study-",
+      () => void refresh(),
+    );
 
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, [currentUser, userId]);
 
