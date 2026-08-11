@@ -250,15 +250,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "순차 데이터 & RNN",
       questionType: "multiple-choice",
-      prompt: "RNN 은닉 상태 수식 $h_t = \tanh(W_{hh}h_{t-1} + W_{xh}x_t + b_h)$ 에 대한 해석으로 가장 바른 것은?",
+      prompt: "RNN 은닉 상태 수식 $h_t = \\tanh(W_{hh}h_{t-1} + W_{xh}x_t + b_h)$ 에 대한 해석으로 가장 바른 것은?",
       options: [
-        "이전 은닉 상태 $h_{t-1}$과 현재 입력 $x_t$가 각각의 가중치와 곱해져 합쳐진 후 $\tanh$ 비선형 변환된다.",
+        "이전 은닉 상태 $h_{t-1}$과 현재 입력 $x_t$가 각각의 가중치와 곱해져 합쳐진 후 $\\tanh$ 비선형 변환된다.",
         "현재 입력 $x_t$만 사용되고 이전 은닉 상태 $h_{t-1}$은 무시된다.",
         "가중치 $W_{hh}$는 타임스텝 $t$마다 새로운 무작위 값으로 변경된다.",
         "출력값 $h_t$는 0보다 작은 음수가 될 수 없다."
       ],
       answer: 0,
-      explanation: "현재 입력 $x_t$와 이전 기억 $h_{t-1}$이 선형 결합 후 $\tanh$를 통해 현재 은닉 상태 $h_t$로 결합됩니다[cite: 2].",
+      explanation: "현재 입력 $x_t$와 이전 기억 $h_{t-1}$이 선형 결합 후 $\\tanh$를 통해 현재 은닉 상태 $h_t$로 결합됩니다[cite: 2].",
       hint: "이전 상태 $h_{t-1}$과 현재 입력 $x_t$가 결합하는 과정입니다[cite: 2]."
     },
     {
@@ -300,11 +300,11 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       options: [
         "역전파 체인 룰(Chain Rule) 과정에서 1보다 작은 미분값과 가중치 행렬이 시점 수만큼 반복 곱해지기 때문",
         "가중치 값이 무한대로 급격히 커지기 때문",
-        "활성화 함수 $\tanh$의 미분 최댓값이 100을 넘기 때문",
+        "활성화 함수 $\\tanh$의 미분 최댓값이 100을 넘기 때문",
         "시간 $t$가 지날수록 입력 차원이 늘어나기 때문"
       ],
       answer: 0,
-      explanation: "BPTT 시 1 이하의 $\tanh'$ 미분값과 가중치 $W_{hh}^T$가 시점 수만큼 반복 곱해지면서 오차가 사라집니다[cite: 2].",
+      explanation: "BPTT 시 1 이하의 $\\tanh'$ 미분값과 가중치 $W_{hh}^T$가 시점 수만큼 반복 곱해지면서 오차가 사라집니다[cite: 2].",
       hint: "역전파 체인 룰 연산 과정에서의 연속 곱하기 때문입니다[cite: 2]."
     },
     {
@@ -444,7 +444,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       options: [],
       answer: null,
       acceptedAnswers: ["연쇄 법칙", "미분값", "반복 곱", "0"],
-      modelAnswer: "BPTT 역전파 진행 시 연쇄 법칙(Chain Rule)에 의해 시간 축을 따라 이전 시점들로 미분값이 연속 곱해진다. 이때 $\tanh$ 활성화 함수의 미분값($\le 1$)과 가중치 행렬이 반복 곱해지면서 기울기가 지수적으로 감소해 0에 수렴하기 때문이다[cite: 2].",
+      modelAnswer: "BPTT 역전파 진행 시 연쇄 법칙(Chain Rule)에 의해 시간 축을 따라 이전 시점들로 미분값이 연속 곱해진다. 이때 $\\tanh$ 활성화 함수의 미분값($\\le 1$)과 가중치 행렬이 반복 곱해지면서 기울기가 지수적으로 감소해 0에 수렴하기 때문이다[cite: 2].",
       rubricKeywords: ["연쇄 법칙", "1 이하 미분값", "지수적 감소(0 수렴)"],
       minLength: 20,
       explanation: "체인 룰 연쇄 곱에 의해 미분값이 감소하여 0으로 수렴하는 원리를 서술합니다[cite: 2].",
@@ -476,10 +476,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "LSTM & 순환 모델",
       questionType: "multiple-choice",
-      prompt: "LSTM에서 현재 시점 세포 상태 $C_t$가 업데이트되는 수식 $C_t = f_t * C_{t-1} + i_t * \tilde{C}_t$ 의 의미는?",
+      prompt: "LSTM에서 현재 시점 세포 상태 $C_t$가 업데이트되는 수식 $C_t = f_t * C_{t-1} + i_t * \\tilde{C}_t$ 의 의미는?",
       options: [
-        "이전 $C_{t-1}$에서 잊을 정보 비율($f_t$)을 곱하고, 새 후보 $\tilde{C}_t$에서 저장할 비율($i_t$)을 곱해 더한다.",
-        "이전 $C_{t-1}$과 새 후보 $\tilde{C}_t$를 단순히 뺀다.",
+        "이전 $C_{t-1}$에서 잊을 정보 비율($f_t$)을 곱하고, 새 후보 $\\tilde{C}_t$에서 저장할 비율($i_t$)을 곱해 더한다.",
+        "이전 $C_{t-1}$과 새 후보 $\\tilde{C}_t$를 단순히 뺀다.",
         "게이트 값에 관계없이 무조건 새 정보만 남긴다.",
         "모든 게이트 수치를 곱하여 세포 상태를 결정한다."
       ],
@@ -493,7 +493,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "LSTM & 순환 모델",
       questionType: "multiple-choice",
-      prompt: "LSTM Forget gate $f_t = \sigma(W_f \cdot [h_{t-1}, x_t] + b_f)$ 의 출력 벡터 원소가 0일 때의 의미는?",
+      prompt: "LSTM Forget gate $f_t = \\sigma(W_f \\cdot [h_{t-1}, x_t] + b_f)$ 의 출력 벡터 원소가 0일 때의 의미는?",
       options: [
         "이전 세포 상태 $C_{t-1}$의 해당 위치 정보를 완벽히 지우고 삭제한다.",
         "이전 세포 상태 $C_{t-1}$의 해당 정보를 100% 온전히 보존한다.",
@@ -510,15 +510,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "LSTM & 순환 모델",
       questionType: "multiple-choice",
-      prompt: "LSTM에서 최종 $h_t$를 생성하는 수식 $h_t = o_t * \tanh(C_t)$ 의 역할에 대한 설명은?",
+      prompt: "LSTM에서 최종 $h_t$를 생성하는 수식 $h_t = o_t * \\tanh(C_t)$ 의 역할에 대한 설명은?",
       options: [
-        "업데이트된 세포 상태 $C_t$를 $\tanh$로 -1~1 압축한 후, Output gate $o_t$ 비율만큼 내보낸다.",
+        "업데이트된 세포 상태 $C_t$를 $\\tanh$로 -1~1 압축한 후, Output gate $o_t$ 비율만큼 내보낸다.",
         "세포 상태 $C_t$를 무조건 0으로 초기화한다.",
         "Output gate $o_t$와 상관없이 $C_t$를 그대로 출력한다.",
         "Forget gate와 Input gate를 곱해준다."
       ],
       answer: 0,
-      explanation: "세포 상태 $C_t$를 $\tanh$로 스케일링한 후 $o_t$ 스위치 비율을 곱해 $h_t$를 만듭니다[cite: 2].",
+      explanation: "세포 상태 $C_t$를 $\\tanh$로 스케일링한 후 $o_t$ 스위치 비율을 곱해 $h_t$를 만듭니다[cite: 2].",
       hint: "$C_t$ 스케일링과 $o_t$ 비율 곱셈입니다[cite: 2]."
     },
     {
@@ -569,7 +569,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "시퀀스 길이를 0으로 만든다."
       ],
       answer: 0,
-      explanation: "Reset gate $r_t$는 새 정보 후보 $\tilde{h}_t$ 연산 시 과거 $h_{t-1}$을 얼마만큼 조합에 넣을지 제어합니다[cite: 2].",
+      explanation: "Reset gate $r_t$는 새 정보 후보 $\\tilde{h}_t$ 연산 시 과거 $h_{t-1}$을 얼마만큼 조합에 넣을지 제어합니다[cite: 2].",
       hint: "새 후보 연산 시 과거 정보를 얼마만큼 리셋(Reset)할지 결정합니다[cite: 2]."
     },
     {
@@ -578,16 +578,16 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "LSTM & 순환 모델",
       questionType: "multiple-choice",
-      prompt: "LSTM에서 새롭게 세포 상태에 더해질 후보 정보 수식 $\tilde{C}_t = \tanh(W_C \cdot [h_{t-1}, x_t] + b_C)$ 의 특징은?",
+      prompt: "LSTM에서 새롭게 세포 상태에 더해질 후보 정보 수식 $\\tilde{C}_t = \\tanh(W_C \\cdot [h_{t-1}, x_t] + b_C)$ 의 특징은?",
       options: [
-        "$\tanh$ 함수를 통해 -1과 1 사이의 값으로 구성된 새로운 정보 후보군을 만든다.",
+        "$\\tanh$ 함수를 통해 -1과 1 사이의 값으로 구성된 새로운 정보 후보군을 만든다.",
         "Sigmoid 함수를 통해 0과 1 사이의 값을 만든다.",
         "항상 양수 값만 갖는다.",
         "이전 $C_{t-1}$ 값이 직접 더해져 있다."
       ],
       answer: 0,
-      explanation: "새로운 정보 내용 후보 $\tilde{C}_t$는 $\tanh$를 통해 -1~1 범위로 정규화되어 생성됩니다[cite: 2].",
-      hint: "새 정보 후보는 $\tanh$를 통해 -1~1 값으로 형성됩니다[cite: 2]."
+      explanation: "새로운 정보 내용 후보 $\\tilde{C}_t$는 $\\tanh$를 통해 -1~1 범위로 정규화되어 생성됩니다[cite: 2].",
+      hint: "새 정보 후보는 $\\tanh$를 통해 -1~1 값으로 형성됩니다[cite: 2]."
     },
     {
       id: "nlp-lstm-mc-med-008",
@@ -603,7 +603,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "Input gate 편향만 0으로 만든다."
       ],
       answer: 0,
-      explanation: "$b_f$를 1~2 정도로 크게 초기화하면 $\sigma(b_f) \approx 1$이 되어 초기에 과거 기억을 잊지 않고 보존합니다[cite: 2].",
+      explanation: "$b_f$를 1~2 정도로 크게 초기화하면 $\\sigma(b_f) \\approx 1$이 되어 초기에 과거 기억을 잊지 않고 보존합니다[cite: 2].",
       hint: "Forget gate의 초기 출력값을 1 근처로 만들기 위한 양수 설정입니다[cite: 2]."
     },
     {
@@ -668,11 +668,11 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "LSTM & 순환 모델",
       questionType: "short-answer",
-      prompt: "LSTM에서 $\tanh$ 연산을 거쳐 현재 세포 상태에 새로 더해질 정보 내용 후보를 가리키는 기호는?",
+      prompt: "LSTM에서 $\\tanh$ 연산을 거쳐 현재 세포 상태에 새로 더해질 정보 내용 후보를 가리키는 기호는?",
       options: [],
       answer: null,
       acceptedAnswers: ["~C_t", "C~_t", "tilde C_t", "\\tilde{C}_t"],
-      explanation: "새로운 세포 상태 후보 $\tilde{C}_t$ 입니다[cite: 2].",
+      explanation: "새로운 세포 상태 후보 $\\tilde{C}_t$ 입니다[cite: 2].",
       hint: "C_t 위에 물결(tilde) 표식이 붙은 기호입니다[cite: 2]."
     },
     {
@@ -681,11 +681,11 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "LSTM & 순환 모델",
       questionType: "essay",
-      prompt: "LSTM의 세포 상태 $C_t$가 업데이트되는 수식 $C_t = f_t * C_{t-1} + i_t * \tilde{C}_t$ 를 각 항의 의미와 함께 서술하시오.",
+      prompt: "LSTM의 세포 상태 $C_t$가 업데이트되는 수식 $C_t = f_t * C_{t-1} + i_t * \\tilde{C}_t$ 를 각 항의 의미와 함께 서술하시오.",
       options: [],
       answer: null,
       acceptedAnswers: ["Forget", "Input", "보존", "기록"],
-      modelAnswer: "이전 세포 상태 $C_{t-1}$에 Forget gate($f_t$)의 보존 비율을 곱해 불필요한 정보를 삭제하고, 새로운 정보 후보 $\tilde{C}_t$에 Input gate($i_t$)의 기록 비율을 곱해 더함으로써 현재 세포 상태 $C_t$를 업데이트한다[cite: 2].",
+      modelAnswer: "이전 세포 상태 $C_{t-1}$에 Forget gate($f_t$)의 보존 비율을 곱해 불필요한 정보를 삭제하고, 새로운 정보 후보 $\\tilde{C}_t$에 Input gate($i_t$)의 기록 비율을 곱해 더함으로써 현재 세포 상태 $C_t$를 업데이트한다[cite: 2].",
       rubricKeywords: ["이전 세포 상태", "Forget gate 곱", "새 정보 후보", "Input gate 곱"],
       minLength: 20,
       explanation: "세포 상태 업데이트 수식의 두 항인 Forget 연산과 Input 연산 의미를 서술합니다[cite: 2].",
@@ -735,7 +735,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       category: "Seq2Seq & Attention",
       questionType: "multiple-choice",
       prompt: "Dot-product Attention에서 디코더 시점 $t$의 상태 $s_t$와 인코더 시점 $i$의 상태 $h_i$ 간의 유사도 Score 계산식은?",
-      options: ["$score(s_t, h_i) = s_t^T h_i$", "$score(s_t, h_i) = s_t + h_i$", "$score(s_t, h_i) = s_t / h_i$", "$score(s_t, h_i) = \sigma(s_t)$"],
+      options: ["$score(s_t, h_i) = s_t^T h_i$", "$score(s_t, h_i) = s_t + h_i$", "$score(s_t, h_i) = s_t / h_i$", "$score(s_t, h_i) = \\sigma(s_t)$"],
       answer: 0,
       explanation: "Dot-product Attention의 유사도는 두 벡터의 전치 내적 $s_t^T h_i$ 로 계산합니다[cite: 2].",
       hint: "두 벡터의 전치 내적(Dot product) 수식입니다[cite: 2]."
@@ -746,7 +746,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "Seq2Seq & Attention",
       questionType: "multiple-choice",
-      prompt: "Attention Score 값들에 Softmax를 취하여 구해지는 확률 분포 $\alpha_t$의 성질은?",
+      prompt: "Attention Score 값들에 Softmax를 취하여 구해지는 확률 분포 $\\alpha_t$의 성질은?",
       options: [
         "모든 인코더 시점 가중치들의 합이 1이 되는 확률 분포를 이룬다.",
         "값들의 합이 인코더 시점 수 $T$와 같아진다.",
@@ -763,15 +763,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "Seq2Seq & Attention",
       questionType: "multiple-choice",
-      prompt: "Attention 분포 $\alpha_{t,i}$와 인코더 은닉 상태 $h_i$를 이용해 컨텍스트 벡터 $a_t$를 구하는 연산은?",
+      prompt: "Attention 분포 $\\alpha_{t,i}$와 인코더 은닉 상태 $h_i$를 이용해 컨텍스트 벡터 $a_t$를 구하는 연산은?",
       options: [
-        "가중합 (Weighted Sum): $a_t = \sum_i \alpha_{t,i} h_i$",
-        "단순 평균: $a_t = \frac{1}{N} \sum_i h_i$",
-        "요소별 차: $a_t = h_i - \alpha_{t,i}$",
+        "가중합 (Weighted Sum): $a_t = \\sum_i \\alpha_{t,i} h_i$",
+        "단순 평균: $a_t = \\frac{1}{N} \\sum_i h_i$",
+        "요소별 차: $a_t = h_i - \\alpha_{t,i}$",
         "행렬식 계산"
       ],
       answer: 0,
-      explanation: "컨텍스트 벡터는 각 인코더 상태 $h_i$에 어텐션 가중치 $\alpha_{t,i}$를 곱해 가중합합니다[cite: 2].",
+      explanation: "컨텍스트 벡터는 각 인코더 상태 $h_i$에 어텐션 가중치 $\\alpha_{t,i}$를 곱해 가중합합니다[cite: 2].",
       hint: "가중치와 은닉 상태를 곱해 다 더하는 가중합 연산입니다[cite: 2]."
     },
     {
@@ -909,7 +909,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       modelAnswer: "1) 디코더 상태와 인코더 상태들 간의 유사도(Score)를 내적 등으로 계산한다. 2) 계산된 Score들에 Softmax를 취해 합이 1인 Attention 확률 분포를 얻는다. 3) 이 확률 분포 가중치를 인코더 은닉 상태들에 곱해 가중합(Context Vector)을 구한다[cite: 2].",
       rubricKeywords: ["유사도 Score 계산", "Softmax 확률 분포", "인코더 상태 가중합"],
       minLength: 20,
-      explanation: "Score 내적 $\rightarrow$ Softmax 확률화 $\rightarrow$ 인코더 상태 가중합 3단계를 서술합니다[cite: 2].",
+      explanation: "Score 내적 $\\rightarrow$ Softmax 확률화 $\\rightarrow$ 인코더 상태 가중합 3단계를 서술합니다[cite: 2].",
       hint: "점수 계산, 소프트맥스 변환, 가중합 순서로 기술하세요[cite: 2]."
     },
     {
@@ -962,8 +962,8 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "$\\text{Attention}(Q, K, V) = \\tanh\\left(\\frac{Q V^T}{K}\\right)$"
       ],
       answer: 0,
-      explanation: "$Q K^T$ 내적을 $\sqrt{d_k}$로 나눈 후 Softmax를 거쳐 Value 행렬과 곱합니다[cite: 2].",
-      hint: "$QK^T / \sqrt{d_k}$ 에 Softmax를 취하고 $V$를 곱하는 공식입니다[cite: 2]."
+      explanation: "$Q K^T$ 내적을 $\\sqrt{d_k}$로 나눈 후 Softmax를 거쳐 Value 행렬과 곱합니다[cite: 2].",
+      hint: "$QK^T / \\sqrt{d_k}$ 에 Softmax를 취하고 $V$를 곱하는 공식입니다[cite: 2]."
     },
     {
       id: "nlp-tr-mc-med-003",
@@ -971,7 +971,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "Transformer & Self-Attention",
       questionType: "multiple-choice",
-      prompt: "Dot-product Attention에서 내적값을 $\sqrt{d_k}$ 차원의 제곱근으로 나누어 스케일링하는 주요 이유는?",
+      prompt: "Dot-product Attention에서 내적값을 $\\sqrt{d_k}$ 차원의 제곱근으로 나누어 스케일링하는 주요 이유는?",
       options: [
         "차원이 커질수록 내적값이 과도하게 커져 Softmax 기울기 소실(Gradient Vanishing) 영역에 빠지는 것을 방지하기 위해",
         "내적 결과값을 무조건 음수로 만들기 위해",
@@ -979,7 +979,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "가중치 행렬의 크기를 축소하기 위해"
       ],
       answer: 0,
-      explanation: "차원이 커지면 내적 분산이 커져 Softmax 출력이 뾰족해지고 기울기가 소실되므로 $\sqrt{d_k}$로 나눕니다[cite: 2].",
+      explanation: "차원이 커지면 내적 분산이 커져 Softmax 출력이 뾰족해지고 기울기가 소실되므로 $\\sqrt{d_k}$로 나눕니다[cite: 2].",
       hint: "내적값이 너무 커져 Softmax 기울기가 작아지는 것을 막습니다[cite: 2]."
     },
     {
@@ -1000,7 +1000,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "Transformer & Self-Attention",
       questionType: "multiple-choice",
-      prompt: "트랜스포머 블록에서 입력 $x$를 서브레이어 출력에 다시 더해주는 $x + \text{SubLayer}(x)$ 구조의 명칭은?",
+      prompt: "트랜스포머 블록에서 입력 $x$를 서브레이어 출력에 다시 더해주는 $x + \\text{SubLayer}(x)$ 구조의 명칭은?",
       options: ["Residual Connection (잔차 연결)", "Layer Normalization", "Dropout", "Softmax"],
       answer: 0,
       explanation: "잔차 연결(Residual Connection)은 층이 깊어져도 오차 기울기가 원활히 통과하도록 지름길을 제공합니다[cite: 2].",
@@ -1041,8 +1041,8 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "Transformer & Self-Attention",
       questionType: "multiple-choice",
-      prompt: "트랜스포머의 Position-wise FFN 서브레이어에서 은닉 차원을 $d_{model} \rightarrow d_{ff} \rightarrow d_{model}$ 로 넓혔다 줄이는 일반적인 확장 비율은?",
-      options: ["4배 (예: 512 $\rightarrow$ 2048 $\rightarrow$ 512)", "2배", "10배", "100배"],
+      prompt: "트랜스포머의 Position-wise FFN 서브레이어에서 은닉 차원을 $d_{model} \\rightarrow d_{ff} \\rightarrow d_{model}$ 로 넓혔다 줄이는 일반적인 확장 비율은?",
+      options: ["4배 (예: 512 $\\rightarrow$ 2048 $\\rightarrow$ 512)", "2배", "10배", "100배"],
       answer: 0,
       explanation: "원 논문 기준 $d_{model}=512$일 때 $d_{ff}=2048$ 로 4배 일시 확장하여 비선형 표현력을 높입니다[cite: 2].",
       hint: "보통 4배 확장 공간으로 넓혔다 줄입니다[cite: 2]."
@@ -1070,7 +1070,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "Transformer & Self-Attention",
       questionType: "short-answer",
-      prompt: "Self-Attention 수식에서 $Q K^T$ 내적값을 $\sqrt{d_k}$ 로 나누어주는 Attention 방식의 정식 명칭은?",
+      prompt: "Self-Attention 수식에서 $Q K^T$ 내적값을 $\\sqrt{d_k}$ 로 나누어주는 Attention 방식의 정식 명칭은?",
       options: [],
       answer: null,
       acceptedAnswers: ["Scaled Dot-Product Attention", "scaled dot-product attention", "스케일드 닷프로덕트 어텐션"],
@@ -1083,7 +1083,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "Transformer & Self-Attention",
       questionType: "short-answer",
-      prompt: "서브레이어의 입력 $x$를 출력에 다시 더해주는 $x + \text{SubLayer}(x)$ 지름길 연결 구조의 영문 명칭은?",
+      prompt: "서브레이어의 입력 $x$를 출력에 다시 더해주는 $x + \\text{SubLayer}(x)$ 지름길 연결 구조의 영문 명칭은?",
       options: [],
       answer: null,
       acceptedAnswers: ["Residual Connection", "residual connection", "잔차 연결", "Residual connection"],
@@ -1122,11 +1122,11 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "Transformer & Self-Attention",
       questionType: "essay",
-      prompt: "Self-Attention 수식에서 내적값 $Q K^T$를 $\sqrt{d_k}$로 나누는 스케일링을 수행해야 하는 이유를 역전파 기울기 관점에서 서술하시오.",
+      prompt: "Self-Attention 수식에서 내적값 $Q K^T$를 $\\sqrt{d_k}$로 나누는 스케일링을 수행해야 하는 이유를 역전파 기울기 관점에서 서술하시오.",
       options: [],
       answer: null,
       acceptedAnswers: ["내적", "분산", "Softmax", "기울기 소실"],
-      modelAnswer: "차원 $d_k$가 커질수록 $Q K^T$ 내적값의 분산이 증가하여 Softmax 함수의 출력이 극단적으로 뾰족해진다. 이로 인해 Softmax의 미분 기울기(Gradient)가 0에 가까워져 학습이 안 되는 기울기 소실 문제가 발생하므로 $\sqrt{d_k}$로 스케일링한다[cite: 2].",
+      modelAnswer: "차원 $d_k$가 커질수록 $Q K^T$ 내적값의 분산이 증가하여 Softmax 함수의 출력이 극단적으로 뾰족해진다. 이로 인해 Softmax의 미분 기울기(Gradient)가 0에 가까워져 학습이 안 되는 기울기 소실 문제가 발생하므로 $\\sqrt{d_k}$로 스케일링한다[cite: 2].",
       rubricKeywords: ["내적 분산 증가", "Softmax 출력이 뾰족함", "기울기 소실 방지"],
       minLength: 20,
       explanation: "차원 증가에 따른 내적 분산 증대와 Softmax 기울기 소실 방지 목적을 서술합니다[cite: 2].",
@@ -1440,9 +1440,9 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "정렬 학습 (Alignment)",
       questionType: "multiple-choice",
-      prompt: "RLHF에서 보상 모델 $R_\psi$를 지도 학습시킬 때, 사람이 더 선호한 답변 $y_w$와 비선호 답변 $y_l$에 대해 취하는 학습 목표는?",
+      prompt: "RLHF에서 보상 모델 $R_\\psi$를 지도 학습시킬 때, 사람이 더 선호한 답변 $y_w$와 비선호 답변 $y_l$에 대해 취하는 학습 목표는?",
       options: [
-        "$R_\psi(x, y_w)$ 의 보상 점수가 $R_\psi(x, y_l)$ 의 보상 점수보다 커지도록 차이를 최대화함",
+        "$R_\\psi(x, y_w)$ 의 보상 점수가 $R_\\psi(x, y_l)$ 의 보상 점수보다 커지도록 차이를 최대화함",
         "두 답변의 보상 점수를 모두 0으로 맞춤",
         "비선호 답변 $y_l$의 보상 점수를 더 높임",
         "두 보상 점수의 평균을 계산해 고정함"
@@ -1659,7 +1659,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "디코딩 알고리즘",
       questionType: "multiple-choice",
-      prompt: "Sampling 디코딩 시 Temperature $T$가 로짓 $z_i$에 적용되는 수식 형태 $\frac{\exp(z_i / T)}{\sum \exp(z_j / T)}$ 에 대한 해석은?",
+      prompt: "Sampling 디코딩 시 Temperature $T$가 로짓 $z_i$에 적용되는 수식 형태 $\\frac{\\exp(z_i / T)}{\\sum \\exp(z_j / T)}$ 에 대한 해석은?",
       options: [
         "$T > 1$ 이면 $z_i / T$ 값들의 차이가 작아져 분포가 평평해지고, $T < 1$ 이면 차이가 커져 분포가 뾰족해진다.",
         "$T > 1$ 이면 무조건 가장 큰 로짓만 100% 선택된다.",
@@ -1676,10 +1676,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "디코딩 알고리즘",
       questionType: "multiple-choice",
-      prompt: "Temperature $T$를 0으로 극한 설정($T \rightarrow 0$)했을 때의 샘플링 동작은 무엇과 동일해지는가?",
+      prompt: "Temperature $T$를 0으로 극한 설정($T \\rightarrow 0$)했을 때의 샘플링 동작은 무엇과 동일해지는가?",
       options: ["Greedy Search (가장 확률 높은 단어만 100% 선택)", "완전 무작위 균등 샘플링", "Beam Search (k=16)", "추론 즉시 중단"],
       answer: 0,
-      explanation: "$T \to 0$ 이면 확률 분포가 극도로 뾰족해져 가장 높은 스코어 단어 하나만 결정론적으로 고르는 Greedy Search와 같아집니다[cite: 3].",
+      explanation: "$T \\to 0$ 이면 확률 분포가 극도로 뾰족해져 가장 높은 스코어 단어 하나만 결정론적으로 고르는 Greedy Search와 같아집니다[cite: 3].",
       hint: "가장 스코어가 높은 1개 단어만 선택하는 결정론적 방식입니다[cite: 3]."
     },
     {
@@ -2170,10 +2170,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "RAG(Retrieval-Augmented Generation) 시스템의 기본 동작 순서로 가장 바른 것은?",
       options: [
-        "유저 질문 $\rightarrow$ 외부 Vector DB 문서 검색 $\rightarrow$ 검색 문서를 프롬프트에 동봉 $\rightarrow$ LLM 근거 답변 생성",
-        "LLM 답변 생성 $\rightarrow$ 외부 DB 검색 $\rightarrow$ 질문 수정",
-        "외부 DB 수정 $\rightarrow$ 질문 삭제 $\rightarrow$ LLM 가중치 업데이트",
-        "유저 질문 $\rightarrow$ LLM 가중치 재학습 $\rightarrow$ 답변 생성"
+        "유저 질문 $\\rightarrow$ 외부 Vector DB 문서 검색 $\\rightarrow$ 검색 문서를 프롬프트에 동봉 $\\rightarrow$ LLM 근거 답변 생성",
+        "LLM 답변 생성 $\\rightarrow$ 외부 DB 검색 $\\rightarrow$ 질문 수정",
+        "외부 DB 수정 $\\rightarrow$ 질문 삭제 $\\rightarrow$ LLM 가중치 업데이트",
+        "유저 질문 $\\rightarrow$ LLM 가중치 재학습 $\\rightarrow$ 답변 생성"
       ],
       answer: 0,
       explanation: "RAG는 질문과 관련된 외부 문서를 DB에서 검색(Retrieval)해 프롬프트에 동봉 후 답변을 생성(Generation)합니다[cite: 3].",

@@ -47,7 +47,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "AI/ML 기초 및 데이터",
       questionType: "multiple-choice",
-      prompt: "특성 벡터 $X = [X_1, X_2, ..., X_p]^\top \in \mathbb{R}^p$와 목표 변수 $Y$에 대한 설명으로 옳은 것은?",
+      prompt: "특성 벡터 $X = [X_1, X_2, ..., X_p]^\\top \\in \\mathbb{R}^p$와 목표 변수 $Y$에 대한 설명으로 옳은 것은?",
       options: [
         "$X$는 $p$개의 독립 변수(Feature)로 이루어진 $p$차원 벡터이며, $Y$는 예측 대상이 되는 종속 변수(Label)이다.",
         "$X$는 항상 1차원 스칼라값이어야 하며, $Y$는 $p$차원 벡터여야 한다.",
@@ -64,15 +64,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "AI/ML 기초 및 데이터",
       questionType: "multiple-choice",
-      prompt: "모형 가정 $Y = f^*(X) + \epsilon$에서 측정 오차 $\epsilon$에 대한 일반적인 통계적 가정으로 옳은 것은?",
+      prompt: "모형 가정 $Y = f^*(X) + \\epsilon$에서 측정 오차 $\\epsilon$에 대한 일반적인 통계적 가정으로 옳은 것은?",
       options: [
-        "$\epsilon$은 입력 특성 $X$와 독립이며, 기댓값 $E[\epsilon] = 0$ 이다.",
-        "$\epsilon$은 항상 양수의 상숫값으로 고정된다.",
-        "$\epsilon$은 $X$의 값에 비례하여 무한히 커지는 함수이다.",
-        "$\epsilon$은 모델이 학습을 거치면 완전히 0으로 소멸된다."
+        "$\\epsilon$은 입력 특성 $X$와 독립이며, 기댓값 $E[\\epsilon] = 0$ 이다.",
+        "$\\epsilon$은 항상 양수의 상숫값으로 고정된다.",
+        "$\\epsilon$은 $X$의 값에 비례하여 무한히 커지는 함수이다.",
+        "$\\epsilon$은 모델이 학습을 거치면 완전히 0으로 소멸된다."
       ],
       answer: 0,
-      explanation: "일반적으로 측정 오차 $\epsilon$은 $X$와 독립이며 평균(기댓값)이 0인 확률 변수로 가정합니다[cite: 5].",
+      explanation: "일반적으로 측정 오차 $\\epsilon$은 $X$와 독립이며 평균(기댓값)이 0인 확률 변수로 가정합니다[cite: 5].",
       hint: "오차의 기댓값은 0이며 피처 $X$와 독립적입니다[cite: 5]."
     },
     {
@@ -81,15 +81,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "AI/ML 기초 및 데이터",
       questionType: "multiple-choice",
-      prompt: "가설 공간 $\mathcal{F}$와 학습된 모델 $f$의 관계에 대한 설명으로 가장 적절한 것은?",
+      prompt: "가설 공간 $\\mathcal{F}$와 학습된 모델 $f$의 관계에 대한 설명으로 가장 적절한 것은?",
       options: [
-        "가설 공간 $\mathcal{F}$는 선택 가능한 모든 후보 함수들의 집합이며, 모델 $f$는 학습을 통해 선택된 $\mathcal{F}$ 내의 특정 함수이다.",
-        "가설 공간 $\mathcal{F}$는 훈련 데이터셋 자체를 의미한다.",
-        "모델 $f$는 가설 공간 $\mathcal{F}$와 아무런 상관이 없는 외부 상수이다.",
+        "가설 공간 $\\mathcal{F}$는 선택 가능한 모든 후보 함수들의 집합이며, 모델 $f$는 학습을 통해 선택된 $\\mathcal{F}$ 내의 특정 함수이다.",
+        "가설 공간 $\\mathcal{F}$는 훈련 데이터셋 자체를 의미한다.",
+        "모델 $f$는 가설 공간 $\\mathcal{F}$와 아무런 상관이 없는 외부 상수이다.",
         "선형 가설 공간에서는 비선형 곡선 모델 $f$만 선택될 수 있다."
       ],
       answer: 0,
-      explanation: "가설 공간 $\mathcal{F}$라는 후보 함수 집합 속에서 데이터와 손실함수를 바탕으로 최적의 모델(함수 $f$) 하나를 고르는 것이 학습입니다[cite: 5]."
+      explanation: "가설 공간 $\\mathcal{F}$라는 후보 함수 집합 속에서 데이터와 손실함수를 바탕으로 최적의 모델(함수 $f$) 하나를 고르는 것이 학습입니다[cite: 5]."
     },
     {
       id: "ml-c1-mc-med-005",
@@ -102,7 +102,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "여러 피처들 중 어떤 피처가 라벨 $Y$를 설명하는 데 중요하고 어떤 것이 무관한지 식별하는 것",
         "새로운 입력 $X=x$에 대한 출력 $Y$의 값을 계산하는 것",
         "특성 $X_i$의 변화 방향에 따른 $Y$의 민감도를 파악하는 것",
-        "데이터의 측정 오차 $\epsilon$을 지우는 것"
+        "데이터의 측정 오차 $\\epsilon$을 지우는 것"
       ],
       answer: 0,
       explanation: "중요 특성 파악은 다양한 입력 피처 중 정답 $Y$에 영향을 주는 유의미한 피처를 구분해내는 것입니다[cite: 5]."
@@ -156,7 +156,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "AI/ML 기초 및 데이터",
       questionType: "multiple-choice",
-      prompt: "머신러닝 루프(Data $\rightarrow$ Model $\rightarrow$ Train $\rightarrow$ Eval)에서 평가(Eval) 단계 이후 수행되는 작업은?",
+      prompt: "머신러닝 루프(Data $\\rightarrow$ Model $\\rightarrow$ Train $\\rightarrow$ Eval)에서 평가(Eval) 단계 이후 수행되는 작업은?",
       options: [
         "평가 결과를 바탕으로 데이터 재정제, 모델 구조 변경, 학습 방법 수정을 반복적으로 개선함",
         "모델 학습을 영구히 종료하고 데이터를 삭제함",
@@ -176,7 +176,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       options: [
         "가설 공간 내 수많은 후보 함수 중 어떤 함수가 데이터를 더 잘 설명하는지 판단하는 정량적 척도 제공",
         "입력 데이터의 피처 개수를 자동으로 늘려주는 역할",
-        "측정 오차 $\epsilon$의 발생을 사전에 막아주는 역할",
+        "측정 오차 $\\epsilon$의 발생을 사전에 막아주는 역할",
         "모든 예측값을 정수로 바꿔주는 역할"
       ],
       answer: 0,
@@ -224,7 +224,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       options: [],
       answer: null,
       acceptedAnswers: ["가설 공간", "가설공간", "Hypothesis Space", "F", "캘리그라피 F"],
-      explanation: "후보 함수들의 모임인 가설 공간($\mathcal{F}$) 입니다[cite: 5]."
+      explanation: "후보 함수들의 모임인 가설 공간($\\mathcal{F}$) 입니다[cite: 5]."
     },
     {
       id: "ml-c1-sa-med-014",
@@ -244,12 +244,12 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "AI/ML 기초 및 데이터",
       questionType: "essay",
-      prompt: "모형 가정 수식 $Y = f^*(X) + \epsilon$ 의 각 구성요소 의미를 설명하고, 우리가 직접 관측할 수 없는 $f^*(X)$를 학습을 통해 근사(추정)하려는 목적 3가지를 서술하시오.",
+      prompt: "모형 가정 수식 $Y = f^*(X) + \\epsilon$ 의 각 구성요소 의미를 설명하고, 우리가 직접 관측할 수 없는 $f^*(X)$를 학습을 통해 근사(추정)하려는 목적 3가지를 서술하시오.",
       options: [],
       answer: null,
       acceptedAnswers: ["참 함수", "측정 오차", "예측", "중요 특성", "해석"],
-      modelAnswer: "$f^*(X)$는 특성과 라벨 사이의 관측 불가능한 미지의 참 함수이며, $\epsilon$은 독립적인 측정 오차이다. $f(X)$를 학습하는 3가지 목적은 1) 새로운 입력에 대한 정답 예측, 2) 정답에 영향을 미치는 중요 특성 파악, 3) 특성 변화에 따른 정답의 반응 방향 및 민감도에 대한 해석 가능성 확보이다[cite: 5].",
-      rubricKeywords: ["참 함수 $f^*$", "측정 오차 $\epsilon$", "예측", "중요 특성 파악", "해석 가능성"],
+      modelAnswer: "$f^*(X)$는 특성과 라벨 사이의 관측 불가능한 미지의 참 함수이며, $\\epsilon$은 독립적인 측정 오차이다. $f(X)$를 학습하는 3가지 목적은 1) 새로운 입력에 대한 정답 예측, 2) 정답에 영향을 미치는 중요 특성 파악, 3) 특성 변화에 따른 정답의 반응 방향 및 민감도에 대한 해석 가능성 확보이다[cite: 5].",
+      rubricKeywords: ["참 함수 $f^*$", "측정 오차 $\\epsilon$", "예측", "중요 특성 파악", "해석 가능성"],
       minLength: 20,
       explanation: "수식 구성요소 설명과 학습의 3가지 목적(예측, 중요 특성 파악, 해석 가능성)을 작성합니다[cite: 5]."
     },
@@ -265,10 +265,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "지도학습의 문제 유형에 따른 대표 손실함수 매핑이 올바르게 연결된 것은?",
       options: [
-        "회귀(Regression) $\rightarrow$ 평균제곱오차(MSE), 분류(Classification) $\rightarrow$ 교차 엔트로피(Cross Entropy)",
-        "회귀 $\rightarrow$ 교차 엔트로피, 분류 $\rightarrow$ 평균제곱오차(MSE)",
-        "회귀 $\rightarrow$ 정확도(Accuracy), 분류 $\rightarrow$ 결정계수($R^2$)",
-        "회귀 $\rightarrow$ 혼동행렬, 분류 $\rightarrow$ 정규방정식"
+        "회귀(Regression) $\\rightarrow$ 평균제곱오차(MSE), 분류(Classification) $\\rightarrow$ 교차 엔트로피(Cross Entropy)",
+        "회귀 $\\rightarrow$ 교차 엔트로피, 분류 $\\rightarrow$ 평균제곱오차(MSE)",
+        "회귀 $\\rightarrow$ 정확도(Accuracy), 분류 $\\rightarrow$ 결정계수($R^2$)",
+        "회귀 $\\rightarrow$ 혼동행렬, 분류 $\\rightarrow$ 정규방정식"
       ],
       answer: 0,
       explanation: "연속 수치를 예측하는 회귀에는 MSE, 범주 확률을 예측하는 분류에는 Cross Entropy 손실을 적용합니다[cite: 5]."
@@ -279,7 +279,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "지도학습 및 평가 지표",
       questionType: "multiple-choice",
-      prompt: "회귀 손실함수 $\text{MSE} = \frac{1}{n} \sum_{i=1}^n (y_i - \hat{y}_i)^2$ 에서 오차 $(y_i - \hat{y}_i)$를 제곱해 줌으로써 얻는 특성은?",
+      prompt: "회귀 손실함수 $\\text{MSE} = \\frac{1}{n} \\sum_{i=1}^n (y_i - \\hat{y}_i)^2$ 에서 오차 $(y_i - \\hat{y}_i)$를 제곱해 줌으로써 얻는 특성은?",
       options: [
         "오차의 음수/양수 부호를 제거하고, 큰 오차에 대해 더 강한 가중 페널티를 부과한다.",
         "큰 오차를 작은 오차보다 더 무시하게 만든다.",
@@ -295,9 +295,9 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "지도학습 및 평가 지표",
       questionType: "multiple-choice",
-      prompt: "결정계수 $R^2 = 1 - \frac{\sum (y_i - \hat{y}_i)^2}{\sum (y_i - \bar{y})^2}$ 수식에서 $R^2$ 수치가 음수($< 0$)가 나오는 상황의 의미는?",
+      prompt: "결정계수 $R^2 = 1 - \\frac{\\sum (y_i - \\hat{y}_i)^2}{\\sum (y_i - \\bar{y})^2}$ 수식에서 $R^2$ 수치가 음수($< 0$)가 나오는 상황의 의미는?",
       options: [
-        "모델의 예측 성능이 단순 정답 평균값($\bar{y}$)으로만 예측하는 것보다도 더 나쁜 경우",
+        "모델의 예측 성능이 단순 정답 평균값($\\bar{y}$)으로만 예측하는 것보다도 더 나쁜 경우",
         "모델의 예측이 100% 완벽한 경우",
         "데이터에 측정 오차가 전혀 없는 경우",
         "회귀 직선의 기울기가 음수인 경우"
@@ -319,7 +319,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "두 지표는 상호 보완적으로 함께 사용하는 것이 바람직하다."
       ],
       answer: 0,
-      explanation: "MSE의 값 범위는 $0 \sim \infty$ 이며, $R^2$의 값 범위가 $0 \sim 1$ (단순 평균보다 못할 시 음수 가능) 입니다[cite: 5]."
+      explanation: "MSE의 값 범위는 $0 \\sim \\infty$ 이며, $R^2$의 값 범위가 $0 \\sim 1$ (단순 평균보다 못할 시 음수 가능) 입니다[cite: 5]."
     },
     {
       id: "ml-c2-mc-med-005",
@@ -340,13 +340,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "정밀도(Precision)와 재현율(Recall)을 이용해 F1-score를 산출하는 올바른 수식은?",
       options: [
-        "$\text{F1} = 2 \times \frac{\text{Precision} \times \text{Recall}}{\text{Precision} + \text{Recall}}$",
-        "$\text{F1} = \frac{\text{Precision} + \text{Recall}}{2}$",
-        "$\text{F1} = \text{Precision} \times \text{Recall}$",
-        "$\text{F1} = \sqrt{\text{Precision}^2 + \text{Recall}^2}$"
+        "$\\text{F1} = 2 \\times \\frac{\\text{Precision} \\times \\text{Recall}}{\\text{Precision} + \\text{Recall}}$",
+        "$\\text{F1} = \\frac{\\text{Precision} + \\text{Recall}}{2}$",
+        "$\\text{F1} = \\text{Precision} \\times \\text{Recall}$",
+        "$\\text{F1} = \\sqrt{\\text{Precision}^2 + \\text{Recall}^2}$"
       ],
       answer: 0,
-      explanation: "F1-score는 정밀도와 재현율의 조화평균(Harmonic Mean) 공식 $2 \times \frac{P \times R}{P + R}$ 로 계산됩니다[cite: 5]."
+      explanation: "F1-score는 정밀도와 재현율의 조화평균(Harmonic Mean) 공식 $2 \\times \\frac{P \\times R}{P + R}$ 로 계산됩니다[cite: 5]."
     },
     {
       id: "ml-c2-mc-med-007",
@@ -354,7 +354,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "지도학습 및 평가 지표",
       questionType: "multiple-choice",
-      prompt: "정확도 수식 $\text{Accuracy} = \frac{1}{n} \sum_{i=1}^n \mathbb{I}(y_i = \hat{y}_i)$ 에 포함된 지시 함수 $\mathbb{I}(A)$의 동작은?",
+      prompt: "정확도 수식 $\\text{Accuracy} = \\frac{1}{n} \\sum_{i=1}^n \\mathbb{I}(y_i = \\hat{y}_i)$ 에 포함된 지시 함수 $\\mathbb{I}(A)$의 동작은?",
       options: [
         "조건 $A$가 참(True)이면 1, 거짓(False)이면 0을 반환한다.",
         "조건 $A$의 값에 상관없이 항상 $A$의 절댓값을 반환한다.",
@@ -362,7 +362,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "오차의 제곱값을 반환한다."
       ],
       answer: 0,
-      explanation: "지시 함수 $\mathbb{I}$는 괄호 안의 조건이 참이면 1(맞춤), 거짓이면 0(틀림)을 출력하는 함수입니다[cite: 5]."
+      explanation: "지시 함수 $\\mathbb{I}$는 괄호 안의 조건이 참이면 1(맞춤), 거짓이면 0(틀림)을 출력하는 함수입니다[cite: 5]."
     },
     {
       id: "ml-c2-mc-med-008",
@@ -370,15 +370,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "지도학습 및 평가 지표",
       questionType: "multiple-choice",
-      prompt: "교차 엔트로피 손실 $\text{CE} = -\log(\hat{p}_{\text{target}})$ 에서 모델이 정답 클래스에 부과한 예측 확률 $\hat{p}_{\text{target}}$이 0에 가까워질 때 손실값의 변화는?",
+      prompt: "교차 엔트로피 손실 $\\text{CE} = -\\log(\\hat{p}_{\\text{target}})$ 에서 모델이 정답 클래스에 부과한 예측 확률 $\\hat{p}_{\\text{target}}$이 0에 가까워질 때 손실값의 변화는?",
       options: [
-        "손실(Loss) 값이 무한대($+\infty$) 방향으로 급격히 커진다.",
+        "손실(Loss) 값이 무한대($+\\infty$) 방향으로 급격히 커진다.",
         "손실 값이 0으로 수렴한다.",
         "손실 값이 음수로 바뀐다.",
         "손실 값이 항상 1로 고정된다."
       ],
       answer: 0,
-      explanation: "정답에 준 확률이 0에 가까워지면 $-\log(0) \to +\infty$ 가 되어 모델에 매우 강력한 손실 페널티를 부과합니다[cite: 5]."
+      explanation: "정답에 준 확률이 0에 가까워지면 $-\\log(0) \\to +\\infty$ 가 되어 모델에 매우 강력한 손실 페널티를 부과합니다[cite: 5]."
     },
     {
       id: "ml-c2-mc-med-009",
@@ -447,7 +447,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "지도학습 및 평가 지표",
       questionType: "short-answer",
-      prompt: "분류 모델 학습 시 정답 클래스 확률 $-\log(\hat{p})$을 이용해 모델의 확신도를 손실값으로 계산하는 손실함수는?",
+      prompt: "분류 모델 학습 시 정답 클래스 확률 $-\\log(\\hat{p})$을 이용해 모델의 확신도를 손실값으로 계산하는 손실함수는?",
       options: [],
       answer: null,
       acceptedAnswers: ["교차 엔트로피", "교차엔트로피", "Cross Entropy", "cross entropy", "Cross-Entropy"],
@@ -510,15 +510,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "검증 및 교차검증",
       questionType: "multiple-choice",
-      prompt: "K-겹 교차검증에서 전체 가중 평균 오류를 구하는 수식 $\text{CV}_{(K)} = \sum_{k=1}^K \frac{n_k}{n} \text{MSE}_k$ 에 대한 설명으로 옳은 것은?",
+      prompt: "K-겹 교차검증에서 전체 가중 평균 오류를 구하는 수식 $\\text{CV}_{(K)} = \\sum_{k=1}^K \\frac{n_k}{n} \\text{MSE}_k$ 에 대한 설명으로 옳은 것은?",
       options: [
-        "각 폴드 $k$의 샘플 수 $n_k$ 비율을 가중치로 하여 각 폴드에서 측정된 $\text{MSE}_k$를 가중 합산한다.",
+        "각 폴드 $k$의 샘플 수 $n_k$ 비율을 가중치로 하여 각 폴드에서 측정된 $\\text{MSE}_k$를 가중 합산한다.",
         "모든 폴드의 MSE를 곱한다.",
         "가장 MSE가 높은 폴드 1개의 값만 채택한다.",
         "전체 데이터 개수 $n$으로 나누는 과정을 생략한다."
       ],
       answer: 0,
-      explanation: "각 폴드의 크기 $n_k$ 비율에 따라 해당 폴드의 $\text{MSE}_k$를 가중 평균하여 전체 CV 오차를 산출합니다[cite: 5]."
+      explanation: "각 폴드의 크기 $n_k$ 비율에 따라 해당 폴드의 $\\text{MSE}_k$를 가중 평균하여 전체 CV 오차를 산출합니다[cite: 5]."
     },
     {
       id: "ml-c3-mc-med-004",
@@ -696,7 +696,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       modelAnswer: "모델 복잡도가 올라갈수록 훈련 오류는 계속 감소한다. 하지만 테스트 오류는 단순한 모델 구간에서는 높은 편향(High Bias / 언더피팅)으로 오류가 크고, 너무 복잡한 구간에서는 높은 분산(High Variance / 오버피팅)으로 오류가 다시 올라가므로 U자형 곡선을 그린다[cite: 5].",
       rubricKeywords: ["훈련 오류 지속 감소", "언더피팅 높은 편향", "오버피팅 높은 분산", "테스트 오류 U자형"],
       minLength: 20,
-      explanation: "모델 복잡도에 따른 훈련/테스트 오류 곡선 양상과 언더피팅(Bias) $\rightarrow$ 최적 $\rightarrow$ 오버피팅(Variance)에 의한 U자형 원리를 서술합니다[cite: 5]."
+      explanation: "모델 복잡도에 따른 훈련/테스트 오류 곡선 양상과 언더피팅(Bias) $\\rightarrow$ 최적 $\\rightarrow$ 오버피팅(Variance)에 의한 U자형 원리를 서술합니다[cite: 5]."
     },
 
     // ==========================================
@@ -758,13 +758,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "K-means 알고리즘의 2단계 반복 루프 과정으로 바른 순서는?",
       options: [
-        "1) 각 데이터를 가장 가까운 중심점에 할당 $\rightarrow$ 2) 할당된 데이터들의 평균 위치로 중심점 재계산",
-        "1) 중심점 재계산 $\rightarrow$ 2) 무작위 가중치 역전파",
-        "1) 모든 데이터를 1개 군집으로 합침 $\rightarrow$ 2) 2개로 분할",
-        "1) 라벨값 교차 엔트로피 계산 $\rightarrow$ 2) 중심점 삭제"
+        "1) 각 데이터를 가장 가까운 중심점에 할당 $\\rightarrow$ 2) 할당된 데이터들의 평균 위치로 중심점 재계산",
+        "1) 중심점 재계산 $\\rightarrow$ 2) 무작위 가중치 역전파",
+        "1) 모든 데이터를 1개 군집으로 합침 $\\rightarrow$ 2) 2개로 분할",
+        "1) 라벨값 교차 엔트로피 계산 $\\rightarrow$ 2) 중심점 삭제"
       ],
       answer: 0,
-      explanation: "K-means는 [가장 가까운 중심에 샘플 할당 $\rightarrow$ 각 군집 샘플들의 평균(Mean)으로 중심점 재계산]을 수렴 시까지 반복합니다[cite: 5]."
+      explanation: "K-means는 [가장 가까운 중심에 샘플 할당 $\\rightarrow$ 각 군집 샘플들의 평균(Mean)으로 중심점 재계산]을 수렴 시까지 반복합니다[cite: 5]."
     },
     {
       id: "ml-c4-mc-med-005",
@@ -914,14 +914,14 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "비지도학습 및 군집화",
       questionType: "essay",
-      prompt: "K-means 클러스터링 알고리즘의 동작 4단계(초기화 $\rightarrow$ 할당 $\rightarrow$ 중심 재계산 $\rightarrow$ 수렴)를 순서대로 서술하시오.",
+      prompt: "K-means 클러스터링 알고리즘의 동작 4단계(초기화 $\\rightarrow$ 할당 $\\rightarrow$ 중심 재계산 $\\rightarrow$ 수렴)를 순서대로 서술하시오.",
       options: [],
       answer: null,
       acceptedAnswers: ["초기화", "할당", "중심", "재계산", "반복"],
       modelAnswer: "1) K개의 초기 중심점(Centroid)을 임의 배치한다. 2) 각 데이터를 가장 가까운 중심점에 할당하여 K개 군집을 형성한다. 3) 각 군집에 속한 데이터들의 평균 위치로 중심점을 재계산한다. 4) 할당에 변화가 없을 때까지 2~3 단계를 반복 수렴한다[cite: 5].",
       rubricKeywords: ["K개 초기 중심점 배치", "가까운 중심 할당", "평균 위치 중심 재계산", "수렴 시까지 반복"],
       minLength: 20,
-      explanation: "K-means의 초기화 $\rightarrow$ 할당 $\rightarrow$ 중심 재계산 $\rightarrow$ 반복 수렴 동작 과정을 서술합니다[cite: 5]."
+      explanation: "K-means의 초기화 $\\rightarrow$ 할당 $\\rightarrow$ 중심 재계산 $\\rightarrow$ 반복 수렴 동작 과정을 서술합니다[cite: 5]."
     },
 
     // ==========================================
@@ -933,15 +933,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "단순선형회귀에서 잔차제곱합 $\text{RSS}(\beta_0, \beta_1) = \sum_{i=1}^n (y_i - \beta_0 - \beta_1 x_i)^2$ 을 최소화하는 최적 계수를 구하는 수학적 접근법은?",
+      prompt: "단순선형회귀에서 잔차제곱합 $\\text{RSS}(\\beta_0, \\beta_1) = \\sum_{i=1}^n (y_i - \\beta_0 - \\beta_1 x_i)^2$ 을 최소화하는 최적 계수를 구하는 수학적 접근법은?",
       options: [
-        "RSS를 각 계수 $\beta_0, \beta_1$에 대해 편미분한 도함수(기울기)가 0이 되는 연립방정식을 푼다.",
+        "RSS를 각 계수 $\\beta_0, \\beta_1$에 대해 편미분한 도함수(기울기)가 0이 되는 연립방정식을 푼다.",
         "RSS 수식에 무작위 숫자를 100만 번 대입해 본다.",
         "데이터를 시그모이드 함수에 통과시킨다.",
-        "계수 $\beta_0, \beta_1$을 항상 1로 고정한다."
+        "계수 $\\beta_0, \\beta_1$을 항상 1로 고정한다."
       ],
       answer: 0,
-      explanation: "RSS 비용함수의 극솟점(최솟값)을 찾기 위해 $\beta_0$과 $\beta_1$에 대해 편미분하여 0이 되는 편미분 방정식을 풀어 해를 도출합니다[cite: 4]."
+      explanation: "RSS 비용함수의 극솟점(최솟값)을 찾기 위해 $\\beta_0$과 $\\beta_1$에 대해 편미분하여 0이 되는 편미분 방정식을 풀어 해를 도출합니다[cite: 4]."
     },
     {
       id: "ml-c5-mc-med-002",
@@ -949,7 +949,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "최소제곱법으로 도출된 기울기 계수 수식 $\hat{\beta}_1 = \frac{\sum (x_i - \bar{x})(y_i - \bar{y})}{\sum (x_i - \bar{x})^2}$ 의 분자와 분모에 대한 바른 해석은?",
+      prompt: "최소제곱법으로 도출된 기울기 계수 수식 $\\hat{\\beta}_1 = \\frac{\\sum (x_i - \\bar{x})(y_i - \\bar{y})}{\\sum (x_i - \\bar{x})^2}$ 의 분자와 분모에 대한 바른 해석은?",
       options: [
         "분자는 $X$와 $Y$의 공분산(Covariance) 형태이고, 분모는 $X$의 편차 제곱합(Variance) 형태이다.",
         "분자는 $X$의 편차합이고, 분모는 $Y$의 편차합이다.",
@@ -965,15 +965,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "절편 수식 $\hat{\beta}_0 = \bar{y} - \hat{\beta}_1 \bar{x}$ 이 시사하는 기하학적 성질은?",
+      prompt: "절편 수식 $\\hat{\\beta}_0 = \\bar{y} - \\hat{\\beta}_1 \\bar{x}$ 이 시사하는 기하학적 성질은?",
       options: [
-        "최소제곱 회귀 직선은 항상 데이터의 평균점 $(\bar{x}, \bar{y})$를 반드시 지나간다.",
+        "최소제곱 회귀 직선은 항상 데이터의 평균점 $(\\bar{x}, \\bar{y})$를 반드시 지나간다.",
         "최소제곱 회귀 직선은 원점 $(0,0)$을 반드시 지나간다.",
         "절편은 항상 0이 된다.",
         "기울기와 절편은 서로 독립이라 평균점과 무관하다."
       ],
       answer: 0,
-      explanation: "수식을 정리하면 $\bar{y} = \hat{\beta}_0 + \hat{\beta}_1 \bar{x}$ 가 되므로, 회귀 직선은 항상 $X$와 $Y$의 평균점 $(\bar{x}, \bar{y})$를 지납니다[cite: 4]."
+      explanation: "수식을 정리하면 $\\bar{y} = \\hat{\\beta}_0 + \\hat{\\beta}_1 \\bar{x}$ 가 되므로, 회귀 직선은 항상 $X$와 $Y$의 평균점 $(\\bar{x}, \\bar{y})$를 지납니다[cite: 4]."
     },
     {
       id: "ml-c5-mc-med-004",
@@ -981,15 +981,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "다중선형회귀 행렬식 $y = X\beta + \epsilon$에서 $\text{RSS} = (y - X\beta)^\top (y - X\beta)$를 $\beta$에 대해 미분하여 0으로 놓아 얻어지는 정규방정식(Normal Equation) 수식은?",
+      prompt: "다중선형회귀 행렬식 $y = X\\beta + \\epsilon$에서 $\\text{RSS} = (y - X\\beta)^\\top (y - X\\beta)$를 $\\beta$에 대해 미분하여 0으로 놓아 얻어지는 정규방정식(Normal Equation) 수식은?",
       options: [
-        "$X^\top X \hat{\beta} = X^\top y$",
-        "$X \hat{\beta} = y$",
-        "$X^\top \hat{\beta} = X y$",
-        "$X X^\top \hat{\beta} = y$"
+        "$X^\\top X \\hat{\\beta} = X^\\top y$",
+        "$X \\hat{\\beta} = y$",
+        "$X^\\top \\hat{\\beta} = X y$",
+        "$X X^\\top \\hat{\\beta} = y$"
       ],
       answer: 0,
-      explanation: "미분 도함수 $-2X^\top y + 2X^\top X \hat{\beta} = 0$ 으로부터 정규방정식 $X^\top X \hat{\beta} = X^\top y$ 가 유도됩니다[cite: 4]."
+      explanation: "미분 도함수 $-2X^\\top y + 2X^\\top X \\hat{\\beta} = 0$ 으로부터 정규방정식 $X^\\top X \\hat{\\beta} = X^\\top y$ 가 유도됩니다[cite: 4]."
     },
     {
       id: "ml-c5-mc-med-005",
@@ -997,15 +997,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "정규방정식 해 $\hat{\beta} = (X^\top X)^{-1} X^\top y$ 가 존재하기 위해 필요한 수학적 조건은?",
+      prompt: "정규방정식 해 $\\hat{\\beta} = (X^\\top X)^{-1} X^\\top y$ 가 존재하기 위해 필요한 수학적 조건은?",
       options: [
-        "행렬 $X^\top X$의 역행렬(Inverse)이 존재해야 하며, 피처 간 다중공선성이 없어 완전한 컬럼 독립이어야 한다.",
+        "행렬 $X^\\top X$의 역행렬(Inverse)이 존재해야 하며, 피처 간 다중공선성이 없어 완전한 컬럼 독립이어야 한다.",
         "행렬 $X$의 모든 원소가 0이어야 한다.",
         "데이터 샘플 수 $n$이 피처 수 $p$보다 무조건 적어야 한다.",
         "역행렬 계산 시 항상 음수만 나와야 한다."
       ],
       answer: 0,
-      explanation: "행렬 $X^\top X$의 역행렬이 존재(Invertible)해야 유일해 가 도출되며, 완벽한 다중공선성이 있으면 역행렬이 존재하지 않습니다[cite: 4]."
+      explanation: "행렬 $X^\\top X$의 역행렬이 존재(Invertible)해야 유일해 가 도출되며, 완벽한 다중공선성이 있으면 역행렬이 존재하지 않습니다[cite: 4]."
     },
     {
       id: "ml-c5-mc-med-006",
@@ -1061,7 +1061,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "독립 변수가 2개인 다중선형회귀 $\hat{y} = \hat{\beta}_0 + \hat{\beta}_1 X_1 + \hat{\beta}_2 X_2$ 가 3차원 공간상에서 그리는 예측 모델의 형태는?",
+      prompt: "독립 변수가 2개인 다중선형회귀 $\\hat{y} = \\hat{\\beta}_0 + \\hat{\\beta}_1 X_1 + \\hat{\\beta}_2 X_2$ 가 3차원 공간상에서 그리는 예측 모델의 형태는?",
       options: ["2차원 평면 (Plane / Hyperplane)", "1차원 직선", "3차원 구형", "점들의 집합"],
       answer: 0,
       explanation: "2개의 입력 피처와 1개의 출력이 이루는 다중선형회귀 결과는 3차원 공간상의 평면(Hyperplane)으로 표현됩니다[cite: 4]."
@@ -1106,13 +1106,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "회귀 계수 결과표의 'Std. Error (표준오차)'가 수치적으로 의미하는 바는?",
       options: [
-        "표본 추출에 따라 추정된 회귀 계수 $\hat{\beta}$ 값에 존재하는 불확실성/변동성의 크기",
+        "표본 추출에 따라 추정된 회귀 계수 $\\hat{\\beta}$ 값에 존재하는 불확실성/변동성의 크기",
         "훈련 데이터의 전체 오차 제곱합",
         "독립 변수 $X$의 평균값",
         "모델의 예측 정확도 백분율"
       ],
       answer: 0,
-      explanation: "Std. Error(표준오차)는 샘플링에 따라 추정 계수 $\hat{\beta}$가 얼마나 흔들릴 수 있는지 불확실성의 크기를 나타냅니다[cite: 4]."
+      explanation: "Std. Error(표준오차)는 샘플링에 따라 추정 계수 $\\hat{\\beta}$가 얼마나 흔들릴 수 있는지 불확실성의 크기를 나타냅니다[cite: 4]."
     },
     {
       id: "ml-c5-sa-med-013",
@@ -1120,11 +1120,11 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "선형회귀",
       questionType: "short-answer",
-      prompt: "다중선형회귀에서 최소제곱법의 미분을 통해 도출되는 정규방정식 해 수식 $\hat{\beta} =$ ( ? ) $X^\top y$ 의 괄호에 들어갈 행렬식은?",
+      prompt: "다중선형회귀에서 최소제곱법의 미분을 통해 도출되는 정규방정식 해 수식 $\\hat{\\beta} =$ ( ? ) $X^\\top y$ 의 괄호에 들어갈 행렬식은?",
       options: [],
       answer: null,
       acceptedAnswers: ["(X^T X)^-1", "(X^T*X)^-1", "(X^T X)^{-1}", "(X'X)^-1"],
-      explanation: "정규방정식의 역행렬 파트인 $(X^\top X)^{-1}$ 입니다[cite: 4]."
+      explanation: "정규방정식의 역행렬 파트인 $(X^\\top X)^{-1}$ 입니다[cite: 4]."
     },
     {
       id: "ml-c5-sa-med-014",
@@ -1144,14 +1144,14 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "선형회귀",
       questionType: "essay",
-      prompt: "다중선형회귀 행렬식 $y = X\beta + \epsilon$에서 $\text{RSS} = (y - X\beta)^\top (y - X\beta)$를 $\beta$로 미분하여 정규방정식 해 $\hat{\beta} = (X^\top X)^{-1} X^\top y$가 유도되는 과정과, $X^\top X$의 역행렬 존재 조건을 서술하시오.",
+      prompt: "다중선형회귀 행렬식 $y = X\\beta + \\epsilon$에서 $\\text{RSS} = (y - X\\beta)^\\top (y - X\\beta)$를 $\\beta$로 미분하여 정규방정식 해 $\\hat{\\beta} = (X^\\top X)^{-1} X^\\top y$가 유도되는 과정과, $X^\\top X$의 역행렬 존재 조건을 서술하시오.",
       options: [],
       answer: null,
       acceptedAnswers: ["편미분", "0", "정규방정식", "역행렬", "독립"],
-      modelAnswer: "RSS를 $\beta$에 대해 미분하여 0으로 놓으면 $\\frac{\\partial \\text{RSS}}{\\partial \\beta} = -2X^T y + 2X^T X \\beta = 0$ 이 되며, 이를 정리하면 정규방정식 $X^T X \\hat{\\beta} = X^T y$ 가 도출된다. 양변에 역행렬을 곱해 해를 얻기 위해서는 행렬 $X^T X$의 역행렬이 존재해야 하며, 이는 $X$의 피처들 사이에 완벽한 다중공선성이 없고 컬럼들이 선형독립이어야 한다[cite: 4].",
+      modelAnswer: "RSS를 $\\beta$에 대해 미분하여 0으로 놓으면 $\\frac{\\partial \\text{RSS}}{\\partial \\beta} = -2X^T y + 2X^T X \\beta = 0$ 이 되며, 이를 정리하면 정규방정식 $X^T X \\hat{\\beta} = X^T y$ 가 도출된다. 양변에 역행렬을 곱해 해를 얻기 위해서는 행렬 $X^T X$의 역행렬이 존재해야 하며, 이는 $X$의 피처들 사이에 완벽한 다중공선성이 없고 컬럼들이 선형독립이어야 한다[cite: 4].",
       rubricKeywords: ["RSS 미분 = 0", "정규방정식 $X^T X \\hat{\\beta} = X^T y$", "$X^T X$ 역행렬 존재", "피처 간 선형독립(다중공선성 없음)"],
       minLength: 20,
-      explanation: "RSS 편미분 유도 과정과 $X^\top X$의 역행렬 존재 조건(독립성)을 서술합니다[cite: 4]."
+      explanation: "RSS 편미분 유도 과정과 $X^\\top X$의 역행렬 존재 조건(독립성)을 서술합니다[cite: 4]."
     },
 
     // ==========================================
@@ -1163,15 +1163,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "이진 분류($Y \in \{0, 1\}$) 문제에 선형 회귀 직선을 그대로 적용할 때 발생하는 근본적 결함은?",
+      prompt: "이진 분류($Y \\in \\{0, 1\\}$) 문제에 선형 회귀 직선을 그대로 적용할 때 발생하는 근본적 결함은?",
       options: [
-        "입력 $X$에 따라 예측값 $\hat{y}$가 0보다 작거나 1보다 큰 값이 나와 이를 확률로 해석하기 부적절함",
+        "입력 $X$에 따라 예측값 $\\hat{y}$가 0보다 작거나 1보다 큰 값이 나와 이를 확률로 해석하기 부적절함",
         "선형 회귀는 역전파 학습이 불가능함",
         "선형 회귀의 회귀 계수가 무조건 0이 됨",
         "선형 회귀는 오직 범주형 피처만 받을 수 있음"
       ],
       answer: 0,
-      explanation: "선형 회귀는 출력을 $0 \sim 1$ 사이로 제한하지 못해 확률의 기본 정의를 위배합니다[cite: 4]."
+      explanation: "선형 회귀는 출력을 $0 \\sim 1$ 사이로 제한하지 못해 확률의 기본 정의를 위배합니다[cite: 4]."
     },
     {
       id: "ml-c6-mc-med-002",
@@ -1179,15 +1179,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "로지스틱 회귀식 $p(X) = \frac{e^{\beta_0 + \beta_1 X}}{1 + e^{\beta_0 + \beta_1 X}}$ 로부터 오즈(Odds) $\frac{p(X)}{1-p(X)}$를 구한 뒤 양변에 자연로그를 취하면 얻어지는 로짓 변환 수식은?",
+      prompt: "로지스틱 회귀식 $p(X) = \\frac{e^{\\beta_0 + \\beta_1 X}}{1 + e^{\\beta_0 + \\beta_1 X}}$ 로부터 오즈(Odds) $\\frac{p(X)}{1-p(X)}$를 구한 뒤 양변에 자연로그를 취하면 얻어지는 로짓 변환 수식은?",
       options: [
-        "$\log\left(\frac{p(X)}{1-p(X)}\right) = \beta_0 + \beta_1 X$",
-        "$\log\left(\frac{p(X)}{1-p(X)}\right) = e^{\beta_0 + \beta_1 X}$",
-        "$\frac{p(X)}{1-p(X)} = \beta_0 + \beta_1 X$",
-        "$\log(p(X)) = \beta_0 + \beta_1 X$"
+        "$\\log\\left(\\frac{p(X)}{1-p(X)}\\right) = \\beta_0 + \\beta_1 X$",
+        "$\\log\\left(\\frac{p(X)}{1-p(X)}\\right) = e^{\\beta_0 + \\beta_1 X}$",
+        "$\\frac{p(X)}{1-p(X)} = \\beta_0 + \\beta_1 X$",
+        "$\\log(p(X)) = \\beta_0 + \\beta_1 X$"
       ],
       answer: 0,
-      explanation: "로지스틱 모형의 오즈에 자연로그를 취하면 우변이 선형 회귀식 $\beta_0 + \beta_1 X$ 로 정리됩니다[cite: 4]."
+      explanation: "로지스틱 모형의 오즈에 자연로그를 취하면 우변이 선형 회귀식 $\\beta_0 + \\beta_1 X$ 로 정리됩니다[cite: 4]."
     },
     {
       id: "ml-c6-mc-med-003",
@@ -1195,12 +1195,12 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "이진 분류 로지스틱 회귀에서 전체 관측 데이터에 대한 우도 함수 $\mathcal{L}(\beta)$ 의 곱셈 수식 형태는?",
+      prompt: "이진 분류 로지스틱 회귀에서 전체 관측 데이터에 대한 우도 함수 $\\mathcal{L}(\\beta)$ 의 곱셈 수식 형태는?",
       options: [
-        "$\mathcal{L}(\beta) = \prod_{i:y_i=1} p(x_i; \beta) \prod_{j:y_j=0} (1 - p(x_j; \beta))$",
-        "$\mathcal{L}(\beta) = \sum_{i=1}^n (y_i - p(x_i))^2$",
-        "$\mathcal{L}(\beta) = \prod_{i=1}^n (p(x_i) + y_i)$",
-        "$\mathcal{L}(\beta) = \beta_0 \times \beta_1$"
+        "$\\mathcal{L}(\\beta) = \\prod_{i:y_i=1} p(x_i; \\beta) \\prod_{j:y_j=0} (1 - p(x_j; \\beta))$",
+        "$\\mathcal{L}(\\beta) = \\sum_{i=1}^n (y_i - p(x_i))^2$",
+        "$\\mathcal{L}(\\beta) = \\prod_{i=1}^n (p(x_i) + y_i)$",
+        "$\\mathcal{L}(\\beta) = \\beta_0 \\times \\beta_1$"
       ],
       answer: 0,
       explanation: "우도 함수는 정답이 1인 샘플들의 확률 $p(x_i)$와 정답이 0인 샘플들의 확률 $(1-p(x_j))$을 모두 곱한 형태입니다[cite: 4]."
@@ -1211,15 +1211,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "우도 함수에 자연로그를 취해 손실함수로 사용하는 Log-Likelihood $\log \mathcal{L}(\beta)$ 수식 표현은?",
+      prompt: "우도 함수에 자연로그를 취해 손실함수로 사용하는 Log-Likelihood $\\log \\mathcal{L}(\\beta)$ 수식 표현은?",
       options: [
-        "$\log \mathcal{L}(\beta) = \sum_{i=1}^n \left[ y_i \log p(x_i; \beta) + (1 - y_i) \log(1 - p(x_i; \beta)) \right]$",
-        "$\log \mathcal{L}(\beta) = \sum_{i=1}^n (y_i - p(x_i))^2$",
-        "$\log \mathcal{L}(\beta) = \prod_{i=1}^n y_i \log p(x_i)$",
-        "$\log \mathcal{L}(\beta) = \log(\beta_0 + \beta_1 X)$"
+        "$\\log \\mathcal{L}(\\beta) = \\sum_{i=1}^n \\left[ y_i \\log p(x_i; \\beta) + (1 - y_i) \\log(1 - p(x_i; \\beta)) \\right]$",
+        "$\\log \\mathcal{L}(\\beta) = \\sum_{i=1}^n (y_i - p(x_i))^2$",
+        "$\\log \\mathcal{L}(\\beta) = \\prod_{i=1}^n y_i \\log p(x_i)$",
+        "$\\log \\mathcal{L}(\\beta) = \\log(\\beta_0 + \\beta_1 X)$"
       ],
       answer: 0,
-      explanation: "이진 분류의 Log-Likelihood 수식은 $y_i=1$일 때 $\log p$, $y_i=0$일 때 $\log(1-p)$가 선택되도록 덧셈 결합됩니다[cite: 4]."
+      explanation: "이진 분류의 Log-Likelihood 수식은 $y_i=1$일 때 $\\log p$, $y_i=0$일 때 $\\log(1-p)$가 선택되도록 덧셈 결합됩니다[cite: 4]."
     },
     {
       id: "ml-c6-mc-med-005",
@@ -1227,15 +1227,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "우도 $\mathcal{L}(\beta)$ 대신 $\log \mathcal{L}(\beta)$를 최대화하는 매개변수 $\hat{\beta}$를 구해도 최적 해가 동일한 수학적 근거는?",
+      prompt: "우도 $\\mathcal{L}(\\beta)$ 대신 $\\log \\mathcal{L}(\\beta)$를 최대화하는 매개변수 $\\hat{\\beta}$를 구해도 최적 해가 동일한 수학적 근거는?",
       options: [
-        "자연로그 함수 $\log(x)$가 단조 증가(Monotone Increasing) 함수이기 때문에",
+        "자연로그 함수 $\\log(x)$가 단조 증가(Monotone Increasing) 함수이기 때문에",
         "로그 함수가 상숫값을 출력하기 때문에",
         "로그 함수와 우도 함수가 완벽히 동일한 수식이기 때문에",
         "로그를 취하면 모든 미분값이 0이 되기 때문에"
       ],
       answer: 0,
-      explanation: "로그 함수는 단조 증가 함수이므로 $\mathcal{L}(\beta)$를 극대화하는 $\beta$값과 $\log \mathcal{L}(\beta)$를 극대화하는 $\beta$값이 정확히 일치합니다[cite: 4]."
+      explanation: "로그 함수는 단조 증가 함수이므로 $\\mathcal{L}(\\beta)$를 극대화하는 $\\beta$값과 $\\log \\mathcal{L}(\\beta)$를 극대화하는 $\\beta$값이 정확히 일치합니다[cite: 4]."
     },
     {
       id: "ml-c6-mc-med-006",
@@ -1243,7 +1243,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "로지스틱 회귀 결과 $\log\left(\frac{p(X)}{1-p(X)}\right) = -10.6513 + 0.0055 \cdot X$ 에서 $X$가 1000에서 2000으로 2배 증가할 때 확률값의 변화 양상은?",
+      prompt: "로지스틱 회귀 결과 $\\log\\left(\\frac{p(X)}{1-p(X)}\\right) = -10.6513 + 0.0055 \\cdot X$ 에서 $X$가 1000에서 2000으로 2배 증가할 때 확률값의 변화 양상은?",
       options: [
         "S자 시그모이드 곡선의 비선형적 특성 때문에 예측 확률값은 단순 2배가 아니라 약 97배 이상 급격히 증가함",
         "확률값도 정확히 2배로 선형 증가함",
@@ -1261,13 +1261,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "여러 독립 변수 $X_1, X_2, ..., X_p$를 포함하는 다중 로지스틱 회귀의 확률 $p(X)$ 수식은?",
       options: [
-        "$p(X) = \frac{e^{\beta_0 + \beta_1 X_1 + ... + \beta_p X_p}}{1 + e^{\beta_0 + \beta_1 X_1 + ... + \beta_p X_p}}$",
-        "$p(X) = \beta_0 + \beta_1 X_1 + ... + \beta_p X_p$",
-        "$p(X) = \frac{1}{\beta_0 + \beta_1 X_1 + ... + \beta_p X_p}$",
-        "$p(X) = \log(\beta_0 + \beta_1 X_1 + ... + \beta_p X_p)$"
+        "$p(X) = \\frac{e^{\\beta_0 + \\beta_1 X_1 + ... + \\beta_p X_p}}{1 + e^{\\beta_0 + \\beta_1 X_1 + ... + \\beta_p X_p}}$",
+        "$p(X) = \\beta_0 + \\beta_1 X_1 + ... + \\beta_p X_p$",
+        "$p(X) = \\frac{1}{\\beta_0 + \\beta_1 X_1 + ... + \\beta_p X_p}$",
+        "$p(X) = \\log(\\beta_0 + \\beta_1 X_1 + ... + \\beta_p X_p)$"
       ],
       answer: 0,
-      explanation: "다중 로지스틱 회귀는 선형 결합 $\beta_0 + \sum \beta_j X_j$ 파트를 시그모이드 함수 $z$ 자리에 대입한 수식입니다[cite: 4]."
+      explanation: "다중 로지스틱 회귀는 선형 결합 $\\beta_0 + \\sum \\beta_j X_j$ 파트를 시그모이드 함수 $z$ 자리에 대입한 수식입니다[cite: 4]."
     },
     {
       id: "ml-c6-mc-med-008",
@@ -1275,7 +1275,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "기상 상태 라벨 $Y \in \{\text{맑음}, \text{눈}, \text{비}\}$를 정수 코딩 $Y \in \{1, 2, 3\}$으로 직접 지정하여 선형 회귀를 적용할 때 생기는 오류는?",
+      prompt: "기상 상태 라벨 $Y \\in \\{\\text{맑음}, \\text{눈}, \\text{비}\\}$를 정수 코딩 $Y \\in \\{1, 2, 3\\}$으로 직접 지정하여 선형 회귀를 적용할 때 생기는 오류는?",
       options: [
         "순서가 없는 범주 간에 인위적인 순서(1 < 2 < 3)와 거리 간격의 동일성을 암묵적으로 가정해 버리는 심각한 왜곡이 발생함",
         "모델의 연산 속도가 100배 빨라짐",
@@ -1323,10 +1323,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "로지스틱 회귀에서 $X_1$이 1단위 증가할 때 오즈(Odds)가 지수배 $e^{\beta_1}$ 만큼 변화하는 비율을 나타내는 지표는?",
+      prompt: "로지스틱 회귀에서 $X_1$이 1단위 증가할 때 오즈(Odds)가 지수배 $e^{\\beta_1}$ 만큼 변화하는 비율을 나타내는 지표는?",
       options: ["오즈비 (Odds Ratio)", "로그 우도", "잔차제곱합", "결정계수"],
       answer: 0,
-      explanation: "Odds Ratio = $e^{\beta_1}$ 은 $X_1$이 1단위 증가할 때 성공 오즈가 몇 배 늘어나는지 나타냅니다[cite: 4]."
+      explanation: "Odds Ratio = $e^{\\beta_1}$ 은 $X_1$이 1단위 증가할 때 성공 오즈가 몇 배 늘어나는지 나타냅니다[cite: 4]."
     },
     {
       id: "ml-c6-mc-med-012",
@@ -1345,7 +1345,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "로지스틱회귀",
       questionType: "short-answer",
-      prompt: "오즈(Odds)에 자연로그를 취하여 선형 회귀식 형태 $\beta_0 + \beta_1 X$ 로 변환해 주는 변환 명칭은?",
+      prompt: "오즈(Odds)에 자연로그를 취하여 선형 회귀식 형태 $\\beta_0 + \\beta_1 X$ 로 변환해 주는 변환 명칭은?",
       options: [],
       answer: null,
       acceptedAnswers: ["로짓 변환", "로짓변환", "Logit Transformation", "Logit transformation", "Logit"],
@@ -1388,15 +1388,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "신경망 모델",
       questionType: "multiple-choice",
-      prompt: "3개의 Hidden Unit을 가진 Shallow 네트워크 수식 $y = \phi_0 + \sum_{d=1}^3 \phi_d a[\theta_{d0} + \theta_{d1} x]$ 의 작동 단계 순서로 바른 것은?",
+      prompt: "3개의 Hidden Unit을 가진 Shallow 네트워크 수식 $y = \\phi_0 + \\sum_{d=1}^3 \\phi_d a[\\theta_{d0} + \\theta_{d1} x]$ 의 작동 단계 순서로 바른 것은?",
       options: [
-        "1) 입력 $x$의 선형 변환 $\theta_{d0} + \theta_{d1} x$ $\rightarrow$ 2) 활성화 함수 $a[\cdot]$ 적용 $\rightarrow$ 3) 가중치 $\phi_d$와 곱해 절편 $\phi_0$와 합산",
-        "1) 활성화 함수 적용 $\rightarrow$ 2) 선형 변환 $\rightarrow$ 3) 나누기",
-        "1) 출력 $y$ 생성 $\rightarrow$ 2) 입력 $x$ 차감",
-        "1) 무작위 난수 생성 $\rightarrow$ 2) 모든 가중치 고정"
+        "1) 입력 $x$의 선형 변환 $\\theta_{d0} + \\theta_{d1} x$ $\\rightarrow$ 2) 활성화 함수 $a[\\cdot]$ 적용 $\\rightarrow$ 3) 가중치 $\\phi_d$와 곱해 절편 $\\phi_0$와 합산",
+        "1) 활성화 함수 적용 $\\rightarrow$ 2) 선형 변환 $\\rightarrow$ 3) 나누기",
+        "1) 출력 $y$ 생성 $\\rightarrow$ 2) 입력 $x$ 차감",
+        "1) 무작위 난수 생성 $\\rightarrow$ 2) 모든 가중치 고정"
       ],
       answer: 0,
-      explanation: "각 은닉 노드에서 선형 변환(Pre-activation) 후 활성화 함수 $a[\cdot]$를 거쳐 출력 가중치 $\phi_d$로 선형 결합됩니다[cite: 4]."
+      explanation: "각 은닉 노드에서 선형 변환(Pre-activation) 후 활성화 함수 $a[\\cdot]$를 거쳐 출력 가중치 $\\phi_d$로 선형 결합됩니다[cite: 4]."
     },
     {
       id: "ml-c7-mc-med-002",
@@ -1406,13 +1406,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "은닉 노드 $h_d$ 연산에서 전활성값(Pre-activation) $z_d$와 최종 활성값(Activation) $h_d$의 관계 표현으로 바른 것은?",
       options: [
-        "$z_d = \theta_{d0} + \theta_{d1} x \quad \rightarrow \quad h_d = a[z_d]$",
-        "$h_d = \theta_{d0} + \theta_{d1} x \quad \rightarrow \quad z_d = a[h_d]$",
-        "$z_d = a[\theta_{d0}] \times \theta_{d1} x$",
+        "$z_d = \\theta_{d0} + \\theta_{d1} x \\quad \\rightarrow \\quad h_d = a[z_d]$",
+        "$h_d = \\theta_{d0} + \\theta_{d1} x \\quad \\rightarrow \\quad z_d = a[h_d]$",
+        "$z_d = a[\\theta_{d0}] \\times \\theta_{d1} x$",
         "$h_d = z_d^2$"
       ],
       answer: 0,
-      explanation: "선형 결합된 값 $z_d$가 Pre-activation 이며, 여기에 활성화 함수 $a[\cdot]$를 씌운 결과가 $h_d$ 입니다[cite: 4]."
+      explanation: "선형 결합된 값 $z_d$가 Pre-activation 이며, 여기에 활성화 함수 $a[\\cdot]$를 씌운 결과가 $h_d$ 입니다[cite: 4]."
     },
     {
       id: "ml-c7-mc-med-003",
@@ -1420,15 +1420,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "신경망 모델",
       questionType: "multiple-choice",
-      prompt: "Shallow 네트워크에서 ReLU 활성화 함수 $a[z] = \max(0, z)$를 사용할 때, 출력 조각별 선형 함수에서 관측되는 꺾이는 점(Joints/Kinks)의 위치 결정 요소는?",
+      prompt: "Shallow 네트워크에서 ReLU 활성화 함수 $a[z] = \\max(0, z)$를 사용할 때, 출력 조각별 선형 함수에서 관측되는 꺾이는 점(Joints/Kinks)의 위치 결정 요소는?",
       options: [
-        "각 은닉 노드의 Pre-activation 값이 0이 되는 $x = -\frac{\theta_{d0}}{\theta_{d1}}$ 위치 지점",
-        "출력 가중치 $\phi_0$의 크기",
+        "각 은닉 노드의 Pre-activation 값이 0이 되는 $x = -\\frac{\\theta_{d0}}{\\theta_{d1}}$ 위치 지점",
+        "출력 가중치 $\\phi_0$의 크기",
         "데이터 샘플의 전체 개수 $n$",
         "항상 $x = 0$ 원점 위치"
       ],
       answer: 0,
-      explanation: "ReLU 함수는 입력이 0일 때 꺾이므로, $\theta_{d0} + \theta_{d1}x = 0$ 이 되는 $x = -\theta_{d0}/\theta_{d1}$ 에서 함수가 꺾입니다[cite: 4]."
+      explanation: "ReLU 함수는 입력이 0일 때 꺾이므로, $\\theta_{d0} + \\theta_{d1}x = 0$ 이 되는 $x = -\\theta_{d0}/\\theta_{d1}$ 에서 함수가 꺾입니다[cite: 4]."
     },
     {
       id: "ml-c7-mc-med-004",
@@ -1474,7 +1474,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "신경망 모델",
       questionType: "medium",
-      prompt: "강의자료 예시에서 2층 Deep 네트워크(파라미터 20개 $\rightarrow$ 최대 16개 선형 구역)와 1층 Shallow 네트워크(파라미터 19개 $\rightarrow$ 최대 7개 선형 구역)를 비교했을 때의 핵심 결론은?",
+      prompt: "강의자료 예시에서 2층 Deep 네트워크(파라미터 20개 $\\rightarrow$ 최대 16개 선형 구역)와 1층 Shallow 네트워크(파라미터 19개 $\\rightarrow$ 최대 7개 선형 구역)를 비교했을 때의 핵심 결론은?",
       options: [
         "비슷한 파라미터 수일 때 Deep 네트워크가 만드는 선형 구역 수가 훨씬 많아 표현 효율성이 압도적으로 높다.",
         "Shallow 네트워크의 표현력이 무조건 더 뛰어나다.",
@@ -1503,10 +1503,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "은닉층 $k$번째의 입력 벡터 $h_{k-1}$과 가중치 행렬 $W_k$, 편향 벡터 $b_k$가 있을 때, Pre-activation $z_k$와 활성화 $h_k$의 벡터 수식은?",
       options: [
-        "$z_k = b_k + W_k h_{k-1} \quad \rightarrow \quad h_k = a[z_k]$",
-        "$h_k = W_k + b_k h_{k-1} \quad \rightarrow \quad z_k = a[h_k]$",
-        "$z_k = W_k h_{k-1} \times b_k$",
-        "$h_k = \text{softmax}(W_k)$"
+        "$z_k = b_k + W_k h_{k-1} \\quad \\rightarrow \\quad h_k = a[z_k]$",
+        "$h_k = W_k + b_k h_{k-1} \\quad \\rightarrow \\quad z_k = a[h_k]$",
+        "$z_k = W_k h_{k-1} \\times b_k$",
+        "$h_k = \\text{softmax}(W_k)$"
       ],
       answer: 0,
       explanation: "행렬 표기로 $z_k = b_k + W_k h_{k-1}$ 선형 결합 후 요소별 활성화 함수 $a[z_k]$를 적용해 $h_k$를 만듭니다[cite: 4]."
@@ -1517,7 +1517,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "신경망 모델",
       questionType: "multiple-choice",
-      prompt: "신경망의 모든 은닉층에 비선형 활성화 함수 $a[\cdot]$를 쓰지 않고 선형 연산만 연속 적용할 때 일어나는 문제는?",
+      prompt: "신경망의 모든 은닉층에 비선형 활성화 함수 $a[\\cdot]$를 쓰지 않고 선형 연산만 연속 적용할 때 일어나는 문제는?",
       options: [
         "여러 층을 아무리 깊게 쌓아도 하나의 단순 선형 회귀 모형으로 축소(Collapse)되어 깊이의 이점이 사라진다.",
         "모델의 표현력이 무한대로 커진다.",
@@ -1549,10 +1549,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "medium",
       category: "신경망 모델",
       questionType: "multiple-choice",
-      prompt: "4개의 Hidden Unit에서 2개의 출력($y_1, y_2$)으로 연결될 때, 은닉층과 출력층 사이의 출력 가중치 $\phi_{j d}$의 총 개수는? (절편 제외)",
-      options: ["8개 ($4 \times 2$)", "4개", "2개", "16개"],
+      prompt: "4개의 Hidden Unit에서 2개의 출력($y_1, y_2$)으로 연결될 때, 은닉층과 출력층 사이의 출력 가중치 $\\phi_{j d}$의 총 개수는? (절편 제외)",
+      options: ["8개 ($4 \\times 2$)", "4개", "2개", "16개"],
       answer: 0,
-      explanation: "4개 은닉 노드가 2개 출력 노드 각각에 전결합(Fully Connected)되므로 $4 \times 2 = 8$ 개의 가중치가 사용됩니다[cite: 4]."
+      explanation: "4개 은닉 노드가 2개 출력 노드 각각에 전결합(Fully Connected)되므로 $4 \\times 2 = 8$ 개의 가중치가 사용됩니다[cite: 4]."
     },
     {
       id: "ml-c7-sa-med-013",

@@ -16,6 +16,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import katex from "katex";
+import "katex/dist/katex.min.css";
 import { ESSAY_MIN_LENGTH } from "../../constants/study";
 import {
   AI_PYTHON_WEEK_META,
@@ -46,6 +48,41 @@ const QUESTION_TYPE_LABELS = {
   "short-answer": "단답형",
   essay: "서술형",
 };
+
+const MATH_SEGMENT_PATTERN = /(\$\$[\s\S]+?\$\$|\$[^$\r\n]+?\$)/g;
+
+function MathText({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(MATH_SEGMENT_PATTERN).map((segment, index) => {
+        const displayMode = segment.startsWith("$$") && segment.endsWith("$$");
+        const inlineMode =
+          !displayMode && segment.startsWith("$") && segment.endsWith("$");
+        if (!displayMode && !inlineMode) return segment;
+
+        const delimiterLength = displayMode ? 2 : 1;
+        const expression = segment.slice(delimiterLength, -delimiterLength);
+        const html = katex.renderToString(expression, {
+          displayMode,
+          throwOnError: false,
+          strict: false,
+          output: "htmlAndMathml",
+        });
+        return (
+          <span
+            key={`${index}-${expression}`}
+            className={
+              displayMode
+                ? "my-2 block max-w-full overflow-x-auto py-1 text-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                : "inline-block max-w-full overflow-visible align-middle"
+            }
+            dangerouslySetInnerHTML={{ __html: html }}
+          />
+        );
+      })}
+    </>
+  );
+}
 
 type SessionAnswer = {
   response: number | string;
@@ -340,7 +377,7 @@ export default function AiPythonWeekQuizView() {
           </div>
 
           <h1 className="whitespace-pre-wrap text-xl font-black leading-8 tracking-tight text-slate-900 sm:text-2xl">
-            {current.prompt}
+            <MathText text={current.prompt} />
           </h1>
 
           {current.code ? (
@@ -405,7 +442,7 @@ export default function AiPythonWeekQuizView() {
                       )}
                     </span>
                     <span className="min-w-0 flex-1 whitespace-pre-wrap font-mono text-sm font-bold">
-                      {option}
+                      <MathText text={option} />
                     </span>
                   </button>
                 );
@@ -489,15 +526,21 @@ export default function AiPythonWeekQuizView() {
                   </p>
                   {!currentAnswer.correct && current.questionType !== "multiple-choice" ? (
                     <p className="mt-2 whitespace-pre-wrap text-sm font-bold text-slate-800">
-                      모범 답안: {current.modelAnswer ?? current.acceptedAnswers?.[0]}
+                      모범 답안:{" "}
+                      <MathText
+                        text={current.modelAnswer ?? current.acceptedAnswers?.[0] ?? ""}
+                      />
                     </p>
                   ) : null}
                   <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                    {current.explanation}
+                    <MathText text={current.explanation} />
                   </p>
                   {current.questionType === "essay" && gradeDetails ? (
                     <p className="mt-2 text-xs text-slate-500">
-                      일치 핵심어: {gradeDetails.matchedKeywords.join(" · ") || "없음"}
+                      일치 핵심어:{" "}
+                      <MathText
+                        text={gradeDetails.matchedKeywords.join(" · ") || "없음"}
+                      />
                     </p>
                   ) : null}
                 </div>
@@ -519,7 +562,7 @@ export default function AiPythonWeekQuizView() {
               </button>
               {hintOpen ? (
                 <p className="mt-3 rounded-xl border border-amber-100 bg-amber-50/60 px-4 py-3 text-sm leading-6 text-amber-900">
-                  {current.hint}
+                  <MathText text={current.hint} />
                 </p>
               ) : null}
             </div>

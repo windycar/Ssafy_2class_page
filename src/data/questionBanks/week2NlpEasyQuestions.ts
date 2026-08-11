@@ -320,10 +320,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "순차 데이터 & RNN",
       questionType: "multiple-choice",
-      prompt: "기본 RNN의 은닉 상태 업데이트 수식 $h_t = \tanh(W_{hh}h_{t-1} + W_{xh}x_t)$ 에 주로 쓰이는 활성화 함수는?",
+      prompt: "기본 RNN의 은닉 상태 업데이트 수식 $h_t = \\tanh(W_{hh}h_{t-1} + W_{xh}x_t)$ 에 주로 쓰이는 활성화 함수는?",
       options: ["tanh", "Softmax", "Sigmoid", "ReLU"],
       answer: 0,
-      explanation: "기본 RNN 구조의 은닉 상태 계산에는 하이퍼볼릭 탄젠트($\tanh$) 함수가 활성화 함수로 사용됩니다[cite: 2].",
+      explanation: "기본 RNN 구조의 은닉 상태 계산에는 하이퍼볼릭 탄젠트($\\tanh$) 함수가 활성화 함수로 사용됩니다[cite: 2].",
       hint: "-1과 1 사이의 범위를 갖는 함수입니다[cite: 2]."
     },
     {
@@ -541,7 +541,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       prompt: "LSTM 게이트들이 열림(1)과 닫힘(0) 사이의 스위치 제어 비율을 구하기 위해 공통적으로 사용하는 활성화 함수는?",
       options: ["Sigmoid (시그모이드)", "Softmax", "ReLU", "Identity"],
       answer: 0,
-      explanation: "게이트 제어 비율(0~1)을 구하기 위해 Sigmoid 함수 $\sigma$를 사용합니다[cite: 2].",
+      explanation: "게이트 제어 비율(0~1)을 구하기 위해 Sigmoid 함수 $\\sigma$를 사용합니다[cite: 2].",
       hint: "0과 1 사이의 출력을 내는 S자형 함수입니다[cite: 2]."
     },
     {
@@ -558,7 +558,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "모든 값을 0으로 초기화함"
       ],
       answer: 0,
-      explanation: "$C_t = f_t * C_{t-1} + i_t * \tilde{C}_t$ 수식에 따라 버릴 정보는 지우고 새 정보를 가산합니다[cite: 2].",
+      explanation: "$C_t = f_t * C_{t-1} + i_t * \\tilde{C}_t$ 수식에 따라 버릴 정보는 지우고 새 정보를 가산합니다[cite: 2].",
       hint: "Forget gate 곱과 Input gate 곱의 합입니다[cite: 2]."
     },
     {
@@ -978,7 +978,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "Transformer & Self-Attention",
       questionType: "multiple-choice",
-      prompt: "트랜스포머 디코더에서 미래 토큰을 미리 참조하지 못하도록 $-\infty$ 마스킹을 적용하는 Self-Attention 기법은?",
+      prompt: "트랜스포머 디코더에서 미래 토큰을 미리 참조하지 못하도록 $-\\infty$ 마스킹을 적용하는 Self-Attention 기법은?",
       options: ["Masked Self-Attention", "Multi-Head Attention", "Cross-Attention", "Scaled Dot-Product"],
       answer: 0,
       explanation: "미래 단어의 위치를 마스킹하여 순차 생성이 이루어지도록 제한합니다[cite: 2].",

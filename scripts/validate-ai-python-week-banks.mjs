@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs";
 import { createServer } from "vite";
+import katex from "katex";
 
 const EXPECTED_DIFFICULTY_TYPE_COUNTS = {
   week1: {
@@ -108,6 +109,21 @@ try {
         question.modelAnswer ?? "",
         ...question.options,
       ].join(" ");
+      if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(visibleText)) {
+        failures.push(`${week}: 제어문자 포함 ${question.id}`);
+      }
+      for (const match of visibleText.matchAll(/\$([^$\r\n]+?)\$/g)) {
+        try {
+          katex.renderToString(match[1], {
+            throwOnError: true,
+            strict: false,
+          });
+        } catch (error) {
+          failures.push(
+            `${week}: 수식 문법 오류 ${question.id} (${error instanceof Error ? error.message : String(error)})`,
+          );
+        }
+      }
       if (forbiddenReference.test(visibleText)) {
         failures.push(`${week}: 자료 의존 표현 ${question.id}`);
       }

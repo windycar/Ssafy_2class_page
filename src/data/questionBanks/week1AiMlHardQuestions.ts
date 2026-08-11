@@ -30,15 +30,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "AI/ML 기초 및 데이터",
       questionType: "multiple-choice",
-      prompt: "모형 가정 $Y = f^*(X) + \epsilon$에서 예측 모델 $\hat{f}(X)$의 기대 오차 $E[(Y - \hat{f}(X))^2]$를 분해했을 때, 줄일 수 없는 오차(Irreducible Error)에 해당하는 항목은?",
+      prompt: "모형 가정 $Y = f^*(X) + \\epsilon$에서 예측 모델 $\\hat{f}(X)$의 기대 오차 $E[(Y - \\hat{f}(X))^2]$를 분해했을 때, 줄일 수 없는 오차(Irreducible Error)에 해당하는 항목은?",
       options: [
-        "측정 오차의 분산 $\text{Var}(\epsilon)$",
-        "모델의 편향 제곱 $(f^*(X) - E[\hat{f}(X)])^2$",
-        "모델의 분산 $\text{Var}(\hat{f}(X))$",
-        "가설 공간의 크기 $|\mathcal{F}|$"
+        "측정 오차의 분산 $\\text{Var}(\\epsilon)$",
+        "모델의 편향 제곱 $(f^*(X) - E[\\hat{f}(X)])^2$",
+        "모델의 분산 $\\text{Var}(\\hat{f}(X))$",
+        "가설 공간의 크기 $|\\mathcal{F}|$"
       ],
       answer: 0,
-      explanation: "기대 예측 오차는 줄일 수 있는 오차(편향 제곱 + 분산)와 데이터 자체 노이즈인 줄일 수 없는 오차 $\text{Var}(\epsilon)$의 합으로 분해됩니다[cite: 5].",
+      explanation: "기대 예측 오차는 줄일 수 있는 오차(편향 제곱 + 분산)와 데이터 자체 노이즈인 줄일 수 없는 오차 $\\text{Var}(\\epsilon)$의 합으로 분해됩니다[cite: 5].",
       hint: "모델을 아무리 완벽하게 학습시켜도 지울 수 없는 데이터 자체의 노이즈 항입니다[cite: 5]."
     },
     {
@@ -47,7 +47,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "AI/ML 기초 및 데이터",
       questionType: "multiple-choice",
-      prompt: "가설 공간 $\mathcal{F}$를 특정 함수군(예: 선형 함수)으로 제한함으로써 보지 못한 데이터에 대해 우선적인 예측 규칙을 부여하는 머신러닝의 핵심 개념은?",
+      prompt: "가설 공간 $\\mathcal{F}$를 특정 함수군(예: 선형 함수)으로 제한함으로써 보지 못한 데이터에 대해 우선적인 예측 규칙을 부여하는 머신러닝의 핵심 개념은?",
       options: [
         "귀납적 편향 (Inductive Bias)",
         "과적합 (Overfitting)",
@@ -64,10 +64,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "AI/ML 기초 및 데이터",
       questionType: "multiple-choice",
-      prompt: "피처 벡터 $X \in \mathbb{R}^p$에서 피처 차원 $p$가 데이터 샘플 수 $n$보다 훨씬 커지는 $p \gg n$ 상황(고차원 데이터)에서 나타나는 위험은?",
+      prompt: "피처 벡터 $X \\in \\mathbb{R}^p$에서 피처 차원 $p$가 데이터 샘플 수 $n$보다 훨씬 커지는 $p \\gg n$ 상황(고차원 데이터)에서 나타나는 위험은?",
       options: [
         "가설 공간의 자유도가 지나치게 높아져 모델이 표본 잡음을 완벽히 외우는 과적합 위험이 극대화된다.",
-        "측정 오차 $\epsilon$이 수학적으로 0으로 소멸한다.",
+        "측정 오차 $\\epsilon$이 수학적으로 0으로 소멸한다.",
         "가설 공간 내의 후보 함수 개수가 1개로 축소된다.",
         "모든 피처 간 상관관계가 자동으로 0이 된다."
       ],
@@ -81,7 +81,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "AI/ML 기초 및 데이터",
       questionType: "multiple-choice",
-      prompt: "가설 공간 $\mathcal{F}$의 유연성(Flexibility / 표현력)과 모델의 해석 가능성(Interpretability) 간의 관계에 대한 바른 설명은?",
+      prompt: "가설 공간 $\\mathcal{F}$의 유연성(Flexibility / 표현력)과 모델의 해석 가능성(Interpretability) 간의 관계에 대한 바른 설명은?",
       options: [
         "유연성이 높은 복잡한 모델일수록 피처와 라벨 간의 관계를 사람이 직관적으로 이해하기 어려운 트레이드오프 관계이다.",
         "유연성이 높아질수록 해석 가능성도 항상 비례하여 높아진다.",
@@ -98,7 +98,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "AI/ML 기초 및 데이터",
       questionType: "multiple-choice",
-      prompt: "2D 피처 공간에서 참 함수 $Y = f^*(X_1, X_2) + \epsilon$의 곡면(Surface) 구조를 학습할 때, 데이터점 주변에서의 국소적 선형 근사가 가질 수 있는 한계는?",
+      prompt: "2D 피처 공간에서 참 함수 $Y = f^*(X_1, X_2) + \\epsilon$의 곡면(Surface) 구조를 학습할 때, 데이터점 주변에서의 국소적 선형 근사가 가질 수 있는 한계는?",
       options: [
         "피처 공간 전체의 급격한 곡률이나 비선형 상호작용 패턴을 대역적으로 설명하지 못한다.",
         "측정 오차의 기댓값을 음수로 만든다.",
@@ -149,7 +149,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "AI/ML 기초 및 데이터",
       questionType: "multiple-choice",
-      prompt: "유한한 개수의 데이터셋 $D = \{(x_i, y_i)\}_{i=1}^n$ 만으로는 참 함수 $f^*$를 유일하게 결정할 수 없다는 이론적 문제는?",
+      prompt: "유한한 개수의 데이터셋 $D = \\{(x_i, y_i)\\}_{i=1}^n$ 만으로는 참 함수 $f^*$를 유일하게 결정할 수 없다는 이론적 문제는?",
       options: [
         "식별 불가능성 (Unidentifiability / Ill-posed Problem)",
         "완벽한 정규화 (Perfect Regularization)",
@@ -217,7 +217,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "AI/ML 기초 및 데이터",
       questionType: "multiple-choice",
-      prompt: "다변량 피처 공간 $\mathbb{R}^p$에서 샘플 $x_i$와 $x_j$ 간의 거리를 유클리드 거리로 측정할 때, 피처 스케일(Scale) 정규화가 이루어지지 않으면 발생하는 문제는?",
+      prompt: "다변량 피처 공간 $\\mathbb{R}^p$에서 샘플 $x_i$와 $x_j$ 간의 거리를 유클리드 거리로 측정할 때, 피처 스케일(Scale) 정규화가 이루어지지 않으면 발생하는 문제는?",
       options: [
         "값의 범위(Scale)가 큰 피처 하나가 전체 거리 계산 결과를 지배하여 다른 중요 피처들의 영향력이 묻힌다.",
         "거리 계산값이 항상 0이 된다.",
@@ -260,11 +260,11 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "AI/ML 기초 및 데이터",
       questionType: "essay",
-      prompt: "모형 $Y = f^*(X) + \epsilon$에서 새로운 입력 $X$에 대한 예측 오차 $E[(Y - \hat{f}(X))^2]$가 '줄일 수 있는 오차(Reducible Error)'와 '줄일 수 없는 오차(Irreducible Error)'로 어떻게 분해되는지 수식적 의미와 함께 서술하시오.",
+      prompt: "모형 $Y = f^*(X) + \\epsilon$에서 새로운 입력 $X$에 대한 예측 오차 $E[(Y - \\hat{f}(X))^2]$가 '줄일 수 있는 오차(Reducible Error)'와 '줄일 수 없는 오차(Irreducible Error)'로 어떻게 분해되는지 수식적 의미와 함께 서술하시오.",
       options: [],
       answer: null,
       acceptedAnswers: ["Reducible", "Irreducible", "편향", "분산", "노이즈"],
-      modelAnswer: "예측 오차는 $E[(f^*(X) - \hat{f}(X))^2] + \text{Var}(\epsilon)$ 으로 분해된다. 앞항은 모델 학습을 통해 줄일 수 있는 오차(Reducible Error)로서 편향 제곱과 모델 분산의 합으로 구성되며, 뒤항 $\text{Var}(\epsilon)$은 데이터 자체의 노이즈 및 측정 한계로 인해 어떤 모델로도 줄일 수 없는 오차(Irreducible Error)이다[cite: 5].",
+      modelAnswer: "예측 오차는 $E[(f^*(X) - \\hat{f}(X))^2] + \\text{Var}(\\epsilon)$ 으로 분해된다. 앞항은 모델 학습을 통해 줄일 수 있는 오차(Reducible Error)로서 편향 제곱과 모델 분산의 합으로 구성되며, 뒤항 $\\text{Var}(\\epsilon)$은 데이터 자체의 노이즈 및 측정 한계로 인해 어떤 모델로도 줄일 수 없는 오차(Irreducible Error)이다[cite: 5].",
       rubricKeywords: ["줄일 수 있는 오차 (편향^2 + 분산)", "줄일 수 없는 오차 $\\text{Var}(\\epsilon)$", "데이터 자체 노이즈"],
       minLength: 20,
       explanation: "기대 예측 오차 수식의 줄일 수 있는 오차(편향+분산)와 데이터 노이즈인 줄일 수 없는 오차 분해를 서술합니다[cite: 5].",
@@ -280,7 +280,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "지도학습 및 평가 지표",
       questionType: "multiple-choice",
-      prompt: "이진 분류에서 정답 $y_i \in \{0, 1\}$에 대해 베르누이 분포 가능도를 최대화하는 MLE 문제로부터 교차 엔트로피(Cross-Entropy) 손실함수가 유도되는 수식적 연결 원리는?",
+      prompt: "이진 분류에서 정답 $y_i \\in \\{0, 1\\}$에 대해 베르누이 분포 가능도를 최대화하는 MLE 문제로부터 교차 엔트로피(Cross-Entropy) 손실함수가 유도되는 수식적 연결 원리는?",
       options: [
         "음의 로그 우도(Negative Log-Likelihood, NLL)를 최소화하는 것이 교차 엔트로피 손실을 최소화하는 것과 수학적으로 완벽히 동일하기 때문",
         "MSE의 제곱근을 취한 것과 같기 때문",
@@ -288,7 +288,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "모든 예측 확률을 0.5로 고정해주기 때문"
       ],
       answer: 0,
-      explanation: "베르누이 우도 함수에 $-\log$를 취해 정리하면 분류의 대표 손실함수인 Cross-Entropy(NLL) 수식이 정확히 도출됩니다[cite: 5].",
+      explanation: "베르누이 우도 함수에 $-\\log$를 취해 정리하면 분류의 대표 손실함수인 Cross-Entropy(NLL) 수식이 정확히 도출됩니다[cite: 5].",
       hint: "음의 로그 우도(Negative Log-Likelihood) 최소화와 교차 엔트로피는 동일합니다[cite: 5]."
     },
     {
@@ -297,15 +297,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "지도학습 및 평가 지표",
       questionType: "multiple-choice",
-      prompt: "결정계수 $R^2 = 1 - \frac{\text{SS}_{\text{res}}}{\text{SS}_{\text{tot}}}$ 수식에서 $\text{SS}_{\text{tot}} = \sum (y_i - \bar{y})^2$ 와 $\text{SS}_{\text{res}} = \sum (y_i - \hat{y}_i)^2$ 의 의미로 바른 것은?",
+      prompt: "결정계수 $R^2 = 1 - \\frac{\\text{SS}_{\\text{res}}}{\\text{SS}_{\\text{tot}}}$ 수식에서 $\\text{SS}_{\\text{tot}} = \\sum (y_i - \\bar{y})^2$ 와 $\\text{SS}_{\\text{res}} = \\sum (y_i - \\hat{y}_i)^2$ 의 의미로 바른 것은?",
       options: [
-        "$\text{SS}_{\text{tot}}$는 라벨의 전체 총변동(총제곱합)이고, $\text{SS}_{\text{res}}$는 모델이 설명하지 못하고 남은 잔차제곱합이다.",
-        "$\text{SS}_{\text{tot}}$는 모델의 예측값 총합이다.",
-        "$\text{SS}_{\text{res}}$는 독립 변수 $X$의 편차제곱합이다.",
-        "$\text{SS}_{\text{tot}}$는 항상 0이다."
+        "$\\text{SS}_{\\text{tot}}$는 라벨의 전체 총변동(총제곱합)이고, $\\text{SS}_{\\text{res}}$는 모델이 설명하지 못하고 남은 잔차제곱합이다.",
+        "$\\text{SS}_{\\text{tot}}$는 모델의 예측값 총합이다.",
+        "$\\text{SS}_{\\text{res}}$는 독립 변수 $X$의 편차제곱합이다.",
+        "$\\text{SS}_{\\text{tot}}$는 항상 0이다."
       ],
       answer: 0,
-      explanation: "전체 변동량($\text{SS}_{\text{tot}}$) 대비 모델 오차($\text{SS}_{\text{res}}$)의 비율을 1에서 뺌으로써 모델의 설명력 비율 $R^2$을 구합니다[cite: 5].",
+      explanation: "전체 변동량($\\text{SS}_{\\text{tot}}$) 대비 모델 오차($\\text{SS}_{\\text{res}}$)의 비율을 1에서 뺌으로써 모델의 설명력 비율 $R^2$을 구합니다[cite: 5].",
       hint: "총변동 대비 설명하지 못한 잔차 변동의 비율을 1에서 뺍니다[cite: 5]."
     },
     {
@@ -316,10 +316,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "무의미한 피처가 추가될 때 $R^2$이 무조건 증가하는 단점을 보완하기 위해 자유도(샘플 수 $n$, 피처 수 $p$)를 고려한 수정 결정계수(Adjusted $R^2$) 수식은?",
       options: [
-        "$R_{\text{adj}}^2 = 1 - \left[ \frac{(1 - R^2)(n - 1)}{n - p - 1} \right]$",
-        "$R_{\text{adj}}^2 = R^2 \times \frac{n}{p}$",
-        "$R_{\text{adj}}^2 = 1 - \frac{p}{n}$",
-        "$R_{\text{adj}}^2 = R^2 - p$"
+        "$R_{\\text{adj}}^2 = 1 - \\left[ \\frac{(1 - R^2)(n - 1)}{n - p - 1} \\right]$",
+        "$R_{\\text{adj}}^2 = R^2 \\times \\frac{n}{p}$",
+        "$R_{\\text{adj}}^2 = 1 - \\frac{p}{n}$",
+        "$R_{\\text{adj}}^2 = R^2 - p$"
       ],
       answer: 0,
       explanation: "수정 결정계수는 샘플 수 $n$과 피처 수 $p$로 자유도를 조정하여 무의미한 피처 추가 시 감점 페널티를 부여합니다[cite: 5].",
@@ -377,16 +377,16 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "지도학습 및 평가 지표",
       questionType: "multiple-choice",
-      prompt: "실제 정답이 $y=1$인 샘플에 대해 분류 모델의 예측 확률 $\hat{p} \to 0$ 으로 잘못 확신할 때 Cross-Entropy 손실값이 보여주는 극단적 동작은?",
+      prompt: "실제 정답이 $y=1$인 샘플에 대해 분류 모델의 예측 확률 $\\hat{p} \\to 0$ 으로 잘못 확신할 때 Cross-Entropy 손실값이 보여주는 극단적 동작은?",
       options: [
-        "손실 $L = -\log(\hat{p})$ 이 무한대($+\infty$)로 급격히 발산하여 모델에 막대한 손실 페널티를 인가한다.",
+        "손실 $L = -\\log(\\hat{p})$ 이 무한대($+\\infty$)로 급격히 발산하여 모델에 막대한 손실 페널티를 인가한다.",
         "손실값이 0으로 수렴한다.",
         "손실값이 음수로 변한다.",
         "손실값이 1로 고정된다."
       ],
       answer: 0,
-      explanation: "정답($y=1$)에 대해 확률을 0에 가깝게 잘못 예측하면 $-\log(0) \to \infty$ 가 되어 극단적 손실 페널티를 부과합니다[cite: 5].",
-      hint: "로그 함수 $-\log(x)$에서 $x \to 0$일 때의 발산 특성입니다[cite: 5]."
+      explanation: "정답($y=1$)에 대해 확률을 0에 가깝게 잘못 예측하면 $-\\log(0) \\to \\infty$ 가 되어 극단적 손실 페널티를 부과합니다[cite: 5].",
+      hint: "로그 함수 $-\\log(x)$에서 $x \\to 0$일 때의 발산 특성입니다[cite: 5]."
     },
     {
       id: "ml-c2-mc-hard-008",
@@ -394,7 +394,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "지도학습 및 평가 지표",
       questionType: "multiple-choice",
-      prompt: "테스트 손실과 훈련 손실의 차이인 Generalization Gap ($\text{Loss}_{\text{test}} - \text{Loss}_{\text{train}}$)이 점차 커지는 현상이 나타내는 시사점은?",
+      prompt: "테스트 손실과 훈련 손실의 차이인 Generalization Gap ($\\text{Loss}_{\\text{test}} - \\text{Loss}_{\\text{train}}$)이 점차 커지는 현상이 나타내는 시사점은?",
       options: [
         "모델이 훈련 데이터에 과적합(Overfitting)되기 시작하여 일반화 능력이 상실되고 있다.",
         "모델이 언더피팅 상태에서 벗어나 완벽히 학습되었다.",
@@ -411,7 +411,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "지도학습 및 평가 지표",
       questionType: "multiple-choice",
-      prompt: "분류의 0-1 손실함수 $\mathbb{I}(y_i \neq \hat{y}_i)$를 직접 경사하강법 학습의 손실함수로 사용할 수 없는 근본적 수학적 이유는?",
+      prompt: "분류의 0-1 손실함수 $\\mathbb{I}(y_i \\neq \\hat{y}_i)$를 직접 경사하강법 학습의 손실함수로 사용할 수 없는 근본적 수학적 이유는?",
       options: [
         "지시 함수 형태라 불연속적이고 대부분 구간에서 미분값이 0이 되어 기울기 전파가 불가능하기 때문",
         "계산 결과가 무조건 음수가 나오기 때문",
@@ -520,7 +520,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "검증 및 교차검증",
       questionType: "multiple-choice",
-      prompt: "훈련 오류 $\text{Err}_{\text{train}}$이 실제 테스트 오류 $\text{Err}_{\text{test}}$에 비해 낙관적으로 과소평가되는 통계적 이유는?",
+      prompt: "훈련 오류 $\\text{Err}_{\\text{train}}$이 실제 테스트 오류 $\\text{Err}_{\\text{test}}$에 비해 낙관적으로 과소평가되는 통계적 이유는?",
       options: [
         "모델의 파라미터가 훈련 데이터 샘플의 무작위 노이즈와 특성을 직접 기팅(Fitting)하여 맞추도록 최소화되었기 때문",
         "훈련 데이터의 샘플 수가 무한대이기 때문",
@@ -600,11 +600,11 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "검증 및 교차검증",
       questionType: "multiple-choice",
-      prompt: "회귀 모델의 기대 테스트 오차 분해 수식 $E[(y_0 - \hat{f}(x_0))^2] = \text{Bias}(\hat{f}(x_0))^2 + \text{Var}(\hat{f}(x_0)) + \text{Var}(\epsilon)$ 에 대한 해석으로 옳지 않은 것은?",
+      prompt: "회귀 모델의 기대 테스트 오차 분해 수식 $E[(y_0 - \\hat{f}(x_0))^2] = \\text{Bias}(\\hat{f}(x_0))^2 + \\text{Var}(\\hat{f}(x_0)) + \\text{Var}(\\epsilon)$ 에 대한 해석으로 옳지 않은 것은?",
       options: [
         "모델의 복잡도를 높이면 편향과 분산이 모두 동시에 감소하여 오차가 0이 된다.",
         "모델 복잡도를 높이면 편향은 줄어들지만 분산은 증가한다.",
-        "학습 알고리즘을 아무리 개선해도 데이터 노이즈 $\text{Var}(\epsilon)$ 이하로 오차를 줄일 수는 없다.",
+        "학습 알고리즘을 아무리 개선해도 데이터 노이즈 $\\text{Var}(\\epsilon)$ 이하로 오차를 줄일 수는 없다.",
         "최적의 일반화 모델은 편향과 분산의 합이 최소가 되는 균형 지점이다."
       ],
       answer: 0,
@@ -818,10 +818,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "비지도학습 및 군집화",
       questionType: "multiple-choice",
-      prompt: "샘플 $i$의 응집도 $a(i)$(자신 군집 내 평균 거리)와 분리도 $b(i)$(가장 가까운 타 군집과의 평균 거리)를 이용한 실루엣 계수 수식 $s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))}$ 에서 ideal한 클러스터링일 때 $s(i)$ 값은?",
+      prompt: "샘플 $i$의 응집도 $a(i)$(자신 군집 내 평균 거리)와 분리도 $b(i)$(가장 가까운 타 군집과의 평균 거리)를 이용한 실루엣 계수 수식 $s(i) = \\frac{b(i) - a(i)}{\\max(a(i), b(i))}$ 에서 ideal한 클러스터링일 때 $s(i)$ 값은?",
       options: ["1에 가까운 값", "0에 가까운 값", "-1에 가까운 값", "무한대"],
       answer: 0,
-      explanation: "자신 군집과는 가깝고($a(i) \to 0$) 타 군집과는 멀면($b(i) \gg a(i)$) 실루엣 계수 $s(i)$는 최댓값 1에 가까워집니다[cite: 5].",
+      explanation: "자신 군집과는 가깝고($a(i) \\to 0$) 타 군집과는 멀면($b(i) \\gg a(i)$) 실루엣 계수 $s(i)$는 최댓값 1에 가까워집니다[cite: 5].",
       hint: "완벽하게 응집되고 잘 분리되면 1에 수렴합니다[cite: 5]."
     },
     {
@@ -830,7 +830,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "비지도학습 및 군집화",
       questionType: "multiple-choice",
-      prompt: "PCA에서 데이터 공분산 행렬 $\Sigma$의 고유값 분해(Eigenvalue Decomposition) 시, 고유값(Eigenvalue) $\lambda_k$가 갖는 의미는?",
+      prompt: "PCA에서 데이터 공분산 행렬 $\\Sigma$의 고유값 분해(Eigenvalue Decomposition) 시, 고유값(Eigenvalue) $\\lambda_k$가 갖는 의미는?",
       options: [
         "해당 고유벡터(주성분 축) 방향으로 데이터가 보존하고 있는 분산(Variance)의 크기",
         "해당 주성분 축의 오차 비율",
@@ -838,7 +838,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "라벨 $Y$와의 상관계수"
       ],
       answer: 0,
-      explanation: "공분산 행렬의 고유값 $\lambda_k$는 사영된 $k$번째 주성분 축 방향의 데이터 분산 크기를 의미합니다[cite: 5].",
+      explanation: "공분산 행렬의 고유값 $\\lambda_k$는 사영된 $k$번째 주성분 축 방향의 데이터 분산 크기를 의미합니다[cite: 5].",
       hint: "해당 축 방향으로 퍼져 있는 분산의 크기입니다[cite: 5]."
     },
     {
@@ -898,7 +898,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "비지도학습 및 군집화",
       questionType: "multiple-choice",
-      prompt: "PCA를 통해 구해진 주성분 축들($\mathbf{u}_1, \mathbf{u}_2, ...$)이 지니는 중요한 수학적 상호 관계 성질은?",
+      prompt: "PCA를 통해 구해진 주성분 축들($\\mathbf{u}_1, \\mathbf{u}_2, ...$)이 지니는 중요한 수학적 상호 관계 성질은?",
       options: [
         "모든 주성분 축들은 서로 완벽하게 직교(Orthogonal)하며 공분산(상관관계)이 0이다.",
         "모든 주성분 축들은 서로 평행하다.",
@@ -967,10 +967,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       options: [],
       answer: null,
       acceptedAnswers: ["공분산 행렬", "고유벡터", "분산 최대화", "사영"],
-      modelAnswer: "PCA는 데이터를 단위 벡터 $u$로 사영(Projection)시켰을 때 사영된 데이터의 분산 $u^T \Sigma u$를 최대화하는 과정이다. 라그랑주 승수법을 적용하면 $\Sigma u = \lambda u$ 라는 고유값 방정식이 유도되며, 이때 분산 크기 자체가 고유값 $\lambda$가 된다. 따라서 가장 큰 고유값에 대응하는 고유벡터가 데이터 분산을 최대 보존하는 첫 번째 주성분 축이 된다[cite: 5].",
+      modelAnswer: "PCA는 데이터를 단위 벡터 $u$로 사영(Projection)시켰을 때 사영된 데이터의 분산 $u^T \\Sigma u$를 최대화하는 과정이다. 라그랑주 승수법을 적용하면 $\\Sigma u = \\lambda u$ 라는 고유값 방정식이 유도되며, 이때 분산 크기 자체가 고유값 $\\lambda$가 된다. 따라서 가장 큰 고유값에 대응하는 고유벡터가 데이터 분산을 최대 보존하는 첫 번째 주성분 축이 된다[cite: 5].",
       rubricKeywords: ["사영된 분산 $u^T \\Sigma u$ 최대화", "라그랑주 승수법 고유값 방정식 $\\Sigma u = \\lambda u$", "최대 고유값 대응 고유벡터 = 첫 주성분"],
       minLength: 20,
-      explanation: "사영 분산 $u^\top \Sigma u$ 극대화 라그랑주 유도와 최대 고유값 대응 고유벡터선정 원리를 서술합니다[cite: 5].",
+      explanation: "사영 분산 $u^\\top \\Sigma u$ 극대화 라그랑주 유도와 최대 고유값 대응 고유벡터선정 원리를 서술합니다[cite: 5].",
       hint: "사영 분산 식과 공분산 행렬의 고유값/고유벡터 유도를 서술하세요[cite: 5]."
     },
 
@@ -983,7 +983,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "다중선형회귀 행렬식 $y = X\beta + \epsilon$에서 잔차제곱합 $\text{RSS}(\beta) = (y - X\beta)^\top (y - X\beta)$를 $\beta$에 대해 미분하여 0으로 유도하는 정규방정식 도함수 과정으로 바른 것은?",
+      prompt: "다중선형회귀 행렬식 $y = X\\beta + \\epsilon$에서 잔차제곱합 $\\text{RSS}(\\beta) = (y - X\\beta)^\\top (y - X\\beta)$를 $\\beta$에 대해 미분하여 0으로 유도하는 정규방정식 도함수 과정으로 바른 것은?",
       options: [
         "$\\frac{\\partial \\text{RSS}}{\\partial \\beta} = -2 X^T y + 2 X^T X \\beta = 0 \\quad \\Longrightarrow \\quad X^T X \\hat{\\beta} = X^T y$",
         "$\\frac{\\partial \\text{RSS}}{\\partial \\beta} = X y - X^T X \\beta = 0$",
@@ -991,7 +991,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "$\\frac{\\partial \\text{RSS}}{\\partial \\beta} = 2 X \\beta = 0$"
       ],
       answer: 0,
-      explanation: "$\text{RSS} = y^\top y - 2\beta^\top X^\top y + \beta^\top X^\top X \beta$ 를 $\beta$로 미분하면 $-2X^\top y + 2X^\top X \beta = 0$ 이 유도됩니다[cite: 4]."
+      explanation: "$\\text{RSS} = y^\\top y - 2\\beta^\\top X^\\top y + \\beta^\\top X^\\top X \\beta$ 를 $\\beta$로 미분하면 $-2X^\\top y + 2X^\\top X \\beta = 0$ 이 유도됩니다[cite: 4]."
     },
     {
       id: "ml-c5-mc-hard-002",
@@ -999,15 +999,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "예측값 수식 $\hat{y} = X \hat{\beta} = X(X^\top X)^{-1}X^\top y = H y$ 에 등장하는 Hat Matrix $H$의 주요 수학적 성질은?",
+      prompt: "예측값 수식 $\\hat{y} = X \\hat{\\beta} = X(X^\\top X)^{-1}X^\\top y = H y$ 에 등장하는 Hat Matrix $H$의 주요 수학적 성질은?",
       options: [
-        "대칭 행렬($H^\top = H$)이자 등멱 행렬($H^2 = H$, Idempotent)이다.",
+        "대칭 행렬($H^\\top = H$)이자 등멱 행렬($H^2 = H$, Idempotent)이다.",
         "역행렬이 항상 존재하는 직교 행렬이다.",
         "대각 원소의 합(Trace)이 항상 0이다.",
         "모든 원소가 1인 단위 행렬이다."
       ],
       answer: 0,
-      explanation: "Hat Matrix $H = X(X^\top X)^{-1}X^\top$는 대칭성($H^\top = H$)과 등멱성($H^2 = H$)을 만족하는 사영(Projection) 행렬입니다[cite: 4]."
+      explanation: "Hat Matrix $H = X(X^\\top X)^{-1}X^\\top$는 대칭성($H^\\top = H$)과 등멱성($H^2 = H$)을 만족하는 사영(Projection) 행렬입니다[cite: 4]."
     },
     {
       id: "ml-c5-mc-hard-003",
@@ -1023,7 +1023,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "피처 $p$의 회귀 계수"
       ],
       answer: 0,
-      explanation: "대각 원소 $h_{ii} = \frac{\partial \hat{y}_i}{\partial y_i}$는 해당 데이터점 $x_i$가 회귀선 결정에 미치는 기하학적 영향력(Leverage)을 의미합니다[cite: 4]."
+      explanation: "대각 원소 $h_{ii} = \\frac{\\partial \\hat{y}_i}{\\partial y_i}$는 해당 데이터점 $x_i$가 회귀선 결정에 미치는 기하학적 영향력(Leverage)을 의미합니다[cite: 4]."
     },
     {
       id: "ml-c5-mc-hard-004",
@@ -1031,7 +1031,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "오차항 $\epsilon$의 기댓값이 0이고, 등분산성 및 자기상관이 없을 때 최소제곱추정량(OLS) $\hat{\beta}$가 BLUE(Best Linear Unbiased Estimator)임을 증명한 정리는?",
+      prompt: "오차항 $\\epsilon$의 기댓값이 0이고, 등분산성 및 자기상관이 없을 때 최소제곱추정량(OLS) $\\hat{\\beta}$가 BLUE(Best Linear Unbiased Estimator)임을 증명한 정리는?",
       options: ["가우스-마르코프 정리 (Gauss-Markov Theorem)", "중앙한계 정리", "베이즈 정리", "대수의 법칙"],
       answer: 0,
       explanation: "가우스-마르코프 정리에 의해 선형 비편향 추정량 중 OLS 추정량이 가장 최소 분산을 갖는 BLUE임이 증명됩니다[cite: 4]."
@@ -1044,13 +1044,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "피처 $X_j$를 나머지 피처들로 회귀시켰을 때의 결정계수를 $R_j^2$라 할 때, 다중공선성을 진단하는 분산팽창지수(VIF) 수식은?",
       options: [
-        "$\text{VIF}_j = \\frac{1}{1 - R_j^2}$",
+        "$\\text{VIF}_j = \\frac{1}{1 - R_j^2}$",
         "$\\text{VIF}_j = 1 - R_j^2$",
         "$\\text{VIF}_j = \\frac{R_j^2}{1 - R_j^2}$",
         "$\\text{VIF}_j = \\sqrt{R_j^2}$"
       ],
       answer: 0,
-      explanation: "$\text{VIF}_j = \frac{1}{1 - R_j^2}$ 이며, 보통 VIF > 10 일 때 심각한 다중공선성이 존재한다고 판단합니다[cite: 4]."
+      explanation: "$\\text{VIF}_j = \\frac{1}{1 - R_j^2}$ 이며, 보통 VIF > 10 일 때 심각한 다중공선성이 존재한다고 판단합니다[cite: 4]."
     },
     {
       id: "ml-c5-mc-hard-006",
@@ -1058,11 +1058,11 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "참 모형이 $Y = \beta_0 + \beta_1 X_1 + \beta_2 X_2 + \epsilon$ 인데, $X_2$를 생략하고 $X_1$만으로 회귀 적합시켰을 때 발생하는 생략 변수 편향(Omitted Variable Bias)은?",
+      prompt: "참 모형이 $Y = \\beta_0 + \\beta_1 X_1 + \\beta_2 X_2 + \\epsilon$ 인데, $X_2$를 생략하고 $X_1$만으로 회귀 적합시켰을 때 발생하는 생략 변수 편향(Omitted Variable Bias)은?",
       options: [
-        "$X_1$과 $X_2$ 사이에 상관관계가 존재하고 $\beta_2 \neq 0$ 이면, $\hat{\beta}_1$의 기대치가 참값 $\beta_1$과 달라져 편향이 발생한다.",
+        "$X_1$과 $X_2$ 사이에 상관관계가 존재하고 $\\beta_2 \\neq 0$ 이면, $\\hat{\\beta}_1$의 기대치가 참값 $\\beta_1$과 달라져 편향이 발생한다.",
         "$X_1$과 $X_2$가 상관관계가 없어도 항상 편향이 발생한다.",
-        "생략된 변수와 관계없이 $\hat{\beta}_1$은 무조건 비편향 추정량이 된다.",
+        "생략된 변수와 관계없이 $\\hat{\\beta}_1$은 무조건 비편향 추정량이 된다.",
         "편향이 아니라 오직 분산만 0으로 줄어든다."
       ],
       answer: 0,
@@ -1074,10 +1074,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "다중선형회귀에서 '모든 기울기 회귀 계수가 동시에 0이다 ($H_0: \beta_1 = \beta_2 = ... = \beta_p = 0$)'라는 귀무가설을 검정하는 통계량은?",
+      prompt: "다중선형회귀에서 '모든 기울기 회귀 계수가 동시에 0이다 ($H_0: \\beta_1 = \\beta_2 = ... = \\beta_p = 0$)'라는 귀무가설을 검정하는 통계량은?",
       options: ["F-통계량 (F-statistic)", "t-통계량", "z-통계량", "시그마 통계량"],
       answer: 0,
-      explanation: "모델 전체 유의성을 검정하는 귀무가설 $H_0: \beta_1 = ... = \beta_p = 0$ 은 F-statistic으로 전체 가설 검정을 수행합니다[cite: 4]."
+      explanation: "모델 전체 유의성을 검정하는 귀무가설 $H_0: \\beta_1 = ... = \\beta_p = 0$ 은 F-statistic으로 전체 가설 검정을 수행합니다[cite: 4]."
     },
     {
       id: "ml-c5-mc-hard-008",
@@ -1087,13 +1087,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "최소제곱법(OLS)의 기하학적 의미를 벡터 공간상에서 올바르게 표현한 것은?",
       options: [
-        "관측 라벨 벡터 $y$를 $X$의 컬럼 공간 $Col(X)$ 위로 직교 사영(Orthogonal Projection)시킨 결과가 예측 벡터 $\hat{y}$ 이다.",
+        "관측 라벨 벡터 $y$를 $X$의 컬럼 공간 $Col(X)$ 위로 직교 사영(Orthogonal Projection)시킨 결과가 예측 벡터 $\\hat{y}$ 이다.",
         "관측 벡터 $y$와 $X$가 서로 평행하다.",
-        "잔차 벡터 $e = y - \hat{y}$가 컬럼 공간 $Col(X)$와 완벽하게 평행하다.",
-        "예측 벡터 $\hat{y}$는 $Col(X)$의 수직 공간에 존재한다."
+        "잔차 벡터 $e = y - \\hat{y}$가 컬럼 공간 $Col(X)$와 완벽하게 평행하다.",
+        "예측 벡터 $\\hat{y}$는 $Col(X)$의 수직 공간에 존재한다."
       ],
       answer: 0,
-      explanation: "OLS 예측치 $\hat{y}$는 $y$를 $X$의 열공간(Column Space)에 직교 사영한 벡터이며, 따라서 잔차 $e = y - \hat{y}$는 열공간과 수직(Orthogonal)입니다[cite: 4]."
+      explanation: "OLS 예측치 $\\hat{y}$는 $y$를 $X$의 열공간(Column Space)에 직교 사영한 벡터이며, 따라서 잔차 $e = y - \\hat{y}$는 열공간과 수직(Orthogonal)입니다[cite: 4]."
     },
     {
       id: "ml-c5-mc-hard-009",
@@ -1112,15 +1112,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "피처 수 $p$가 샘플 수 $n$보다 많아지는 $p > n$ 고차원 상황에서 행렬 $X^\top X$의 성질은?",
+      prompt: "피처 수 $p$가 샘플 수 $n$보다 많아지는 $p > n$ 고차원 상황에서 행렬 $X^\\top X$의 성질은?",
       options: [
-        "행렬 $X^\top X$의 랭크가 최대 $n$이 되어 Singular(특이) 행렬이 되므로 역행렬이 존재하지 않는다.",
+        "행렬 $X^\\top X$의 랭크가 최대 $n$이 되어 Singular(특이) 행렬이 되므로 역행렬이 존재하지 않는다.",
         "역행렬이 무조건 유일하게 존재한다.",
         "모든 고유값이 무한대로 커진다.",
         "Hat Matrix가 단위 행렬이 된다."
       ],
       answer: 0,
-      explanation: "$p > n$ 이면 $X^\top X \in \mathbb{R}^{p \times p}$의 최대 랭크가 $n$에 불과해 가역성(Invertibility)이 상실되어 역행렬을 구할 수 없습니다[cite: 4]."
+      explanation: "$p > n$ 이면 $X^\\top X \\in \\mathbb{R}^{p \\times p}$의 최대 랭크가 $n$에 불과해 가역성(Invertibility)이 상실되어 역행렬을 구할 수 없습니다[cite: 4]."
     },
     {
       id: "ml-c5-mc-hard-011",
@@ -1128,15 +1128,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "2차 다항식 회귀 $Y = \beta_0 + \beta_1 X + \beta_2 X^2 + \epsilon$ 도 결국 '선형'회귀 분류에 속하는 수학적 이유는?",
+      prompt: "2차 다항식 회귀 $Y = \\beta_0 + \\beta_1 X + \\beta_2 X^2 + \\epsilon$ 도 결국 '선형'회귀 분류에 속하는 수학적 이유는?",
       options: [
-        "입력 $X$에 대해서는 비선형이지만, 추정해야 할 매개변수(파라미터) $\beta$들에 대해서는 여전히 선형(Linear in Parameters) 결합이기 때문",
+        "입력 $X$에 대해서는 비선형이지만, 추정해야 할 매개변수(파라미터) $\\beta$들에 대해서는 여전히 선형(Linear in Parameters) 결합이기 때문",
         "그래프를 그리면 직선이 되기 때문",
         "$X^2$ 항을 무시할 수 있기 때문",
         "활성화 함수 ReLU를 쓰기 때문"
       ],
       answer: 0,
-      explanation: "선형회귀에서 '선형'이란 입력 피처 $X$가 아닌 추정할 가중치 파라미터 $\beta$들에 대해 선형 결합임을 뜻하므로 다항회귀도 선형회귀입니다[cite: 4]."
+      explanation: "선형회귀에서 '선형'이란 입력 피처 $X$가 아닌 추정할 가중치 파라미터 $\\beta$들에 대해 선형 결합임을 뜻하므로 다항회귀도 선형회귀입니다[cite: 4]."
     },
     {
       id: "ml-c5-mc-hard-012",
@@ -1155,7 +1155,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "선형회귀",
       questionType: "short-answer",
-      prompt: "다중공선성 심각도를 진단하는 지표로 수식 $\frac{1}{1 - R_j^2}$ 로 정의되는 지표의 약자는?",
+      prompt: "다중공선성 심각도를 진단하는 지표로 수식 $\\frac{1}{1 - R_j^2}$ 로 정의되는 지표의 약자는?",
       options: [],
       answer: null,
       acceptedAnswers: ["VIF", "vif", "분산팽창지수", "분산 팽창 지수"],
@@ -1179,14 +1179,14 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "선형회귀",
       questionType: "essay",
-      prompt: "다중선형회귀 $y = X\beta + \epsilon$에서 예측치 $\hat{y} = X(X^\top X)^{-1} X^\top y = H y$ 가 갖는 기하학적 의미(직교 사영)와 잔차 벡터 $e = y - \hat{y}$ 가 $X$의 컬럼 공간 $Col(X)$와 이루는 수직(Orthogonal) 관계를 서술하시오.",
+      prompt: "다중선형회귀 $y = X\\beta + \\epsilon$에서 예측치 $\\hat{y} = X(X^\\top X)^{-1} X^\\top y = H y$ 가 갖는 기하학적 의미(직교 사영)와 잔차 벡터 $e = y - \\hat{y}$ 가 $X$의 컬럼 공간 $Col(X)$와 이루는 수직(Orthogonal) 관계를 서술하시오.",
       options: [],
       answer: null,
       acceptedAnswers: ["직교 사영", "컬럼 공간", "수직", "Orthogonal", "Hat matrix"],
-      modelAnswer: "예측치 $\hat{y}$는 $y$ 벡터를 $X$의 열(컬럼) 공간 $Col(X)$ 위로 직교 사영(Orthogonal Projection)시킨 최단 거리 벡터이다. 따라서 실제치와 예측치의 차이인 잔차 벡터 $e = y - \hat{y}$는 $X$의 컬럼 공간 $Col(X)$ 상의 모든 벡터와 직교(Orthogonal)하며, $X^T e = 0$ 이 성립한다[cite: 4].",
+      modelAnswer: "예측치 $\\hat{y}$는 $y$ 벡터를 $X$의 열(컬럼) 공간 $Col(X)$ 위로 직교 사영(Orthogonal Projection)시킨 최단 거리 벡터이다. 따라서 실제치와 예측치의 차이인 잔차 벡터 $e = y - \\hat{y}$는 $X$의 컬럼 공간 $Col(X)$ 상의 모든 벡터와 직교(Orthogonal)하며, $X^T e = 0$ 이 성립한다[cite: 4].",
       rubricKeywords: ["$Col(X)$ 위로의 직교 사영", "잔차 벡터 $e$와 $Col(X)$의 수직 관계", "$X^T e = 0$"],
       minLength: 20,
-      explanation: "OLS 예측치 $\hat{y}$의 직교 사영 기하학과 잔차 벡터 $e$의 수직($X^\top e = 0$) 성질을 서술합니다[cite: 4].",
+      explanation: "OLS 예측치 $\\hat{y}$의 직교 사영 기하학과 잔차 벡터 $e$의 수직($X^\\top e = 0$) 성질을 서술합니다[cite: 4].",
       hint: "열 공간으로의 직교 사영과 잔차 벡터가 수직을 이룬다는 기하학적 원리를 기술하세요[cite: 4]."
     },
 
@@ -1199,7 +1199,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "시그모이드 함수 $\sigma(z) = \frac{1}{1 + e^{-z}}$ 의 미분 도함수 $\sigma'(z)$를 $\sigma(z)$ 자체로 간결히 나타낸 수식은?",
+      prompt: "시그모이드 함수 $\\sigma(z) = \\frac{1}{1 + e^{-z}}$ 의 미분 도함수 $\\sigma'(z)$를 $\\sigma(z)$ 자체로 간결히 나타낸 수식은?",
       options: [
         "$\\sigma'(z) = \\sigma(z)(1 - \\sigma(z))$",
         "$\\sigma'(z) = \\sigma(z)^2$",
@@ -1207,7 +1207,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "$\\sigma'(z) = e^{-z} \\sigma(z)$"
       ],
       answer: 0,
-      explanation: "시그모이드 미분 공식은 $\sigma'(z) = \sigma(z)(1 - \sigma(z))$ 가 되어 경사하강법 계산이 매우 깔끔해집니다[cite: 4]."
+      explanation: "시그모이드 미분 공식은 $\\sigma'(z) = \\sigma(z)(1 - \\sigma(z))$ 가 되어 경사하강법 계산이 매우 깔끔해집니다[cite: 4]."
     },
     {
       id: "ml-c6-mc-hard-002",
@@ -1215,7 +1215,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "로지스틱 회귀의 Log-Likelihood $\ell(\beta) = \sum \left[ y_i \log p_i + (1 - y_i) \log(1 - p_i) \right]$ 를 $\beta$에 대해 경사 미분한 기울기 벡터 $\nabla_\beta \ell(\beta)$ 수식은?",
+      prompt: "로지스틱 회귀의 Log-Likelihood $\\ell(\\beta) = \\sum \\left[ y_i \\log p_i + (1 - y_i) \\log(1 - p_i) \\right]$ 를 $\\beta$에 대해 경사 미분한 기울기 벡터 $\\nabla_\\beta \\ell(\\beta)$ 수식은?",
       options: [
         "$\\nabla_\\beta \\ell(\\beta) = X^T (y - p)$",
         "$\\nabla_\\beta \\ell(\\beta) = X^T (y - p)^2$",
@@ -1223,7 +1223,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "$\\nabla_\\beta \\ell(\\beta) = y - X \\beta$"
       ],
       answer: 0,
-      explanation: "미분 결과 기울기 벡터는 $X^\top (y - p)$ 로 정제되며, 이는 OLS 잔차 수식과 놀라울 정도로 유사한 형태입니다[cite: 4]."
+      explanation: "미분 결과 기울기 벡터는 $X^\\top (y - p)$ 로 정제되며, 이는 OLS 잔차 수식과 놀라울 정도로 유사한 형태입니다[cite: 4]."
     },
     {
       id: "ml-c6-mc-hard-003",
@@ -1231,10 +1231,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "독립 변수 $X_1$이 1단위 증가할 때 성공 오즈 $\text{Odds}(X_1 + 1)$가 기존 오즈 $\text{Odds}(X_1)$의 몇 배가 되는지 알려주는 오즈비(Odds Ratio) 수식은?",
-      options: ["$\text{OR} = e^{\beta_1}$", "$\text{OR} = \beta_1$", "$\text{OR} = 1 + \beta_1$", "$\text{OR} = \log(\beta_1)$"],
+      prompt: "독립 변수 $X_1$이 1단위 증가할 때 성공 오즈 $\\text{Odds}(X_1 + 1)$가 기존 오즈 $\\text{Odds}(X_1)$의 몇 배가 되는지 알려주는 오즈비(Odds Ratio) 수식은?",
+      options: ["$\\text{OR} = e^{\\beta_1}$", "$\\text{OR} = \\beta_1$", "$\\text{OR} = 1 + \\beta_1$", "$\\text{OR} = \\log(\\beta_1)$"],
       answer: 0,
-      explanation: "로짓 차이 $\log \text{Odds}_{new} - \log \text{Odds}_{old} = \beta_1$ 이므로 지수를 취하면 오즈비 $\text{OR} = e^{\beta_1}$ 배가 됩니다[cite: 4]."
+      explanation: "로짓 차이 $\\log \\text{Odds}_{new} - \\log \\text{Odds}_{old} = \\beta_1$ 이므로 지수를 취하면 오즈비 $\\text{OR} = e^{\\beta_1}$ 배가 됩니다[cite: 4]."
     },
     {
       id: "ml-c6-mc-hard-004",
@@ -1255,13 +1255,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "데이터셋에서 특정 피처 하나만으로 클래스 0과 1이 완벽히 직선 분리되는 '완전 분리(Perfect Separation)'가 일어날 때 로지스틱 회귀의 발생 문제는?",
       options: [
-        "해당 피처의 회귀 계수 $\hat{\beta}$가 무한대($\pm \infty$)로 발산하여 MLE 수렴이 실패하고 수치적 에러가 난다.",
+        "해당 피처의 회귀 계수 $\\hat{\\beta}$가 무한대($\\pm \\infty$)로 발산하여 MLE 수렴이 실패하고 수치적 에러가 난다.",
         "모든 회귀 계수가 0이 된다.",
         "확률 출력이 0.5로 고정된다.",
         "오버피팅이 완전히 소멸한다."
       ],
       answer: 0,
-      explanation: "완전 분리 시 확률을 0과 1로 극단화하기 위해 회귀 계수 $\beta$가 무한대로 발산하여 MLE 추정이 실패하게 됩니다[cite: 4]."
+      explanation: "완전 분리 시 확률을 0과 1로 극단화하기 위해 회귀 계수 $\\beta$가 무한대로 발산하여 MLE 추정이 실패하게 됩니다[cite: 4]."
     },
     {
       id: "ml-c6-mc-hard-006",
@@ -1293,7 +1293,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "불연속 계단 함수"
       ],
       answer: 0,
-      explanation: "$P=0.5$ 일 때 $\log(p/(1-p)) = \log(1) = 0$ 이 되므로, 결정 경계는 선형 방정식 $\beta_0 + \beta^\top X = 0$ 이 됩니다[cite: 4]."
+      explanation: "$P=0.5$ 일 때 $\\log(p/(1-p)) = \\log(1) = 0$ 이 되므로, 결정 경계는 선형 방정식 $\\beta_0 + \\beta^\\top X = 0$ 이 됩니다[cite: 4]."
     },
     {
       id: "ml-c6-mc-hard-008",
@@ -1302,9 +1302,9 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       category: "로지스틱회귀",
       questionType: "multiple-choice",
       prompt: "선형회귀의 잔차제곱합(RSS) 역할을 대신하여 로지스틱 회귀 모형의 적합도(Goodness-of-fit)를 평가하는 통계량은?",
-      options: ["디비언스 (Deviance = $-2 \log \mathcal{L}$)", "결정계수 ($R^2$)", "F-통계량", "VIF"],
+      options: ["디비언스 (Deviance = $-2 \\log \\mathcal{L}$)", "결정계수 ($R^2$)", "F-통계량", "VIF"],
       answer: 0,
-      explanation: "로지스틱 회귀에서는 $-2 \times \text{Log-Likelihood}$ 로 정의되는 Deviance를 이용해 모형의 적합도를 평가합니다[cite: 4]."
+      explanation: "로지스틱 회귀에서는 $-2 \\times \\text{Log-Likelihood}$ 로 정의되는 Deviance를 이용해 모형의 적합도를 평가합니다[cite: 4]."
     },
     {
       id: "ml-c6-mc-hard-009",
@@ -1312,7 +1312,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "로지스틱 회귀 개별 계수 $\beta_j$의 유의성을 검정하기 위해 $z = \frac{\hat{\beta}_j}{\text{SE}(\hat{\beta}_j)}$ 수식을 이용하는 검정법은?",
+      prompt: "로지스틱 회귀 개별 계수 $\\beta_j$의 유의성을 검정하기 위해 $z = \\frac{\\hat{\\beta}_j}{\\text{SE}(\\hat{\\beta}_j)}$ 수식을 이용하는 검정법은?",
       options: ["왈드 검정 (Wald Test)", "F-검정", "t-검정", "카이제곱 독립성 검정"],
       answer: 0,
       explanation: "로지스틱 회귀 개별 계수의 통계적 유의성은 $z$-통계량을 이용한 Wald Test로 검정합니다[cite: 4]."
@@ -1334,7 +1334,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "로지스틱 회귀 Log-Likelihood의 2차 미분 행렬인 헤세 행렬 $H = -X^\top W X$ 에서 대각 가중치 행렬 $W$의 원소 형태 $w_{ii}$는?",
+      prompt: "로지스틱 회귀 Log-Likelihood의 2차 미분 행렬인 헤세 행렬 $H = -X^\\top W X$ 에서 대각 가중치 행렬 $W$의 원소 형태 $w_{ii}$는?",
       options: ["$w_{ii} = p_i (1 - p_i)$", "$w_{ii} = p_i^2$", "$w_{ii} = 1 - p_i$", "$w_{ii} = y_i - p_i$"],
       answer: 0,
       explanation: "로지스틱 2차 미분 헤세 행렬 내 대각 원소는 $w_{ii} = p_i (1 - p_i)$ 형태로 계산됩니다[cite: 4]."
@@ -1348,7 +1348,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       prompt: "완전 분리(Perfect Separation) 문제나 고차원 피처 오버피팅을 방지하기 위해 로지스틱 회귀 손실함수에 추가하는 규제(Regularization) 방식은?",
       options: ["L1(Lasso) 또는 L2(Ridge) 가중치 규제 항", "Gradient Clipping", "가변수 추가", "임계값 인상"],
       answer: 0,
-      explanation: "L1/L2 규제 패널티를 손실함수에 더해주면 계수 $\beta$가 무한대로 발산하는 것을 방지하고 과적합을 막아줍니다[cite: 4]."
+      explanation: "L1/L2 규제 패널티를 손실함수에 더해주면 계수 $\\beta$가 무한대로 발산하는 것을 방지하고 과적합을 막아줍니다[cite: 4]."
     },
     {
       id: "ml-c6-sa-hard-013",
@@ -1356,7 +1356,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "로지스틱회귀",
       questionType: "short-answer",
-      prompt: "독립변수 1단위 증가 시 오즈(Odds)가 몇 배 증가하는지 나타내는 $e^{\beta_1}$ 지표 명칭은?",
+      prompt: "독립변수 1단위 증가 시 오즈(Odds)가 몇 배 증가하는지 나타내는 $e^{\\beta_1}$ 지표 명칭은?",
       options: [],
       answer: null,
       acceptedAnswers: ["오즈비", "오즈 비", "Odds Ratio", "odds ratio"],
@@ -1380,10 +1380,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "로지스틱회귀",
       questionType: "essay",
-      prompt: "시그모이드 함수 $\sigma(z) = \frac{1}{1 + e^{-z}}$ 의 미분 수식 $\sigma'(z) = \sigma(z)(1 - \sigma(z))$ 가 정답과 예측 차이 오차를 보정하는 경사하강법 미분 과정에서 가지는 수식적 정제 장점을 서술하시오.",
+      prompt: "시그모이드 함수 $\\sigma(z) = \\frac{1}{1 + e^{-z}}$ 의 미분 수식 $\\sigma'(z) = \\sigma(z)(1 - \\sigma(z))$ 가 정답과 예측 차이 오차를 보정하는 경사하강법 미분 과정에서 가지는 수식적 정제 장점을 서술하시오.",
       options: [],
       answer: null,
-      acceptedAnswers: ["미분", "$\sigma(z)(1-\sigma(z))$", "X^T(y-p)", "정제"],
+      acceptedAnswers: ["미분", "$\\sigma(z)(1-\\sigma(z))$", "X^T(y-p)", "정제"],
       modelAnswer: "시그모이드 함수의 미분 $\\sigma'(z) = \\sigma(z)(1 - \\sigma(z))$ 속성이 Cross-Entropy 손실함수의 분모 지수항과 깔끔하게 약분된다. 그 결과 Log-Likelihood의 경사 미분 수식이 $\\nabla_\\beta \\ell(\\beta) = X^T(y - p)$ 로 매우 간결하게 정제되어, 오차 $(y - p)$에 비례하여 안정적으로 가중치를 업데이트할 수 있다[cite: 4]."
     }
   ]

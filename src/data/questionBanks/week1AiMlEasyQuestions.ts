@@ -96,10 +96,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "AI/ML 기초 및 데이터",
       questionType: "multiple-choice",
-      prompt: "실제 관측 데이터 $Y$에 관한 관계식 $Y = f^*(X) + \epsilon$에서 $\epsilon$이 의미하는 바는 무엇인가?",
+      prompt: "실제 관측 데이터 $Y$에 관한 관계식 $Y = f^*(X) + \\epsilon$에서 $\\epsilon$이 의미하는 바는 무엇인가?",
       options: ["측정 오차 (Measurement Error)", "학습률", "회귀 계수", "가설 공간"],
       answer: 0,
-      explanation: "실제 데이터는 미지의 참 함수 $f^*(X)$에 환경적 요인이나 기기 한계 등으로 인한 측정 오차 $\epsilon$이 포함되어 관측됩니다[cite: 5].",
+      explanation: "실제 데이터는 미지의 참 함수 $f^*(X)$에 환경적 요인이나 기기 한계 등으로 인한 측정 오차 $\\epsilon$이 포함되어 관측됩니다[cite: 5].",
       hint: "데이터에 섞여 있는 노이즈나 오차입니다[cite: 5]."
     },
     {
@@ -164,7 +164,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       prompt: "머신러닝 작업이 단순 일회성이 아니라 평가 결과를 반영해 지속적으로 개선되는 특성을 나타내는 용어는?",
       options: ["반복적 개선 루프 (ML Loop)", "단층 전개", "하드코딩", "오차 수렴"],
       answer: 0,
-      explanation: "머신러닝은 데이터 $\rightarrow$ 모델 $\rightarrow$ 학습 $\rightarrow$ 평가 순환을 거쳐 지속적으로 개선되는 피드백 루프를 가집니다[cite: 5].",
+      explanation: "머신러닝은 데이터 $\\rightarrow$ 모델 $\\rightarrow$ 학습 $\\rightarrow$ 평가 순환을 거쳐 지속적으로 개선되는 피드백 루프를 가집니다[cite: 5].",
       hint: "순환(Loop) 구조를 뜻합니다[cite: 5]."
     },
     {
@@ -175,7 +175,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "미지의 참 함수 $f^*$를 잘 근사하는 모델 $f$를 학습시켜야 하는 이유로 적절하지 않은 것은?",
       options: [
-        "데이터에 존재하는 측정 오차 $\epsilon$ 자체를 물리적으로 완전히 소멸시키기 위해",
+        "데이터에 존재하는 측정 오차 $\\epsilon$ 자체를 물리적으로 완전히 소멸시키기 위해",
         "새로운 입력 $X$에 대해 정답 $Y$를 정확히 예측하기 위해",
         "여러 피처 중 어떤 피처가 $Y$에 중요한 영향을 미치는지 파악하기 위해",
         "피처 $X$의 변화에 따라 $Y$가 어떻게 변하는지 해석하기 위해"
@@ -277,7 +277,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "지도학습 및 평가 지표",
       questionType: "multiple-choice",
-      prompt: "회귀 문제에서 실제 정답 $y_i$와 예측값 $\hat{y}_i$ 간 오차 제곱의 평균을 구하는 손실함수는?",
+      prompt: "회귀 문제에서 실제 정답 $y_i$와 예측값 $\\hat{y}_i$ 간 오차 제곱의 평균을 구하는 손실함수는?",
       options: ["MSE (평균제곱오차)", "교차 엔트로피", "정확도 (Accuracy)", "혼동행렬"],
       answer: 0,
       explanation: "Mean Squared Error(MSE)는 회귀 모델의 대표적 손실 지표입니다[cite: 5].",
@@ -355,7 +355,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       prompt: "분류 지표 중 '모델이 양성이라고 예측한 것들 중' 실제 진짜 양성의 비율을 나타내는 지표는?",
       options: ["정밀도 (Precision)", "재현율 (Recall)", "MSE", "결정계수 ($R^2$)"],
       answer: 0,
-      explanation: "정밀도(Precision)는 $\frac{TP}{TP + FP}$ 수식으로 모델 예측의 정교함을 측정합니다[cite: 5].",
+      explanation: "정밀도(Precision)는 $\\frac{TP}{TP + FP}$ 수식으로 모델 예측의 정교함을 측정합니다[cite: 5].",
       hint: "모델이 양성이라 한 것 중 진짜 양성 비율입니다[cite: 5]."
     },
     {
@@ -367,7 +367,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       prompt: "분류 지표 중 '실제 진짜 양성 데이터 전체 중' 모델이 놓치지 않고 잡아낸 비율을 나타내는 지표는?",
       options: ["재현율 (Recall/Sensitivity)", "정밀도 (Precision)", "MSE", "RMSE"],
       answer: 0,
-      explanation: "재현율(Recall)은 $\frac{TP}{TP + FN}$ 수식으로 진짜 양성을 얼마나 잘 재현해냈는지 파악합니다[cite: 5].",
+      explanation: "재현율(Recall)은 $\\frac{TP}{TP + FN}$ 수식으로 진짜 양성을 얼마나 잘 재현해냈는지 파악합니다[cite: 5].",
       hint: "실제 진짜 양성 중 잡아낸 비율입니다[cite: 5]."
     },
     {
@@ -746,7 +746,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "라벨 값과의 차이를 제곱하여 MSE를 최소화함"
       ],
       answer: 0,
-      explanation: "K-means는 [가장 가까운 중심에 데이터 할당 $\rightarrow$ 군집 중심점 재계산] 과정을 반복합니다[cite: 5].",
+      explanation: "K-means는 [가장 가까운 중심에 데이터 할당 $\\rightarrow$ 군집 중심점 재계산] 과정을 반복합니다[cite: 5].",
       hint: "가까운 중심 할당 및 평균으로 중심 재계산을 반복합니다[cite: 5]."
     },
     {
@@ -878,10 +878,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "단순선형회귀식 $Y = \beta_0 + \beta_1 X + \epsilon$ 에서 $\beta_0$과 $\beta_1$을 통칭하는 용어는?",
+      prompt: "단순선형회귀식 $Y = \\beta_0 + \\beta_1 X + \\epsilon$ 에서 $\\beta_0$과 $\\beta_1$을 통칭하는 용어는?",
       options: ["회귀 계수 (Regression Coefficients)", "잔차", "측정 오차", "독립 변수"],
       answer: 0,
-      explanation: "$\beta_0$(절편)과 $\beta_1$(기울기)은 모델이 추정해야 할 회귀 계수(Parameter)입니다[cite: 4].",
+      explanation: "$\\beta_0$(절편)과 $\\beta_1$(기울기)은 모델이 추정해야 할 회귀 계수(Parameter)입니다[cite: 4].",
       hint: "절편과 기울기를 일컫는 회귀 계수입니다[cite: 4]."
     },
     {
@@ -890,8 +890,8 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "선형회귀에서 특정 데이터 $i$번째의 실제 관측값 $y_i$와 모델 예측값 $\hat{y}_i$의 차이 $e_i = y_i - \hat{y}_i$를 무엇이라 하는가?",
-      options: ["잔차 (Residual)", "측정 오차 ($\epsilon$)", "회귀 계수", "결정계수"],
+      prompt: "선형회귀에서 특정 데이터 $i$번째의 실제 관측값 $y_i$와 모델 예측값 $\\hat{y}_i$의 차이 $e_i = y_i - \\hat{y}_i$를 무엇이라 하는가?",
+      options: ["잔차 (Residual)", "측정 오차 ($\\epsilon$)", "회귀 계수", "결정계수"],
       answer: 0,
       explanation: "실제 관측값과 직선 예측값 사이의 수직 거리를 잔차(Residual)라 부릅니다[cite: 4].",
       hint: "남아있는 차이라는 뜻의 잔차(Residual)입니다[cite: 4]."
@@ -926,7 +926,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "선형회귀",
       questionType: "multiple-choice",
-      prompt: "다중선형회귀에서 특정 계수 $\beta_j$의 올바른 해석은?",
+      prompt: "다중선형회귀에서 특정 계수 $\\beta_j$의 올바른 해석은?",
       options: [
         "다른 모든 변수를 고정한 채 $X_j$가 1단위 증가할 때 $Y$의 평균 변화량",
         "모든 독립 변수가 동시에 1단위 증가할 때 $Y$의 변화량",
@@ -1004,7 +1004,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       prompt: "다중선형회귀에서 최소제곱법으로 계수를 한 번에 공식으로 바로 구하는 해의 수식 형태를 무엇이라 하는가?",
       options: ["정규방정식 해 (Closed-form solution)", "경사하강법", "시그모이드 해", "인컨텍스트 해"],
       answer: 0,
-      explanation: "$\hat{\boldsymbol{\beta}} = (\mathbf{X}^T \mathbf{X})^{-1} \mathbf{X}^T \mathbf{y}$ 수식처럼 공식으로 바로 계산되는 정규방정식(Closed-form) 해입니다[cite: 4].",
+      explanation: "$\\hat{\\boldsymbol{\\beta}} = (\\mathbf{X}^T \\mathbf{X})^{-1} \\mathbf{X}^T \\mathbf{y}$ 수식처럼 공식으로 바로 계산되는 정규방정식(Closed-form) 해입니다[cite: 4].",
       hint: "공식으로 바로 구해지는 Closed-form 해입니다[cite: 4]."
     },
     {
@@ -1025,7 +1025,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "선형회귀",
       questionType: "short-answer",
-      prompt: "선형회귀에서 실제 관측값 $y_i$와 모델 예측값 $\hat{y}_i$의 차이($y_i - \hat{y}_i$)를 무엇이라 하는가?",
+      prompt: "선형회귀에서 실제 관측값 $y_i$와 모델 예측값 $\\hat{y}_i$의 차이($y_i - \\hat{y}_i$)를 무엇이라 하는가?",
       options: [],
       answer: null,
       acceptedAnswers: ["잔차", "Residual", "residual"],
@@ -1096,7 +1096,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "$y = z^2$"
       ],
       answer: 0,
-      explanation: "시그모이드 함수 수식은 $y = \frac{e^z}{1 + e^z} = \frac{1}{1 + e^{-z}}$ 입니다[cite: 4].",
+      explanation: "시그모이드 함수 수식은 $y = \\frac{e^z}{1 + e^z} = \\frac{1}{1 + e^{-z}}$ 입니다[cite: 4].",
       hint: "$1 / (1 + e^{-z})$ 수식 형태입니다[cite: 4]."
     },
     {
@@ -1105,8 +1105,8 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "시그모이드 함수 $y = \frac{1}{1 + e^{-z}}$ 에서 $z \rightarrow +\infty$ 일 때와 $z \rightarrow -\infty$ 일 때 수렴하는 값은?",
-      options: ["$z \rightarrow +\infty$ 이면 1, $z \rightarrow -\infty$ 이면 0", "$z \rightarrow +\infty$ 이면 0, $z \rightarrow -\infty$ 이면 1", "둘 다 0.5로 수렴", "둘 다 무한대로 발산"],
+      prompt: "시그모이드 함수 $y = \\frac{1}{1 + e^{-z}}$ 에서 $z \\rightarrow +\\infty$ 일 때와 $z \\rightarrow -\\infty$ 일 때 수렴하는 값은?",
+      options: ["$z \\rightarrow +\\infty$ 이면 1, $z \\rightarrow -\\infty$ 이면 0", "$z \\rightarrow +\\infty$ 이면 0, $z \\rightarrow -\\infty$ 이면 1", "둘 다 0.5로 수렴", "둘 다 무한대로 발산"],
       answer: 0,
       explanation: "$z$가 커지면 1에 가까워지고, $z$가 매우 작아지면 0에 가까워집니다[cite: 4].",
       hint: "양수 무한대로 갈 때 1, 음수 무한대로 갈 때 0입니다[cite: 4]."
@@ -1117,10 +1117,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "시그모이드 함수 $y = \frac{1}{1 + e^{-z}}$ 에 $z = 0$ 을 대입했을 때의 출력값은?",
+      prompt: "시그모이드 함수 $y = \\frac{1}{1 + e^{-z}}$ 에 $z = 0$ 을 대입했을 때의 출력값은?",
       options: ["0.5", "0.0", "1.0", "-1.0"],
       answer: 0,
-      explanation: "$e^0 = 1$ 이므로 $\frac{1}{1 + 1} = 0.5$ 가 됩니다[cite: 4].",
+      explanation: "$e^0 = 1$ 이므로 $\\frac{1}{1 + 1} = 0.5$ 가 됩니다[cite: 4].",
       hint: "$z=0$ 일 때 정중앙값 0.5가 나옵니다[cite: 4]."
     },
     {
@@ -1132,7 +1132,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       prompt: "성공 확률 $p$에 대해 실패 확률 대비 성공 확률의 비율을 나타내는 오즈(Odds) 수식은?",
       options: ["$\\text{Odds} = \\frac{p}{1-p}$", "$\\text{Odds} = \\frac{1-p}{p}$", "$\\text{Odds} = p \\times (1-p)$", "$\\text{Odds} = p + (1-p)$"],
       answer: 0,
-      explanation: "오즈(Odds)는 $\frac{p(y=1|x)}{p(y=0|x)} = \frac{p}{1-p}$ 로 정의됩니다[cite: 4].",
+      explanation: "오즈(Odds)는 $\\frac{p(y=1|x)}{p(y=0|x)} = \\frac{p}{1-p}$ 로 정의됩니다[cite: 4].",
       hint: "성공 확률 / 실패 확률 입니다[cite: 4]."
     },
     {
@@ -1141,10 +1141,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "오즈(Odds)에 자연로그(log)를 취한 $\log\left(\frac{p}{1-p}\right)$ 변환을 무엇이라 하는가?",
+      prompt: "오즈(Odds)에 자연로그(log)를 취한 $\\log\\left(\\frac{p}{1-p}\\right)$ 변환을 무엇이라 하는가?",
       options: ["로짓 변환 (Logit Transformation / Log odds)", "시그모이드 변환", "정규화 변환", "최소제곱 변환"],
       answer: 0,
-      explanation: "오즈에 로그를 취한 $\text{logit}(p) = \log\left(\frac{p}{1-p}\right)$를 로짓 변환이라고 합니다[cite: 4].",
+      explanation: "오즈에 로그를 취한 $\\text{logit}(p) = \\log\\left(\\frac{p}{1-p}\\right)$를 로짓 변환이라고 합니다[cite: 4].",
       hint: "로짓(Logit) 변환 또는 Log odds라 부릅니다[cite: 4]."
     },
     {
@@ -1156,7 +1156,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       prompt: "로지스틱 회귀 모형식에 로짓 변환을 수행했을 때 우변에 얻어지는 식의 형태는?",
       options: ["선형 회귀 모형식 ($\\beta_0 + \\beta_1 X$)", "2차 곡선 방정식", "원-핫 인코딩 벡터", "행렬식"],
       answer: 0,
-      explanation: "로지스틱 모형식에 로짓 변환을 취하면 $\log\left(\frac{p(X)}{1-p(X)}\right) = \beta_0 + \beta_1 X$ 와 같이 선형 회귀식이 도출됩니다[cite: 4].",
+      explanation: "로지스틱 모형식에 로짓 변환을 취하면 $\\log\\left(\\frac{p(X)}{1-p(X)}\\right) = \\beta_0 + \\beta_1 X$ 와 같이 선형 회귀식이 도출됩니다[cite: 4].",
       hint: "로짓 변환 결과는 선형 회귀식 형태가 됩니다[cite: 4]."
     },
     {
@@ -1197,7 +1197,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "파라미터 개수를 줄이기 위해"
       ],
       answer: 0,
-      explanation: "곱으로 구성된 우도식에 $\log$를 취하면 덧셈으로 바뀌어 미분 및 수치 최적화가 쉬워집니다[cite: 4].",
+      explanation: "곱으로 구성된 우도식에 $\\log$를 취하면 덧셈으로 바뀌어 미분 및 수치 최적화가 쉬워집니다[cite: 4].",
       hint: "로그를 취하면 곱셈이 덧셈으로 변해 미분이 쉬워집니다[cite: 4]."
     },
     {
@@ -1218,7 +1218,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "로지스틱회귀",
       questionType: "multiple-choice",
-      prompt: "로지스틱 회귀 계수 $\hat{\beta}_1 = 0.0055$ 가 의미하는 바는?",
+      prompt: "로지스틱 회귀 계수 $\\hat{\\beta}_1 = 0.0055$ 가 의미하는 바는?",
       options: [
         "입력 변수 $X$가 1단위 증가할 때 연체의 로짓(Log-odds)이 0.0055 증가한다.",
         "입력 변수 $X$가 1단위 증가할 때 연체 확률이 정확히 0.0055% 감소한다.",
@@ -1268,7 +1268,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       modelAnswer: "오즈(Odds)는 실패 확률 대비 성공 확률의 비율인 $\\frac{p}{1-p}$ 이다. 여기에 자연로그를 취하는 로짓 변환 $\\log\\left(\\frac{p}{1-p}\\right)$ 을 수행하면 우변이 선형 회귀식 $\\beta_0 + \\beta_1 X$ 로 변환되어 선형 모델과 연결된다[cite: 4].",
       rubricKeywords: ["오즈 $p/(1-p)$", "로그 오즈(로짓)", "선형 회귀식 변환"],
       minLength: 20,
-      explanation: "오즈의 수식 정의와 오즈에 로그를 취한 로짓 변환이 선형식 $\beta_0 + \beta_1 X$가 되는 원리를 서술합니다[cite: 4].",
+      explanation: "오즈의 수식 정의와 오즈에 로그를 취한 로짓 변환이 선형식 $\\beta_0 + \\beta_1 X$가 되는 원리를 서술합니다[cite: 4].",
       hint: "오즈 수식 및 오즈에 로그를 취하면 우변이 선형식이 됨을 서술하세요[cite: 4]."
     },
 
@@ -1302,7 +1302,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       options: [
         "선형 결합 후 활성화 함수를 거쳐 모델에 비선형 표현력을 부여함",
         "입력 데이터를 그대로 출력층으로 지름길 전송함",
-        "측정 오차 $\epsilon$을 0으로 초기화함",
+        "측정 오차 $\\epsilon$을 0으로 초기화함",
         "손실함수의 종류를 결정함"
       ],
       answer: 0,
@@ -1315,7 +1315,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "신경망 모델",
       questionType: "multiple-choice",
-      prompt: "대표적 활성화 함수인 ReLU(Rectified Linear Unit)의 수식 $a[z] = \max(0, z)$ 의 출력 특징은?",
+      prompt: "대표적 활성화 함수인 ReLU(Rectified Linear Unit)의 수식 $a[z] = \\max(0, z)$ 의 출력 특징은?",
       options: [
         "음수 입력은 0으로 바꾸고, 0 이상의 양수 입력은 값 그대로 출력함",
         "모든 입력을 -1과 1 사이로 압축함",
@@ -1323,7 +1323,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "입력값에 무조건 10을 더함"
       ],
       answer: 0,
-      explanation: "ReLU는 $z < 0$이면 0, $z \ge 0$이면 $z$ 그대로를 내놓습니다[cite: 4].",
+      explanation: "ReLU는 $z < 0$이면 0, $z \\ge 0$이면 $z$ 그대로를 내놓습니다[cite: 4].",
       hint: "음수는 0, 양수는 자기 자신입니다[cite: 4]."
     },
     {
@@ -1344,11 +1344,11 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "신경망 모델",
       questionType: "multiple-choice",
-      prompt: "1개 입력 $x$, 3개 Hidden Unit, 1개 출력 $y$를 가진 Shallow 신경망 $y = \phi_0 + \sum_{d=1}^3 \phi_d a[\theta_{d0} + \theta_{d1}x]$ 의 총 파라미터 개수는?",
+      prompt: "1개 입력 $x$, 3개 Hidden Unit, 1개 출력 $y$를 가진 Shallow 신경망 $y = \\phi_0 + \\sum_{d=1}^3 \\phi_d a[\\theta_{d0} + \\theta_{d1}x]$ 의 총 파라미터 개수는?",
       options: ["10개", "3개", "5개", "100개"],
       answer: 0,
-      explanation: "$\theta$ 파라미터 6개($\theta_{10}, \theta_{11}, \theta_{20}, \theta_{21}, \theta_{30}, \theta_{31}$) + $\phi$ 파라미터 4개($\phi_0, \phi_1, \phi_2, \phi_3$) = 총 10개입니다[cite: 4].",
-      hint: "6개의 $\theta$와 4개의 $\phi$를 합친 개수입니다[cite: 4]."
+      explanation: "$\\theta$ 파라미터 6개($\\theta_{10}, \\theta_{11}, \\theta_{20}, \\theta_{21}, \\theta_{30}, \\theta_{31}$) + $\\phi$ 파라미터 4개($\\phi_0, \\phi_1, \\phi_2, \\phi_3$) = 총 10개입니다[cite: 4].",
+      hint: "6개의 $\\theta$와 4개의 $\\phi$를 합친 개수입니다[cite: 4]."
     },
     {
       id: "ml-c7-mc-006",
@@ -1426,7 +1426,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "easy",
       category: "신경망 모델",
       questionType: "multiple-choice",
-      prompt: "은닉 노드에서 활성화 함수 $a[\cdot]$를 적용하기 직전의 선형 결합 값($\theta_{d0} + \theta_{d1}x$)을 일컫는 용어는?",
+      prompt: "은닉 노드에서 활성화 함수 $a[\\cdot]$를 적용하기 직전의 선형 결합 값($\\theta_{d0} + \\theta_{d1}x$)을 일컫는 용어는?",
       options: ["전활성값 (Pre-activation)", "후활성값", "손실값", "출력값"],
       answer: 0,
       explanation: "활성화 함수 적용 전의 선형 결합 수치를 Pre-activation(전활성값)이라고 부릅니다[cite: 4].",

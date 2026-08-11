@@ -31,13 +31,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "Word2Vec Skip-gram에 Negative Sampling(SGNS)을 적용했을 때, 중심 단어 $w_c$, 주변 단어 $w_o$, 그리고 $k$개의 음성 샘플 단어 $w_i$에 대한 최적화 목적(Loss) 수식 형태로 가장 올바른 것은?",
       options: [
-        "$-\\log \\sigma(v'_{w_o}^T v_{w_c}) - \\sum_{i=1}^k \\log \\sigma(-v'_{w_i}^T v_{w_c})$",
-        "$-\\sum_{i=1}^k \\log \\sigma(v'_{w_i}^T v_{w_c})$",
-        "$\\log \\sigma(v'_{w_o}^T v_{w_c}) + \\sum_{i=1}^k \\log \\sigma(v'_{w_i}^T v_{w_c})$",
-        "$-\\log \\left( \\frac{\\exp(v'_{w_o}^T v_{w_c})}{\\sum_j \\exp(v'_j^T v_{w_c})} \\right)$"
+        "$-\\log \\sigma(v_{w_o}^{\\prime T} v_{w_c}) - \\sum_{i=1}^k \\log \\sigma(-v_{w_i}^{\\prime T} v_{w_c})$",
+        "$-\\sum_{i=1}^k \\log \\sigma(v_{w_i}^{\\prime T} v_{w_c})$",
+        "$\\log \\sigma(v_{w_o}^{\\prime T} v_{w_c}) + \\sum_{i=1}^k \\log \\sigma(v_{w_i}^{\\prime T} v_{w_c})$",
+        "$-\\log \\left( \\frac{\\exp(v_{w_o}^{\\prime T} v_{w_c})}{\\sum_j \\exp(v_j^{\\prime T} v_{w_c})} \\right)$"
       ],
       answer: 0,
-      explanation: "SGNS는 실제 주변 단어와의 내적 확률은 높이고($\log \sigma$), 무작위 음성 단어들과의 내적 확률은 낮추는($\log \sigma(-x)$) 이진 분류 손실을 최소화합니다[cite: 2].",
+      explanation: "SGNS는 실제 주변 단어와의 내적 확률은 높이고($\\log \\sigma$), 무작위 음성 단어들과의 내적 확률은 낮추는($\\log \\sigma(-x)$) 이진 분류 손실을 최소화합니다[cite: 2].",
       hint: "참 주변 단어 확률을 올리고 오답 단어 확률을 떨어뜨리는 시그모이드 로그 합 조합입니다[cite: 2]."
     },
     {
@@ -65,13 +65,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "Hierarchical Softmax에서 단어들을 허프만 트리(Huffman Tree) 구조로 배치하는 근본적 목적은?",
       options: [
-        "빈도가 높은 단어일수록 트리의 루트 상단에 배치하여 평균 연산 경로 길이를 최소화하고 $O(\log V)$ 복잡도를 달성하기 위해",
+        "빈도가 높은 단어일수록 트리의 루트 상단에 배치하여 평균 연산 경로 길이를 최소화하고 $O(\\log V)$ 복잡도를 달성하기 위해",
         "모든 단어의 트리 깊이를 완벽하게 똑같이 일치시키기 위해",
         "단어 알파벳 순서대로 정렬하기 위해",
         "희귀 단어의 깊이를 가장 얕게 만들기 위해"
       ],
       answer: 0,
-      explanation: "고빈도 단어를 상단에 배치해 경로 길이를 줄임으로써 전체 Softmax 연산량을 $O(V)$에서 $O(\log V)$로 단축합니다[cite: 2].",
+      explanation: "고빈도 단어를 상단에 배치해 경로 길이를 줄임으로써 전체 Softmax 연산량을 $O(V)$에서 $O(\\log V)$로 단축합니다[cite: 2].",
       hint: "빈도 높은 단어를 상단에 두어 평균 탐색 길이를 줄입니다[cite: 2]."
     },
     {
@@ -126,7 +126,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "워드 임베딩",
       questionType: "multiple-choice",
-      prompt: "Word2Vec 모형이 보유한 두 가중치 행렬 $W \in \mathbb{R}^{V \times N}$과 $W' \in \mathbb{R}^{N \times V}$에 대해, 학습 완료 후 단어 임베딩으로 가장 널리 채택되는 벡터는?",
+      prompt: "Word2Vec 모형이 보유한 두 가중치 행렬 $W \\in \\mathbb{R}^{V \\times N}$과 $W' \\in \\mathbb{R}^{N \\times V}$에 대해, 학습 완료 후 단어 임베딩으로 가장 널리 채택되는 벡터는?",
       options: [
         "입력 가중치 행렬 $W$의 행 벡터들을 사용하거나, $W$와 $W'^T$의 평균 벡터를 사용한다.",
         "무조건 출력 행렬 $W'$만 사용하고 $W 조각$은 버린다.",
@@ -177,7 +177,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "워드 임베딩",
       questionType: "short-answer",
-      prompt: "Word2Vec에서 Softmax의 $O(V)$ 연산을 이진 허프만 트리 기반 $O(\log V)$로 단축시키는 기법은?",
+      prompt: "Word2Vec에서 Softmax의 $O(V)$ 연산을 이진 허프만 트리 기반 $O(\\log V)$로 단축시키는 기법은?",
       options: [],
       answer: null,
       acceptedAnswers: ["Hierarchical Softmax", "hierarchical softmax", "계층적 소프트맥스"],
@@ -264,15 +264,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "순차 데이터 & RNN",
       questionType: "multiple-choice",
-      prompt: "RNN의 야코비 행렬(Jacobian) 편미분 수식 $\frac{\partial h_t}{\partial h_k} = \prod_{j=k+1}^t \frac{\partial h_j}{\\partial h_{j-1}}$ 에서 기울기 소실이 일어나는 수학적 조건은?",
+      prompt: "RNN의 야코비 행렬(Jacobian) 편미분 수식 $\\frac{\\partial h_t}{\\partial h_k} = \\prod_{j=k+1}^t \\frac{\\partial h_j}{\\partial h_{j-1}}$ 에서 기울기 소실이 일어나는 수학적 조건은?",
       options: [
-        "활성화 함수 $\tanh$의 미분 최댓값이 1이고, 가중치 행렬 $W_{hh}$의 고유값들이 1보다 작을 때 연쇄 곱에 의해 0으로 지수적 수렴하기 때문",
+        "활성화 함수 $\\tanh$의 미분 최댓값이 1이고, 가중치 행렬 $W_{hh}$의 고유값들이 1보다 작을 때 연쇄 곱에 의해 0으로 지수적 수렴하기 때문",
         "가중치 행렬 $W_{hh}$의 값이 무한대로 발산할 때",
         "타임스텝 간격 $(t-k)$가 1일 때",
         "입력 벡터 $x_t$의 차원이 0일 때"
       ],
       answer: 0,
-      explanation: "1 이하의 $\tanh$ 미분값과 고유값이 1 미만인 $W_{hh}$ 행렬이 지수 횟수만큼 연쇄 곱해지면서 오차가 사라집니다[cite: 2]."
+      explanation: "1 이하의 $\\tanh$ 미분값과 고유값이 1 미만인 $W_{hh}$ 행렬이 지수 횟수만큼 연쇄 곱해지면서 오차가 사라집니다[cite: 2]."
     },
     {
       id: "nlp-rnn-mc-hard-002",
@@ -280,7 +280,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "순차 데이터 & RNN",
       questionType: "multiple-choice",
-      prompt: "RNN 기울기 폭발(Gradient Explosion) 방지를 위한 Gradient Clipping 수식 $g \leftarrow \frac{\text{threshold}}{\|g\|} g \quad (\text{if } \|g\| > \text{threshold})$ 에 대한 수학적 해석은?",
+      prompt: "RNN 기울기 폭발(Gradient Explosion) 방지를 위한 Gradient Clipping 수식 $g \\leftarrow \\frac{\\text{threshold}}{\\|g\\|} g \\quad (\\text{if } \\|g\\| > \\text{threshold})$ 에 대한 수학적 해석은?",
       options: [
         "기울기 벡터 $g$의 방향(Direction)은 그대로 보존하고 노름(Norm) 크기만 threshold 수준으로 스케일링한다.",
         "기울기 벡터의 부호를 반대로 반전시킨다.",
@@ -314,13 +314,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "입력 벡터 차원이 $d_x$, 은닉 상태 차원이 $d_h$일 때, RNN의 가중치 행렬 $W_{xh}$와 $W_{hh}$의 차원 크기는 각각 어떻게 되는가?",
       options: [
-        "$W_{xh} \in \mathbb{R}^{d_h \times d_x}$, $\quad W_{hh} \in \mathbb{R}^{d_h \times d_h}$",
-        "$W_{xh} \in \mathbb{R}^{d_x \times d_x}$, $\quad W_{hh} \in \mathbb{R}^{d_h \times d_x}$",
-        "$W_{xh} \in \mathbb{R}^{d_h \times d_h}$, $\quad W_{hh} \in \mathbb{R}^{d_x \times d_x}$",
-        "$W_{xh} \in \mathbb{R}^{1 \times d_x}$, $\quad W_{hh} \in \mathbb{R}^{1 \times d_h}$"
+        "$W_{xh} \\in \\mathbb{R}^{d_h \\times d_x}$, $\\quad W_{hh} \\in \\mathbb{R}^{d_h \\times d_h}$",
+        "$W_{xh} \\in \\mathbb{R}^{d_x \\times d_x}$, $\\quad W_{hh} \\in \\mathbb{R}^{d_h \\times d_x}$",
+        "$W_{xh} \\in \\mathbb{R}^{d_h \\times d_h}$, $\\quad W_{hh} \\in \\mathbb{R}^{d_x \\times d_x}$",
+        "$W_{xh} \\in \\mathbb{R}^{1 \\times d_x}$, $\\quad W_{hh} \\in \\mathbb{R}^{1 \\times d_h}$"
       ],
       answer: 0,
-      explanation: "은닉 벡터 $h_t \in \mathbb{R}^{d_h}$를 만들기 위해 $W_{xh}$는 $(d_h \times d_x)$, $W_{hh}$는 $(d_h \times d_h)$ 차원을 가집니다[cite: 2]."
+      explanation: "은닉 벡터 $h_t \\in \\mathbb{R}^{d_h}$를 만들기 위해 $W_{xh}$는 $(d_h \\times d_x)$, $W_{hh}$는 $(d_h \\times d_h)$ 차원을 가집니다[cite: 2]."
     },
     {
       id: "nlp-rnn-mc-hard-005",
@@ -392,7 +392,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "순차 데이터 & RNN",
       questionType: "multiple-choice",
-      prompt: "RNN BPTT에서 $\frac{\partial L_t}{\partial h_k}$ 계산 시 시간 거리 $(t-k)$가 멀어질수록 야코비 행렬의 곱셈 횟수가 증가하는 현상이 시사하는 바는?",
+      prompt: "RNN BPTT에서 $\\frac{\\partial L_t}{\\partial h_k}$ 계산 시 시간 거리 $(t-k)$가 멀어질수록 야코비 행렬의 곱셈 횟수가 증가하는 현상이 시사하는 바는?",
       options: [
         "시간 거리가 먼 과거 시점 $k$일수록 오차 경사도가 지수적으로 감쇄하거나 폭발하여 장기 기억 학습에 구조적 취약성을 갖는다.",
         "과거 시점일수록 기울기가 더 정확하게 보존된다.",
@@ -456,12 +456,12 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "순차 데이터 & RNN",
       questionType: "essay",
-      prompt: "RNN 학습 시 BPTT 연산에서 $\frac{\partial h_t}{\partial h_k} = \prod_{j=k+1}^t \frac{\partial h_j}{\partial h_{j-1}}$ 수식과 야코비 행렬 관점에서 기울기 소실이 발생하는 수학적 이유를 서술하시오.",
+      prompt: "RNN 학습 시 BPTT 연산에서 $\\frac{\\partial h_t}{\\partial h_k} = \\prod_{j=k+1}^t \\frac{\\partial h_j}{\\partial h_{j-1}}$ 수식과 야코비 행렬 관점에서 기울기 소실이 발생하는 수학적 이유를 서술하시오.",
       options: [],
       answer: null,
       acceptedAnswers: ["야코비", "연쇄 곱", "1 이하", "지수적"],
-      modelAnswer: "시간 간격이 멀어질수록 야코비 행렬 $\frac{\partial h_j}{\partial h_{j-1}} = \text{diag}(1 - \tanh^2(\cdot)) W_{hh}^T$ 가 연속적으로 곱해진다. $\tanh$ 미분 최댓값이 1이고 $W_{hh}$ 고유값이 1 미만일 때, 이 행렬들이 시점 수만큼 연쇄 곱해지며 오차 경사가 지수적으로 0에 수렴한다[cite: 2].",
-      rubricKeywords: ["야코비 행렬 연속 곱", "$\tanh$ 미분 및 $W_{hh}$", "지수적 소실"],
+      modelAnswer: "시간 간격이 멀어질수록 야코비 행렬 $\\frac{\\partial h_j}{\\partial h_{j-1}} = \\text{diag}(1 - \\tanh^2(\\cdot)) W_{hh}^T$ 가 연속적으로 곱해진다. $\\tanh$ 미분 최댓값이 1이고 $W_{hh}$ 고유값이 1 미만일 때, 이 행렬들이 시점 수만큼 연쇄 곱해지며 오차 경사가 지수적으로 0에 수렴한다[cite: 2].",
+      rubricKeywords: ["야코비 행렬 연속 곱", "$\\tanh$ 미분 및 $W_{hh}$", "지수적 소실"],
       minLength: 20,
       explanation: "야코비 행렬의 연속 곱셈과 고유값/미분값 특성에 따른 기울기 소실 메커니즘을 서술합니다[cite: 2]."
     },
@@ -490,15 +490,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "LSTM & 순환 모델",
       questionType: "multiple-choice",
-      prompt: "LSTM이 RNN의 기울기 소실을 극복하는 이유를 야코비 행렬 $\frac{\partial C_t}{\partial C_{t-1}}$ 관점에서 분석한 올바른 설명은?",
+      prompt: "LSTM이 RNN의 기울기 소실을 극복하는 이유를 야코비 행렬 $\\frac{\\partial C_t}{\\partial C_{t-1}}$ 관점에서 분석한 올바른 설명은?",
       options: [
-        "$\frac{\partial C_t}{\partial C_{t-1}} = f_t + \dots$ 형태가 되어, Forget gate $f_t \approx 1$일 때 가중치 연속 곱에 의한 감쇄 없이 오차가 멀리 전파된다.",
+        "$\\frac{\\partial C_t}{\\partial C_{t-1}} = f_t + \\dots$ 형태가 되어, Forget gate $f_t \\approx 1$일 때 가중치 연속 곱에 의한 감쇄 없이 오차가 멀리 전파된다.",
         "기울기가 지속적으로 제곱되어 무한정 발산하기 때문이다.",
         "미분 연산이 덧셈이 아닌 나눗셈으로 변환되기 때문이다.",
         "야코비 행렬 값이 항상 0으로 고정되기 때문이다."
       ],
       answer: 0,
-      explanation: "Cell state 오차 편미분 시 Forget gate $f_t$ 항이 남으므로 $f_t \approx 1$일 때 기울기가 소실 없이 직통 전파됩니다[cite: 2]."
+      explanation: "Cell state 오차 편미분 시 Forget gate $f_t$ 항이 남으므로 $f_t \\approx 1$일 때 기울기가 소실 없이 직통 전파됩니다[cite: 2]."
     },
     {
       id: "nlp-lstm-mc-hard-002",
@@ -506,7 +506,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "LSTM & 순환 모델",
       questionType: "multiple-choice",
-      prompt: "LSTM의 세포 상태 업데이트 수식 $C_t = f_t * C_{t-1} + i_t * \tilde{C}_t$ 이 지닌 덧셈 기반 선형(Linear) 통로의 핵심 장점은?",
+      prompt: "LSTM의 세포 상태 업데이트 수식 $C_t = f_t * C_{t-1} + i_t * \\tilde{C}_t$ 이 지닌 덧셈 기반 선형(Linear) 통로의 핵심 장점은?",
       options: [
         "역전파 과정에서 비선형 활성화 함수의 연속 미분 곱으로 인한 기울기 감쇄 오버헤드를 덧셈 연산으로 우회한다.",
         "모든 가중치를 0으로 초기화할 수 있게 만든다.",
@@ -540,13 +540,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "LSTM 초기 학습 시 $b_f$ (Forget gate bias)를 1.0이나 2.0 같은 양수로 크게 설정하는 수학적/실무적 이유는?",
       options: [
-        "초기에 $\sigma(b_f) \approx 1$ 이 되도록 만들어, 모델이 과거 세포 상태 기억을 쉽게 잊지 않고 보존하게 유도하기 위해",
+        "초기에 $\\sigma(b_f) \\approx 1$ 이 되도록 만들어, 모델이 과거 세포 상태 기억을 쉽게 잊지 않고 보존하게 유도하기 위해",
         "초기 기울기를 무한대로 증폭하기 위해",
         "Loss 값을 강제로 0으로 만들기 위해",
         "입력 데이터를 묵살하기 위해"
       ],
       answer: 0,
-      explanation: "$b_f$를 양수로 초기화하면 $\sigma$ 출력이 1에 가까워져 초기에 과거 기억을 망각하지 않고 안정적으로 유지합니다동작합니다[cite: 2]."
+      explanation: "$b_f$를 양수로 초기화하면 $\\sigma$ 출력이 1에 가까워져 초기에 과거 기억을 망각하지 않고 안정적으로 유지합니다동작합니다[cite: 2]."
     },
     {
       id: "nlp-lstm-mc-hard-005",
@@ -570,7 +570,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "LSTM & 순환 모델",
       questionType: "multiple-choice",
-      prompt: "LSTM 수식 $h_t = o_t * \tanh(C_t)$ 에서 세포 상태 $C_t$에 $\tanh$를 취해주는 수학적 이유는?",
+      prompt: "LSTM 수식 $h_t = o_t * \\tanh(C_t)$ 에서 세포 상태 $C_t$에 $\\tanh$를 취해주는 수학적 이유는?",
       options: [
         "무한히 누적될 수 있는 세포 상태 값의 범위를 -1과 1 사이로 압축(Clamping)하여 출력 안정성을 확보하기 위해",
         "세포 상태를 무조건 양수로 고정하기 위해",
@@ -578,7 +578,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "미분 불가능한 구간을 만들기 위해"
       ],
       answer: 0,
-      explanation: "세포 상태 $C_t$는 덧셈 누적으로 값이 커질 수 있으므로 $\tanh$를 통해 -1과 1 사이로 압축해 줍니다[cite: 2]."
+      explanation: "세포 상태 $C_t$는 덧셈 누적으로 값이 커질 수 있으므로 $\\tanh$를 통해 -1과 1 사이로 압축해 줍니다[cite: 2]."
     },
     {
       id: "nlp-lstm-mc-hard-007",
@@ -586,7 +586,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "LSTM & 순환 모델",
       questionType: "multiple-choice",
-      prompt: "LSTM의 후보 세포 상태 $\tilde{C}_t = \tanh(W_C \cdot [h_{t-1}, x_t] + b_C)$ 가 생성하는 정보의 실질적 성격은?",
+      prompt: "LSTM의 후보 세포 상태 $\\tilde{C}_t = \\tanh(W_C \\cdot [h_{t-1}, x_t] + b_C)$ 가 생성하는 정보의 실질적 성격은?",
       options: [
         "현재 입력과 이전 단기 기억을 바탕으로 이번 시점에 새로 반영될 수 있는 새로운 정보 후보군",
         "과거의 모든 기억을 강제로 초기화하는 리셋 신호",
@@ -594,7 +594,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "손실 함수 값"
       ],
       answer: 0,
-      explanation: "$\tilde{C}_t$는 이번 스텝에 새로 더해질 수 있는 신규 정보 내용 후보이며, Input gate에 의해 일부만 선별 기록됩니다[cite: 2]."
+      explanation: "$\\tilde{C}_t$는 이번 스텝에 새로 더해질 수 있는 신규 정보 내용 후보이며, Input gate에 의해 일부만 선별 기록됩니다[cite: 2]."
     },
     {
       id: "nlp-lstm-mc-hard-008",
@@ -602,9 +602,9 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "LSTM & 순환 모델",
       questionType: "multiple-choice",
-      prompt: "GRU의 은닉 상태 업데이트 수식 $h_t = (1 - z_t) * h_{t-1} + z_t * \tilde{h}_t$ 의 수학적 선형 보간(Interpolation) 의미는?",
+      prompt: "GRU의 은닉 상태 업데이트 수식 $h_t = (1 - z_t) * h_{t-1} + z_t * \\tilde{h}_t$ 의 수학적 선형 보간(Interpolation) 의미는?",
       options: [
-        "업데이트 게이트 $z_t$를 가중치로 하여 이전 은닉 상태 $h_{t-1}$과 새 후보 $\tilde{h}_t$ 사이의 반영 비율을 0~1 사이로 부드럽게 결합한다.",
+        "업데이트 게이트 $z_t$를 가중치로 하여 이전 은닉 상태 $h_{t-1}$과 새 후보 $\\tilde{h}_t$ 사이의 반영 비율을 0~1 사이로 부드럽게 결합한다.",
         "두 벡터를 단순히 곱해서 차원을 제곱한다.",
         "과거 기억을 100% 버리고 새 후보만 취한다.",
         "두 벡터의 차이 절댓값을 구한다."
@@ -618,9 +618,9 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "LSTM & 순환 모델",
       questionType: "multiple-choice",
-      prompt: "Bi-LSTM이 시점 $t$에서 순방향 은닉 상태 $\vec{h}_t$와 역방향 은닉 상태 $\overleftarrow{h}_t$를 결합하는 표준 방식은?",
+      prompt: "Bi-LSTM이 시점 $t$에서 순방향 은닉 상태 $\\vec{h}_t$와 역방향 은닉 상태 $\\overleftarrow{h}_t$를 결합하는 표준 방식은?",
       options: [
-        "두 은닉 상태 벡터를 이어붙이기(Concatenation)하여 $[ \vec{h}_t ; \overleftarrow{h}_t ]$ 형태로 만든다.",
+        "두 은닉 상태 벡터를 이어붙이기(Concatenation)하여 $[ \\vec{h}_t ; \\overleftarrow{h}_t ]$ 형태로 만든다.",
         "두 벡터를 엘리먼트 단위로 곱한다.",
         "두 벡터를 평균 내어 하나로 압축한다.",
         "둘 중 값이 큰 벡터 하나만 고르고 나머지는 버린다."
@@ -682,11 +682,11 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "LSTM & 순환 모델",
       questionType: "essay",
-      prompt: "기본 RNN과 비교하여 LSTM의 세포 상태 업데이트 수식 $C_t = f_t * C_{t-1} + i_t * \tilde{C}_t$ 이 야코비 편미분 $\frac{\partial C_t}{\partial C_{t-1}}$ 관점에서 왜 기울기 소실을 방지하는지 서술하시오.",
+      prompt: "기본 RNN과 비교하여 LSTM의 세포 상태 업데이트 수식 $C_t = f_t * C_{t-1} + i_t * \\tilde{C}_t$ 이 야코비 편미분 $\\frac{\\partial C_t}{\\partial C_{t-1}}$ 관점에서 왜 기울기 소실을 방지하는지 서술하시오.",
       options: [],
       answer: null,
       acceptedAnswers: ["야코비", "Forget gate", "직통", "덧셈"],
-      modelAnswer: "기본 RNN은 가중치 행렬과 비선형 미분값이 곱해져 연속 곱셈으로 기울기가 소실된다. 반면 LSTM은 세포 상태 편미분 시 $\frac{\partial C_t}{\partial C_{t-1}} = f_t + \dots$ 형태가 되어, Forget gate $f_t \approx 1$일 때 오차 기울기가 감쇄 없이 덧셈 통로를 통해 먼 과거로 직통 전파된다[cite: 2].",
+      modelAnswer: "기본 RNN은 가중치 행렬과 비선형 미분값이 곱해져 연속 곱셈으로 기울기가 소실된다. 반면 LSTM은 세포 상태 편미분 시 $\\frac{\\partial C_t}{\\partial C_{t-1}} = f_t + \\dots$ 형태가 되어, Forget gate $f_t \\approx 1$일 때 오차 기울기가 감쇄 없이 덧셈 통로를 통해 먼 과거로 직통 전파된다[cite: 2].",
       rubricKeywords: ["세포 상태 편미분", "Forget gate $f_t$", "기울기 소실 방지 직통 전파"],
       minLength: 20,
       explanation: "RNN의 연속 곱셈 감쇄와 LSTM 세포 상태의 편미분 $f_t$ 직통 전파를 비교 서술합니다[cite: 2].",
@@ -717,16 +717,16 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "Seq2Seq & Attention",
       questionType: "multiple-choice",
-      prompt: "Beam Search 디코딩 시 단순 로그 확률 합 $\sum \log P(y_t)$ 만 사용하면 발생하는 편향과 이를 보정하는 길이 페널티(Length Penalty) 수식 방식은?",
+      prompt: "Beam Search 디코딩 시 단순 로그 확률 합 $\\sum \\log P(y_t)$ 만 사용하면 발생하는 편향과 이를 보정하는 길이 페널티(Length Penalty) 수식 방식은?",
       options: [
-        "길이가 짧은 문장이 누적 로그 확률 합이 높아 무조건 유리해지므로, 문장 길이 $|Y|^\alpha$로 나누어 정규화한다.",
+        "길이가 짧은 문장이 누적 로그 확률 합이 높아 무조건 유리해지므로, 문장 길이 $|Y|^\\alpha$로 나누어 정규화한다.",
         "길이가 긴 문장에 무조건 100점의 가산점을 부여한다.",
         "단어 개수가 10개 이상이면 무조건 탈락시킨다.",
         "로그 확률 값을 제곱하여 확대한다."
       ],
       answer: 0,
-      explanation: "로그 확률($\le 0$)은 음수이므로 더할수록 짧은 문장 스코어가 커집니다. 이를 보정하고자 길이 $|Y|^\alpha$로 나눕니다[cite: 2, 3].",
-      hint: "짧은 문장 선호 편향을 막고자 길이 $|Y|^\alpha$로 나누어 정규화합니다[cite: 2, 3]."
+      explanation: "로그 확률($\\le 0$)은 음수이므로 더할수록 짧은 문장 스코어가 커집니다. 이를 보정하고자 길이 $|Y|^\\alpha$로 나눕니다[cite: 2, 3].",
+      hint: "짧은 문장 선호 편향을 막고자 길이 $|Y|^\\alpha$로 나누어 정규화합니다[cite: 2, 3]."
     },
     {
       id: "nlp-s2s-mc-hard-002",
@@ -736,14 +736,14 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "Seq2Seq 표준 Attention에서 디코더 상태 $s_t$와 인코더 모든 상태 $h_i$ 간의 점수를 매번 계산할 때 소요되는 시간 및 공간 복잡도는?",
       options: [
-        "$O(T_x \cdot T_y)$ (입력 길이 $T_x$와 출력 길이 $T_y$의 곱에 비례)",
+        "$O(T_x \\cdot T_y)$ (입력 길이 $T_x$와 출력 길이 $T_y$의 곱에 비례)",
         "$O(1)$",
-        "$O(\log T_x)$",
+        "$O(\\log T_x)$",
         "$O(T_x^3)$"
       ],
       answer: 0,
       explanation: "매 출력 스텝마다 모든 인코더 스텝을 조회하므로 출력 길이 $T_y$와 입력 길이 $T_x$의 곱에 비례하는 복잡도를 가집니다[cite: 2].",
-      hint: "출력 스텝과 입력 스텝의 곱($T_x \cdot T_y$)에 비례합니다[cite: 2]."
+      hint: "출력 스텝과 입력 스텝의 곱($T_x \\cdot T_y$)에 비례합니다[cite: 2]."
     },
     {
       id: "nlp-s2s-mc-hard-003",
@@ -751,7 +751,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "Seq2Seq & Attention",
       questionType: "multiple-choice",
-      prompt: "Attention 가중치 행렬 $\alpha_{t,i}$가 기계번역에서 전통적인 '단어 정렬(Word Alignment) 모델'을 대체할 수 있는 근본적 이유는?",
+      prompt: "Attention 가중치 행렬 $\\alpha_{t,i}$가 기계번역에서 전통적인 '단어 정렬(Word Alignment) 모델'을 대체할 수 있는 근본적 이유는?",
       options: [
         "디코더가 출력 단어를 생성할 때 필요한 입력 소스 단어에 자동으로 높은 가중치(확률)를 할당하도록 End-to-End로 학습되기 때문에",
         "단어 정렬 표를 사람이 직접 수작업으로 입력해주기 때문에",
@@ -796,7 +796,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "Seq2Seq & Attention",
       questionType: "multiple-choice",
-      prompt: "Bahdanau Additive Attention의 점수 계산 수식 $score(s_{t-1}, h_i) = v_a^T \tanh(W_a s_{t-1} + U_a h_i)$ 에 포함된 가중치 행렬 $W_a, U_a$와 벡터 $v_a$의 역할은?",
+      prompt: "Bahdanau Additive Attention의 점수 계산 수식 $score(s_{t-1}, h_i) = v_a^T \\tanh(W_a s_{t-1} + U_a h_i)$ 에 포함된 가중치 행렬 $W_a, U_a$와 벡터 $v_a$의 역할은?",
       options: [
         "디코더 상태와 인코더 상태를 각각 비선형 공간으로 선형 투영한 뒤 스칼라 점수로 합산하기 위한 학습 가능한 파라미터들이다.",
         "고정된 하이퍼파라미터 상수로 절대 변하지 않는다.",
@@ -828,7 +828,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "Seq2Seq & Attention",
       questionType: "multiple-choice",
-      prompt: "Attention 스코어에 Softmax 적용 전 스케일링 온도 $T$를 도입했을 때($\alpha_i = \text{softmax}(e_i / T)$), $T$가 매우 커지면(무한대) 어텐션 가중치 분포는 어떻게 변하는가?",
+      prompt: "Attention 스코어에 Softmax 적용 전 스케일링 온도 $T$를 도입했을 때($\\alpha_i = \\text{softmax}(e_i / T)$), $T$가 매우 커지면(무한대) 어텐션 가중치 분포는 어떻게 변하는가?",
       options: [
         "모든 인코더 토큰에 대해 가중치가 균등하게 분산되는 균등 분포(Uniform Distribution)가 된다.",
         "단 하나의 토큰에만 가중치 1.0이 쏠린다.",
@@ -872,7 +872,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "Seq2Seq & Attention",
       questionType: "short-answer",
-      prompt: "신경망 레이어와 $\tanh$를 조합하여 가중치 합산 형태의 점수를 구하는 최초의 Additive 어텐션 제안자 명칭은?",
+      prompt: "신경망 레이어와 $\\tanh$를 조합하여 가중치 합산 형태의 점수를 구하는 최초의 Additive 어텐션 제안자 명칭은?",
       options: [],
       answer: null,
       acceptedAnswers: ["Bahdanau", "바다나우", "Bahdanau Attention"],
@@ -945,14 +945,14 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "시퀀스 길이가 $N$일 때 표준 Self-Attention의 시간 및 공간 복잡도가 $O(N^2)$인 결정적 원인은?",
       options: [
-        "$Q K^T$ 연산 결과로 생성되는 유사도 행렬의 크기가 $N \times N$ 이기 때문",
+        "$Q K^T$ 연산 결과로 생성되는 유사도 행렬의 크기가 $N \\times N$ 이기 때문",
         "입력 텐서의 차원이 무한대이기 때문",
         "Softmax 함수가 3차원 연산을 요구하기 때문",
         "가중치 행렬 $W^Q$의 행 개수가 $N^2$이므로"
       ],
       answer: 0,
-      explanation: "Query와 Key 내적 행렬 크기가 $N \times N$이므로 시퀀스 길이에 대해 2차수 $O(N^2)$ 복잡도를 갖습니다[cite: 2].",
-      hint: "모든 토큰 간 상호작용을 계산하므로 $N \times N$ 행렬이 만들어집니다[cite: 2]."
+      explanation: "Query와 Key 내적 행렬 크기가 $N \\times N$이므로 시퀀스 길이에 대해 2차수 $O(N^2)$ 복잡도를 갖습니다[cite: 2].",
+      hint: "모든 토큰 간 상호작용을 계산하므로 $N \\times N$ 행렬이 만들어집니다[cite: 2]."
     },
     {
       id: "nlp-tr-mc-hard-002",
@@ -994,7 +994,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "Transformer & Self-Attention",
       questionType: "multiple-choice",
-      prompt: "FlashAttention이 $N \times N$ Attention 행렬을 느린 HBM에 통째로 쓰지 않고 고속 연산을 수행하는 핵심 구현 기법은?",
+      prompt: "FlashAttention이 $N \\times N$ Attention 행렬을 느린 HBM에 통째로 쓰지 않고 고속 연산을 수행하는 핵심 구현 기법은?",
       options: [
         "GPU 빠른 SRAM 메모리 블록 크기로 행렬을 타일링(Tiling)하고 Online Softmax 기법으로 누적 계산함",
         "Softmax 대신 평균 연산만 수행함",
@@ -1047,7 +1047,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "트랜스포머 인코더 Self-Attention과 디코더 Masked Self-Attention의 마스크 행렬 유효 영역 차이는?",
       options: [
-        "인코더는 $T \times T$ 전체 영역이 유효하고, 디코더는 미래 토큰을 차단하는 하삼각(Lower-triangular) 영역만 유효하다.",
+        "인코더는 $T \\times T$ 전체 영역이 유효하고, 디코더는 미래 토큰을 차단하는 하삼각(Lower-triangular) 영역만 유효하다.",
         "인코더는 하삼각만 유효하고, 디코더는 전체가 유효하다.",
         "인코더와 디코더 모두 상삼각 영역만 유효하다.",
         "둘 다 마스크를 쓰지 않는다."
@@ -1138,14 +1138,14 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "Transformer & Self-Attention",
       questionType: "essay",
-      prompt: "Scaled Dot-Product Attention 수식 $\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q K^T}{\sqrt{d_k}}\right) V$ 에서 왜 $\sqrt{d_k}$로 나누어 주어야 하는지 내적 분산 및 Softmax 기울기 소실 관점에서 서술하시오.",
+      prompt: "Scaled Dot-Product Attention 수식 $\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\frac{Q K^T}{\\sqrt{d_k}}\\right) V$ 에서 왜 $\\sqrt{d_k}$로 나누어 주어야 하는지 내적 분산 및 Softmax 기울기 소실 관점에서 서술하시오.",
       options: [],
       answer: null,
       acceptedAnswers: ["분산", "차원", "Softmax", "기울기 소실"],
-      modelAnswer: "차원 $d_k$가 커지면 $Q K^T$ 내적값들의 분산이 커져 값이 매우 커진다. 이 경우 Softmax 함수를 통과하면 출력이 한쪽으로 쏠려 뾰족해지고 미분 기울기가 0에 수렴하는 기울기 소실이 발생하므로, $\sqrt{d_k}$로 나누어 분산을 정규화한다[cite: 2].",
-      rubricKeywords: ["내적 분산 증가", "Softmax 미분 기울기 소실", "$\sqrt{d_k}$ 스케일링 정규화"],
+      modelAnswer: "차원 $d_k$가 커지면 $Q K^T$ 내적값들의 분산이 커져 값이 매우 커진다. 이 경우 Softmax 함수를 통과하면 출력이 한쪽으로 쏠려 뾰족해지고 미분 기울기가 0에 수렴하는 기울기 소실이 발생하므로, $\\sqrt{d_k}$로 나누어 분산을 정규화한다[cite: 2].",
+      rubricKeywords: ["내적 분산 증가", "Softmax 미분 기울기 소실", "$\\sqrt{d_k}$ 스케일링 정규화"],
       minLength: 20,
-      explanation: "차원 증가에 따른 내적 분산 확대와 Softmax 기울기 소실 방지를 위한 $\sqrt{d_k}$ 정규화 원리를 서술합니다[cite: 2].",
+      explanation: "차원 증가에 따른 내적 분산 확대와 Softmax 기울기 소실 방지를 위한 $\\sqrt{d_k}$ 정규화 원리를 서술합니다[cite: 2].",
       hint: "차원이 클 때 분산이 커져 Softmax 미분값이 0이 되는 현상을 기술하세요[cite: 2]."
     },
     {
@@ -1392,7 +1392,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "정렬 학습 (Alignment)",
       questionType: "multiple-choice",
-      prompt: "RLHF Step 3 PPO 학습 시 목적함수에 KL Divergence 페널티 항 $D_{KL}(\pi_\phi^{RL} \parallel \pi^{SFT})$을 포함하는 핵심 목적은?",
+      prompt: "RLHF Step 3 PPO 학습 시 목적함수에 KL Divergence 페널티 항 $D_{KL}(\\pi_\\phi^{RL} \\parallel \\pi^{SFT})$을 포함하는 핵심 목적은?",
       options: [
         "언어 모델이 보상 모델의 허점(Bug)을 악용하여 의미 없는 반복문이나 이상한 텍스트로 점수만 높이는 보상 해킹(Reward Hacking)을 방지하기 위해",
         "보상 모델의 VRAM 메모리 사용량을 절반으로 낮추기 위해",
@@ -1410,10 +1410,10 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "Direct Preference Optimization(DPO) 유도 과정에서 정의되는 암묵적 보상(Implicit Reward) $r(x, y)$의 수식 표현은?",
       options: [
-        "$r(x, y) = \beta \log \frac{\pi_\theta(y|x)}{\pi_{ref}(y|x)}$",
-        "$r(x, y) = \pi_\theta(y|x) + \pi_{ref}(y|x)$",
-        "$r(x, y) = \frac{\pi_{ref}(y|x)}{\pi_\theta(y|x)}$",
-        "$r(x, y) = \sigma(\pi_\theta(y|x))$"
+        "$r(x, y) = \\beta \\log \\frac{\\pi_\\theta(y|x)}{\\pi_{ref}(y|x)}$",
+        "$r(x, y) = \\pi_\\theta(y|x) + \\pi_{ref}(y|x)$",
+        "$r(x, y) = \\frac{\\pi_{ref}(y|x)}{\\pi_\\theta(y|x)}$",
+        "$r(x, y) = \\sigma(\\pi_\\theta(y|x))$"
       ],
       answer: 0,
       explanation: "DPO는 최적 강화학습 정책 수식을 역변환하여 보상함수가 레퍼런스 모델 대비 현재 모델의 로그 확률 비로 표현됨을 유도합니다[cite: 3]."
@@ -1494,7 +1494,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "정렬 학습 (Alignment)",
       questionType: "multiple-choice",
-      prompt: "InstructGPT 보상 모델 학습용 이진 쌍 손실함수 $loss(\psi) = -\mathbb{E}_{(x, y_w, y_l)} \left[ \log \sigma \left( R_\psi(x, y_w) - R_\psi(x, y_l) \right) \right]$ 의 최적화 목적은?",
+      prompt: "InstructGPT 보상 모델 학습용 이진 쌍 손실함수 $loss(\\psi) = -\\mathbb{E}_{(x, y_w, y_l)} \\left[ \\log \\sigma \\left( R_\\psi(x, y_w) - R_\\psi(x, y_l) \\right) \\right]$ 의 최적화 목적은?",
       options: [
         "선호 답변 $y_w$의 보상 점수가 비선호 답변 $y_l$의 보상 점수보다 최대한 높아지도록 차이를 시그모이드 상에서 극대화한다.",
         "두 답변의 보상 점수 차이를 무조건 0으로 만든다.",
@@ -1608,15 +1608,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "디코딩 알고리즘",
       questionType: "multiple-choice",
-      prompt: "Sampling 디코딩 시 Temperature $T \rightarrow \infty$ (무한대) 로 극한을 취했을 때 Softmax 확률 분포의 변화는?",
+      prompt: "Sampling 디코딩 시 Temperature $T \\rightarrow \\infty$ (무한대) 로 극한을 취했을 때 Softmax 확률 분포의 변화는?",
       options: [
-        "모든 토큰의 선택 확률이 $\frac{1}{|V|}$ 로 동일해지는 완벽한 균등 분포(Uniform Distribution)가 되어 완전 무작위 출력이 된다.",
+        "모든 토큰의 선택 확률이 $\\frac{1}{|V|}$ 로 동일해지는 완벽한 균등 분포(Uniform Distribution)가 되어 완전 무작위 출력이 된다.",
         "가장 로짓이 큰 단어의 확률이 정확히 1이 된다.",
         "모든 단어의 확률이 0으로 수렴한다.",
         "확률 분포가 변경되지 않고 유지된다."
       ],
       answer: 0,
-      explanation: "$T \to \infty$ 이면 $z_i / T \to 0$이 되어 $\exp(0)=1$이므로 모든 단어가 동등한 확률($1/|V|$)을 갖는 균등 분포가 됩니다[cite: 3]."
+      explanation: "$T \\to \\infty$ 이면 $z_i / T \\to 0$이 되어 $\\exp(0)=1$이므로 모든 단어가 동등한 확률($1/|V|$)을 갖는 균등 분포가 됩니다[cite: 3]."
     },
     {
       id: "nlp-dec-mc-hard-002",
@@ -1626,7 +1626,7 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "Contrastive Search 디코딩에서 반복 현상(Degeneration)을 막기 위해 후보 토큰의 로짓 평가식에 포함된 페널티 항은?",
       options: [
-        "이전 생성된 토큰들의 은닉 상태와 현재 후보 토큰 은닉 상태 간의 최대 코사인 유사도에 페널티 계수 $\alpha$를 곱해 차감한다.",
+        "이전 생성된 토큰들의 은닉 상태와 현재 후보 토큰 은닉 상태 간의 최대 코사인 유사도에 페널티 계수 $\\alpha$를 곱해 차감한다.",
         "이전 토큰들과 동일한 단어가 나오면 가산점을 100점 부여한다.",
         "확률값을 무조건 음수로 변환한다.",
         "문장 길이를 10단어로 강제 차단한다."
@@ -1642,13 +1642,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "Beam Search에서 짧은 문장 선호 편향을 막기 위해 누적 로그 확률 합을 정규화하는 길이 페널티 수식 표현은?",
       options: [
-        "$\\frac{1}{|Y|^\alpha} \sum_{t=1}^{|Y|} \log P(y_t | y_<t)$",
-        "$\\sum \\log P(y_t) \times |Y|$",
-        "$|Y| + \sum \log P(y_t)$",
+        "$\\frac{1}{|Y|^\\alpha} \\sum_{t=1}^{|Y|} \\log P(y_t | y_<t)$",
+        "$\\sum \\log P(y_t) \\times |Y|$",
+        "$|Y| + \\sum \\log P(y_t)$",
         "$\\log (|Y|)$"
       ],
       answer: 0,
-      explanation: "문장 길이 $|Y|^\alpha$ 로 누적 로그 확률 합을 나누어(정규화하여) 지나치게 짧은 문장이 채택되는 편향을 보정합니다[cite: 2, 3]."
+      explanation: "문장 길이 $|Y|^\\alpha$ 로 누적 로그 확률 합을 나누어(정규화하여) 지나치게 짧은 문장이 채택되는 편향을 보정합니다[cite: 2, 3]."
     },
     {
       id: "nlp-dec-mc-hard-004",
@@ -1672,15 +1672,15 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "디코딩 알고리즘",
       questionType: "multiple-choice",
-      prompt: "디코딩 시 Repetition Penalty $\theta > 1$을 이전에 등장한 토큰 로짓 $z_{x_j}$에 적용하는 올바른 수식 규칙은?",
+      prompt: "디코딩 시 Repetition Penalty $\\theta > 1$을 이전에 등장한 토큰 로짓 $z_{x_j}$에 적용하는 올바른 수식 규칙은?",
       options: [
-        "$z_i = \\begin{cases} z_i / \theta & (z_i > 0 \text{ 일 때}) \\\\ z_i \times \theta & (z_i < 0 \text{ 일 때}) \end{cases}$",
-        "$z_i = z_i - \theta$",
-        "$z_i = z_i \times \theta$",
+        "$z_i = \\begin{cases} z_i / \\theta & (z_i > 0 \\text{ 일 때}) \\\\ z_i \\times \\theta & (z_i < 0 \\text{ 일 때}) \\end{cases}$",
+        "$z_i = z_i - \\theta$",
+        "$z_i = z_i \\times \\theta$",
         "$z_i = 0$"
       ],
       answer: 0,
-      explanation: "로짓이 양수면 $\theta$로 나누고 음수면 $\theta$를 곱해 더 작은 값으로 만들어 샘플링 확률을 떨어뜨립니다[cite: 3]."
+      explanation: "로짓이 양수면 $\\theta$로 나누고 음수면 $\\theta$를 곱해 더 작은 값으로 만들어 샘플링 확률을 떨어뜨립니다[cite: 3]."
     },
     {
       id: "nlp-dec-mc-hard-006",
@@ -1690,13 +1690,13 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       questionType: "multiple-choice",
       prompt: "Speculative Decoding에서 Target 모델이 Draft 모델의 추측 토큰을 검증할 때 사용하는 리젝션 샘플링 확률 기준은?",
       options: [
-        "$\\min\left(1, \frac{p(x)}{q(x)}\right)$ 비율을 기반으로 하여 최종 출력 분포가 타겟 모델 원본 분포와 수학적으로 완벽히 동일함을 보장한다.",
+        "$\\min\\left(1, \\frac{p(x)}{q(x)}\\right)$ 비율을 기반으로 하여 최종 출력 분포가 타겟 모델 원본 분포와 수학적으로 완벽히 동일함을 보장한다.",
         "무조건 50% 확률로 수용한다.",
         "드래프트 모델 확률이 더 높으면 무조건 거부한다.",
         "타겟 모델의 손실함수 값에 비례한다."
       ],
       answer: 0,
-      explanation: "리젝션 샘플링 비율 $\min(1, p/q)$을 적용하므로 속도는 빨라지되 생성 분포 왜곡은 전혀 발생하지 않습니다[cite: 3]."
+      explanation: "리젝션 샘플링 비율 $\\min(1, p/q)$을 적용하므로 속도는 빨라지되 생성 분포 왜곡은 전혀 발생하지 않습니다[cite: 3]."
     },
     {
       id: "nlp-dec-mc-hard-007",
@@ -2064,12 +2064,12 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
       difficulty: "hard",
       category: "LLM 평가 및 응용",
       questionType: "multiple-choice",
-      prompt: "HumanEval 코드 평가 시 pass@k 지표 계산에서 편향을 최소화하기 위해 $n$개 샘플($n \ge k$)을 뽑아 적용하는 불편 추정량(Unbiased Estimator) 공식은?",
+      prompt: "HumanEval 코드 평가 시 pass@k 지표 계산에서 편향을 최소화하기 위해 $n$개 샘플($n \\ge k$)을 뽑아 적용하는 불편 추정량(Unbiased Estimator) 공식은?",
       options: [
-        "$\\text{pass}@k \approx 1 - \frac{\binom{n-c}{k}}{\binom{n}{k}}$ (단, $c$는 테스트를 통과한 샘플 수)",
-        "$\\text{pass}@k = \frac{c}{n} \times k$",
-        "$\\text{pass}@k = \frac{c}{k}$",
-        "$\\text{pass}@k = 1 - \left(\frac{c}{n}\right)^k$"
+        "$\\text{pass}@k \\approx 1 - \\frac{\\binom{n-c}{k}}{\\binom{n}{k}}$ (단, $c$는 테스트를 통과한 샘플 수)",
+        "$\\text{pass}@k = \\frac{c}{n} \\times k$",
+        "$\\text{pass}@k = \\frac{c}{k}$",
+        "$\\text{pass}@k = 1 - \\left(\\frac{c}{n}\\right)^k$"
       ],
       answer: 0,
       explanation: "높은 분산을 줄이기 위해 전체 $n$개 중 오답 $(n-c)$개에서 $k$개를 모두 뽑을 확률을 1에서 빼는 조합 공식 추정량을 사용합니다[cite: 3]."
