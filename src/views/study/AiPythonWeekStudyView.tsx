@@ -77,6 +77,19 @@ const CATEGORY_COLORS = [
   "#9333ea",
 ];
 
+function getAvailableCategoriesForDifficulty(
+  week: AiPythonWeek,
+  difficulty: AiPythonWeekDifficulty,
+) {
+  return [
+    ...new Set(
+      AI_PYTHON_WEEK_QUESTION_BANKS[week][difficulty].map(
+        (question) => question.category,
+      ),
+    ),
+  ];
+}
+
 export default function AiPythonWeekStudyView() {
   const { week: weekParam } = useParams();
 
@@ -99,7 +112,13 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
   const { progress, resetProgress } = useAiPythonWeekProgress();
   const categories = useMemo(() => getAiPythonWeekCategories(week), [week]);
   const [difficulty, setDifficulty] = useState<AiPythonWeekDifficulty>("easy");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(categories);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
+    getAvailableCategoriesForDifficulty(week, "easy"),
+  );
+  const availableCategories = useMemo(
+    () => getAvailableCategoriesForDifficulty(week, difficulty),
+    [difficulty, week],
+  );
 
   const completedQuestionIds = useMemo(
     () =>
@@ -145,7 +164,11 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
   );
 
   const meta = AI_PYTHON_WEEK_META[week];
-  const allSelected = selectedCategories.length === categories.length;
+  const allSelected =
+    availableCategories.length > 0 &&
+    availableCategories.every((category) =>
+      selectedCategories.includes(category),
+    );
 
   const startQuiz = () => {
     if (!remainingQuestions.length || !selectedCategories.length) return;
@@ -223,7 +246,12 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
               <button
                 key={level}
                 type="button"
-                onClick={() => setDifficulty(level)}
+                onClick={() => {
+                  setDifficulty(level);
+                  setSelectedCategories(
+                    getAvailableCategoriesForDifficulty(week, level),
+                  );
+                }}
                 className={`rounded-2xl border-2 p-5 text-left transition ${
                   active
                     ? "border-violet-500 bg-violet-50 shadow-[0_10px_28px_rgba(124,58,237,0.12)]"
@@ -257,7 +285,9 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
                 </h3>
                 <p className="mt-1 text-xs text-slate-500">{levelMeta.description}</p>
                 <p className="mt-4 border-t border-slate-100 pt-3 text-[11px] font-bold text-slate-400">
-                  미풀이 {remaining} / 100
+                  {remaining === 0
+                    ? "100문제 풀이 완료"
+                    : `미풀이 ${remaining} / 100`}
                 </p>
               </button>
             );
@@ -273,12 +303,16 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
             </span>
             <div>
               <h2 className="font-black text-slate-900">출제 범위</h2>
-              <p className="text-xs text-slate-400">최소 한 영역을 선택하세요</p>
+              <p className="text-xs text-slate-400">
+                현재 난이도: {availableCategories.length}개 영역 출제 가능 · {categories.length - availableCategories.length}개 영역 문제 없음
+              </p>
             </div>
           </div>
           <button
             type="button"
-            onClick={() => setSelectedCategories(allSelected ? [] : categories)}
+            onClick={() =>
+              setSelectedCategories(allSelected ? [] : availableCategories)
+            }
             className="text-xs font-extrabold text-violet-700"
           >
             {allSelected ? "전체 해제" : "전체 선택"}
@@ -286,10 +320,12 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
         </div>
         <div className="grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
           {categories.map((category, index) => {
-            const selected = selectedCategories.includes(category);
             const categoryQuestions = AI_PYTHON_WEEK_QUESTION_BANKS[week][
               difficulty
             ].filter((question) => question.category === category);
+            const hasQuestions = categoryQuestions.length > 0;
+            const selected =
+              hasQuestions && selectedCategories.includes(category);
             const remaining = categoryQuestions.filter(
               (question) => !completedQuestionIds.has(question.id),
             ).length;
@@ -298,6 +334,7 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
               <button
                 key={category}
                 type="button"
+                disabled={!hasQuestions}
                 onClick={() =>
                   setSelectedCategories((current) =>
                     current.includes(category)
@@ -307,10 +344,10 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
                         ),
                   )
                 }
-                className="flex min-h-14 items-center gap-3 rounded-xl border-2 bg-white px-3 py-2.5 text-left transition hover:-translate-y-0.5"
+                className="flex min-h-14 items-center gap-3 rounded-xl border-2 bg-white px-3 py-2.5 text-left transition enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-slate-50"
                 style={{
                   borderColor: selected ? color : "#e8edf3",
-                  opacity: selected ? 1 : 0.58,
+                  opacity: !hasQuestions ? 0.48 : selected ? 1 : 0.62,
                 }}
               >
                 <span
@@ -323,7 +360,11 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
                   {category}
                 </span>
                 <span className="shrink-0 text-[10px] font-black text-slate-400">
-                  미풀이 {remaining}
+                  {!hasQuestions
+                    ? "이 난이도 문제 없음"
+                    : remaining === 0
+                      ? "풀이 완료"
+                      : `미풀이 ${remaining} / ${categoryQuestions.length}`}
                 </span>
               </button>
             );
@@ -382,7 +423,7 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
         <div className="grid grid-cols-2 gap-2 sm:flex">
           <button
             type="button"
-            onClick={() => setSelectedCategories(categories)}
+            onClick={() => setSelectedCategories(availableCategories)}
             className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-500"
           >
             <RotateCcw className="h-3.5 w-3.5" /> 선택 초기화
