@@ -90,7 +90,7 @@ const QUICK_MENU = [
   },
   {
     title: "공부 문제",
-    description: "Python 실전형 문제를 풀고 내 약점과 오답을 분석해요.",
+    description: "Python·Web·AI 문제를 풀고 틀린 문제만 골라 다시 풀어요.",
     imageSrc: studyQuickMenuArt,
     path: "/study",
     badge: `${TOTAL_STUDY_QUESTIONS}문제`,

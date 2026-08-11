@@ -66,14 +66,14 @@ export default function StudyHubView() {
           </h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-blue-100/75 sm:text-base">
             객관식·단답형·서술형을 실제 시험처럼 풀어보세요. 제출 즉시 정답과 해설을 확인하고,
-            틀린 유형은 자동으로 약점 리포트에 모입니다.
+            틀린 문제는 자동으로 오답 복습에 모입니다.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               to="/study/report"
               className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15"
             >
-              <BarChart3 className="h-4 w-4" /> 내 약점 보기
+              <BarChart3 className="h-4 w-4" /> 틀린 문제 다시 풀기
             </Link>
           </div>
         </div>

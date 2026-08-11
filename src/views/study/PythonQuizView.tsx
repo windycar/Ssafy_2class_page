@@ -266,7 +266,7 @@ export default function PythonQuizView() {
           className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-500 transition hover:text-indigo-600"
         >
           <ArrowLeft className="h-4 w-4" />
-          {mode === "wrong" ? "약점 분석" : "난이도 선택"}
+          {mode === "wrong" ? "오답 세트 선택" : "난이도 선택"}
         </Link>
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-red-50 px-3 py-1.5 text-xs font-black text-red-600">
@@ -277,7 +277,7 @@ export default function PythonQuizView() {
           </span>
           <Link
             to="/study/report"
-            aria-label="약점 분석 보기"
+            aria-label="틀린 문제 다시 풀기"
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-indigo-600"
           >
             <BarChart3 className="h-4 w-4" />
