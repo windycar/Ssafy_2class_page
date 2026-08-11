@@ -1,9 +1,9 @@
 import { Link } from "react-router";
 import {
   ArrowRight,
-  BarChart3,
   BookOpenCheck,
   CheckCircle2,
+  RotateCcw,
   Sparkles,
   Target,
 } from "lucide-react";
@@ -68,12 +68,28 @@ export default function StudyHubView() {
             객관식·단답형·서술형을 실제 시험처럼 풀어보세요. 제출 즉시 정답과 해설을 확인하고,
             틀린 문제는 자동으로 오답 복습에 모입니다.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-7 flex flex-wrap items-center gap-4">
             <Link
               to="/study/report"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15"
+              className="group relative inline-flex w-full max-w-[320px] items-center gap-3 overflow-hidden rounded-2xl border border-white/70 bg-white/95 px-4 py-3.5 text-left text-[#172354] shadow-[0_12px_32px_rgba(10,25,74,0.24)] backdrop-blur transition duration-200 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_16px_38px_rgba(10,25,74,0.32)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-200/70 sm:w-auto sm:min-w-[300px]"
             >
-              <BarChart3 className="h-4 w-4" /> 틀린 문제 다시 풀기
+              <span className="absolute inset-0 -translate-x-full bg-[linear-gradient(110deg,transparent_25%,rgba(99,102,241,0.10)_50%,transparent_75%)] transition-transform duration-700 group-hover:translate-x-full" />
+              <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#3454b4] to-[#6753c9] text-white shadow-[0_6px_14px_rgba(52,84,180,0.28)]">
+                <RotateCcw className="h-5 w-5 transition-transform duration-300 group-hover:-rotate-45" />
+              </span>
+              <span className="relative min-w-0 flex-1">
+                <span className="block text-[10px] font-black tracking-[0.13em] text-[#56618c]">
+                  WRONG ANSWER REVIEW
+                </span>
+                <span className="mt-0.5 block text-base font-black">틀린 문제 다시 풀기</span>
+              </span>
+              {reviewCount > 0 ? (
+                <span className="relative flex h-8 min-w-8 shrink-0 items-center justify-center rounded-full bg-[#536cc7] px-2 text-xs font-black text-white shadow-sm ring-2 ring-indigo-100">
+                  {reviewCount}
+                </span>
+              ) : (
+                <ArrowRight className="relative h-5 w-5 shrink-0 transition-transform group-hover:translate-x-1" />
+              )}
             </Link>
           </div>
         </div>
