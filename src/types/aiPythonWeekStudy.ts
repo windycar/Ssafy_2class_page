@@ -2,7 +2,7 @@ export type AiPythonWeek = "week1" | "week2";
 
 export const AI_PYTHON_WEEK_BANK_VERSIONS = {
   week1: "v5",
-  week2: "v7",
+  week2: "v8",
 } as const satisfies Record<AiPythonWeek, string>;
 
 export const AI_PYTHON_WEEK_ATTEMPT_ID_PREFIXES = {

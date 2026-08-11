@@ -3,7 +3,7 @@ import { createServer } from "vite";
 
 const EXPECTED_DIFFICULTY_TYPE_COUNTS = {
   week1: { "multiple-choice": 75, "short-answer": 15, essay: 10 },
-  week2: { "multiple-choice": 90, "short-answer": 40, essay: 20 },
+  week2: { "multiple-choice": 120, "short-answer": 20, essay: 10 },
 };
 const EXPECTED_QUESTIONS_PER_DIFFICULTY = {
   week1: 100,
@@ -146,6 +146,34 @@ try {
         failures.push(
           `${week}/${difficulty}: 문제 유형 수 오류 ${JSON.stringify(counts)}`,
         );
+      }
+      if (week === "week2") {
+        const categoryTypeCounts = new Map();
+        bank[difficulty].forEach((question) => {
+          const categoryCounts = categoryTypeCounts.get(question.category) ?? {
+            "multiple-choice": 0,
+            "short-answer": 0,
+            essay: 0,
+          };
+          categoryCounts[question.questionType] += 1;
+          categoryTypeCounts.set(question.category, categoryCounts);
+        });
+        if (categoryTypeCounts.size !== 10) {
+          failures.push(
+            `${week}/${difficulty}: 출제 영역 ${categoryTypeCounts.size}개 (기대값 10)`,
+          );
+        }
+        categoryTypeCounts.forEach((categoryCounts, category) => {
+          if (
+            categoryCounts["multiple-choice"] !== 12 ||
+            categoryCounts["short-answer"] !== 2 ||
+            categoryCounts.essay !== 1
+          ) {
+            failures.push(
+              `${week}/${difficulty}/${category}: 문제 유형 수 오류 ${JSON.stringify(categoryCounts)}`,
+            );
+          }
+        });
       }
     }
     if (Math.max(...answerPositions) - Math.min(...answerPositions) > 2) {
