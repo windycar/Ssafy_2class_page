@@ -2,12 +2,25 @@ import { existsSync } from "node:fs";
 import { createServer } from "vite";
 
 const EXPECTED_DIFFICULTY_TYPE_COUNTS = {
-  week1: { "multiple-choice": 75, "short-answer": 15, essay: 10 },
-  week2: { "multiple-choice": 120, "short-answer": 20, essay: 10 },
+  week1: {
+    easy: { "multiple-choice": 84, "short-answer": 14, essay: 7 },
+    medium: { "multiple-choice": 84, "short-answer": 14, essay: 7 },
+    hard: { "multiple-choice": 72, "short-answer": 12, essay: 6 },
+  },
+  week2: Object.fromEntries(
+    ["easy", "medium", "hard"].map((difficulty) => [
+      difficulty,
+      { "multiple-choice": 120, "short-answer": 20, essay: 10 },
+    ]),
+  ),
 };
 const EXPECTED_QUESTIONS_PER_DIFFICULTY = {
-  week1: 100,
-  week2: 150,
+  week1: { easy: 105, medium: 105, hard: 90 },
+  week2: { easy: 150, medium: 150, hard: 150 },
+};
+const EXPECTED_CATEGORIES_PER_DIFFICULTY = {
+  week1: { easy: 7, medium: 7, hard: 6 },
+  week2: { easy: 10, medium: 10, hard: 10 },
 };
 
 const server = await createServer({
@@ -50,8 +63,9 @@ try {
     const hintCounts = new Map();
     const explanationCounts = new Map();
 
-    const expectedDifficultyTotal = EXPECTED_QUESTIONS_PER_DIFFICULTY[week];
-    const expectedWeekTotal = expectedDifficultyTotal * 3;
+    const expectedWeekTotal = Object.values(
+      EXPECTED_QUESTIONS_PER_DIFFICULTY[week],
+    ).reduce((total, count) => total + count, 0);
     if (questions.length !== expectedWeekTotal) {
       failures.push(
         `${week}: 총 ${questions.length}문제 (기대값 ${expectedWeekTotal})`,
@@ -59,6 +73,8 @@ try {
     }
 
     for (const difficulty of ["easy", "medium", "hard"]) {
+      const expectedDifficultyTotal =
+        EXPECTED_QUESTIONS_PER_DIFFICULTY[week][difficulty];
       if (bank[difficulty].length !== expectedDifficultyTotal) {
         failures.push(
           `${week}/${difficulty}: ${bank[difficulty].length}문제 (기대값 ${expectedDifficultyTotal})`,
@@ -122,12 +138,15 @@ try {
       }
     });
 
-    const expectedDifficultyCounts = EXPECTED_DIFFICULTY_TYPE_COUNTS[week];
-    const expectedTypeCounts = Object.fromEntries(
-      Object.entries(expectedDifficultyCounts).map(([type, count]) => [
-        type,
-        count * 3,
-      ]),
+    const expectedTypeCounts = ["multiple-choice", "short-answer", "essay"].reduce(
+      (counts, type) => ({
+        ...counts,
+        [type]: Object.values(EXPECTED_DIFFICULTY_TYPE_COUNTS[week]).reduce(
+          (total, difficultyCounts) => total + difficultyCounts[type],
+          0,
+        ),
+      }),
+      {},
     );
     if (
       typeCounts["multiple-choice"] !== expectedTypeCounts["multiple-choice"] ||
@@ -138,6 +157,8 @@ try {
     }
     for (const difficulty of ["easy", "medium", "hard"]) {
       const counts = difficultyTypeCounts[difficulty];
+      const expectedDifficultyCounts =
+        EXPECTED_DIFFICULTY_TYPE_COUNTS[week][difficulty];
       if (
         counts["multiple-choice"] !== expectedDifficultyCounts["multiple-choice"] ||
         counts["short-answer"] !== expectedDifficultyCounts["short-answer"] ||
@@ -147,34 +168,34 @@ try {
           `${week}/${difficulty}: 문제 유형 수 오류 ${JSON.stringify(counts)}`,
         );
       }
-      if (week === "week2") {
-        const categoryTypeCounts = new Map();
-        bank[difficulty].forEach((question) => {
-          const categoryCounts = categoryTypeCounts.get(question.category) ?? {
-            "multiple-choice": 0,
-            "short-answer": 0,
-            essay: 0,
-          };
-          categoryCounts[question.questionType] += 1;
-          categoryTypeCounts.set(question.category, categoryCounts);
-        });
-        if (categoryTypeCounts.size !== 10) {
+      const categoryTypeCounts = new Map();
+      bank[difficulty].forEach((question) => {
+        const categoryCounts = categoryTypeCounts.get(question.category) ?? {
+          "multiple-choice": 0,
+          "short-answer": 0,
+          essay: 0,
+        };
+        categoryCounts[question.questionType] += 1;
+        categoryTypeCounts.set(question.category, categoryCounts);
+      });
+      const expectedCategoryTotal =
+        EXPECTED_CATEGORIES_PER_DIFFICULTY[week][difficulty];
+      if (categoryTypeCounts.size !== expectedCategoryTotal) {
+        failures.push(
+          `${week}/${difficulty}: 출제 영역 ${categoryTypeCounts.size}개 (기대값 ${expectedCategoryTotal})`,
+        );
+      }
+      categoryTypeCounts.forEach((categoryCounts, category) => {
+        if (
+          categoryCounts["multiple-choice"] !== 12 ||
+          categoryCounts["short-answer"] !== 2 ||
+          categoryCounts.essay !== 1
+        ) {
           failures.push(
-            `${week}/${difficulty}: 출제 영역 ${categoryTypeCounts.size}개 (기대값 10)`,
+            `${week}/${difficulty}/${category}: 문제 유형 수 오류 ${JSON.stringify(categoryCounts)}`,
           );
         }
-        categoryTypeCounts.forEach((categoryCounts, category) => {
-          if (
-            categoryCounts["multiple-choice"] !== 12 ||
-            categoryCounts["short-answer"] !== 2 ||
-            categoryCounts.essay !== 1
-          ) {
-            failures.push(
-              `${week}/${difficulty}/${category}: 문제 유형 수 오류 ${JSON.stringify(categoryCounts)}`,
-            );
-          }
-        });
-      }
+      });
     }
     if (Math.max(...answerPositions) - Math.min(...answerPositions) > 2) {
       failures.push(`${week}: 객관식 정답 위치 편중 ${JSON.stringify(answerPositions)}`);
