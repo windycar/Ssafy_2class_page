@@ -107,16 +107,10 @@ function normalizeQuestions(
 const EASY_QUESTIONS = normalizeQuestions("easy", RAW_EASY_QUESTIONS, 0);
 const MEDIUM_QUESTIONS = normalizeQuestions(
   "medium",
-  RAW_MEDIUM_QUESTIONS
-    .filter((question) => question.id !== "nlp-medium-mc-038")
-    .map((question) =>
-      question.id === "nlp-easy-mc-038-corr"
-        ? { ...question, id: "nlp-medium-mc-038" }
-        : question,
-    ),
-  85,
+  RAW_MEDIUM_QUESTIONS,
+  90,
 );
-const HARD_QUESTIONS = normalizeQuestions("hard", RAW_HARD_QUESTIONS, 170);
+const HARD_QUESTIONS = normalizeQuestions("hard", RAW_HARD_QUESTIONS, 180);
 
 export const QUESTION_BANK: Record<
   AiPythonWeekDifficulty,

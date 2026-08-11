@@ -227,7 +227,7 @@ export default function StudyHubView() {
                 <div className="relative flex h-full flex-col">
                   <div className="flex justify-end">
                     <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-black text-white">
-                      300문제
+                      {meta.questionCount}문제
                     </span>
                   </div>
                   <div className="relative z-10 mt-auto max-w-[68%] sm:max-w-[70%] lg:max-w-[62%] xl:max-w-[65%]">

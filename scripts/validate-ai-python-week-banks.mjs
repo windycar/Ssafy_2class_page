@@ -3,7 +3,11 @@ import { createServer } from "vite";
 
 const EXPECTED_DIFFICULTY_TYPE_COUNTS = {
   week1: { "multiple-choice": 75, "short-answer": 15, essay: 10 },
-  week2: { "multiple-choice": 85, "short-answer": 10, essay: 5 },
+  week2: { "multiple-choice": 90, "short-answer": 40, essay: 20 },
+};
+const EXPECTED_QUESTIONS_PER_DIFFICULTY = {
+  week1: 100,
+  week2: 150,
 };
 
 const server = await createServer({
@@ -46,14 +50,18 @@ try {
     const hintCounts = new Map();
     const explanationCounts = new Map();
 
-    if (questions.length !== 300) {
-      failures.push(`${week}: 총 ${questions.length}문제 (기대값 300)`);
+    const expectedDifficultyTotal = EXPECTED_QUESTIONS_PER_DIFFICULTY[week];
+    const expectedWeekTotal = expectedDifficultyTotal * 3;
+    if (questions.length !== expectedWeekTotal) {
+      failures.push(
+        `${week}: 총 ${questions.length}문제 (기대값 ${expectedWeekTotal})`,
+      );
     }
 
     for (const difficulty of ["easy", "medium", "hard"]) {
-      if (bank[difficulty].length !== 100) {
+      if (bank[difficulty].length !== expectedDifficultyTotal) {
         failures.push(
-          `${week}/${difficulty}: ${bank[difficulty].length}문제 (기대값 100)`,
+          `${week}/${difficulty}: ${bank[difficulty].length}문제 (기대값 ${expectedDifficultyTotal})`,
         );
       }
     }

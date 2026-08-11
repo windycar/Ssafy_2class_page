@@ -21,356 +21,923 @@ export interface StudyQuestion {
 export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
   medium: [
     // ==========================================
-    // 1. 단답형 (10문항)
+    // 1. 워드 임베딩 (15문항)
     // ==========================================
     {
-      id: "nlp-medium-sa-001",
-      conceptId: "perplexity",
-      difficulty: "medium",
-      category: "언어 모델 평가",
-      questionType: "short-answer",
-      prompt: "언어 모델이 다음 단어를 예측할 때 느끼는 헷갈리는 정도를 수치화한 지표로, 낮을수록 모델의 성능이 좋음을 의미하는 평가 지표의 명칭(영문 약자)을 작성하시오.",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["PPL", "ppl", "Perplexity"],
-      explanation: "Perplexity(PPL)는 조건부 확률의 역수의 기하평균으로, 값이 낮을수록 문장을 자연스럽고 높은 확률로 예측한다는 뜻입니다[cite: 3].",
-      hint: "Perplexity의 영문 3글자 약자입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-sa-002",
-      conceptId: "subword-tokenization",
-      difficulty: "medium",
-      category: "전처리",
-      questionType: "short-answer",
-      prompt: "BERT 등의 토크나이저에서 단어 'tokenizing'을 'token'과 '##izing'으로 쪼개는 것처럼 신조어나 OOV(Out-of-Vocabulary) 문제를 완화하기 위해 자주 쓰이는 단어 분할 기법을 영문으로 작성하시오.",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["Subword", "subword", "Subword Tokenization", "Subword tokenization"],
-      explanation: "서브워드(Subword) 분할 기법은 자주 쓰이는 단어는 그대로 두고, 드문 단어는 서브워드 단위로 쪼개어 OOV를 최소화합니다[cite: 3].",
-      hint: "단어(Word)의 하위 단위를 뜻하는 영단어입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-sa-003",
-      conceptId: "bptt",
-      difficulty: "medium",
-      category: "RNN",
-      questionType: "short-answer",
-      prompt: "RNN의 순환 구조를 시간 축에 따라 펼친 후, 전체 시점에 대해 역전파를 수행하여 가중치를 학습시키는 경사하강법 알고리즘의 명칭(영문 약자)을 작성하시오.",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["BPTT", "bptt"],
-      explanation: "Backpropagation Through Time(BPTT)은 펼쳐진 깊은 신경망 형태로 시간 축을 거슬러 올라가며 역전파를 수행합니다[cite: 2].",
-      hint: "Backpropagation Through Time의 줄임말입니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-sa-004",
-      conceptId: "lstm-candidate-cell",
-      difficulty: "medium",
-      category: "LSTM",
-      questionType: "short-answer",
-      prompt: "LSTM 수식 $\\tilde{C}_t = \\tanh(W_C \\cdot [h_{t-1}, x_t] + b_C)$ 에서 현재 시점에 새롭게 더해질 세포 상태 후보군을 나타내는 상징 기호를 작성하시오.",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["\\tilde{C}_t", "~C_t", "C~_t", "C_t~", "tilde C_t"],
-      explanation: "$\\tilde{C}_t$는 이번 타임스텝에서 새롭게 생성된 후보 cell content(New cell content candidate)입니다[cite: 2].",
-      hint: "C_t에 물결 표시(tilde)가 들어간 기호입니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-sa-005",
-      conceptId: "additive-attention",
-      difficulty: "medium",
-      category: "Attention",
-      questionType: "short-answer",
-      prompt: "Bahdanau 등이 제안한 방식으로, Query와 Key를 단순히 내적하지 않고 신경망 레이어($W_h h + W_s s$)와 $\\tanh$를 거쳐 점수를 계산하는 Attention 방식을 무엇이라 하는가?",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["Additive Attention", "additive attention", "바다나우 어텐션", "Bahdanau Attention"],
-      explanation: "가중치 행렬 선형 결합과 tanh를 사용하는 방식을 Additive(덧셈) Attention이라 합니다[cite: 2].",
-      hint: "Dot-product(곱셈) 방식과 대비되는 덧셈 기반 방식입니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-sa-006",
-      conceptId: "sinusoidal-positional-encoding",
-      difficulty: "medium",
-      category: "Transformer",
-      questionType: "short-answer",
-      prompt: "트랜스포머 원 논문에서 위치 임베딩을 학습 파라미터로 만들지 않고, 서로 다른 주기의 사인(sin)과 코사인(cos) 함수를 합성하여 만든 위치 인코딩 방식의 명칭은?",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["Sinusoidal Positional Encoding", "sinusoidal positional encoding", "Sinusoidal"],
-      explanation: "Sinusoidal 기법은 삼각함수의 주기성을 이용하여 시퀀스 길이가 학습 때보다 길어져도 위치 벡터를 계산해낼 수 있습니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-sa-007",
-      conceptId: "mmlu-benchmark",
-      difficulty: "medium",
-      category: "거대 언어 모델 평가",
-      questionType: "short-answer",
-      prompt: "인문학, 사회과학, STEM 등 57개 전문 학문 분야의 객관식 문제로 LLM의 다중태스크 지식 이해도를 평가하는 대표적 벤치마크의 약자는?",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["MMLU", "mmlu"],
-      explanation: "Massive Multitask Language Understanding(MMLU)은 대학교재 수준 및 학술 분야 문제 기반의 대형 벤치마크입니다[cite: 3].",
-      hint: "Massive Multitask Language Understanding의 약자입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-sa-008",
-      conceptId: "dpo-alignment",
-      difficulty: "medium",
-      category: "선호 학습",
-      questionType: "short-answer",
-      prompt: "별도의 보상 모델(Reward Model)이나 별도의 RL 최적화 과정 없이, 선호 데이터셋의 확률 비율을 직접 수학적으로 손실함수화하여 LLM을 정렬시키는 최신 기법의 약자는?",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["DPO", "dpo", "Direct Preference Optimization"],
-      explanation: "Direct Preference Optimization(DPO)은 RLHF의 복잡성을 줄이고 직접 언어 모델의 확률값 비교를 통해 정렬을 수행합니다[cite: 3].",
-      hint: "Direct Preference Optimization의 약자입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-sa-009",
-      conceptId: "bleu-ngram",
-      difficulty: "medium",
-      category: "기계 번역 평가",
-      questionType: "short-answer",
-      prompt: "기계번역 지표인 BLEU에서 연속된 $n$개의 단어 묶음이 사람의 참조 번역과 얼마나 정밀하게 일치하는지 측정하는 단어 묶음 단위 개념을 작성하시오.",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["n-gram", "ngram", "N-gram", "N-Gram"],
-      explanation: "BLEU는 1-gram부터 4-gram까지의 정밀도(Precision)와 문장 길이 페널티(Brevity Penalty)를 조합해 계산합니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-sa-010",
-      conceptId: "kv-cache",
-      difficulty: "medium",
-      category: "LLM 추론",
-      questionType: "short-answer",
-      prompt: "LLM 추론 자동회귀 생성 시, 이전 토큰들의 Key와 Value 벡터들을 메모리에 저장해두어 재연산을 방지하는 대표적인 추론 최적화 기법의 명칭은?",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["KV Cache", "KV 캐시", "kv cache", "KV Caching"],
-      explanation: "KV Cache를 사용하면 생성된 이전 토큰들의 K, V 행렬을 재계산하지 않고 재사용하여 추론 속도를 대폭 향상시킵니다[cite: 3]."
-    },
-
-    // ==========================================
-    // 2. 객관식 (85문항)
-    // ==========================================
-    {
-      id: "nlp-medium-mc-001",
-      conceptId: "word2vec-cbow-vs-skipgram-arch",
+      id: "nlp-emb-mc-med-001",
+      conceptId: "word2vec-arch-compare",
       difficulty: "medium",
       category: "워드 임베딩",
       questionType: "multiple-choice",
-      prompt: "Word2Vec의 CBOW와 Skip-gram 아키텍처 입력/출력 구조 차이에 대한 설명으로 가장 옳은 것은?",
+      prompt: "Word2Vec의 두 알고리즘인 CBOW와 Skip-gram의 구조적 차이에 대한 설명으로 가장 옳은 것은?",
       options: [
-        "CBOW는 여러 주변 단어 벡터의 합/평균을 입력받아 1개의 중심 단어를 예측하고, Skip-gram은 1개 중심 단어를 입력받아 여러 주변 단어를 예측한다.",
-        "CBOW는 1개의 중심 단어를 입력받아 주변 단어들의 합을 예측하고, Skip-gram은 여러 주변 단어를 입력받아 1개 중심 단어를 예측한다.",
-        "CBOW와 Skip-gram 모두 은닉층에서 비선형 활성화 함수인 ReLU를 필수적으로 사용한다.",
-        "CBOW는 은닉층이 존재하지만, Skip-gram은 은닉층이 전혀 없는 단층 구조이다."
+        "CBOW는 여러 주변 단어 벡터의 합/평균으로 중심 단어를 예측하고, Skip-gram은 중심 단어로 여러 주변 단어를 예측한다.",
+        "CBOW는 중심 단어로 주변 단어를 예측하고, Skip-gram은 주변 단어들로 중심 단어를 예측한다.",
+        "CBOW는 활성화 함수로 ReLU를 쓰고, Skip-gram은 Sigmoid만 사용한다.",
+        "CBOW는 은닉층이 없고, Skip-gram은 은닉층이 2개 존재한다."
       ],
       answer: 0,
-      explanation: "CBOW는 문맥 입력들을 투영층에서 합산(SUM)하여 타겟을 고르고, Skip-gram은 중심 단어에서 주변 단어 각각의 조건부 확률을 각각 계산합니다[cite: 2].",
-      hint: "CBOW는 문맥 여러 개를 모아서 하나로 모으고, Skip-gram은 하나에서 여러 개로 퍼져나갑니다[cite: 2]."
+      explanation: "CBOW는 문맥 단어들의 집합을 투영층에서 합산해 중심 단어를 맞추고, Skip-gram은 중심 단어에서 주변 단어 각각의 조건부 확률을 예측합니다[cite: 2].",
+      hint: "어느 방향으로 입력과 출력이 설정되는지 생각해보세요[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-002",
+      id: "nlp-emb-mc-med-002",
       conceptId: "word2vec-projection-layer",
       difficulty: "medium",
       category: "워드 임베딩",
       questionType: "multiple-choice",
-      prompt: "Word2Vec 신경망 구조에서 투영층(Projection Layer)에 대한 설명으로 옳은 것은?",
+      prompt: "Word2Vec 신경망 아키텍처의 투영층(Projection Layer)이 가진 주요 특징은 무엇인가?",
       options: [
-        "은닉층에 활성화 함수가 존재하지 않는 선형 변환 층이다.",
-        "비선형성을 부여하기 위해 Sigmoid 함수를 사용한다.",
-        "출력층의 Softmax 연산을 대체하는 층이다.",
-        "입력 원-핫 벡터와 은닉층 가중치를 곱할 때 항상 0이 반환된다."
+        "비선형 활성화 함수가 존재하지 않는 선형 변환 층이다.",
+        "Sigmoid 활성화 함수가 반드시 적용된다.",
+        "Softmax 연산을 수행하는 출력층이다.",
+        "입력 원-핫 벡터와 곱해질 때 항상 0을 반환한다."
       ],
       answer: 0,
-      explanation: "Word2Vec의 은닉층(투영층)은 활성화 함수가 없는 룩업 테이블 형태의 선형 공간입니다[cite: 2].",
-      hint: "일반적인 딥러닝 은닉층과 달리 활성화 함수가 존재하지 않습니다[cite: 2]."
+      explanation: "Word2Vec의 투영층은 활성화 함수 없이 가중치 행렬과 원-핫 벡터의 곱(Lookup)만 수행하는 선형 층입니다[cite: 2].",
+      hint: "일반 딥러닝 은닉층과 달리 비선형 활성화 함수가 없습니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-003",
-      conceptId: "glove-concept",
+      id: "nlp-emb-mc-med-003",
+      conceptId: "word2vec-vector-arithmetic",
       difficulty: "medium",
       category: "워드 임베딩",
       questionType: "multiple-choice",
-      prompt: "GloVe(Global Vectors for Word Representation) 임베딩 방식의 핵심 메커니즘은?",
-      options: [
-        "전체 코퍼스의 단어 동시 등장 행렬(Co-occurrence Matrix)의 통계적 비율 정보를 행렬 분해/손실함수로 학습한다.",
-        "RNN을 사용하여 문장 전체를 오토인코딩한다.",
-        "단어의 철자(Char-level)만을 가지고 n-gram을 계산한다.",
-        "랜덤하게 가중치를 부여하고 업데이트하지 않는다."
-      ],
+      prompt: "Word2Vec 임베딩 공간에서 'vec(King) - vec(Man) + vec(Woman)' 연산을 수행했을 때 가장 가까운 벡터는?",
+      options: ["vec(Queen)", "vec(Apple)", "vec(Boy)", "vec(Prince)"],
       answer: 0,
-      explanation: "GloVe는 카운트 기반의 전체 동시 등장 통계와 Word2Vec의 벡터 예측 방식을 결합한 기법입니다[cite: 2]."
+      explanation: "Word2Vec으로 학습된 분산 표현은 단어 간의 의미적/문법적 관계가 벡터 선형 연산으로 유지되는 특징을 가집니다[cite: 2].",
+      hint: "왕(King)에서 남자(Man) 성별을 빼고 여자(Woman) 성별을 더한 단어입니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-004",
+      id: "nlp-emb-mc-med-004",
+      conceptId: "word2vec-rare-words",
+      difficulty: "medium",
+      category: "워드 임베딩",
+      questionType: "multiple-choice",
+      prompt: "코퍼스 내에서 출현 빈도가 낮은 희귀 단어(Rare words)나 드문 구 표현 학습에 상대적으로 더 유용한 알고리즘은?",
+      options: ["Skip-gram", "CBOW", "N-gram", "One-hot Encoding"],
+      answer: 0,
+      explanation: "Skip-gram은 한 중심 단어로 여러 주변 단어와의 관계를 학습하므로 희귀 단어 표현을 포착하는 데 강합니다[cite: 2].",
+      hint: "희귀 단어 표현에 강점을 가진 Word2Vec 알고리즘입니다[cite: 2]."
+    },
+    {
+      id: "nlp-emb-mc-med-005",
+      conceptId: "cbow-loss-function",
+      difficulty: "medium",
+      category: "워드 임베딩",
+      questionType: "multiple-choice",
+      prompt: "CBOW 모델 학습 시 가중치 업데이트를 위해 사용하는 손실 함수(Loss)의 기준은?",
+      options: [
+        "예측한 중심 단어의 Softmax 확률 분포와 실제 정답 중심 단어의 원-핫 벡터 간 Cross-Entropy",
+        "주변 단어들과의 평균 제곱 오차 (MSE)",
+        "단어 알파벳 길이의 차이",
+        "문장 전체 단어 개수"
+      ],
+      answer: 0,
+      explanation: "CBOW는 주변 단어들로 예측한 중심 단어 확률 분포와 정답 중심 단어 간 Cross-Entropy 손실을 최소화합니다[cite: 2].",
+      hint: "다중 클래스 분류 형태의 Cross-Entropy 손실을 사용합니다[cite: 2]."
+    },
+    {
+      id: "nlp-emb-mc-med-006",
       conceptId: "fasttext-concept",
       difficulty: "medium",
       category: "워드 임베딩",
       questionType: "multiple-choice",
-      prompt: "FastText가 Word2Vec과 달리 OOV(Out-of-Vocabulary) 단어나 오타에 강한 결정적 이유는?",
+      prompt: "FastText가 Word2Vec의 OOV(Out-of-Vocabulary) 문제를 해결할 수 있는 근본적 원리는?",
       options: [
-        "단어를 서브워드(Subword) 서브-n-gram 단위들로 쪼개어 임베딩의 합으로 단어를 표현하기 때문",
-        "트랜스포머의 Self-Attention을 사용하기 때문",
-        "단어 사전을 무한대로 늘려서 모든 단어를 등록해 두었기 때문",
-        "LSTM 레이어를 100층 쌓았기 때문"
+        "단어를 내부 문자 n-gram 서브워드 단위로 쪼개어 임베딩의 합으로 단어를 표현하기 때문",
+        "단어 사전을 100배로 크게 만들었기 때문",
+        "트랜스포머 레이어를 도입했기 때문",
+        "모든 단어를 숫자로 정규화했기 때문"
       ],
       answer: 0,
-      explanation: "FastText는 단어를 내부 문자 n-gram 단위로 나누어 학습하므로 미학습 단어도 내부 n-gram 조합으로 임베딩을 생성합니다[cite: 2]."
+      explanation: "FastText는 단어 내부의 문자 n-gram 서브워드들을 학습하므로 사전에 없는 단어도 n-gram의 합으로 임베딩을 만들어냅니다[cite: 2].",
+      hint: "단어를 더 작은 문자 단위 서브워드로 쪼개어 학습합니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-005",
-      conceptId: "rnn-hidden-state-formula",
+      id: "nlp-emb-mc-med-007",
+      conceptId: "glove-concept",
       difficulty: "medium",
-      category: "RNN",
+      category: "워드 임베딩",
       questionType: "multiple-choice",
-      prompt: "RNN의 시간 $t$에서의 은닉 상태 수식 $h_t = \tanh(W_{hh} h_{t-1} + W_{xh} x_t + b_h)$ 에 대한 올바른 해석은?",
+      prompt: "GloVe(Global Vectors) 임베딩 방식이 사용하는 핵심 학습 원리는?",
       options: [
-        "이전 시점의 은닉 상태 $h_{t-1}$과 현재 시점의 입력 $x_t$가 각각의 가중치 행렬과 곱해진 후 합쳐져 비선형 변환된다.",
-        "현재 입력 $x_t$만 사용되며 이전 은닉 상태 $h_{t-1}$은 사용되지 않는다.",
-        "활성화 함수 $\tanh$는 입력값을 0과 1 사이의 값으로 압축한다.",
-        "가중치 $W_{hh}$는 타임스텝 $t$마다 서로 다른 매개변수로 변경된다."
+        "전체 코퍼스의 단어 동시 등장 행렬(Co-occurrence Matrix) 통계를 기반으로 한 가중 회귀 학습",
+        "순환 신경망(RNN)을 통한 문장 자동 생성",
+        "단어 길이 기반의 무작위 벡터 할당",
+        "이진 트리 구조를 이용한 계층적 소프트맥스"
       ],
       answer: 0,
-      explanation: "수식에서 알 수 있듯 현재 입력 $x_t$와 이전 기억 $h_{t-1}$이 선형 결합 후 $\tanh$를 거쳐 현재 상태 $h_t$가 됩니다[cite: 2]."
+      explanation: "GloVe는 전체 코퍼스의 단어 동시 등장 행렬 통계 수치를 벡터 내적으로 모델링하는 가중 회귀 방식을 씁니다[cite: 2].",
+      hint: "전체 카운트 통계 기반의 동시 등장 행렬(Co-occurrence)을 활용합니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-006",
-      conceptId: "rnn-vanishing-math",
+      id: "nlp-emb-mc-med-008",
+      conceptId: "word2vec-negative-sampling-why",
       difficulty: "medium",
-      category: "RNN",
+      category: "워드 임베딩",
       questionType: "multiple-choice",
-      prompt: "RNN에서 BPTT 수행 시 기울기 소실(Vanishing Gradient)이 쉽게 일어나는 수학적 원인은?",
-      options: [
-        "가중치 행렬 $W_{hh}$와 $\tanh$의 미분값($\le 1$)이 시점 연산 과정에서 지속적으로 연쇄 곱셈(Chain Rule)되기 때문에",
-        "가중치 $W_{hh}$의 값이 무한대로 발산하기 때문에",
-        "학습률(Learning rate)이 타임스텝마다 2배씩 늘어나기 때문에",
-        "활성화 함수로 ReLU를 사용할 때 무조건 100이 나오기 때문에"
-      ],
+      prompt: "Word2Vec 학습 시 전체 단어 사전에 대해 Softmax를 계산하는 막대한 연산량을 축소하기 위해 사용하는 기법은?",
+      options: ["Negative Sampling", "Full Softmax", "Grid Search", "Layer Normalization"],
       answer: 0,
-      explanation: "역전파 체인 룰 적용 시 $W_{hh}^T$와 $\tanh'$ (최댓값 1 이하)가 시점 수만큼 계속 곱해지면서 오차가 0으로 수렴합니다[cite: 2]."
+      explanation: "Negative Sampling은 전체 단어 대신 정답 단어와 몇 개의 무작위 오답(Negative) 단어만 추출해 이진 분류로 근사 학습합니다[cite: 2].",
+      hint: "오답(Negative) 단어 몇 개만 샘플링하여 연산을 대폭 줄입니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-007",
-      conceptId: "lstm-cell-state-update-formula",
+      id: "nlp-emb-mc-med-009",
+      conceptId: "cbow-projection-sum",
       difficulty: "medium",
-      category: "LSTM",
+      category: "워드 임베딩",
       questionType: "multiple-choice",
-      prompt: "LSTM에서 현재 시점 세포 상태 $C_t$를 업데이트하는 올바른 수식 표현은?",
-      options: [
-        "$C_t = f_t * C_{t-1} + i_t * \\tilde{C}_t$",
-        "$C_t = f_t + C_{t-1} * i_t + \\tilde{C}_t$",
-        "$C_t = \\tanh(f_t * C_{t-1})$",
-        "$C_t = o_t * \\tanh(h_{t-1})$"
-      ],
+      prompt: "CBOW 모델의 투영층에서 주변 단어 벡터들이 모인 후 일어나는 연산은?",
+      options: ["벡터들의 합(Sum) 또는 평균(Average)", "행렬식 연산", "벡터 차의 계산", "모든 원소를 0으로 초기화"],
       answer: 0,
-      explanation: "이전 세포 상태에서 잊을 비율($f_t * C_{t-1}$)과 새로 저장할 정보량($i_t * \\tilde{C}_t$)을 요소별 곱셈 후 더합니다[cite: 2]."
+      explanation: "CBOW의 투영층에서는 입력된 문맥 단어 임베딩 벡터들을 모두 더하거나(Sum) 평균 내어 하나의 문맥 벡터를 만듭니다[cite: 2].",
+      hint: "주변 단어 벡터들을 하나로 합치거나 평균을 냅니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-008",
-      conceptId: "lstm-forget-gate-formula",
+      id: "nlp-emb-sa-med-010",
+      conceptId: "negative-sampling-sa",
       difficulty: "medium",
-      category: "LSTM",
-      questionType: "multiple-choice",
-      prompt: "LSTM Forget gate $f_t = \\sigma(W_f \\cdot [h_{t-1}, x_t] + b_f)$ 의 출력값이 0에 가깝다면 이는 무엇을 의미하는가?",
-      options: [
-        "이전 세포 상태 $C_{t-1}$의 해당 정보를 대부분 잊어버리고 버린다.",
-        "이전 세포 상태 $C_{t-1}$의 정보를 100% 온전하게 유지한다.",
-        "현재 입력 $x_t$를 100% 무시한다.",
-        "출력 $h_t$를 0으로 강제 설정한다."
-      ],
-      answer: 0,
-      explanation: "시그모이드 출력 $f_t$가 0이라는 것은 이전 세포 상태 $C_{t-1}$과의 곱셈 시 0이 되어 정보를 삭제함을 뜻합니다[cite: 2]."
+      category: "워드 임베딩",
+      questionType: "short-answer",
+      prompt: "Word2Vec에서 전체 어휘에 대한 Softmax 계산을 몇 개의 오답 단어 추출 이진 분류로 근사하는 연산 경량화 기법은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Negative Sampling", "negative sampling", "네거티브 샘플링", "Negative sampling"],
+      explanation: "Negative Sampling 연산 경량화 기법입니다[cite: 2].",
+      hint: "Negative 단어가 들어가는 영문 기법 명칭입니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-009",
-      conceptId: "gru-gate-structure",
+      id: "nlp-emb-sa-med-011",
+      conceptId: "subword-sa",
       difficulty: "medium",
-      category: "RNN 변형",
-      questionType: "multiple-choice",
-      prompt: "GRU(Gated Recurrent Unit)가 LSTM과 비교하여 가지는 구조적 특징은?",
-      options: [
-        "Cell state와 Hidden state를 하나로 통합하고, Reset gate와 Update gate 2개의 게이트를 사용한다.",
-        "게이트를 4개로 늘려 정확도를 높였다.",
-        "Hidden state를 완전히 제거하고 Cell state만 남겼다.",
-        "Forget gate, Input gate, Output gate 외에 3개의 게이트를 추가했다."
-      ],
-      answer: 0,
-      explanation: "GRU는 Cell state를 별도로 두지 않고 $h_t$에 통합하며 게이트를 2개로 줄여 매개변수를 경량화했습니다[cite: 2]."
+      category: "워드 임베딩",
+      questionType: "short-answer",
+      prompt: "FastText에서 OOV 단어를 처리하기 위해 단어를 더 작은 문자 n-gram 단위로 쪼개어 학습하는 단위를 무엇이라 하는가?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["서브워드", "Subword", "subword", "서브워드 단위"],
+      explanation: "단어의 하위 단위인 서브워드(Subword) 개념입니다[cite: 2].",
+      hint: "단어(Word)의 하위(Sub) 단위라는 뜻입니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-010",
-      conceptId: "seq2seq-context-vector-limitation",
+      id: "nlp-emb-sa-med-012",
+      conceptId: "co-occurrence-matrix-sa",
       difficulty: "medium",
-      category: "Seq2Seq",
-      questionType: "multiple-choice",
-      prompt: "기본 Seq2Seq에서 인코더의 마지막 타임스텝 hidden state $h_T$만 디코더로 전달할 때 발생하는 문제는?",
-      options: [
-        "문장의 앞부분 정보가 $h_T$에 다다르기 전에 희석되거나 손실되어 긴 문장 번역 성능이 급격히 떨어진다.",
-        "디코더가 학습을 아예 시작하지 못한다.",
-        "메모리가 과도하게 사용되어 다운된다.",
-        "문장의 길이가 항상 3단어로 고정된다."
-      ],
-      answer: 0,
-      explanation: "마지막 은닉 상태 하나에 모든 과거 문맥을 압축하는 병목 현상 때문에 문장이 길어질수록 앞쪽 정보 손실이 커집니다[cite: 2]."
+      category: "워드 임베딩",
+      questionType: "short-answer",
+      prompt: "GloVe에서 전체 코퍼스의 단어들이 특정 윈도우 내에서 함께 등장한 횟수를 기록한 행렬의 명칭은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["동시 등장 행렬", "동시등장행렬", "Co-occurrence Matrix", "co-occurrence matrix"],
+      explanation: "Co-occurrence Matrix(동시 등장 행렬) 입니다[cite: 2].",
+      hint: "단어들이 '동시 등장'한 횟수를 집계한 행렬입니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-011",
-      conceptId: "attention-score-computation",
+      id: "nlp-emb-sa-med-013",
+      conceptId: "word2vec-lookup-table-sa",
       difficulty: "medium",
-      category: "Attention",
-      questionType: "multiple-choice",
-      prompt: "Attention 메커니즘에서 디코더의 시점 $t$의 상태 $s_t$와 인코더의 모든 시점 $i$의 상태 $h_i$ 간의 유사도(Score)를 내적으로 계산하는 방식 수식은?",
-      options: [
-        "$score(s_t, h_i) = s_t^T h_i$",
-        "$score(s_t, h_i) = s_t + h_i$",
-        "$score(s_t, h_i) = \\frac{s_t}{h_i}$",
-        "$score(s_t, h_i) = \\sigma(s_t) * \\tanh(h_i)$"
-      ],
-      answer: 0,
-      explanation: "Dot-product Attention의 Score 계산은 디코더의 $s_t$와 인코더 $h_i$ 벡터의 전치 내적 $s_t^T h_i$ 로 구합니다[cite: 2]."
+      category: "워드 임베딩",
+      questionType: "short-answer",
+      prompt: "Word2Vec 투영층에서 입력 원-핫 벡터와 가중치 행렬 $W$의 곱셈 연산이 실제로는 가중치 행의 특정 위치 값을 가져오는 동작과 같음을 뜻하는 용어는?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["룩업 테이블", "Lookup Table", "lookup table", "Lookup"],
+      explanation: "원-핫 벡터의 1이 위치한 인덱스의 가중치 행을 그대로 참조해 오는 Lookup 연산입니다[cite: 2].",
+      hint: "테이블에서 찾아온다(Lookup)는 의미입니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-012",
+      id: "nlp-emb-es-med-014",
+      conceptId: "cbow-vs-skipgram-detail-essay",
+      difficulty: "medium",
+      category: "워드 임베딩",
+      questionType: "essay",
+      prompt: "Word2Vec의 CBOW와 Skip-gram 중 학습 속도와 희귀 단어 표현 성능 면에서 각각 어느 모델이 더 우수한지 이유와 함께 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["CBOW", "Skip-gram", "속도", "희귀"],
+      modelAnswer: "CBOW는 주변 단어들을 합쳐 1개의 타겟 단어를 예측하므로 학습 속도가 빠르다. 반면 Skip-gram은 중심 단어 1개로 주변 여러 단어를 각각 예측하므로 학습 기회가 많아 희귀 단어나 드문 표현을 더 잘 포착한다[cite: 2].",
+      rubricKeywords: ["CBOW 속도 빠름", "Skip-gram 희귀 단어"],
+      minLength: 20,
+      explanation: "CBOW의 속도 이점과 Skip-gram의 희귀 단어 포착 이점을 비교 서술합니다[cite: 2].",
+      hint: "CBOW의 학습 속도 우위와 Skip-gram의 희귀 단어 표현 우위를 설명하세요[cite: 2]."
+    },
+    {
+      id: "nlp-emb-es-med-015",
+      conceptId: "fasttext-oov-resolution-essay",
+      difficulty: "medium",
+      category: "워드 임베딩",
+      questionType: "essay",
+      prompt: "FastText가 Word2Vec과 달리 사전에 없는 단어(OOV)의 임베딩을 만들어낼 수 있는 원리를 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["서브워드", "n-gram", "조합", "합"],
+      modelAnswer: "FastText는 단어를 독립된 기호로 보지 않고 내부 문자 n-gram 서브워드들로 분할하여 학습한다. 따라서 사전에 없는 단어가 들어와도 구성 문자 n-gram들의 임베딩 벡터를 더하여 의미 있는 벡터를 생성한다[cite: 2].",
+      rubricKeywords: ["문자 n-gram 서브워드", "임베딩 합산"],
+      minLength: 20,
+      explanation: "FastText의 문자 n-gram 서브워드 분할 및 벡터 합산 원리를 서술합니다[cite: 2].",
+      hint: "단어를 쪼개는 문자 n-gram 서브워드 개념을 기술하세요[cite: 2]."
+    },
+
+    // ==========================================
+    // 2. 순차 데이터 & RNN (15문항)
+    // ==========================================
+    {
+      id: "nlp-rnn-mc-med-001",
+      conceptId: "rnn-hidden-formula-meaning",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "multiple-choice",
+      prompt: "RNN 은닉 상태 수식 $h_t = \tanh(W_{hh}h_{t-1} + W_{xh}x_t + b_h)$ 에 대한 해석으로 가장 바른 것은?",
+      options: [
+        "이전 은닉 상태 $h_{t-1}$과 현재 입력 $x_t$가 각각의 가중치와 곱해져 합쳐진 후 $\tanh$ 비선형 변환된다.",
+        "현재 입력 $x_t$만 사용되고 이전 은닉 상태 $h_{t-1}$은 무시된다.",
+        "가중치 $W_{hh}$는 타임스텝 $t$마다 새로운 무작위 값으로 변경된다.",
+        "출력값 $h_t$는 0보다 작은 음수가 될 수 없다."
+      ],
+      answer: 0,
+      explanation: "현재 입력 $x_t$와 이전 기억 $h_{t-1}$이 선형 결합 후 $\tanh$를 통해 현재 은닉 상태 $h_t$로 결합됩니다[cite: 2].",
+      hint: "이전 상태 $h_{t-1}$과 현재 입력 $x_t$가 결합하는 과정입니다[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-mc-med-002",
+      conceptId: "rnn-unfolding-concept",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "multiple-choice",
+      prompt: "RNN 구조를 시간 축에 따라 펼쳤을 때(Unfolding) 나타나는 시각적/구조적 특징은?",
+      options: [
+        "각 층이 하나의 시점(Time step)을 나타내는 깊은 신경망 구조 형태가 된다.",
+        "모든 은닉 노드가 사라지고 단층 선형 모델이 된다.",
+        "입력 시퀀스의 길이가 1로 고정된다.",
+        "가중치 공유 성질이 소멸된다."
+      ],
+      answer: 0,
+      explanation: "시간 축으로 펼치면 시점마다 입력과 은닉상태가 순차 연결된 깊은 신경망 모양이 됩니다[cite: 2].",
+      hint: "시점(Time step)마다 층이 펼쳐진 깊은 신경망 모양입니다[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-mc-med-003",
+      conceptId: "rnn-bptt-concept",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "multiple-choice",
+      prompt: "펼쳐진 RNN 구조에서 시간 축을 거슬러 올라가며 전체 시점에 대해 오차 역전파를 수행하는 학습 알고리즘은?",
+      options: ["BPTT (Backpropagation Through Time)", "CNN", "K-Means", "PCA"],
+      answer: 0,
+      explanation: "Backpropagation Through Time(BPTT)은 시간을 거슬러 오차 경사도를 역전파합니다[cite: 2].",
+      hint: "시간을 통과하는 역전파(Backpropagation Through Time)입니다[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-mc-med-004",
+      conceptId: "rnn-vanishing-cause",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "multiple-choice",
+      prompt: "RNN의 BPTT 진행 시 기울기 소실(Vanishing Gradient)이 발생하는 주요 수학적 원인은?",
+      options: [
+        "역전파 체인 룰(Chain Rule) 과정에서 1보다 작은 미분값과 가중치 행렬이 시점 수만큼 반복 곱해지기 때문",
+        "가중치 값이 무한대로 급격히 커지기 때문",
+        "활성화 함수 $\tanh$의 미분 최댓값이 100을 넘기 때문",
+        "시간 $t$가 지날수록 입력 차원이 늘어나기 때문"
+      ],
+      answer: 0,
+      explanation: "BPTT 시 1 이하의 $\tanh'$ 미분값과 가중치 $W_{hh}^T$가 시점 수만큼 반복 곱해지면서 오차가 사라집니다[cite: 2].",
+      hint: "역전파 체인 룰 연산 과정에서의 연속 곱하기 때문입니다[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-mc-med-005",
+      conceptId: "rnn-gradient-clipping",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "multiple-choice",
+      prompt: "RNN 학습 중 기울기 값이 너무 커져 발산하는 '기울기 폭발(Gradient Explosion)'을 방지하는 기법은?",
+      options: ["Gradient Clipping (기울기 클리핑)", "Dropout", "Min-Max Scaling", "Label Encoding"],
+      answer: 0,
+      explanation: "Gradient Clipping은 기울기가 설정 임계값을 넘을 때 크기를 임계값으로 잘라내어 폭발을 차단합니다[cite: 2].",
+      hint: "기울기의 크기를 임계값으로 잘라냅니다(Clipping)[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-mc-med-006",
+      conceptId: "rnn-many-to-many-synced-vs-unsynced",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "multiple-choice",
+      prompt: "RNN Many-to-Many 구조 중 '품사 태깅(POS Tagging)'처럼 입력 스텝마다 즉시 출력이 1:1로 매핑되는 특징은?",
+      options: [
+        "입력과 출력의 타임스텝 동기화(Synced)",
+        "인코딩 완료 후 뒤늦은 출력 시작",
+        "단일 입력에서 퍼져나감",
+        "단일 출력으로만 모임"
+      ],
+      answer: 0,
+      explanation: "품사 태깅이나 프레임 라벨링은 입력 스텝마다 출력이 1:1 동기화(Synced)되어 발생합니다[cite: 2].",
+      hint: "입력과 출력이 시점별로 1:1 연결(Synced)되어 있습니다[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-mc-med-007",
+      conceptId: "bilstm-concept",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "multiple-choice",
+      prompt: "양방향 순환 신경망(Bi-directional RNN/LSTM)이 문맥 파악에 우수한 이유는?",
+      options: [
+        "순방향(Left-to-Right)과 역방향(Right-to-Left) 신경망을 모두 구동하여 앞뒤 문맥을 동시에 파악하므로",
+        "학습 파라미터 개수가 절반으로 줄어들기 때문에",
+        "시간 축 연산을 완전히 없애주기 때문에",
+        "미래 토큰 생성을 전문으로 처리하기 때문에"
+      ],
+      answer: 0,
+      explanation: "Bi-RNN은 문장의 과거(왼쪽) 및 미래(오른쪽) 문맥 정보를 양방향으로 연결해 반영합니다[cite: 2].",
+      hint: "왼쪽에서 오른쪽, 오른쪽에서 왼쪽 양방향을 모두 봅니다[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-mc-med-008",
+      conceptId: "rnn-hidden-size-hyperparameter",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "multiple-choice",
+      prompt: "RNN 계열 아키텍처에서 은닉 상태 벡터의 차원 크기(Hidden size)는 어떻게 결정되는가?",
+      options: [
+        "모델을 설계하는 개발자가 설정하는 하이퍼파라미터이다.",
+        "입력 문장의 단어 개수에 의해 자동으로 결정된다.",
+        "단어 사전 전체의 크기와 무조건 동일하다.",
+        "배치 크기(Batch size)와 무조건 일치한다."
+      ],
+      answer: 0,
+      explanation: "Hidden size(예: 128, 256, 512)는 모델 설계자가 자유롭게 정하는 하이퍼파라미터입니다[cite: 2].",
+      hint: "개발자가 직접 부여하는 하이퍼파라미터입니다[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-mc-med-009",
+      conceptId: "truncated-bptt-concept",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "multiple-choice",
+      prompt: "매우 긴 시퀀스 학습 시 연산량 과다와 기울기 소실을 막기 위해 역전파 길이를 일정 잘린 타임스텝 단위로 제한하는 기법은?",
+      options: ["Truncated BPTT", "Full BPTT", "Gradient Accumulation", "Early Stopping"],
+      answer: 0,
+      explanation: "Truncated BPTT는 순방향 전개는 유지하되 역전파 경사 계산은 일정 깊이에서 잘라 연산합니다[cite: 2].",
+      hint: "BPTT 경사 계산 구간을 자릅니다(Truncated)[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-sa-med-010",
+      conceptId: "bptt-sa",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "short-answer",
+      prompt: "펼쳐진 RNN 구조에서 시간 축을 따라 역전파를 수행하는 학습 알고리즘의 약자를 작성하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["BPTT", "bptt"],
+      explanation: "Backpropagation Through Time(BPTT) 입니다[cite: 2].",
+      hint: "BPTT 4글자 약자입니다[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-sa-med-011",
+      conceptId: "gradient-clipping-sa",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "short-answer",
+      prompt: "RNN 학습 도중 기울기 크기가 과도하게 커지는 기울기 폭발을 막고자 임계값으로 잘라내는 기법은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Gradient Clipping", "gradient clipping", "기울기 클리핑", "Gradient clipping"],
+      explanation: "Gradient Clipping 기법입니다[cite: 2].",
+      hint: "Gradient 뒤에 Clipping이 붙습니다[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-sa-med-012",
+      conceptId: "bi-directional-rnn-sa",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "short-answer",
+      prompt: "순방향과 역방향의 순환 신경망을 결합하여 시점 t의 앞뒤 문맥을 동시에 참조하게 한 RNN은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Bi-RNN", "Bi-directional RNN", "양방향 RNN", "BiRNN"],
+      explanation: "양방향(Bi-directional) RNN 구조입니다[cite: 2].",
+      hint: "'양방향' 또는 'Bi-' 표현이 포함됩니다[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-sa-med-013",
+      conceptId: "chain-rule-sa",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "short-answer",
+      prompt: "BPTT 역전파 미분 시 시점 $t$에서 과거 시점까지 미분값을 연속 곱하여 계산할 때 쓰이는 수학 법칙은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["연쇄 법칙", "연쇄법칙", "Chain Rule", "chain rule"],
+      explanation: "합성함수 미분을 이어나가는 연쇄 법칙(Chain Rule)입니다[cite: 2].",
+      hint: "미분을 사슬처럼 엮어 곱하는 법칙입니다[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-es-med-014",
+      conceptId: "bptt-vanishing-math-essay",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "essay",
+      prompt: "RNN 학습 시 BPTT 과정에서 '기울기 소실'이 수학적으로 발생하는 원인을 연쇄 법칙 곱셈 관점에서 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["연쇄 법칙", "미분값", "반복 곱", "0"],
+      modelAnswer: "BPTT 역전파 진행 시 연쇄 법칙(Chain Rule)에 의해 시간 축을 따라 이전 시점들로 미분값이 연속 곱해진다. 이때 $\tanh$ 활성화 함수의 미분값($\le 1$)과 가중치 행렬이 반복 곱해지면서 기울기가 지수적으로 감소해 0에 수렴하기 때문이다[cite: 2].",
+      rubricKeywords: ["연쇄 법칙", "1 이하 미분값", "지수적 감소(0 수렴)"],
+      minLength: 20,
+      explanation: "체인 룰 연쇄 곱에 의해 미분값이 감소하여 0으로 수렴하는 원리를 서술합니다[cite: 2].",
+      hint: "연쇄 법칙에 따른 연속 곱셈이 미분값에 미치는 영향을 기술하세요[cite: 2]."
+    },
+    {
+      id: "nlp-rnn-es-med-015",
+      conceptId: "gradient-clipping-essay",
+      difficulty: "medium",
+      category: "순차 데이터 & RNN",
+      questionType: "essay",
+      prompt: "RNN의 '기울기 폭발(Gradient Explosion)' 현상이 무엇인지 설명하고, Gradient Clipping의 동작 원리를 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["발산", "임계값", "크기"],
+      modelAnswer: "기울기 폭발은 역전파 시 기울기 값이 가중치 곱에 의해 극도로 커져 발산하는 현상이다. Gradient Clipping은 기울기 벡터의 크기가 설정한 임계값(Threshold)을 초과할 때 방향은 유지한 채 크기를 임계값 이하로 잘라내어 발산을 막는다[cite: 2].",
+      rubricKeywords: ["기울기 발산", "임계값 초과 시", "방향 유지 크기 감소"],
+      minLength: 20,
+      explanation: "기울기 발산 정의와 임계값 기반 스케일링 조절 원리를 서술합니다[cite: 2].",
+      hint: "임계값을 넘었을 때 크기를 잘라내는 방식을 기술하세요[cite: 2]."
+    },
+
+    // ==========================================
+    // 3. LSTM & 순환 모델 (15문항)
+    // ==========================================
+    {
+      id: "nlp-lstm-mc-med-001",
+      conceptId: "lstm-cell-state-formula",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "multiple-choice",
+      prompt: "LSTM에서 현재 시점 세포 상태 $C_t$가 업데이트되는 수식 $C_t = f_t * C_{t-1} + i_t * \tilde{C}_t$ 의 의미는?",
+      options: [
+        "이전 $C_{t-1}$에서 잊을 정보 비율($f_t$)을 곱하고, 새 후보 $\tilde{C}_t$에서 저장할 비율($i_t$)을 곱해 더한다.",
+        "이전 $C_{t-1}$과 새 후보 $\tilde{C}_t$를 단순히 뺀다.",
+        "게이트 값에 관계없이 무조건 새 정보만 남긴다.",
+        "모든 게이트 수치를 곱하여 세포 상태를 결정한다."
+      ],
+      answer: 0,
+      explanation: "Forget gate의 보존 비율과 Input gate의 기록 비율을 각각 요소별 곱셈(Element-wise product) 후 더합니다[cite: 2].",
+      hint: "$f_t$와 $i_t$ 게이트가 각각 어떤 비율을 보정하는지 확인하세요[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-mc-med-002",
+      conceptId: "lstm-forget-gate-value-meaning",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "multiple-choice",
+      prompt: "LSTM Forget gate $f_t = \sigma(W_f \cdot [h_{t-1}, x_t] + b_f)$ 의 출력 벡터 원소가 0일 때의 의미는?",
+      options: [
+        "이전 세포 상태 $C_{t-1}$의 해당 위치 정보를 완벽히 지우고 삭제한다.",
+        "이전 세포 상태 $C_{t-1}$의 해당 정보를 100% 온전히 보존한다.",
+        "현재 입력 $x_t$를 100% 저장한다.",
+        "현재 출력을 1로 보정한다."
+      ],
+      answer: 0,
+      explanation: "$f_t = 0$ 이면 $f_t * C_{t-1} = 0$이 되므로 이전 세포 상태 정보를 삭제합니다[cite: 2].",
+      hint: "0을 곱하면 이전 세포 상태 값이 지워집니다[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-mc-med-003",
+      conceptId: "lstm-output-hidden-formula",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "multiple-choice",
+      prompt: "LSTM에서 최종 $h_t$를 생성하는 수식 $h_t = o_t * \tanh(C_t)$ 의 역할에 대한 설명은?",
+      options: [
+        "업데이트된 세포 상태 $C_t$를 $\tanh$로 -1~1 압축한 후, Output gate $o_t$ 비율만큼 내보낸다.",
+        "세포 상태 $C_t$를 무조건 0으로 초기화한다.",
+        "Output gate $o_t$와 상관없이 $C_t$를 그대로 출력한다.",
+        "Forget gate와 Input gate를 곱해준다."
+      ],
+      answer: 0,
+      explanation: "세포 상태 $C_t$를 $\tanh$로 스케일링한 후 $o_t$ 스위치 비율을 곱해 $h_t$를 만듭니다[cite: 2].",
+      hint: "$C_t$ 스케일링과 $o_t$ 비율 곱셈입니다[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-mc-med-004",
+      conceptId: "gru-vs-lstm-architecture",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "multiple-choice",
+      prompt: "GRU가 LSTM 대비 가지는 아키텍처적 차이점으로 옳은 것은?",
+      options: [
+        "Cell state와 Hidden state를 하나로 통합하고, 게이트를 Reset gate와 Update gate 2개로 줄였다.",
+        "게이트 수를 4개로 확대했다.",
+        "Hidden state를 없애고 Cell state만 사용한다.",
+        "Sigmoid 함수 대신 ReLU만 사용한다."
+      ],
+      answer: 0,
+      explanation: "GRU는 Cell state를 $h_t$에 합치고 게이트를 2개로 단순화한 경량 구조입니다[cite: 2].",
+      hint: "상태를 1개로 통합하고 게이트를 2개로 단축했습니다[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-mc-med-005",
+      conceptId: "gru-update-gate-role",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "multiple-choice",
+      prompt: "GRU의 Update gate ($z_t$)가 담당하는 역할은 무엇인가?",
+      options: [
+        "이전 은닉 상태의 정보를 얼마나 유지하고, 새 은닉 상태 후보를 얼마나 반영할지 균형을 제어한다.",
+        "이전 정보를 무조건 100% 삭제한다.",
+        "입력 데이터의 차원을 확장한다.",
+        "Softmax 확률값을 계산한다."
+      ],
+      answer: 0,
+      explanation: "Update gate $z_t$는 LSTM의 Forget gate와 Input gate 역할을 하나로 합친 혼합 제어를 수행합니다[cite: 2].",
+      hint: "이전 기억 유지와 새 기억 반영의 밸런스를 조절합니다[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-mc-med-006",
+      conceptId: "gru-reset-gate-role",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "multiple-choice",
+      prompt: "GRU의 Reset gate ($r_t$)가 담당하는 역할은 무엇인가?",
+      options: [
+        "새로운 은닉 상태 후보를 계산할 때 이전 은닉 상태 정보를 얼마나 무시/리셋할지 결정한다.",
+        "학습 가중치를 0으로 리셋한다.",
+        "출력층을 비활성화한다.",
+        "시퀀스 길이를 0으로 만든다."
+      ],
+      answer: 0,
+      explanation: "Reset gate $r_t$는 새 정보 후보 $\tilde{h}_t$ 연산 시 과거 $h_{t-1}$을 얼마만큼 조합에 넣을지 제어합니다[cite: 2].",
+      hint: "새 후보 연산 시 과거 정보를 얼마만큼 리셋(Reset)할지 결정합니다[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-mc-med-007",
+      conceptId: "lstm-candidate-cell-formula",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "multiple-choice",
+      prompt: "LSTM에서 새롭게 세포 상태에 더해질 후보 정보 수식 $\tilde{C}_t = \tanh(W_C \cdot [h_{t-1}, x_t] + b_C)$ 의 특징은?",
+      options: [
+        "$\tanh$ 함수를 통해 -1과 1 사이의 값으로 구성된 새로운 정보 후보군을 만든다.",
+        "Sigmoid 함수를 통해 0과 1 사이의 값을 만든다.",
+        "항상 양수 값만 갖는다.",
+        "이전 $C_{t-1}$ 값이 직접 더해져 있다."
+      ],
+      answer: 0,
+      explanation: "새로운 정보 내용 후보 $\tilde{C}_t$는 $\tanh$를 통해 -1~1 범위로 정규화되어 생성됩니다[cite: 2].",
+      hint: "새 정보 후보는 $\tanh$를 통해 -1~1 값으로 형성됩니다[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-mc-med-008",
+      conceptId: "lstm-bias-initialization-trick",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "multiple-choice",
+      prompt: "LSTM 학습 초기 단계에 과거 기억 소실을 방지하기 위해 적용하는 편향 초기화 팁은?",
+      options: [
+        "Forget gate의 편향 $b_f$를 1.0 등 양수로 설정하여 초기 정보 보존율을 높인다.",
+        "Forget gate 편향을 -10.0으로 설정한다.",
+        "모든 편향을 0으로 설정한다.",
+        "Input gate 편향만 0으로 만든다."
+      ],
+      answer: 0,
+      explanation: "$b_f$를 1~2 정도로 크게 초기화하면 $\sigma(b_f) \approx 1$이 되어 초기에 과거 기억을 잊지 않고 보존합니다[cite: 2].",
+      hint: "Forget gate의 초기 출력값을 1 근처로 만들기 위한 양수 설정입니다[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-mc-med-009",
+      conceptId: "bilstm-application",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "multiple-choice",
+      prompt: "Bi-LSTM(양방향 LSTM)이 개방형 문장 생성(Generation)보다 개체명 인식(NER)이나 문장 분류에 더 적합한 이유는?",
+      options: [
+        "개체명 인식은 문장 전체의 양방향(앞뒤) 문맥을 모두 참조해야 정확하지만, 순차 생성 시에는 미래 단어를 미리 알 수 없기 때문",
+        "Bi-LSTM은 생성 모델 전용이기 때문",
+        "Bi-LSTM은 단어 사전을 안 쓰기 때문",
+        "속도가 단방향보다 100배 빠르기 때문"
+      ],
+      answer: 0,
+      explanation: "Bi-LSTM은 미래 단어를 참조하므로 전체가 주어진 상태의 분석/분류 태스크에 적합하고 실시간 생성에는 부적합합니다[cite: 2].",
+      hint: "문장 전체의 앞뒤 문맥이 동시에 주어진 상황에 적합합니다[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-sa-med-010",
+      conceptId: "gru-sa",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "short-answer",
+      prompt: "LSTM의 구조를 개선하여 Cell state를 은닉 상태에 통합하고 2개의 게이트로 단순화한 모델의 약자는?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["GRU", "gru"],
+      explanation: "Gated Recurrent Unit(GRU) 입니다[cite: 2].",
+      hint: "G_U 형태의 3글자 약자입니다[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-sa-med-011",
+      conceptId: "update-gate-sa",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "short-answer",
+      prompt: "GRU에서 이전 기억의 유지 비율과 새 기억의 반영 비율을 종합 제어하는 게이트의 영문 명칭은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Update gate", "update gate", "업데이트 게이트", "Update Gate"],
+      explanation: "Update gate ($z_t$) 입니다[cite: 2].",
+      hint: "Update 단어가 들어갑니다[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-sa-med-012",
+      conceptId: "reset-gate-sa",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "short-answer",
+      prompt: "GRU에서 새 은닉 상태 후보를 연산할 때 과거 정보를 얼마나 무시할지 결정하는 게이트의 영문 명칭은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Reset gate", "reset gate", "리셋 게이트", "Reset Gate"],
+      explanation: "Reset gate ($r_t$) 입니다[cite: 2].",
+      hint: "Reset 단어가 들어갑니다[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-sa-med-013",
+      conceptId: "candidate-cell-state-sa",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "short-answer",
+      prompt: "LSTM에서 $\tanh$ 연산을 거쳐 현재 세포 상태에 새로 더해질 정보 내용 후보를 가리키는 기호는?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["~C_t", "C~_t", "tilde C_t", "\\tilde{C}_t"],
+      explanation: "새로운 세포 상태 후보 $\tilde{C}_t$ 입니다[cite: 2].",
+      hint: "C_t 위에 물결(tilde) 표식이 붙은 기호입니다[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-es-med-014",
+      conceptId: "lstm-cell-state-math-essay",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "essay",
+      prompt: "LSTM의 세포 상태 $C_t$가 업데이트되는 수식 $C_t = f_t * C_{t-1} + i_t * \tilde{C}_t$ 를 각 항의 의미와 함께 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Forget", "Input", "보존", "기록"],
+      modelAnswer: "이전 세포 상태 $C_{t-1}$에 Forget gate($f_t$)의 보존 비율을 곱해 불필요한 정보를 삭제하고, 새로운 정보 후보 $\tilde{C}_t$에 Input gate($i_t$)의 기록 비율을 곱해 더함으로써 현재 세포 상태 $C_t$를 업데이트한다[cite: 2].",
+      rubricKeywords: ["이전 세포 상태", "Forget gate 곱", "새 정보 후보", "Input gate 곱"],
+      minLength: 20,
+      explanation: "세포 상태 업데이트 수식의 두 항인 Forget 연산과 Input 연산 의미를 서술합니다[cite: 2].",
+      hint: "Forget gate와의 곱과 Input gate와의 곱을 합산함을 기술하세요[cite: 2]."
+    },
+    {
+      id: "nlp-lstm-es-med-015",
+      conceptId: "gru-vs-lstm-essay",
+      difficulty: "medium",
+      category: "LSTM & 순환 모델",
+      questionType: "essay",
+      prompt: "GRU가 LSTM 대비 가지는 구조적 차이점과 이점을 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Cell state", "통합", "게이트", "경량화"],
+      modelAnswer: "GRU는 Cell state와 Hidden state를 하나로 통합하고, 게이트를 Reset gate와 Update gate 2개로 줄였다. 이를 통해 LSTM보다 학습 매개변수 수가 적고 연산 속도가 빠르며 경량화된 이점을 가진다[cite: 2].",
+      rubricKeywords: ["상태 통합", "게이트 2개 단순화", "매개변수 경량화"],
+      minLength: 20,
+      explanation: "상태 벡터의 통합 및 2개 게이트 단순화에 따른 경량화 이점을 설명합니다[cite: 2].",
+      hint: "상태의 통합, 게이트 수 감소, 연산량 경량화를 쓰세요[cite: 2]."
+    },
+
+    // ==========================================
+    // 4. Seq2Seq & Attention (15문항)
+    // ==========================================
+    {
+      id: "nlp-s2s-mc-med-001",
+      conceptId: "seq2seq-loss-backprop",
+      difficulty: "medium",
+      category: "Seq2Seq & Attention",
+      questionType: "multiple-choice",
+      prompt: "Seq2Seq 모델 학습 시 손실 역전파(Backpropagation) 과정에 대한 바른 설명은?",
+      options: [
+        "디코더에서 발생한 손실 오차가 역전파되어 인코더까지 전파되므로 전체가 End-to-End로 동시 학습된다.",
+        "인코더와 디코더는 완전히 독립되어 별도로만 학습된다.",
+        "인코더만 학습되고 디코더는 고정된다.",
+        "역전파가 불가능하여 무작위 탐색을 수행한다."
+      ],
+      answer: 0,
+      explanation: "Seq2Seq는 디코더부터 인코더까지 오차가 연결되어 전파되는 통합 End-to-End 신경망입니다[cite: 2].",
+      hint: "인코더와 디코더가 하나로 연결되어 동시(End-to-End) 학습됩니다[cite: 2]."
+    },
+    {
+      id: "nlp-s2s-mc-med-002",
+      conceptId: "attention-score-dot-product",
+      difficulty: "medium",
+      category: "Seq2Seq & Attention",
+      questionType: "multiple-choice",
+      prompt: "Dot-product Attention에서 디코더 시점 $t$의 상태 $s_t$와 인코더 시점 $i$의 상태 $h_i$ 간의 유사도 Score 계산식은?",
+      options: ["$score(s_t, h_i) = s_t^T h_i$", "$score(s_t, h_i) = s_t + h_i$", "$score(s_t, h_i) = s_t / h_i$", "$score(s_t, h_i) = \sigma(s_t)$"],
+      answer: 0,
+      explanation: "Dot-product Attention의 유사도는 두 벡터의 전치 내적 $s_t^T h_i$ 로 계산합니다[cite: 2].",
+      hint: "두 벡터의 전치 내적(Dot product) 수식입니다[cite: 2]."
+    },
+    {
+      id: "nlp-s2s-mc-med-003",
       conceptId: "attention-distribution-softmax",
       difficulty: "medium",
-      category: "Attention",
+      category: "Seq2Seq & Attention",
       questionType: "multiple-choice",
-      prompt: "Attention Score값들에 Softmax 함수를 적용하여 얻은 값 $\\alpha_t$의 성질은?",
+      prompt: "Attention Score 값들에 Softmax를 취하여 구해지는 확률 분포 $\alpha_t$의 성질은?",
       options: [
-        "모든 인코더 시점에 대한 확률값의 합이 1이 되는 Attention 분포(가중치)가 된다.",
-        "값이 -1과 1 사이로 고르게 분산된다.",
-        "모든 원소가 정수값으로 변화된다.",
-        "합이 인코더 타임스텝 $T$와 같아진다."
+        "모든 인코더 시점 가중치들의 합이 1이 되는 확률 분포를 이룬다.",
+        "값들의 합이 인코더 시점 수 $T$와 같아진다.",
+        "모든 수치가 음수로 변화한다.",
+        "가장 가중치가 작은 단어에 1이 할당된다."
       ],
       answer: 0,
-      explanation: "Softmax를 거치면 가중치들의 합이 1이 되는 확률 분포(Attention Distribution)가 형성됩니다[cite: 2]."
+      explanation: "Softmax를 통과하면 가중치 합이 1인 Attention 분포(가중치)가 생성됩니다[cite: 2].",
+      hint: "가중치의 총합이 1이 되는 확률 분포입니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-013",
-      conceptId: "attention-context-vector-sum",
+      id: "nlp-s2s-mc-med-004",
+      conceptId: "attention-context-vector-formula",
       difficulty: "medium",
-      category: "Attention",
+      category: "Seq2Seq & Attention",
       questionType: "multiple-choice",
-      prompt: "Attention 분포 $\\alpha_{t,i}$와 인코더 은닉 상태 $h_i$를 이용하여 컨텍스트 벡터 $a_t$를 구하는 연산은?",
+      prompt: "Attention 분포 $\alpha_{t,i}$와 인코더 은닉 상태 $h_i$를 이용해 컨텍스트 벡터 $a_t$를 구하는 연산은?",
       options: [
-        "가중합 (Weighted Sum): $a_t = \\sum_i \\alpha_{t,i} h_i$",
-        "단순 평균: $a_t = \\frac{1}{N} \\sum_i h_i$",
-        "요소별 차: $a_t = h_i - \\alpha_{t,i}$",
-        "행렬식 계산: $a_t = \\det(h_i)$"
+        "가중합 (Weighted Sum): $a_t = \sum_i \alpha_{t,i} h_i$",
+        "단순 평균: $a_t = \frac{1}{N} \sum_i h_i$",
+        "요소별 차: $a_t = h_i - \alpha_{t,i}$",
+        "행렬식 계산"
       ],
       answer: 0,
-      explanation: "컨텍스트 벡터는 각 인코더 은닉 상태 $h_i$를 Attention 가중치 $\\alpha_{t,i}$로 가중합하여 생성합니다[cite: 2]."
+      explanation: "컨텍스트 벡터는 각 인코더 상태 $h_i$에 어텐션 가중치 $\alpha_{t,i}$를 곱해 가중합합니다[cite: 2].",
+      hint: "가중치와 은닉 상태를 곱해 다 더하는 가중합 연산입니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-014",
-      conceptId: "transformer-qkv-projection",
+      id: "nlp-s2s-mc-med-005",
+      conceptId: "attention-interpretability",
       difficulty: "medium",
-      category: "Self-Attention",
+      category: "Seq2Seq & Attention",
       questionType: "multiple-choice",
-      prompt: "입력 임베딩 행렬 $X$로부터 Self-Attention의 $Q, K, V$ 행렬을 만들어내는 올바른 선형 변환 수식은?",
+      prompt: "Attention 가중치 맵을 시각화했을 때 얻을 수 있는 추가적인 구조적 이점은?",
+      options: [
+        "디코더가 출력 단어를 생성할 때 인코더의 어떤 단어에 집중했는지 정렬(Alignment) 단서를 얻어 모델 판단을 해석할 수 있다.",
+        "모델의 파라미터 수가 절반으로 줄어든다.",
+        "학습 속도가 100배 증가한다.",
+        "모든 오답 단어가 자동으로 교정된다."
+      ],
+      answer: 0,
+      explanation: "어텐션 가중치를 시각화하면 단어 간 정렬(Alignment) 및 모델 의사결정의 해석 가능성을 얻습니다[cite: 2].",
+      hint: "단어 간의 매핑 및 정렬(Alignment) 관계를 시각적으로 해석할 수 있습니다[cite: 2]."
+    },
+    {
+      id: "nlp-s2s-mc-med-006",
+      conceptId: "seq2seq-loss-type",
+      difficulty: "medium",
+      category: "Seq2Seq & Attention",
+      questionType: "multiple-choice",
+      prompt: "Seq2Seq 디코더가 매 시점 단어 사전 중 정답 단어를 예측할 때 사용하는 손실 함수는?",
+      options: ["Cross-Entropy Loss", "Mean Squared Error (MSE)", "L1 Loss", "Hinge Loss"],
+      answer: 0,
+      explanation: "디코더 출력이 단어 사전 다중 클래스 분류이므로 Cross-Entropy 손실을 씁니다[cite: 2].",
+      hint: "다중 분류에 사용하는 대표적 손실 함수입니다[cite: 2]."
+    },
+    {
+      id: "nlp-s2s-mc-med-007",
+      conceptId: "additive-vs-dot-attention",
+      difficulty: "medium",
+      category: "Seq2Seq & Attention",
+      questionType: "multiple-choice",
+      prompt: "Dot-product Attention이 Bahdanau 등의 Additive Attention에 비해 갖는 이점은?",
+      options: [
+        "행렬 곱 연산으로 구현되어 연산 속도가 빠르고 메모리 효율적이다.",
+        "파라미터 개수가 10배 많아 표현력이 좋다.",
+        "Softmax 함수를 생략할 수 있다.",
+        "입력 차원이 축소된다."
+      ],
+      answer: 0,
+      explanation: "Dot-product 방식은 고속 행렬 곱셈 라이브러리(MatMul)를 활용하여 연산 속도가 뛰어납니다[cite: 2].",
+      hint: "행렬 곱 연산(MatMul)으로 고속 연산이 가능합니다[cite: 2]."
+    },
+    {
+      id: "nlp-s2s-mc-med-008",
+      conceptId: "seq2seq-sos-eos-usage",
+      difficulty: "medium",
+      category: "Seq2Seq & Attention",
+      questionType: "multiple-choice",
+      prompt: "Seq2Seq 디코더 구동 시 시작을 알리는 입력 토큰과 종료를 알리는 토큰 순서는?",
+      options: ["<SOS> 토큰으로 시작, <EOS> 토큰으로 종료", "<EOS> 토큰으로 시작, <SOS> 토큰으로 종료", "<PAD> 토큰으로 시작, <MASK> 토큰으로 종료", "<UNK> 토큰으로 시작, <CLS> 토큰으로 종료"],
+      answer: 0,
+      explanation: "시작 시 <SOS>(Start of Sequence)를 넣고 완료 시 <EOS>(End of Sequence)를 내놓습니다[cite: 2].",
+      hint: "Start of Sequence로 시작하고 End of Sequence로 끝납니다[cite: 2]."
+    },
+    {
+      id: "nlp-s2s-mc-med-009",
+      conceptId: "exposure-bias-concept",
+      difficulty: "medium",
+      category: "Seq2Seq & Attention",
+      questionType: "multiple-choice",
+      prompt: "Teacher Forcing으로 학습된 모델이 추론 시에는 자기 자신의 이전 예측값을 쓰면서 발생하는 오차 누적 현상은?",
+      options: ["Exposure Bias (노출 편향)", "Overfitting", "Bottleneck Problem", "Gradient Vanishing"],
+      answer: 0,
+      explanation: "학습(정답 노출)과 추론(자기 예측 노출) 간의 환경 차이로 오차가 누적되는 Exposure Bias 현상입니다[cite: 2].",
+      hint: "노출(Exposure) 환경 차이로 생기는 편향(Bias)입니다[cite: 2]."
+    },
+    {
+      id: "nlp-s2s-sa-med-010",
+      conceptId: "attention-score-sa",
+      difficulty: "medium",
+      category: "Seq2Seq & Attention",
+      questionType: "short-answer",
+      prompt: "Attention 연산에서 디코더 상태와 인코더 상태 간의 유사도를 측정하기 위해 내적 등을 취해 얻는 값을 무엇이라 하는가?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["어텐션 스코어", "Attention Score", "attention score", "어텐션 점수"],
+      explanation: "유사도를 나타내는 Attention Score(어텐션 점수) 입니다[cite: 2].",
+      hint: "Attention 뒤에 Score(점수)가 붙습니다[cite: 2]."
+    },
+    {
+      id: "nlp-s2s-sa-med-011",
+      conceptId: "context-vector-sa",
+      difficulty: "medium",
+      category: "Seq2Seq & Attention",
+      questionType: "short-answer",
+      prompt: "Attention 분포 가중치와 인코더 은닉 상태들을 가중합하여 얻은 최종 맥락 정보 벡터의 명칭은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["컨텍스트 벡터", "Context Vector", "context vector", "맥락 벡터"],
+      explanation: "가중합된 결과인 Context Vector(컨텍스트 벡터) 입니다[cite: 2].",
+      hint: "맥락을 뜻하는 Context와 Vector의 결합입니다[cite: 2]."
+    },
+    {
+      id: "nlp-s2s-sa-med-012",
+      conceptId: "alignment-sa",
+      difficulty: "medium",
+      category: "Seq2Seq & Attention",
+      questionType: "short-answer",
+      prompt: "기계 번역에서 디코더 출력을 생성할 때 원문의 특정 단어와 자동으로 대응 관계를 매핑하는 개념은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["정렬", "Alignment", "alignment", "단어 정렬"],
+      explanation: "단어 간 매핑 관계인 Alignment(정렬) 개념입니다[cite: 2].",
+      hint: "영문 'Alignment' 또는 한글 '정렬' 입니다[cite: 2]."
+    },
+    {
+      id: "nlp-s2s-sa-med-013",
+      conceptId: "bleu-sa",
+      difficulty: "medium",
+      category: "Seq2Seq & Attention",
+      questionType: "short-answer",
+      prompt: "기계 번역 결과의 품질을 사람의 번역문과 n-gram 일치 정밀도로 비교 평가하는 대표적 지표 약자는?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["BLEU", "bleu", "BLEU score"],
+      explanation: "BLEU(Bilingual Evaluation Understudy) 지표입니다[cite: 2].",
+      hint: "B_E_U 형태의 4글자 약자입니다[cite: 2]."
+    },
+    {
+      id: "nlp-s2s-es-med-014",
+      conceptId: "attention-calculation-process-essay",
+      difficulty: "medium",
+      category: "Seq2Seq & Attention",
+      questionType: "essay",
+      prompt: "Attention 메커니즘에서 컨텍스트 벡터가 구해지는 3단계 과정(Score 계산 -> 확률 분포 변환 -> 가중합)을 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["내적", "Softmax", "가중합"],
+      modelAnswer: "1) 디코더 상태와 인코더 상태들 간의 유사도(Score)를 내적 등으로 계산한다. 2) 계산된 Score들에 Softmax를 취해 합이 1인 Attention 확률 분포를 얻는다. 3) 이 확률 분포 가중치를 인코더 은닉 상태들에 곱해 가중합(Context Vector)을 구한다[cite: 2].",
+      rubricKeywords: ["유사도 Score 계산", "Softmax 확률 분포", "인코더 상태 가중합"],
+      minLength: 20,
+      explanation: "Score 내적 $\rightarrow$ Softmax 확률화 $\rightarrow$ 인코더 상태 가중합 3단계를 서술합니다[cite: 2].",
+      hint: "점수 계산, 소프트맥스 변환, 가중합 순서로 기술하세요[cite: 2]."
+    },
+    {
+      id: "nlp-s2s-es-med-015",
+      conceptId: "exposure-bias-essay",
+      difficulty: "medium",
+      category: "Seq2Seq & Attention",
+      questionType: "essay",
+      prompt: "Seq2Seq 모델 학습 시 Teacher Forcing으로 인해 추론 단계에서 발생하는 '노출 편향(Exposure Bias)' 현상을 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["학습", "추론", "예측", "오차 누적"],
+      modelAnswer: "학습 시에는 항상 정답 단어만을 디코더 입력으로 제공받지만, 실제 추론 시에는 자신이 이전에 예측한 단어를 입력으로 사용한다. 이로 인해 학습과 추론 간 입력 환경 차이가 발생하여 초기 예측 오차가 뒤로 갈수록 연쇄적으로 증폭/누적되는 현상이다[cite: 2].",
+      rubricKeywords: ["학습 정답 제공", "추론 자기 예측 사용", "오차 누적"],
+      minLength: 20,
+      explanation: "학습 환경(정답 제공)과 추론 환경(자기 예측 제공)의 불일치로 인한 오차 누적을 설명합니다[cite: 2]."
+    },
+
+    // ==========================================
+    // 5. Transformer & Self-Attention (15문항)
+    // ==========================================
+    {
+      id: "nlp-tr-mc-med-001",
+      conceptId: "qkv-projection-formula",
+      difficulty: "medium",
+      category: "Transformer & Self-Attention",
+      questionType: "multiple-choice",
+      prompt: "입력 행렬 $X$로부터 Self-Attention의 $Q, K, V$ 행렬을 얻는 선형 변환 수식 표현은?",
       options: [
         "$Q = X W^Q, \\quad K = X W^K, \\quad V = X W^V$",
         "$Q = X + W^Q, \\quad K = X + W^K, \\quad V = X + W^V$",
@@ -378,15 +945,16 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "$Q = X^{-1}, \\quad K = X^T, \\quad V = \\det(X)$"
       ],
       answer: 0,
-      explanation: "입력 $X$에 각 투영 가중치 행렬 $W^Q, W^K, W^V$를 곱하여 $Q, K, V$를 얻습니다[cite: 2]."
+      explanation: "입력 $X$에 각 투영 가중치 행렬 $W^Q, W^K, W^V$를 곱하여 $Q, K, V$ 행렬을 생성합니다[cite: 2].",
+      hint: "입력 $X$에 투영 가중치 행렬 $W$를 곱합니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-015",
+      id: "nlp-tr-mc-med-002",
       conceptId: "scaled-dot-product-formula",
       difficulty: "medium",
-      category: "Transformer",
+      category: "Transformer & Self-Attention",
       questionType: "multiple-choice",
-      prompt: "트랜스포머의 Scaled Dot-Product Attention 계산 공식으로 올바른 것은?",
+      prompt: "트랜스포머의 Scaled Dot-Product Attention 계산 수식으로 올바른 것은?",
       options: [
         "$\\text{Attention}(Q, K, V) = \\text{softmax}\\left(\\frac{Q K^T}{\\sqrt{d_k}}\\right) V$",
         "$\\text{Attention}(Q, K, V) = \\text{softmax}(Q + K) \\cdot V$",
@@ -394,79 +962,237 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "$\\text{Attention}(Q, K, V) = \\tanh\\left(\\frac{Q V^T}{K}\\right)$"
       ],
       answer: 0,
-      explanation: "Query와 Key의 내적을 $\\sqrt{d_k}$로 나누고 Softmax를 취한 뒤 Value 행렬과 곱해줍니다[cite: 2]."
+      explanation: "$Q K^T$ 내적을 $\sqrt{d_k}$로 나눈 후 Softmax를 거쳐 Value 행렬과 곱합니다[cite: 2].",
+      hint: "$QK^T / \sqrt{d_k}$ 에 Softmax를 취하고 $V$를 곱하는 공식입니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-016",
-      conceptId: "multi-head-attention-concat",
+      id: "nlp-tr-mc-med-003",
+      conceptId: "scaled-dot-product-reason",
       difficulty: "medium",
-      category: "Transformer",
+      category: "Transformer & Self-Attention",
       questionType: "multiple-choice",
-      prompt: "Multi-Head Attention에서 $h$개의 헤드에서 각각 계산된 Attention 출력을 합칠 때 사용하는 연산과 가중치는?",
+      prompt: "Dot-product Attention에서 내적값을 $\sqrt{d_k}$ 차원의 제곱근으로 나누어 스케일링하는 주요 이유는?",
       options: [
-        "각 헤드의 출력 $head_i$들을 이어붙이고(Concat) 출력 가중치 $W^O$를 곱한다.",
-        "각 헤드 출력을 모두 엘리먼트 단위로 더하고 2로 나눈다.",
-        "가장 값이 큰 헤드 하나만 고르고 나머지는 버린다.",
-        "모든 헤드 출력을 곱한다."
+        "차원이 커질수록 내적값이 과도하게 커져 Softmax 기울기 소실(Gradient Vanishing) 영역에 빠지는 것을 방지하기 위해",
+        "내적 결과값을 무조건 음수로 만들기 위해",
+        "Softmax 연산을 생략하기 위해",
+        "가중치 행렬의 크기를 축소하기 위해"
       ],
       answer: 0,
-      explanation: "$\text{MultiHead}(Q,K,V) = \text{Concat}(head_1, ..., head_h) W^O$ 수식에 따라 Concat 후 $W^O$로 투영합니다[cite: 2]."
+      explanation: "차원이 커지면 내적 분산이 커져 Softmax 출력이 뾰족해지고 기울기가 소실되므로 $\sqrt{d_k}$로 나눕니다[cite: 2].",
+      hint: "내적값이 너무 커져 Softmax 기울기가 작아지는 것을 막습니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-017",
-      conceptId: "transformer-encoder-block-structure",
+      id: "nlp-tr-mc-med-004",
+      conceptId: "multi-head-head-dim",
       difficulty: "medium",
-      category: "Transformer",
+      category: "Transformer & Self-Attention",
       questionType: "multiple-choice",
-      prompt: "트랜스포머 인코더 블록 1개를 이루는 주요 서브레이어 순서 및 구성은?",
+      prompt: "전체 모델 차원이 $d_{model} = 512$ 이고, Multi-Head Attention의 헤드 수가 $h = 8$ 일 때, 각 헤드의 차원 $d_k$는 얼마인가?",
+      options: ["64", "512", "8", "128"],
+      answer: 0,
+      explanation: "$d_k = d_{model} / h = 512 / 8 = 64$ 차원으로 각 헤드에 할당됩니다[cite: 2].",
+      hint: "$d_{model}$을 헤드 수 $h$로 나눈 값입니다[cite: 2]."
+    },
+    {
+      id: "nlp-tr-mc-med-005",
+      conceptId: "residual-connection-concept",
+      difficulty: "medium",
+      category: "Transformer & Self-Attention",
+      questionType: "multiple-choice",
+      prompt: "트랜스포머 블록에서 입력 $x$를 서브레이어 출력에 다시 더해주는 $x + \text{SubLayer}(x)$ 구조의 명칭은?",
+      options: ["Residual Connection (잔차 연결)", "Layer Normalization", "Dropout", "Softmax"],
+      answer: 0,
+      explanation: "잔차 연결(Residual Connection)은 층이 깊어져도 오차 기울기가 원활히 통과하도록 지름길을 제공합니다[cite: 2].",
+      hint: "입력을 그대로 bypass하여 더해주는 잔차(Residual) 연결입니다[cite: 2]."
+    },
+    {
+      id: "nlp-tr-mc-med-006",
+      conceptId: "layer-norm-concept",
+      difficulty: "medium",
+      category: "Transformer & Self-Attention",
+      questionType: "multiple-choice",
+      prompt: "트랜스포머의 Add & Norm 파트에서 각 서브레이어 단위로 벡터 특성값들을 정규화하여 안정적 학습을 돕는 기술은?",
+      options: ["Layer Normalization", "Batch Normalization", "Weight Normalization", "Min-Max Normalization"],
+      answer: 0,
+      explanation: "각 레이어 내부 노드 특성 단위로 정규화하는 Layer Normalization 기법입니다[cite: 2].",
+      hint: "레이어(Layer) 단위로 정규화(Normalization)합니다[cite: 2]."
+    },
+    {
+      id: "nlp-tr-mc-med-007",
+      conceptId: "cross-attention-qkv-source",
+      difficulty: "medium",
+      category: "Transformer & Self-Attention",
+      questionType: "multiple-choice",
+      prompt: "트랜스포머 디코더의 Cross-Attention 서브레이어에서 Query(Q), Key(K), Value(V)의 출처 조합으로 바른 것은?",
       options: [
-        "Multi-Head Self-Attention $\\rightarrow$ Add & Norm $\\rightarrow$ Feed-Forward Network $\\rightarrow$ Add & Norm",
-        "Masked Multi-Head Attention $\\rightarrow$ Cross-Attention $\\rightarrow$ Add & Norm",
-        "RNN Layer $\\rightarrow$ LSTM Layer $\\rightarrow$ Softmax",
-        "Feed-Forward Network $\\rightarrow$ Masked Attention $\\rightarrow$ Add & Norm"
+        "Query는 디코더의 하위 레이어 출력, Key와 Value는 인코더의 최상단 출력",
+        "Query, Key, Value 모두 인코더 출력",
+        "Query, Key, Value 모두 디코더 출력",
+        "Query와 Key는 인코더, Value는 디코더 출력"
       ],
       answer: 0,
-      explanation: "인코더 블록은 Self-Attention 구조와 FFN 구조, 그리고 각 서브레이어마다 잔차연결과 LayerNorm(Add & Norm)이 붙습니다[cite: 2]."
+      explanation: "Cross-Attention은 질문(Q)은 디코더의 상태에서 오고, 참고할 K와 V는 인코더 출력에서 옵니다[cite: 2].",
+      hint: "Q는 디코더에서, K와 V는 인코더에서 가져옵니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-018",
-      conceptId: "transformer-ffn-structure",
+      id: "nlp-tr-mc-med-008",
+      conceptId: "position-wise-ffn-expansion",
       difficulty: "medium",
-      category: "Transformer",
+      category: "Transformer & Self-Attention",
       questionType: "multiple-choice",
-      prompt: "트랜스포머의 Self-Attention 서브레이어 뒤에 위치하는 Position-wise Feed-Forward Network(FFN)의 주요 역할은?",
+      prompt: "트랜스포머의 Position-wise FFN 서브레이어에서 은닉 차원을 $d_{model} \rightarrow d_{ff} \rightarrow d_{model}$ 로 넓혔다 줄이는 일반적인 확장 비율은?",
+      options: ["4배 (예: 512 $\rightarrow$ 2048 $\rightarrow$ 512)", "2배", "10배", "100배"],
+      answer: 0,
+      explanation: "원 논문 기준 $d_{model}=512$일 때 $d_{ff}=2048$ 로 4배 일시 확장하여 비선형 표현력을 높입니다[cite: 2].",
+      hint: "보통 4배 확장 공간으로 넓혔다 줄입니다[cite: 2]."
+    },
+    {
+      id: "nlp-tr-mc-med-009",
+      conceptId: "encoder-vs-decoder-architecture",
+      difficulty: "medium",
+      category: "Transformer & Self-Attention",
+      questionType: "multiple-choice",
+      prompt: "트랜스포머 인코더 블록과 디코더 블록의 결정적인 서브레이어 구조 차이는?",
       options: [
-        "선형 결합 위주의 Self-Attention 표현에 ReLU/GELU 등 비선형 변환을 추가하여 표현력을 깊게 확장하는 역할",
-        "단어 순서를 정렬하는 역할",
-        "입력 텍스트를 토큰으로 나누는 역할",
-        "미래 단어를 마스킹하는 역할"
+        "디코더 블록에는 Masked Self-Attention과 인코더 출력을 참조하는 Cross-Attention이 추가되어 있다.",
+        "인코더 블록에는 FFN이 없고 디코더에만 존재한다.",
+        "인코더 블록은 LayerNorm을 쓰지 않는다.",
+        "디코더 블록은 Residual Connection이 없다."
       ],
       answer: 0,
-      explanation: "Self-Attention 가중합은 선형적 성격이 강하므로 FFN(Fully Connected + ReLU 등)을 추가해 복잡한 비선형 패턴을 학습합니다[cite: 2]."
+      explanation: "디코더 블록은 Masked Self-Attention과 인코더-디코더 Cross-Attention 서브레이어가 추가되어 총 3개 서브레이어로 구성됩니다[cite: 2].",
+      hint: "디코더에는 미래 토큰 차단 마스크와 인코더 참조 Cross-Attention이 더 있습니다[cite: 2]."
     },
     {
-      id: "nlp-medium-mc-019",
+      id: "nlp-tr-sa-med-010",
+      conceptId: "scaled-dot-product-sa",
+      difficulty: "medium",
+      category: "Transformer & Self-Attention",
+      questionType: "short-answer",
+      prompt: "Self-Attention 수식에서 $Q K^T$ 내적값을 $\sqrt{d_k}$ 로 나누어주는 Attention 방식의 정식 명칭은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Scaled Dot-Product Attention", "scaled dot-product attention", "스케일드 닷프로덕트 어텐션"],
+      explanation: "Scaled Dot-Product Attention 기법입니다[cite: 2].",
+      hint: "'Scaled'라는 단어로 시작하는 어텐션 명칭입니다[cite: 2]."
+    },
+    {
+      id: "nlp-tr-sa-med-011",
+      conceptId: "residual-connection-sa",
+      difficulty: "medium",
+      category: "Transformer & Self-Attention",
+      questionType: "short-answer",
+      prompt: "서브레이어의 입력 $x$를 출력에 다시 더해주는 $x + \text{SubLayer}(x)$ 지름길 연결 구조의 영문 명칭은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Residual Connection", "residual connection", "잔차 연결", "Residual connection"],
+      explanation: "Residual Connection(잔차 연결) 입니다[cite: 2].",
+      hint: "'Residual'로 시작하는 영문 명칭입니다[cite: 2]."
+    },
+    {
+      id: "nlp-tr-sa-med-012",
+      conceptId: "layer-normalization-sa",
+      difficulty: "medium",
+      category: "Transformer & Self-Attention",
+      questionType: "short-answer",
+      prompt: "각 레이어 내부의 은닉 벡터 특성값들을 정규화하여 학습 정밀도를 높이는 기법의 영문 명칭은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Layer Normalization", "layer normalization", "레이어 정규화", "Layer normalization"],
+      explanation: "Layer Normalization 기법입니다[cite: 2].",
+      hint: "'Layer'로 시작하는 정규화 기술입니다[cite: 2]."
+    },
+    {
+      id: "nlp-tr-sa-med-013",
+      conceptId: "cross-attention-sa",
+      difficulty: "medium",
+      category: "Transformer & Self-Attention",
+      questionType: "short-answer",
+      prompt: "트랜스포머 디코더에서 Query는 디코더에서, Key와 Value는 인코더 출력에서 받아 연결하는 어텐션 서브레이어는?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Cross-Attention", "cross-attention", "크로스 어텐션", "Cross Attention"],
+      explanation: "Cross-Attention 서브레이어입니다[cite: 2].",
+      hint: "인코더와 디코더를 '교차' 연결하는 어텐션입니다[cite: 2]."
+    },
+    {
+      id: "nlp-tr-es-med-014",
+      conceptId: "scaled-dot-product-reason-essay",
+      difficulty: "medium",
+      category: "Transformer & Self-Attention",
+      questionType: "essay",
+      prompt: "Self-Attention 수식에서 내적값 $Q K^T$를 $\sqrt{d_k}$로 나누는 스케일링을 수행해야 하는 이유를 역전파 기울기 관점에서 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["내적", "분산", "Softmax", "기울기 소실"],
+      modelAnswer: "차원 $d_k$가 커질수록 $Q K^T$ 내적값의 분산이 증가하여 Softmax 함수의 출력이 극단적으로 뾰족해진다. 이로 인해 Softmax의 미분 기울기(Gradient)가 0에 가까워져 학습이 안 되는 기울기 소실 문제가 발생하므로 $\sqrt{d_k}$로 스케일링한다[cite: 2].",
+      rubricKeywords: ["내적 분산 증가", "Softmax 출력이 뾰족함", "기울기 소실 방지"],
+      minLength: 20,
+      explanation: "차원 증가에 따른 내적 분산 증대와 Softmax 기울기 소실 방지 목적을 서술합니다[cite: 2].",
+      hint: "차원이 클 때 내적 분산이 커져 Softmax 미분값이 0이 되는 현상을 기술하세요[cite: 2]."
+    },
+    {
+      id: "nlp-tr-es-med-015",
+      conceptId: "cross-attention-qkv-essay",
+      difficulty: "medium",
+      category: "Transformer & Self-Attention",
+      questionType: "essay",
+      prompt: "트랜스포머 디코더의 Cross-Attention 서브레이어에서 Query, Key, Value 벡터가 각각 어디서 오는지 출처를 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Query", "Key", "Value", "디코더", "인코더"],
+      modelAnswer: "Query(Q) 벡터는 디코더의 하위 마스킹 Self-Attention 서브레이어 출력에서 오고, Key(K)와 Value(V) 벡터는 인코더의 최상단 레이어 출력 표현에서 가져온다[cite: 2].",
+      rubricKeywords: ["Query는 디코더", "Key/Value는 인코더"],
+      minLength: 20,
+      explanation: "Q(디코더 하위 출력) 및 K, V(인코더 최상단 출력)의 출처를 명확히 작성합니다[cite: 2].",
+      hint: "Q는 디코더, K와 V는 인코더에서 온다는 점을 명시하세요[cite: 2]."
+    },
+
+    // ==========================================
+    // 6. 텍스트 파운데이션 모델 (15문항)
+    // ==========================================
+    {
+      id: "nlp-llm-mc-med-001",
       conceptId: "bert-vs-gpt-architecture",
-      difficulty: "medium",
-      category: "거대 언어 모델",
-      questionType: "multiple-choice",
-      prompt: "BERT와 GPT의 트랜스포머 아키텍처 블록 활용 및 문맥 참조 방식의 차이점은?",
-      options: [
-        "BERT는 인코더 블록 중심의 양방향(Bidirectional) 문맥 참조이며, GPT는 디코더 블록 중심의 단방향(Unidirectional) 생성 모델이다.",
-        "BERT는 디코더 블록 중심이고, GPT는 인코더 블록 중심이다.",
-        "BERT와 GPT 모두 단방향 문맥만 참조한다.",
-        "BERT는 생성 전용 모델이고, GPT는 분류 전용 모델이다."
-      ],
-      answer: 0,
-      explanation: "BERT는 Masked LM 기반 양방향 인코더 구조이고, GPT는 다음 토큰 예측 기반 단방향 디코더 구조입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-020",
-      conceptId: "gpt-3-in-context-shots",
       difficulty: "medium",
       category: "텍스트 파운데이션 모델",
       questionType: "multiple-choice",
-      prompt: "In-context Learning 중 프롬프트에 지시문만 주고 예시를 0개 주는 것, 1개 주는 것, 여러 개 주는 것을 순서대로 올바르게 짝지은 것은?",
+      prompt: "BERT와 GPT 모델의 트랜스포머 아키텍처 블록 활용 및 문맥 참조 방식 차이는?",
+      options: [
+        "BERT는 인코더 기반의 양방향(Bidirectional) 참조이며, GPT는 디코더 기반의 단방향(Unidirectional) 생성 모델이다.",
+        "BERT는 디코더 기반이고 GPT는 인코더 기반이다.",
+        "BERT와 GPT 모두 단방향 참조만 수행한다.",
+        "BERT는 이미지 처리 전용이고 GPT는 텍스트 처리 전용이다."
+      ],
+      answer: 0,
+      explanation: "BERT는 양방향 인코더 구조, GPT는 다음 단어를 예측하는 단방향 디코더 구조입니다[cite: 3].",
+      hint: "BERT는 양방향 인코더, GPT는 단방향 디코더입니다[cite: 3]."
+    },
+    {
+      id: "nlp-llm-mc-med-002",
+      conceptId: "gpt2-underfitting-lesson",
+      difficulty: "medium",
+      category: "텍스트 파운데이션 모델",
+      questionType: "multiple-choice",
+      prompt: "GPT-2 연구에서 모델 파라미터 크기가 증가함에 따라 Perplexity가 계속 감소하며 얻은 중요한 교훈은?",
+      options: [
+        "가장 큰 GPT-2 모델조차 아직 언더피팅 상태이며, 모델과 데이터 규모를 더 확장할 필요성이 존재한다.",
+        "모델 크기를 줄여야만 오차가 감소한다.",
+        "Perplexity 수치는 모델 성능과 상관없다.",
+        "텍스트 자가 학습은 이미 한계에 다다랐다."
+      ],
+      answer: 0,
+      explanation: "GPT-2의 가장 큰 모델도 여전히 손실이 감소 중이었으며, 더 큰 규모(GPT-3)로의 확장 정당성을 보여주었습니다[cite: 3].",
+      hint: "모델 규모를 더 늘렸을 때 성능이 더 향상될 여지가 있음을 발견했습니다[cite: 3]."
+    },
+    {
+      id: "nlp-llm-mc-med-003",
+      conceptId: "in-context-shots-classification",
+      difficulty: "medium",
+      category: "텍스트 파운데이션 모델",
+      questionType: "multiple-choice",
+      prompt: "In-context Learning 프롬프트에서 지시문과 함께 예시를 0개, 1개, 소수 개 제공하는 것을 순서대로 짝지은 것은?",
       options: [
         "Zero-shot, One-shot, Few-shot",
         "Few-shot, One-shot, Zero-shot",
@@ -474,991 +1200,1115 @@ export const QUESTION_BANK: Record<string, StudyQuestion[]> = {
         "Zero-shot, Multi-shot, Few-shot"
       ],
       answer: 0,
-      explanation: "예시 0개는 Zero-shot, 1개는 One-shot, 2개 이상 소수는 Few-shot이라 부릅니다[cite: 3]."
+      explanation: "예시 0개는 Zero-shot, 1개는 One-shot, 소수는 Few-shot이라 명칭합니다[cite: 3].",
+      hint: "Zero(0), One(1), Few(소수) 입니다[cite: 3]."
     },
     {
-      id: "nlp-medium-mc-021",
-      conceptId: "instruct-gpt-step1",
+      id: "nlp-llm-mc-med-004",
+      conceptId: "pretraining-loss-causal-lm",
       difficulty: "medium",
-      category: "지시 학습",
+      category: "텍스트 파운데이션 모델",
       questionType: "multiple-choice",
-      prompt: "InstructGPT 학습 단계 3단계 중 'Step 1'에서 수행하는 작업은?",
+      prompt: "GPT 계열의 Causal Language Modeling(인과적 언어 모델링) 사전 학습 목적함수의 작동 방식은?",
       options: [
-        "사람 주석자가 직접 작성한 프롬프트-답변 데모 데이터셋으로 GPT-3를 SFT(Supervised Fine-Tuning) 지도 학습시킨다.",
-        "보상 모델(Reward Model)을 훈련시킨다.",
-        "PPO 강화학습을 적용한다.",
-        "웹 데이터를 긁어와 다음 단어를 예측한다."
+        "이전까지 나타난 단어들 $w_1, ..., w_{t-1}$의 문맥을 조건으로 하여 다음 단어 $w_t$의 로그 확률을 최대화함",
+        "문장 전체를 보고 양방향 가운데 빈칸 단어를 예측함",
+        "문장 전체를 한 번에 인코딩해 분류 라벨 1개를 예측함",
+        "모든 단어를 무작위 시퀀스로 섞음"
       ],
       answer: 0,
-      explanation: "Step 1은 human labeler의 가이드 답변 데모 데이터로 SFT(Supervised Fine-Tuning)를 진행하는 단계입니다[cite: 3]."
+      explanation: "인과적 언어 모델링은 과거 문맥만을 바탕으로 바로 다음 토큰의 확률을 예측합니다[cite: 3].",
+      hint: "과거 문맥을 조건으로 다음 단어의 확률을 예측합니다[cite: 3]."
     },
     {
-      id: "nlp-medium-mc-022",
-      conceptId: "instruct-gpt-step2",
+      id: "nlp-llm-mc-med-005",
+      conceptId: "gpt3-pretraining-data-mix",
       difficulty: "medium",
-      category: "선호 학습",
+      category: "텍스트 파운데이션 모델",
       questionType: "multiple-choice",
-      prompt: "InstructGPT 학습 'Step 2'에서 보상 모델(Reward Model)을 훈련시키기 위해 주석자가 제공하는 데이터 형태는?",
+      prompt: "GPT-3 사전 학습 데이터 조합에서 가장 큰 비중(60%)을 차지한 데이터셋은?",
+      options: ["Common Crawl (filtered)", "WebText2", "Books1", "Wikipedia"],
+      answer: 0,
+      explanation: "GPT-3 사전 학습에는 필터링된 Common Crawl 웹 데이터가 60% 비중으로 가장 많이 쓰였습니다[cite: 3].",
+      hint: "웹 크롤링 데이터셋인 Common Crawl 입니다[cite: 3]."
+    },
+    {
+      id: "nlp-llm-mc-med-006",
+      conceptId: "llama2-chat-alignment",
+      difficulty: "medium",
+      category: "텍스트 파운데이션 모델",
+      questionType: "multiple-choice",
+      prompt: "Meta가 LLaMA 2 모델과 함께 대화형 서비스에 적합하도록 정렬 학습을 거쳐 공개한 모델 버전 명칭은?",
+      options: ["Llama-2-chat", "Llama-2-code", "Llama-2-vision", "Llama-2-base"],
+      answer: 0,
+      explanation: "Meta는 대화에 특화되도록 RLHF 및 대화 데이터로 미세조정한 Llama-2-chat을 함께 공개했습니다[cite: 3].",
+      hint: "대화(chat) 전용 정렬 모델입니다[cite: 3]."
+    },
+    {
+      id: "nlp-llm-mc-med-007",
+      conceptId: "chinchilla-scaling-law",
+      difficulty: "medium",
+      category: "텍스트 파운데이션 모델",
+      questionType: "multiple-choice",
+      prompt: "DeepMind의 Chinchilla 연구에서 제시한 최적의 자원 배분 법칙으로, 모델 파라미터 수($N$)와 학습 토큰 수($D$)의 관계는?",
       options: [
-        "모델이 생성한 여러 답변 후보들에 대한 순위/선호도(Ranking) 데이터",
-        "100만 자 분량의 소설 텍스트",
-        "C++ 코드의 컴파일 성공 여부 라벨",
-        "이미지와 텍스트 한 쌍"
+        "파라미터 수 $N$과 학습 토큰 수 $D$를 1:1 동등한 비율로 함께 확장해야 함",
+        "파라미터 $N$만 10배 늘리고 토큰 수 $D$는 고정해야 함",
+        "토큰 수 $D$만 100배 늘리고 파라미터 $N$은 줄여야 함",
+        "파라미터 수와 토큰 수는 무관함"
       ],
       answer: 0,
-      explanation: "Step 2에서는 모델의 여러 응답 출력에 대해 라벨러가 Best부터 Worst까지 순위(Ranking)를 매겨 보상 모델을 학습시킵니다[cite: 3]."
+      explanation: "Chinchilla 연구는 파라미터 $N$과 학습 토큰 $D$가 1:1 비율로 같이 커져야 제한된 계산 자원에서 손실이 최소화됨을 입증했습니다[cite: 3].",
+      hint: "파라미터와 학습 토큰을 1:1 동등 비율로 늘려야 합니다[cite: 3]."
     },
     {
-      id: "nlp-medium-mc-023",
-      conceptId: "rlhf-reward-model-loss",
+      id: "nlp-llm-mc-med-008",
+      conceptId: "closed-llm-tradeoff",
       difficulty: "medium",
-      category: "선호 학습",
+      category: "텍스트 파운데이션 모델",
       questionType: "multiple-choice",
-      prompt: "RLHF 보상 모델(Reward Model) 학습 시, 사람이 선호한 답변 $y_w$와 비선호 답변 $y_l$에 대해 보상 모델 $r_\\theta$가 출력해야 하는 바람직한 관계는?",
+      prompt: "폐쇄형(Closed) LLM API를 활용할 때의 트레이드오프(단점)로 옳은 것은?",
       options: [
-        "$r_\\theta(x, y_w) > r_\\theta(x, y_l)$ (선호 답변의 보상값이 더 커야 한다)",
-        "$r_\\theta(x, y_w) < r_\\theta(x, y_l)$",
-        "$r_\\theta(x, y_w) = r_\\theta(x, y_l) = 0$",
-        "$r_\\theta(x, y_w) + r_\\theta(x, y_l) = -100$"
+        "호출 시마다 비용이 발생하고 내부 가중치나 구동 정보가 제한적이다.",
+        "모델의 성능이 오픈소스보다 무조건 낮다.",
+        "직접 GPU 서버를 사서 구축해야만 한다.",
+        "파이썬 코드로 호출이 불가능하다."
       ],
       answer: 0,
-      explanation: "보상 모델은 사람이 더 선호한 답변 $y_w$(winner)에 더 높은 점수/보상을 주도록 크로스 엔트로피 손실로 학습됩니다[cite: 3]."
+      explanation: "폐쇄형 LLM은 사용이 쉽고 성능이 우수하지만, 토큰당 API 비용과 내부 정보 불투명성이 트레이드오프입니다[cite: 3].",
+      hint: "토큰당 사용 비용과 가중치 비공개 특성입니다[cite: 3]."
     },
     {
-      id: "nlp-medium-mc-024",
-      conceptId: "nucleus-sampling-mechanism",
+      id: "nlp-llm-mc-med-009",
+      conceptId: "open-llm-tradeoff",
       difficulty: "medium",
-      category: "디코딩 알고리즘",
+      category: "텍스트 파운데이션 모델",
       questionType: "multiple-choice",
-      prompt: "Top-P (Nucleus) Sampling 디코딩에서 단어 후보군을 결정하는 올바른 조건은?",
+      prompt: "개방형(Open-sourced) LLM을 자체 구축하여 활용할 때의 트레이드오프(단점)로 옳은 것은?",
       options: [
-        "상위 단어들의 확률을 내림차순 정렬하여 누적 확률 합이 $p$에 도달하는 최소한의 단어 집합 $V_{top-p}$를 선택한다.",
-        "무조건 상위 10개 단어만 선택한다.",
-        "확률이 0.5 이하인 단어들만 모아서 선택한다.",
-        "단어 길이 알파벳 수가 가장 긴 단어만 고른다."
+        "구동 및 미세조정을 위해 자체적인 계산 자원(GPU VRAM 등)과 인프라가 필요하다.",
+        "소스 코드가 비공개되어 수정할 수 없다.",
+        "API 호스팅이 절대 불가능하다.",
+        "상용 서비스로 서빙할 수 없다."
       ],
       answer: 0,
-      explanation: "Top-P는 확률 내림차순 정렬 후 누적 확률이 $p$(예: 0.9, 0.95)를 넘는 지점까지의 후보 단어군만 샘플링에 사용합니다[cite: 3]."
+      explanation: "개방형 LLM은 무료 사용 및 커스텀이 가능하지만, 고성능 GPU 인프라와 운영 오버헤드가 필요합니다[cite: 3].",
+      hint: "고성능 GPU 계산 자원 및 서버 인프라가 필요합니다[cite: 3]."
     },
     {
-      id: "nlp-medium-mc-025",
-      conceptId: "cot-few-shot-vs-zero-shot",
+      id: "nlp-llm-sa-med-010",
+      conceptId: "causal-language-modeling-sa",
       difficulty: "medium",
-      category: "프롬프트 엔지니어링",
-      questionType: "multiple-choice",
-      prompt: "Few-shot CoT와 Zero-shot CoT의 차이점에 대한 설명으로 옳은 것은?",
-      options: [
-        "Few-shot CoT는 프롬프트 예시에 단계별 풀이 과정을 직접 제공하고, Zero-shot CoT는 예시 없이 \"Let's think step by step\" 같은 문구만 추가한다.",
-        "Few-shot CoT는 모델을 재학습시키고, Zero-shot CoT는 학습하지 않는다.",
-        "Few-shot CoT는 수학 문제에만 쓰이고, Zero-shot CoT는 번역에만 쓰인다.",
-        "둘 사이에 아무런 차이가 없다."
-      ],
-      answer: 0,
-      explanation: "Few-shot CoT는 중간 풀이 예시들을 프롬프트에 써주고, Zero-shot CoT는 예시 없이 생각 유도 문구만으로 추론을 유발합니다[cite: 3]."
+      category: "텍스트 파운데이션 모델",
+      questionType: "short-answer",
+      prompt: "이전까지 등장한 단어들만을 조건으로 다음 단어의 로그 확률을 예측하는 GPT 계열의 사전 학습 기법은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Causal Language Modeling", "causal language modeling", "인과적 언어 모델링", "CLM"],
+      explanation: "Causal Language Modeling(CLM) 기법입니다[cite: 3].",
+      hint: "인과적(Causal) 언어 모델링입니다[cite: 3]."
     },
     {
-      id: "nlp-medium-mc-026",
-      conceptId: "sentence-bert-pooling",
+      id: "nlp-llm-sa-med-011",
+      conceptId: "zero-shot-sa",
       difficulty: "medium",
-      category: "문장 임베딩",
-      questionType: "multiple-choice",
-      prompt: "Sentence-BERT에서 BERT의 토큰별 출력 벡터들을 하나의 고정 길이 문장 벡터로 압축하기 위해 주로 사용하는 풀링(Pooling) 방식은?",
-      options: ["Mean Pooling (평균 풀링) 또는 CLS 토큰 추출", "Max Unpooling", "Random Sampling", "Convolution 1D"],
-      answer: 0,
-      explanation: "Sentence-BERT는 모든 토큰 출력 벡터의 평균(Mean Pooling)을 내어 문장 전체를 대표하는 고정 벡터를 구합니다[cite: 3]."
+      category: "텍스트 파운데이션 모델",
+      questionType: "short-answer",
+      prompt: "In-context Learning에서 프롬프트에 예시(Example)를 전혀 주지 않고 지시문만 주는 방식을 무엇이라 하는가?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Zero-shot", "zero-shot", "Zero-shot 프롬프팅", "제로샷"],
+      explanation: "Zero-shot 프롬프팅 방식입니다[cite: 3].",
+      hint: "숫자 0을 뜻하는 Zero가 들어갑니다[cite: 3]."
     },
     {
-      id: "nlp-medium-mc-027",
-      conceptId: "bert-pretraining-tasks",
+      id: "nlp-llm-sa-med-012",
+      conceptId: "few-shot-sa",
       difficulty: "medium",
-      category: "언어 모델",
-      questionType: "multiple-choice",
-      prompt: "BERT 사전 학습 시 사용된 2가지 대표적 자가 학습 태스크 조합은?",
-      options: [
-        "Masked Language Model (MLM) + Next Sentence Prediction (NSP)",
-        "Next Token Prediction + RLHF",
-        "Translation + Summarization",
-        "Image Captioning + Speech Recognition"
-      ],
-      answer: 0,
-      explanation: "BERT는 단어를 마스킹하고 맞추는 MLM과 두 문장의 연속성을 맞추는 NSP 태스크로 사전 학습합니다[cite: 3]."
+      category: "텍스트 파운데이션 모델",
+      questionType: "short-answer",
+      prompt: "In-context Learning에서 프롬프트에 지시문과 함께 소수 개의 예시를 함께 제공하는 방식을 무엇이라 하는가?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Few-shot", "few-shot", "Few-shot 프롬프팅", "퓨샷"],
+      explanation: "Few-shot 프롬프팅 방식입니다[cite: 3].",
+      hint: "소수를 뜻하는 Few가 들어갑니다[cite: 3]."
     },
     {
-      id: "nlp-medium-mc-028",
-      conceptId: "temperature-formula-effect",
+      id: "nlp-llm-sa-med-013",
+      conceptId: "chinchilla-sa",
       difficulty: "medium",
-      category: "디코딩 알고리즘",
-      questionType: "multiple-choice",
-      prompt: "Softmax 수식 $P(w_i) = \\frac{\\exp(z_i / T)}{\\sum_j \\exp(z_j / T)}$ 에서 $T \\rightarrow 0$ 으로 매우 작아질 때의 수학적 한계값 동작은?",
-      options: [
-        "가장 로짓($z_i$)이 큰 단어의 확률이 1에 수렴하여 Greedy Search와 동일해진다.",
-        "모든 단어의 확률이 동일한 균등 분포가 된다.",
-        "모든 확률이 0이 되어 에러가 발생한다.",
-        "확률값이 음수로 변화한다."
-      ],
-      answer: 0,
-      explanation: "$T \\to 0$이면 최댓값과 다른 값들과의 차이가 극대화되어 가장 큰 값 하나만 확률 1을 갖는 argmax(Greedy)와 같아집니다[cite: 3]."
+      category: "텍스트 파운데이션 모델",
+      questionType: "short-answer",
+      prompt: "DeepMind 연구진이 제안한 파라미터 수와 학습 토큰 수 간의 1:1 최적 비율 스케일링 법칙의 모델 명칭은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Chinchilla", "chinchilla", "친칠라"],
+      explanation: "Chinchilla(친칠라) 스케일링 법칙입니다[cite: 3].",
+      hint: "동물 이름과 같은 Chinchilla 입니다[cite: 3]."
     },
     {
-      id: "nlp-medium-mc-029",
-      conceptId: "word2vec-negative-sampling",
+      id: "nlp-llm-es-med-014",
+      conceptId: "bert-vs-gpt-essay",
       difficulty: "medium",
-      category: "워드 임베딩",
-      questionType: "multiple-choice",
-      prompt: "Word2Vec 학습 시 전체 어휘 사전에 대해 Softmax를 계산하는 막대한 연산량을 줄이기 위해 사용하는 효율적 연산 기법은?",
-      options: ["Negative Sampling", "Full Softmax", "Grid Search", "Batch Normalization"],
-      answer: 0,
-      explanation: "Negative Sampling은 전체 단어를 계산하지 않고 정답 단어와 몇 개의 무작위 오답(Negative) 단어만 추출해 이진 분류로 근사 학습합니다[cite: 2]."
+      category: "텍스트 파운데이션 모델",
+      questionType: "essay",
+      prompt: "BERT와 GPT의 아키텍처적 구조 차이(인코더/디코더)와 문맥 참조 방식 차이를 비교 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["BERT", "GPT", "인코더", "디코더", "양방향", "단방향"],
+      modelAnswer: "BERT는 트랜스포머 인코더 블록 기반으로 문장 전체의 양방향(Bidirectional) 문맥을 참조하여 분류/분석에 유리하다. 반면 GPT는 트랜스포머 디코더 블록 기반으로 과거 문맥만 참조하는 단방향(Unidirectional) Causal LM으로 텍스트 생성에 유리하다[cite: 3].",
+      rubricKeywords: ["BERT 인코더 양방향", "GPT 디코더 단방향"],
+      minLength: 20,
+      explanation: "BERT의 양방향 인코더 구조와 GPT의 단방향 디코더 구조 차이를 서술합니다[cite: 3].",
+      hint: "인코더/디코더 구조 및 양방향/단방향 참조 차이를 서술하세요[cite: 3]."
     },
     {
-      id: "nlp-medium-mc-030",
-      conceptId: "seq2seq-loss-function",
+      id: "nlp-llm-es-med-015",
+      conceptId: "in-context-learning-shots-essay",
       difficulty: "medium",
-      category: "Seq2Seq",
-      questionType: "multiple-choice",
-      prompt: "Seq2Seq 모델의 디코더 출력 학습 시 주로 사용되는 손실 함수(Loss function)는?",
-      options: ["Cross-Entropy Loss", "Mean Squared Error (MSE)", "L1 Loss", "Hinge Loss"],
-      answer: 0,
-      explanation: "디코더가 각 타임스텝마다 전체 어휘 중 정답 단어 토큰을 분류해야 하므로 Cross-Entropy 손실을 사용합니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-031",
-      conceptId: "system-prompt-vs-user-prompt",
-      difficulty: "medium",
-      category: "프롬프트 엔지니어링",
-      questionType: "multiple-choice",
-      prompt: "시스템 프롬프트(System Prompt)와 유저 쿼리(User Query)의 차이점으로 가장 적절한 것은?",
-      options: [
-        "시스템 프롬프트는 모델의 역할과 금지사항 등 제약 규칙을 설정하고, 유저 쿼리는 사용자가 그때그때 던지는 실제 질문이다.",
-        "시스템 프롬프트는 사람이 볼 수 없고, 유저 쿼리만 사람이 작성한다.",
-        "시스템 프롬프트는 가중치를 업데이트하고, 유저 쿼리는 가중치를 고정한다.",
-        "시스템 프롬프트는 항상 영어로만 작성해야 한다."
-      ],
-      answer: 0,
-      explanation: "System Prompt는 챗봇의 기본 페르소나/가이드라인을 고정 설정하고, User Query는 개별 사용자의 대화 요청 내용입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-032",
-      conceptId: "hallucination-cause",
-      difficulty: "medium",
-      category: "거대 언어 모델",
-      questionType: "multiple-choice",
-      prompt: "LLM에서 환각(Hallucination)이 발생하는 주된 이유 중 하나는?",
-      options: [
-        "LLM은 사실 여부를 검증하는 데이터베이스가 아니라 확률적으로 가장 그럴듯한 다음 토큰을 생성하도록 학습되었기 때문에",
-        "LLM 내부에 인터넷이 실시간 연결되어 검색하기 때문에",
-        "파라미터 개수가 너무 적어서 텍스트를 못 읽기 때문에",
-        "GPU가 아닌 CPU에서 작동할 때만 발생하는 버그 때문에"
-      ],
-      answer: 0,
-      explanation: "LLM은 진실성 판별기가 아니라 '확률적 문장 완성기'이므로 사실이 아니더라도 확률적으로 유창하면 거짓을 답변합니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-033",
-      conceptId: "rag-concept",
-      difficulty: "medium",
-      category: "LLM 응용",
-      questionType: "multiple-choice",
-      prompt: "LLM의 환각 문제를 완화하고 최신/외부 검색 문서를 참고하여 답변하게 만드는 기법인 RAG의 약자는?",
-      options: ["Retrieval-Augmented Generation", "Random Auto-regressive Generation", "Recurrent Attention Gate", "Real-time AI Guidance"],
-      answer: 0,
-      explanation: "Retrieval-Augmented Generation(검색 증강 생성)은 외부 DB에서 관련 문서를 검색(Retrieval)해 프롬프트에 제공합니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-034",
-      conceptId: "transformer-decoder-cross-attention-k-v",
-      difficulty: "medium",
-      category: "Transformer",
-      questionType: "multiple-choice",
-      prompt: "트랜스포머 디코더 블록 내부의 Cross-Attention에서 Key(K)와 Value(V) 행렬의 가로 차원 길이는 무엇의 영향을 받는가?",
-      options: ["인코더 입력 시퀀스의 길이 ($T_{enc}$)", "디코더 입력 시퀀스의 길이 ($T_{dec}$)", "단어 사전의 전체 크기", "배치 크기만 영향"],
-      answer: 0,
-      explanation: "Cross-Attention의 K, V는 인코더의 최종 출력에서 오므로 인코더 타임스텝 길이를 가집니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-035",
-      conceptId: "multi-query-attention",
-      difficulty: "medium",
-      category: "Transformer 변형",
-      questionType: "multiple-choice",
-      prompt: "Multi-Head Attention의 KV 캐시 메모리 부담을 줄이기 위해 모든 Head가 하나의 K, V를 공유하도록 개량한 기술은?",
-      options: ["Multi-Query Attention (MQA)", "Single-Head Attention", "Full Attention", "Cross-Attention"],
-      answer: 0,
-      explanation: "Multi-Query Attention(MQA)은 Q는 멀티헤드로 유지하되 K와 V를 모든 헤드가 공유하여 KV 캐시 메모리를 절약합니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-036",
-      conceptId: "bleu-brevity-penalty",
-      difficulty: "medium",
-      category: "기계 번역 평가",
-      questionType: "multiple-choice",
-      prompt: "BLEU 스코어 계산 시 기계번역 결과가 참조 번역보다 터무니없이 짧을 때 점수를 깎기 위해 적용하는 페널티는?",
-      options: ["Brevity Penalty (BP)", "Length Reward", "Recall Penalty", "Overfitting Penalty"],
-      answer: 0,
-      explanation: "짧은 문장으로 정밀도만 높이는 속임수를 막기 위해 문장 길이가 짧으면 Brevity Penalty(BP)를 곱해 감점합니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-037",
-      conceptId: "rouge-l-concept",
-      difficulty: "medium",
-      category: "문서 요약 평가",
-      questionType: "multiple-choice",
-      prompt: "ROUGE 평가 지표 종류 중 정답 문장과 생성 문장 간의 최장 공통 부분 수열을 측정하는 지표는?",
-      options: ["ROUGE-L (LCS 기반)", "ROUGE-1", "ROUGE-2", "ROUGE-N"],
-      answer: 0,
-      explanation: "ROUGE-L은 Longest Common Subsequence(LCS, 최장 공통 부분 수열)를 기반으로 유사도를 계산합니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-038",
-      conceptId: "word2vec-cbow-target",
-      difficulty: "medium",
-      category: "워드 임베딩",
-      questionType: "multiple-choice",
-      prompt: "문장 \"The quick brown fox runs away\" 에서 윈도우 크기 2의 CBOW로 중심 단어 \"fox\"를 예측할 때 입력 문맥 단어가 아닌 것은?",
-      options: ["away", "quick", "brown", "runs"],
-      answer: 0,
-      explanation: "중심 단어 \"fox\" (위치 t) 기준 윈도우 크기 2의 주변 단어는 [quick(t-2), brown(t-1), runs(t+1), away(t+2)] 중 away는 범위 안이지만, 구체적으로 문맥 집합 {quick, brown, runs, away}에 포함됩니다. 오답지를 검증해보면 away는 t+3이 아니므로 윈도우 2 안입니다. 만약 윈도우 2 범위 밖 단어인 \"The\"(t-3)가 있다면 그것이 정답입니다. 이 문제에서는 옵션 0번 위치를 \"The\"로 교정하여 명확히 합니다.",
-      // 옵션을 명확히 재정의합니다:
-      // ["The", "quick", "brown", "runs"] -> 정답 0 ("The"는 t-3이므로 윈도우 2 범위 밖)
-    },
-    // 재정의된 38번 문항 적용
-    {
-      id: "nlp-easy-mc-038-corr",
-      conceptId: "word2vec-cbow-target-window",
-      difficulty: "medium",
-      category: "워드 임베딩",
-      questionType: "multiple-choice",
-      prompt: "문장 \"The quick brown fox runs away\" 에서 윈도우 크기가 2이고 중심 단어가 \"fox\"일 때, CBOW의 입력으로 들어가는 주변 단어 집합에 포함되지 않는 것은?",
-      options: ["The", "quick", "brown", "runs"],
-      answer: 0,
-      explanation: "\"fox\" 기준 윈도우 크기 2 안의 주변 단어는 quick(t-2), brown(t-1), runs(t+1), away(t+2)입니다. \"The\"는 t-3에 위치하므로 포함되지 않습니다[cite: 2].",
-      hint: "중심 단어 앞뒤로 2단어까지만 범위에 들어갑니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-039",
-      conceptId: "skipgram-objective-formula",
-      difficulty: "medium",
-      category: "워드 임베딩",
-      questionType: "multiple-choice",
-      prompt: "Skip-gram 모델이 최대화하고자 하는 목적함수 $J(\\theta)$의 조건부 확률 기본 형태는?",
-      options: [
-        "$\\sum_{t=1}^T \\sum_{-c \\le j \\le c, j \\neq 0} \\log P(w_{t+j} | w_t)$",
-        "$\\sum_{t=1}^T \\log P(w_t | w_{t-1})$",
-        "$\\sum_{t=1}^T \\sum_{j} P(w_t | w_{t+j})$",
-        "$\\prod_{t=1}^T P(w_t)$"
-      ],
-      answer: 0,
-      explanation: "Skip-gram은 중심 단어 $w_t$가 주어졌을 때 주변 단어 $w_{t+j}$가 나타날 조건부 로그 확률의 합을 최대화합니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-040",
-      conceptId: "rnn-many-to-many-types",
-      difficulty: "medium",
-      category: "RNN",
-      questionType: "multiple-choice",
-      prompt: "RNN의 Many-to-Many 구조 중 '프레임 단위 음성 라벨링'처럼 입력 시점 마다 즉시 출력이 발생하는 구조와 Seq2Seq 기계번역 구조의 결정적 차이는?",
-      options: [
-        "기계번역은 입력 시퀀스를 다 읽은 후 출력을 시작하지만, 음성 라벨링은 입력과 출력 타임스텝이 1:1로 동기화되어 진행된다.",
-        "기계번역은 은닉 상태를 쓰지 않는다.",
-        "음성 라벨링은 디코더만 사용한다.",
-        "두 구조는 완전히 동일하여 차이가 없다."
-      ],
-      answer: 0,
-      explanation: "Seq2Seq 번역은 Synced 되지 않은 Many-to-Many(인코딩 후 생성)이고, POS 태깅/음성 라벨링은 Synced Many-to-Many(각 스텝마다 즉시 출력)입니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-041",
-      conceptId: "lstm-tanh-output-gate",
-      difficulty: "medium",
-      category: "LSTM",
-      questionType: "multiple-choice",
-      prompt: "LSTM에서 최종 $h_t$를 구할 때 세포 상태 $C_t$에 $\\tanh$를 씌운 후 Output gate $o_t$와 곱하는 이유 수식 $h_t = o_t * \\tanh(C_t)$의 목적은?",
-      options: [
-        "Cell state의 값 범위를 -1과 1 사이로 압축하여 조정하고, Output gate로 내보낼 양을 제어하기 위해",
-        "Cell state를 0으로 만들기 위해",
-        "기울기를 무한대로 증폭하기 위해",
-        "Sigmoid 계산을 생략하기 위해"
-      ],
-      answer: 0,
-      explanation: "무한히 누적될 수 있는 $C_t$ 값을 $\tanh$로 -1~1 사이로 스케일링한 후 $o_t$ 필터로 걸러 $h_t$를 만듭니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-042",
-      conceptId: "seq2seq-loss-backprop",
-      difficulty: "medium",
-      category: "Seq2Seq",
-      questionType: "multiple-choice",
-      prompt: "Seq2Seq 모델의 학습(Training) 과정에 대한 설명 중 올바른 것은?",
-      options: [
-        "디코더에서 발생한 오차가 역전파(Backpropagation)를 통해 인코더까지 전달되어 전체 네트워크가 End-to-End로 동시에 학습된다.",
-        "인코더와 디코더는 완전히 독립된 모델이므로 서로 역전파 오차를 주고받지 않는다.",
-        "인코더만 학습되고 디코더 가중치는 고정된다.",
-        "디코더 학습이 끝난 후에만 인코더를 별도로 학습시킨다."
-      ],
-      answer: 0,
-      explanation: "Seq2Seq는 인코더와 디코더가 하나로 연결되어 디코더 오차가 인코더까지 역전파되는 End-to-End 결합 모델입니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-043",
-      conceptId: "attention-weight-matrix-shape",
-      difficulty: "medium",
-      category: "Self-Attention",
-      questionType: "multiple-choice",
-      prompt: "시퀀스 길이가 $T$이고 모델 차원이 $d$일 때, $Q K^T$ 연산으로 만들어지는 Attention Score 행렬의 크기(Shape)는?",
-      options: ["$T \\times T$", "$d \\times d$", "$T \\times d$", "$d \\times T$"],
-      answer: 0,
-      explanation: "$Q(T \\times d_k)$와 $K^T(d_k \\times T)$를 곱하면 모든 토큰 간의 $T \\times T$ 유사도 행렬이 생성됩니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-044",
-      conceptId: "transformer-head-dimension",
-      difficulty: "medium",
-      category: "Transformer",
-      questionType: "multiple-choice",
-      prompt: "트랜스포머의 전체 모델 차원이 $d_{model} = 512$이고, Multi-Head Attention의 헤드 개수가 $h = 8$일 때, 각 헤드의 차원 $d_k$는 얼마인가?",
-      options: ["64", "512", "8", "128"],
-      answer: 0,
-      explanation: "원 논문에서 $d_k = d_{model} / h = 512 / 8 = 64$ 로 각 헤드에 차원을 나누어 할당합니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-045",
-      conceptId: "transformer-masking-value",
-      difficulty: "medium",
-      category: "Transformer",
-      questionType: "multiple-choice",
-      prompt: "Masked Self-Attention에서 미래 토큰 위치의 Attention score에 $-\\infty$(마이너스 무한대)를 더해주는 이유는?",
-      options: [
-        "Softmax 함수를 거쳤을 때 해당 위치의 확률값을 정확히 0으로 만들기 위해",
-        "Softmax 결과값을 1로 만들기 위해",
-        "미래 토큰의 가중치를 가장 크게 높이기 위해",
-        "연산 속도를 0초로 단축하기 위해"
-      ],
-      answer: 0,
-      explanation: "$\\exp(-\\infty) = 0$ 이므로 Softmax를 통과하면 미래 단어 참조 확률 가중치가 0이 됩니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-046",
-      conceptId: "flan-held-out-evaluation",
-      difficulty: "medium",
-      category: "지시 학습",
-      questionType: "multiple-choice",
-      prompt: "FLAN 논문에서 지시 학습(Instruction Tuning) 모델의 일반화 성능을 공정하게 평가하기 위해 사용한 Held-out 평가 방식은?",
-      options: [
-        "특정 태스크 클러스터(예: 요약) 전체를 학습에서 완전히 제외(Held-out)한 뒤, 테스트 때 해당 클러스터 문제로 평가한다.",
-        "학습 데이터와 똑같은 문제로만 테스트한다.",
-        "모델 크기를 0으로 줄여서 평가한다.",
-        "영어로만 훈련하고 테스트는 불어로만 한다."
-      ],
-      answer: 0,
-      explanation: "보지 못한 지시문(unseen task)에 대한 지시 이행 일반화 능력을 측정하고자 특정 태스크 전체를 학습에서 빼고 테스트합니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-047",
-      conceptId: "dpo-loss-feature",
-      difficulty: "medium",
-      category: "선호 학습",
-      questionType: "multiple-choice",
-      prompt: "DPO(Direct Preference Optimization) 알고리즘이 기존 RLHF(PPO) 방식 대비 갖는 구조적 장점은?",
-      options: [
-        "별도의 보상 모델 학습 및 PPO 강화학습 루프 없이, 선호/비선호 데이터로 언어 모델 자체를 직접 최적화하여 학습이 매우 안정적이다.",
-        "학습 데이터가 1개만 있어도 된다.",
-        "트랜스포머 레이어를 사용할 필요가 없다.",
-        "GPU 대신 CPU 1개로만 학습이 가능하다."
-      ],
-      answer: 0,
-      explanation: "DPO는 RLHF의 보상 모델과 PPO 강화학습 단계를 수학적으로 단순화하여 직접 교스 엔트로피 형태로 정렬합니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-048",
-      conceptId: "kv-cache-memory-tradeoff",
-      difficulty: "medium",
-      category: "LLM 추론",
-      questionType: "multiple-choice",
-      prompt: "LLM 추론 시 KV Cache 기법을 사용할 때 발생하는 트레이드오프(Trade-off)는?",
-      options: [
-        "연산 속도가 대폭 향상되는 대신, GPU VRAM 메모리 사용량이 크게 증가한다.",
-        "메모리가 줄어드는 대신 속도가 100배 느려진다.",
-        "정확도가 0점으로 떨어진다.",
-        "아무런 트레이드오프 없이 모든 면에서 이점만 존재한다."
-      ],
-      answer: 0,
-      explanation: "KV Cache는 과거 K, V 벡터를 VRAM에 저장하므로 연산 속도는 빨라지지만 메모리(VRAM)를 많이 차지합니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-049",
-      conceptId: "chatgpt-memory-personalization",
-      difficulty: "medium",
-      category: "프롬프트 엔지니어링",
-      questionType: "multiple-choice",
-      prompt: "ChatGPT의 메모리 기능이나 시스템 프롬프트를 통해 사용자의 직업, 취향, 어조 요구사항을 지속 반영하는 기법은?",
-      options: ["개인화 (Personalization)", "양자화 (Quantization)", "증류 (Distillation)", "토크나이징 (Tokenization)"],
-      answer: 0,
-      explanation: "유저에 대한 맥락 정보를 시스템 프롬프트/메모리에 저장하여 개인 맞춤형 응답을 생성하는 개인화 기법입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-050",
-      conceptId: "gsm8k-task-nature",
-      difficulty: "medium",
-      category: "LLM 평가",
-      questionType: "multiple-choice",
-      prompt: "GSM8K 벤치마크 문제들의 특징으로 옳은 것은?",
-      options: [
-        "단계별 사칙연산과 논리 추론이 필요한 초등 수준 수학 문장제 문제로 구성되어 있다.",
-        "대학원 수준의 고난도 물리학 객관식 문제이다.",
-        "단순 영한 번역 문장 1만 개로 구성되어 있다.",
-        "이미지를 보고 객체를 분류하는 문제이다."
-      ],
-      answer: 0,
-      explanation: "GSM8K(Grade School Math 8K)는 멀티스텝 수리 추론 능력을 측정하는 초등 수학 문장제 데이터셋입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-051",
-      conceptId: "cbow-projection-sum",
-      difficulty: "medium",
-      category: "워드 임베딩",
-      questionType: "multiple-choice",
-      prompt: "CBOW 모델의 투영층(Projection layer)에서 여러 주변 단어의 원-핫 벡터와 가중치 행렬 $W$가 곱해진 후 일어나는 연산은?",
-      options: ["벡터들의 합(Sum) 또는 평균(Average)", "벡터들의 행렬식 계산", "각 벡터의 최대값 추출", "모든 원소를 0으로 초기화"],
-      answer: 0,
-      explanation: "CBOW 투영층에서는 입력된 주변 단어들의 임베딩 벡터를 모두 더하거나(SUM) 평균 내어 하나의 문맥 벡터를 만듭니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-052",
-      conceptId: "skipgram-output-layer",
-      difficulty: "medium",
-      category: "워드 임베딩",
-      questionType: "multiple-choice",
-      prompt: "Skip-gram 모델의 출력층(Output layer) 크기는 무엇과 동일한가?",
-      options: ["단어 사전 전체의 크기 ($V$)", "윈도우 크기", "은닉층 차원 수", "입력 문장의 길이"],
-      answer: 0,
-      explanation: "출력층은 전체 어휘 사전 $V$ 내의 각 단어가 주변 단어로 등장할 Softmax 확률 분포를 내므로 크기는 $V$입니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-053",
-      conceptId: "rnn-backprop-chain-rule",
-      difficulty: "medium",
-      category: "RNN",
-      questionType: "multiple-choice",
-      prompt: "RNN 학습 시 역전파 오차가 시점 $t$에서 시점 1까지 전달될 때 미분 연산에서 적용되는 수학적 법칙은?",
-      options: ["연쇄 법칙 (Chain Rule)", "피타고라스 정리", "베이즈 정리", "테일러 전개"],
-      answer: 0,
-      explanation: "시간을 거슬러 올라가며 미분값을 계속 곱해나가는 연쇄 법칙(Chain Rule)이 적용됩니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-054",
-      conceptId: "lstm-input-gate-formula",
-      difficulty: "medium",
-      category: "LSTM",
-      questionType: "multiple-choice",
-      prompt: "LSTM의 Input gate 수식 $i_t = \\sigma(W_i \\cdot [h_{t-1}, x_t] + b_i)$ 에서 시그모이드 함수 $\\sigma$를 사용하는 목적은?",
-      options: [
-        "새로운 정보를 얼마나 수용할지 0과 1 사이의 비율값(비중)을 구하기 위해",
-        "음수 값을 만들기 위해",
-        "기울기를 무한대로 늘리기 위해",
-        "행렬의 차원을 줄이기 위해"
-      ],
-      answer: 0,
-      explanation: "Sigmoid 함수는 출력이 0~1 사이로 나오므로, 정보를 얼마만큼(0%~100%) 반영할지 비율을 결정합니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-055",
-      conceptId: "attention-dot-product-scaling-reason",
-      difficulty: "medium",
-      category: "Transformer",
-      questionType: "multiple-choice",
-      prompt: "Scaled Dot-Product Attention에서 내적값을 $\\sqrt{d_k}$로 나누지 않으면 생기는 문제점은?",
-      options: [
-        "내적값이 너무 커져 Softmax 함수의 기울기(Gradient)가 매우 작아지는 기울기 소실 영역에 빠진다.",
-        "내적값이 항상 0이 된다.",
-        "Softmax 결과가 음수가 된다.",
-        "Attention score가 무한히 작아져 계산이 안 된다."
-      ],
-      answer: 0,
-      explanation: "차원이 크면 내적 결과의 분산이 커져 Softmax 출력이 한쪽으로 쏠리고 기울기 소실(Gradient vanishing)이 발생합니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-056",
-      conceptId: "transformer-decoder-block-count",
-      difficulty: "medium",
-      category: "Transformer",
-      questionType: "multiple-choice",
-      prompt: "트랜스포머 아키텍처에서 인코더와 디코더의 블록(Layer) 개수 설정에 관한 설명으로 옳은 것은?",
-      options: [
-        "동일한 구조의 블록을 $N$개(예: 6개, 12개 등) 쌓아 올려 깊은 아키텍처를 형성한다.",
-        "인코더 블록은 무조건 1개만 사용할 수 있다.",
-        "디코더 블록은 사용할 수 없다.",
-        "블록의 개수는 항상 입력 문장의 단어 수와 정확히 같아야 한다."
-      ],
-      answer: 0,
-      explanation: "트랜스포머는 동일한 하위 블록 레이어를 $N$번 반복 하이퍼파라미터(예: $N=6$)로 쌓아 올립니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-057",
-      conceptId: "llm-pretraining-cost",
-      difficulty: "medium",
-      category: "거대 언어 모델",
-      questionType: "multiple-choice",
-      prompt: "GPT-3 (175B) 수준의 LLM을 사전 학습하는 데 들어간 추정 비용 및 자원 규모에 대한 설명으로 옳은 것은?",
-      options: [
-        "수천 개의 고성능 GPU와 수십~수백억 원 상당의 대규모 비용이 소요된다.",
-        "일반 개인용 노트북 1대로 1시간 만에 학습할 수 있다.",
-        "학습 비용이 전혀 들지 않는다.",
-        "GPU 대신 CPU 1개로만 학습하는 것이 가장 효율적이다."
-      ],
-      answer: 0,
-      explanation: "GPT-3 수준 학습에는 수천 개의 클러스터 GPU와 막대한 전기/계산 비용(약 백억 원 이상)이 소요됩니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-058",
-      conceptId: "dpo-vs-rlhf-reward-model",
-      difficulty: "medium",
-      category: "선호 학습",
-      questionType: "multiple-choice",
-      prompt: "DPO 방식과 기존 RLHF 방식의 핵심 차이 중 '보상 모델(Reward Model)'에 관한 설명은?",
-      options: [
-        "DPO는 별도의 보상 모델을 신경망으로 따로 훈련시키지 않고 언어 모델의 확률 비로 대체한다.",
-        "DPO는 보상 모델을 10개 이상 동시에 사용한다.",
-        "DPO는 사람의 선호 데이터를 전혀 사용하지 않는다.",
-        "RLHF는 보상 모델을 사용하지 않는다."
-      ],
-      answer: 0,
-      explanation: "DPO는 수학적 변환을 통해 언어 모델 자체의 닫힌 형태(Implicit Reward)로 보상 모델을 대체합니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-059",
-      conceptId: "decoding-top-k-limitation",
-      difficulty: "medium",
-      category: "디코딩 알고리즘",
-      questionType: "multiple-choice",
-      prompt: "Top-K Sampling이 가진 한계점은?",
-      options: [
-        "확률 분포가 매우 뾰족하거나 평평한 문맥적 변화에 관계없이 고정된 K개만 고려한다.",
-        "K의 값이 자동으로 매번 변한다.",
-        "항상 똑같은 답변만 나온다.",
-        "계산량이 Beam Search의 1000배이다."
-      ],
-      answer: 0,
-      explanation: "문맥에 따라 완벽한 후보가 1개일 수도, 20개일 수도 있는데 K가 고정되어 있으면 잡음 단어가 섞이거나 유용한 단어가 잘릴 수 있습니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-060",
-      conceptId: "prompt-persona-setting",
-      difficulty: "medium",
-      category: "프롬프트 엔지니어링",
-      questionType: "multiple-choice",
-      prompt: "프롬프트에 \"너는 친절한 초등학교 선생님이야. 6살 아이에게 설명하듯 말해줘\" 라고 역할을 지정하는 프롬프트 기법은?",
-      options: ["페르소나(Persona) 지정 프롬프팅", "Zero-shot CoT", "RAG", "DPO"],
-      answer: 0,
-      explanation: "모델에게 특정 페르소나(역할/자격)를 부여하여 말투와 답변 수준을 제어하는 프롬프트 기술입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-061",
-      conceptId: "nlp-pipeline-order",
-      difficulty: "medium",
-      category: "자연어 처리 기초",
-      questionType: "multiple-choice",
-      prompt: "일반적인 자연어 처리 파이프라인의 순서로 가장 올바른 것은?",
-      options: [
-        "텍스트 수집 $\\rightarrow$ 토큰화(Tokenization) $\\rightarrow$ 단어 임베딩 $\\rightarrow$ 모델 학습 및 추론",
-        "모델 추론 $\\rightarrow$ 단어 임베딩 $\\rightarrow$ 텍스트 수집 $\\rightarrow$ 토큰화",
-        "단어 임베딩 $\\rightarrow$ 텍스트 수집 $\\rightarrow$ 토큰화 $\\rightarrow$ 모델 학습",
-        "토큰화 $\\rightarrow$ 텍스트 수집 $\\rightarrow$ 모델 학습 $\\rightarrow$ 단어 임베딩"
-      ],
-      answer: 0,
-      explanation: "원시 텍스트를 수집 및 정제한 후 토큰 단위로 나누고, 이를 밀집 벡터로 임베딩하여 모델에 입력합니다."
-    },
-    {
-      id: "nlp-medium-mc-062",
-      conceptId: "word2vec-cbow-loss",
-      difficulty: "medium",
-      category: "워드 임베딩",
-      questionType: "multiple-choice",
-      prompt: "CBOW 모델 학습 시 가중치 업데이트를 위해 계산하는 손실(Loss)의 기준은?",
-      options: [
-        "예측한 중심 단어의 확률 분포와 실제 중심 단어 원-핫 벡터 간의 Cross-Entropy",
-        "주변 단어들과의 거리 평균",
-        "단어의 알파벳 개수 차이",
-        "문장 전체의 단어 개수"
-      ],
-      answer: 0,
-      explanation: "CBOW는 주변 단어로 예측한 중심 단어 확률 분포와 정답 중심 단어의 교차 엔트로피 손실을 줄이도록 학습합니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-063",
-      conceptId: "rnn-gradient-explosion-solution",
-      difficulty: "medium",
-      category: "RNN",
-      questionType: "multiple-choice",
-      prompt: "RNN 학습 과정에서 기울기가 너무 커져 발산하는 '기울기 폭발(Gradient Explosion)'을 막기 위한 대표적 기법은?",
-      options: ["Gradient Clipping (기울기 클리핑)", "Dropout", "Weight Initialization", "Early Stopping"],
-      answer: 0,
-      explanation: "Gradient Clipping은 기울기 임계값을 넘어서면 임계값 크기로 기울기를 잘라내어 발산을 막습니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-064",
-      conceptId: "lstm-peephole-connection",
-      difficulty: "medium",
-      category: "LSTM 변형",
-      questionType: "multiple-choice",
-      prompt: "LSTM 변형 중 각 게이트들이 Cell state $C_{t-1}$의 값을 직접 다이렉트로 들여다볼 수 있게 연결을 추가한 구조는?",
-      options: ["Peephole Connection (피프홀 연결)", "GRU", "Bi-LSTM", "Attention"],
-      answer: 0,
-      explanation: "Peephole Connection은 게이트 계산 시 이전 hidden state뿐만 아니라 이전 cell state 값도 직접 참조합니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-065",
-      conceptId: "bilstm-concept",
-      difficulty: "medium",
-      category: "LSTM 변형",
-      questionType: "multiple-choice",
-      prompt: "양방향 LSTM(Bi-directional LSTM)이 텍스트 표현에 유리한 이유는?",
-      options: [
-        "순방향(Left-to-Right)과 역방향(Right-to-Left) LSTM을 모두 사용하여 시점 $t$의 앞뒤 문맥을 동시에 파악할 수 있어서",
-        "속도가 2배 빠르기 때문에",
-        "파라미터가 절반으로 줄어들기 때문에",
-        "미래 단어를 생성하는 개방형 생성에 최적화되어 있어서"
-      ],
-      answer: 0,
-      explanation: "Bi-LSTM은 문장의 과거(왼쪽)와 미래(오른쪽) 문맥 정보를 모두 은닉 상태에 담을 수 있습니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-066",
-      conceptId: "seq2seq-sos-eos-tokens",
-      difficulty: "medium",
-      category: "Seq2Seq",
-      questionType: "multiple-choice",
-      prompt: "Seq2Seq 모델에서 디코더 생성을 시작할 때 첫 입력으로 들어가는 토큰과 생성을 끝낼 때 사용하는 토큰 순서는?",
-      options: ["<SOS> 토큰으로 시작, <EOS> 토큰으로 종료", "<EOS> 토큰으로 시작, <SOS> 토큰으로 종료", "<PAD> 토큰으로 시작, <MASK> 토큰으로 종료", "<UNK> 토큰으로 시작, <CLS> 토큰으로 종료"],
-      answer: 0,
-      explanation: "디코더 시작 시 <SOS>(Start of Sequence)를 넣고, 출력이 완성되면 <EOS>(End of Sequence)를 출력합니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-067",
-      conceptId: "attention-additive-vs-dot",
-      difficulty: "medium",
-      category: "Attention",
-      questionType: "multiple-choice",
-      prompt: "Dot-product Attention이 Additive Attention에 비해 갖는 주요 장점은?",
-      options: [
-        "행렬 곱 연산으로 구현되어 빠르게 계산되고 메모리 효율적이다.",
-        "파라미터 수가 10배 더 많다.",
-        "차원이 커져도 스케일링이 필요 없다.",
-        "Softmax 연산을 사용하지 않아도 된다."
-      ],
-      answer: 0,
-      explanation: "Dot-product 방식은 고속 행렬 곱셈(MatMul) 최적화 라이브러리를 활용할 수 있어 연산 속도가 뛰어납니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-068",
-      conceptId: "transformer-cross-attention-query",
-      difficulty: "medium",
-      category: "Transformer",
-      questionType: "multiple-choice",
-      prompt: "트랜스포머 디코더의 Cross-Attention 수식에서 Query($Q$) 행렬은 어디에서 오는가?",
-      options: ["디코더의 이전 마스킹 Self-Attention 서브레이어 출력", "인코더의 최상단 블록 출력", "입력 단어 사전", "임의의 무작위 행렬"],
-      answer: 0,
-      explanation: "Cross-Attention에서 $Q$는 디코더의 하위 서브레이어 출력에서 오고, $K$와 $V$는 인코더의 출력에서 옵니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-069",
-      conceptId: "bert-mlm-mask-ratio",
-      difficulty: "medium",
-      category: "언어 모델",
-      questionType: "multiple-choice",
-      prompt: "BERT 사전 학습 시 입력 토큰 중 무작위로 마스킹(Mask)을 적용하는 비율은 전체의 몇 % 인가?",
-      options: ["15%", "50%", "1%", "80%"],
-      answer: 0,
-      explanation: "BERT는 전체 입력 토큰 중 약 15%를 무작위 선택하여 [MASK] 변환 등의 MLM 학습을 진행합니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-070",
-      conceptId: "gpt-causal-language-modeling",
-      difficulty: "medium",
-      category: "거대 언어 모델",
-      questionType: "multiple-choice",
-      prompt: "GPT 시리즈가 사용하는 Causal Language Modeling(인과적 언어 모델링)의 의미는?",
-      options: [
-        "현재 위치 이전의 단어들만을 문맥으로 이용하여 바로 다음 단어를 예측한다.",
-        "문장 전체의 양방향 단어를 모두 보고 가운데 빈칸을 맞춘다.",
-        "미래의 단어 10개를 한꺼번에 맞춘다.",
-        "단어의 알파벳 철자를 역순으로 맞춘다."
-      ],
-      answer: 0,
-      explanation: "Causal LM은 인과 관계에 따라 과거 문맥 $w_1, ..., w_{t-1}$ 만을 보고 $w_t$를 예측합니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-071",
-      conceptId: "llm-temperature-0-property",
-      difficulty: "medium",
-      category: "LLM 추론",
-      questionType: "multiple-choice",
-      prompt: "LLM API 호출 시 Temperature 값을 0으로 설정했을 때의 결과 동작은?",
-      options: [
-        "매번 가장 확률이 높은 단어만 고르는 결정론적(Deterministic) Greedy 출력이 된다.",
-        "모델이 답변을 생성하지 못하고 에러를 낸다.",
-        "가장 무작위적인 난수 텍스트가 생성된다.",
-        "답변이 무조건 거절된다."
-      ],
-      answer: 0,
-      explanation: "Temperature가 0이 되면 확률 분산이 사라져 항상 가장 높은 로짓의 토큰만 출력하는 결정론적 선택이 됩니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-072",
-      conceptId: "instruct-gpt-sft-vs-rlhf",
-      difficulty: "medium",
-      category: "정렬 학습",
-      questionType: "multiple-choice",
-      prompt: "InstructGPT 논문 평가에서 단순 SFT(지도 미세조정) 모델 대비 RLHF 적용 모델이 얻은 주요 개선은?",
-      options: [
-        "인간 평가자의 선호도 점수가 대폭 상승하고, 유해성(Toxicity)과 환각이 감소했다.",
-        "모델 파라미터 수가 10배로 늘어났다.",
-        "학습 데이터량이 1000배 감소했다.",
-        "영어가 아닌 타 언어 번역률이 0점이 되었다."
-      ],
-      answer: 0,
-      explanation: "RLHF를 거친 InstructGPT는 단순 SFT 모델보다 사람 의도에 훨씬 잘 부합하며 유해 응답을 적게 생성했습니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-073",
-      conceptId: "llama-2-pretraining-tokens",
-      difficulty: "medium",
-      category: "거대 언어 모델",
-      questionType: "multiple-choice",
-      prompt: "LLaMA 1(1.4T 토큰) 대비 LLaMA 2 사전 학습에 투입된 토큰 수의 규모는?",
-      options: ["2.0T (2조) 토큰", "100억 토큰", "500억 토큰", "10조 토큰"],
-      answer: 0,
-      explanation: "LLaMA 2는 LLaMA 1보다 40% 이상 늘어난 2.0조(2 Trillion) 토큰의 데이터로 사전 학습되었습니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-074",
-      conceptId: "prompt-jailbreak-safety",
-      difficulty: "medium",
-      category: "LLM 안전성",
-      questionType: "multiple-choice",
-      prompt: "사용자가 우회적 질문이나 악의적 교동으로 LLM의 안전 가이드라인을 뚫고 유해 답변을 유도하는 공격 기법은?",
-      options: ["탈옥 (Jailbreaking)", "RAG", "DPO", "Fine-tuning"],
-      answer: 0,
-      explanation: "Jailbreaking은 모델의 안전 정렬 장치를 우회하여 불법/유해 정보를 출력하게 만드는 프롬프트 공격입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-075",
-      conceptId: "eval-truthful-qa",
-      difficulty: "medium",
-      category: "LLM 평가",
-      questionType: "multiple-choice",
-      prompt: "LLM이 사람이 오해하기 쉬운 미신이나 거짓 정보에 속지 않고 진실된 답변을 하는지 평가하는 벤치마크는?",
-      options: ["TruthfulQA", "GSM8K", "HumanEval", "MBPP"],
-      answer: 0,
-      explanation: "TruthfulQA는 통념, 미신, 음모론 지문 등에 대해 모델이 진실하고 정확하게 답변하는지 측정합니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-076",
-      conceptId: "eval-humaneval",
-      difficulty: "medium",
-      category: "LLM 평가",
-      questionType: "multiple-choice",
-      prompt: "OpenAI가 공개한 벤치마크로, 파이썬 함수 독스트링 요구사항을 보고 올바른 코드를 작성하는지 평가하는 기법은?",
-      options: ["HumanEval", "MMLU", "ROUGE", "BLEU"],
-      answer: 0,
-      explanation: "HumanEval은 파이썬 코딩 문제 기반의 대표적인 LLM 코드 생성 평가 벤치마크입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-077",
-      conceptId: "word2vec-similarity-math",
-      difficulty: "medium",
-      category: "워드 임베딩",
-      questionType: "multiple-choice",
-      prompt: "Word2Vec으로 학습된 벡터 공간에서 \"vec('King') - vec('Man') + vec('Woman')\" 연산을 수행했을 때 가장 가까운 벡터는?",
-      options: ["vec('Queen')", "vec('Apple')", "vec('Boy')", "vec('Prince')"],
-      answer: 0,
-      explanation: "Word2Vec의 대표적 성질로, 단어 간 의미적 관계가 벡터의 선형 연산(King - Man + Woman = Queen)으로 나타납니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-078",
-      conceptId: "rnn-hidden-size-hyperparameter",
-      difficulty: "medium",
-      category: "RNN",
-      questionType: "multiple-choice",
-      prompt: "RNN 계열 모델에서 은닉 상태 $h_t$의 차원 크기(Hidden size)를 결정하는 요소는?",
-      options: [
-        "개발자가 설정하는 모델의 하이퍼파라미터",
-        "입력 문장의 단어 개수",
-        "단어 사전 전체의 크기",
-        "학습 에포크 수"
-      ],
-      answer: 0,
-      explanation: "Hidden size(예: 128, 256, 512 등)는 모델을 설계하는 개발자가 정하는 하이퍼파라미터입니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-079",
-      conceptId: "transformer-position-wise-ffn-formula",
-      difficulty: "medium",
-      category: "Transformer",
-      questionType: "multiple-choice",
-      prompt: "트랜스포머의 FFN 서브레이어 수식 $\\text{FFN}(x) = \\max(0, x W_1 + b_1) W_2 + b_2$ 에서 중간 은닉 차원의 크기는 보통 $d_{model}$의 몇 배인가?",
-      options: ["4배 ($d_{ff} = 2048$)", "1배", "100배", "1/2배"],
-      answer: 0,
-      explanation: "트랜스포머 원 논문에서 $d_{model}=512$일 때 FFN 내부는 4배 확장된 $d_{ff}=2048$ 차원을 사용합니다[cite: 2]."
-    },
-    {
-      id: "nlp-medium-mc-080",
-      conceptId: "llm-context-window-size",
-      difficulty: "medium",
-      category: "거대 언어 모델",
-      questionType: "multiple-choice",
-      prompt: "Gemini 1.5 Pro 등 최신 LLM이 지원하는 '컨텍스트 윈도우(Context Window)'의 의미는?",
-      options: [
-        "모델이 한 번에 입력받고 처리할 수 있는 최대 토큰의 수",
-        "컴퓨터 모니터의 화면 해상도",
-        "1초당 생성되는 단어의 속도",
-        "모델 학습 시 사용하는 GPU 장비 개수"
-      ],
-      answer: 0,
-      explanation: "컨텍스트 윈도우는 모델이 한 번의 프롬프트에서 기억하고 처리할 수 있는 최대 입력 길이/토큰 수입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-081",
-      conceptId: "gqa-concept",
-      difficulty: "medium",
-      category: "Transformer 변형",
-      questionType: "multiple-choice",
-      prompt: "LLaMA 2 70B 등에 채택된 기법으로, 여러 개의 Query 헤드가 그룹을 이루어 하나의 KV 헤드를 공유함으로써 MHA와 MQA의 중간 성능을 내는 구조는?",
-      options: ["Grouped-Query Attention (GQA)", "Multi-Head Attention", "Self-Attention", "Scaled Attention"],
-      answer: 0,
-      explanation: "Grouped-Query Attention(GQA)은 품질과 KV 캐시 메모리 효율성을 모두 잡은 중간 형태의 Attention입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-082",
-      conceptId: "lora-finetuning",
-      difficulty: "medium",
-      category: "LLM 학습 기법",
-      questionType: "multiple-choice",
-      prompt: "LLM 미세조정 시 전체 파라미터를 업데이트하지 않고, 저차원 분해 행렬 $A, B$만 추가하여 효율적으로 훈련시키는 기법의 약자는?",
-      options: ["LoRA (Low-Rank Adaptation)", "RLHF", "SFT", "RAG"],
-      answer: 0,
-      explanation: "Low-Rank Adaptation(LoRA)은 기존 가중치를 고정하고 저차원 행렬만 학습시켜 메모리를 획기적으로 줄입니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-083",
-      conceptId: "eval-code-pass-at-k",
-      difficulty: "medium",
-      category: "LLM 평가",
-      questionType: "multiple-choice",
-      prompt: "HumanEval 등 코드 생성 평가 시 사용되는 pass@k 지표의 의미는?",
-      options: [
-        "모델이 생성한 k개의 코드 샘플 중 하나라도 단위 테스트를 통과하면 성공으로 판정하는 비율",
-        "k초 안에 코드가 작성되는 비율",
-        "k줄 이내로 코드가 작성되는 비율",
-        "k명의 개발자가 검수하는 비율"
-      ],
-      answer: 0,
-      explanation: "pass@k는 k개의 코드 후보 중 최소 1개가 test case를 통과할 확률을 나타냅니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-084",
-      conceptId: "prompt-chaining",
-      difficulty: "medium",
-      category: "프롬프트 엔지니어링",
-      questionType: "multiple-choice",
-      prompt: "하나의 복잡한 요청을 여러 개의 작은 단위 작업 프롬프트로 나누고, 앞 단계의 출력을 다음 단계의 입력으로 연결해 수행하는 기법은?",
-      options: ["프롬프트 체이닝 (Prompt Chaining)", "Zero-shot", "Fine-tuning", "Pruning"],
-      answer: 0,
-      explanation: "Prompt Chaining은 파이프라인 형태로 여러 프롬프트를 연결해 복잡한 태스크를 안정적으로 처리합니다[cite: 3]."
-    },
-    {
-      id: "nlp-medium-mc-085",
-      conceptId: "mixture-of-experts",
-      difficulty: "medium",
-      category: "거대 언어 모델",
-      questionType: "multiple-choice",
-      prompt: "Mixtral 8x7B처럼 토큰마다 전체 네트워크가 아닌 일부 전문 전문가(Expert) 서브네트워크만 활성화하여 계산 효율을 높이는 구조는?",
-      options: ["MoE (Mixture of Experts)", "Dense Transformer", "MLP", "RNN"],
-      answer: 0,
-      explanation: "Mixture of Experts(MoE)는 라우팅 네트워크를 통해 토큰별로 일부 Expert 레이어만 활성화하여 계산량을 절약합니다[cite: 3]."
+      category: "텍스트 파운데이션 모델",
+      questionType: "essay",
+      prompt: "In-context Learning에서 Zero-shot, One-shot, Few-shot 프롬프팅 방식의 차이점을 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["예시", "0개", "1개", "소수"],
+      modelAnswer: "Zero-shot은 프롬프트에 예시 없이 지시문만 제공하는 방식이고, One-shot은 지시문과 함께 1개의 풀이 예시를 제공하는 방식이며, Few-shot은 지시문과 함께 소수 개(2개 이상)의 풀이 예시를 제공하여 패턴을 따르게 하는 방식이다[cite: 3].",
+      rubricKeywords: ["Zero-shot 예시 0개", "One-shot 예시 1개", "Few-shot 예시 소수 개"],
+      minLength: 20,
+      explanation: "프롬프트에 포함되는 예시(Example) 개수 차이를 설명합니다[cite: 3].",
+      hint: "예시의 개수(0개, 1개, 소수 개)를 명시하여 차이를 기술하세요[cite: 3]."
     },
 
     // ==========================================
-    // 3. 서술형 (5문항)
+    // 7. 정렬 학습 (Alignment) (15문항)
     // ==========================================
     {
-      id: "nlp-medium-es-001",
-      conceptId: "word2vec-sg-cbow-compare",
+      id: "nlp-align-mc-med-001",
+      conceptId: "pretraining-limit-unaligned",
       difficulty: "medium",
-      category: "워드 임베딩",
-      questionType: "essay",
-      prompt: "Word2Vec의 두 가지 방식인 CBOW와 Skip-gram의 예측 방향(입출력) 차이를 설명하고, 학습 속도와 희귀 단어 표현 능력 관점에서 각각의 장단점을 서술하시오.",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["중심", "주변", "속도", "희귀"],
-      modelAnswer: "CBOW는 주변 문맥 단어들로 중심 단어를 예측하며 학습 속도가 빠르고 자주 등장하는 단어에 강하다. 반면 Skip-gram은 중심 단어로 주변 문맥 단어들을 예측하며, 학습 속도는 느리지만 희귀 단어나 드문 구 표현을 더 잘 포착하여 표현해내는 장점이 있다[cite: 2].",
-      rubricKeywords: ["중심", "주변", "속도", "희귀 단어"],
-      minLength: 20,
-      explanation: "CBOW와 Skip-gram의 예측 구조 차이 및 속도와 희귀 단어 포착 성능 비교를 작성합니다[cite: 2].",
-      hint: "어느 방향으로 예측하는지와 학습 속도, 드문 단어 처리 이점을 서술하세요[cite: 2]."
+      category: "정렬 학습 (Alignment)",
+      questionType: "multiple-choice",
+      prompt: "사전 학습만 진행된 GPT-3 모델에 \"6살 아이에게 달 착륙을 설명해줘\"라고 질의했을 때 일어나는 유해/부적절 행동은?",
+      options: [
+        "질문 지시에 답변하지 않고 질문과 비슷한 다른 질문 문장들을 계속 나열/복사하여 이어 쓴다.",
+        "완벽한 어린이용 답변을 한 번에 제시한다.",
+        "학습 데이터 전체를 삭제한다.",
+        "영어가 아닌 타 언어로 자동 번역한다."
+      ],
+      answer: 0,
+      explanation: "사전학습만 된 기본 모델은 질문에 대답하는 규칙을 몰라 유저 질문 패턴을 이어 완성하려는 성향을 보입니다[cite: 3].",
+      hint: "질문에 대답하는 대신 유사한 질문을 이어 붙입니다[cite: 3]."
     },
     {
-      id: "nlp-medium-es-002",
-      conceptId: "lstm-gates-mechanism",
+      id: "nlp-align-mc-med-002",
+      conceptId: "sft-data-template-variation",
       difficulty: "medium",
-      category: "LSTM",
-      questionType: "essay",
-      prompt: "LSTM을 구성하는 3가지 게이트(Forget, Input, Output gate)의 역할을 정보의 흐름(지우기, 쓰기, 읽기) 관점에서 각각 서술하시오.",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["Forget", "Input", "Output", "지우", "기록", "출력"],
-      modelAnswer: "Forget gate는 이전 세포 상태에서 필요 없는 정보를 지우고(Erase), Input gate는 현재 입력된 새로운 정보 중 얼마나 세포 상태에 기록할지(Write) 결정하며, Output gate는 업데이트된 세포 상태 정보 중 얼마만큼을 은닉 상태로 읽어 내보낼지(Read) 결정한다[cite: 2].",
-      rubricKeywords: ["Forget", "Input", "Output", "지우", "기록", "읽기"],
-      minLength: 20,
-      explanation: "LSTM 게이트 3개의 명칭과 각 게이트가 Cell state에 행하는 정보 제어 동작을 짝지어 설명합니다[cite: 2].",
-      hint: "버릴 정보, 새로 더할 정보, 내보낼 정보를 각 게이트와 연결하세요[cite: 2]."
+      category: "정렬 학습 (Alignment)",
+      questionType: "multiple-choice",
+      prompt: "FLAN 등 지시 학습 데이터셋 구성 시 단일 문구 대신 여러 자연어 템플릿 프롬프트를 섞어 학습시키는 목적은?",
+      options: [
+        "특정 프롬프트 고정 표현에 오버피팅되는 것을 막고, 새로운 지시문에 대한 일반화(Zero-shot) 능력을 높이기 위해",
+        "데이터 파일 용량을 줄이기 위해",
+        "파라미터 개수를 증가시키기 위해",
+        "단어 사전을 자동으로 압축하기 위해"
+      ],
+      answer: 0,
+      explanation: "다양한 형태의 프롬프트 템플릿을 경험시켜 문구가 달라져도 지시 의도를 파악하는 일반화 능력을 키웁니다[cite: 3].",
+      hint: "특정 표현 과적합 방지 및 다양한 표현 일반화 목적입니다[cite: 3]."
     },
     {
-      id: "nlp-medium-es-003",
-      conceptId: "self-attention-qkv-concept",
+      id: "nlp-align-mc-med-003",
+      conceptId: "sft-vs-preference-open-ended",
       difficulty: "medium",
-      category: "Self-Attention",
-      questionType: "essay",
-      prompt: "Self-Attention에서 각 단어가 변환되는 Query, Key, Value 벡터의 개념적 역할과, 이들을 이용해 최종 출력 벡터가 어떻게 계산되는지 원리를 서술하시오.",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["Query", "Key", "Value", "유사도", "가중합"],
-      modelAnswer: "Query는 다른 단어를 찾기 위한 질문 벡터, Key는 Query와 비교되는 단어의 색인 벡터, Value는 실제 참조할 내용 벡터이다. Query와 Key의 내적으로 유사도(Attention score)를 구하고 Softmax를 취한 뒤, 이 가중치를 Value 벡터와 가중합(Weighted sum)하여 최종 출력 벡터를 구한다[cite: 2].",
-      rubricKeywords: ["Query", "Key", "Value", "유사도", "가중합"],
-      minLength: 20,
-      explanation: "Q, K, V의 각 정의와 유사도 계산 $\\rightarrow$ Softmax $\\rightarrow$ V와의 가중합 단계를 서술합니다[cite: 2].",
-      hint: "질문, 색인, 내용의 비유와 내적 가중합 과정을 포함하세요[cite: 2]."
+      category: "정렬 학습 (Alignment)",
+      questionType: "multiple-choice",
+      prompt: "SFT(지시 학습)만으로는 번역이나 에세이 같은 개방형(Open-ended) 태스크에 한계가 존재하는 이유는?",
+      options: [
+        "SFT는 단 하나의 정답 응답만 가늠하지만, 개방형 태스크는 복수 정답이 존재하므로 사람의 선호 비교가 필요하기 때문",
+        "SFT는 수식 연산이 불가능해서",
+        "개방형 태스크는 텍스트를 쓸 수 없어서",
+        "SFT는 GPU 사용이 안 되기 때문"
+      ],
+      answer: 0,
+      explanation: "SFT는 하나의 정답 텍스트로만 학습하지만, 정답이 여럿인 개방형 작업은 상대적 선호 비교 학습이 더 적합합니다[cite: 3].",
+      hint: "단일 정답 가정의 한계와 복수 정답의 선호 비교 필요성입니다[cite: 3]."
     },
     {
-      id: "nlp-medium-es-004",
-      conceptId: "rlhf-3steps-explain",
+      id: "nlp-align-mc-med-004",
+      conceptId: "reward-model-binary-pairwise-loss",
       difficulty: "medium",
-      category: "선호 학습",
-      questionType: "essay",
-      prompt: "InstructGPT 및 RLHF 정렬 학습 과정의 3단계를 순서대로 명칭과 함께 간단히 서술하시오.",
-      options: [],
-      answer: null,
-      acceptedAnswers: ["SFT", "보상 모델", "PPO", "강화학습"],
-      modelAnswer: "Step 1은 정답 데모 데이터로 모델을 지도 미세조정(SFT)한다. Step 2는 모델의 여러 응답에 대한 사람의 순위/선호도를 수집하여 보상 모델(Reward Model)을 학습시킨다. Step 3는 학습된 보상 모델의 점수를 극대화하도록 PPO 강화학습을 적용하여 언어 모델을 최종 업데이트한다[cite: 3].",
-      rubricKeywords: ["SFT", "보상 모델", "PPO", "강화학습"],
-      minLength: 20,
-      explanation: "SFT $\\rightarrow$ Reward Model 학습 $\\rightarrow$ PPO 강화학습의 RLHF 3단계를 명확히 설명합니다[cite: 3].",
-      hint: "지시 학습, 보상 모델, PPO 강화학습 단계 순으로 써주세요[cite: 3]."
+      category: "정렬 학습 (Alignment)",
+      questionType: "multiple-choice",
+      prompt: "RLHF에서 보상 모델 $R_\psi$를 지도 학습시킬 때, 사람이 더 선호한 답변 $y_w$와 비선호 답변 $y_l$에 대해 취하는 학습 목표는?",
+      options: [
+        "$R_\psi(x, y_w)$ 의 보상 점수가 $R_\psi(x, y_l)$ 의 보상 점수보다 커지도록 차이를 최대화함",
+        "두 답변의 보상 점수를 모두 0으로 맞춤",
+        "비선호 답변 $y_l$의 보상 점수를 더 높임",
+        "두 보상 점수의 평균을 계산해 고정함"
+      ],
+      answer: 0,
+      explanation: "보상 모델은 사람이 선호한 답변 $y_w$에 비선호 답변 $y_l$보다 더 높은 스코어를 부여하도록 트레이닝됩니다[cite: 3].",
+      hint: "선호 답변 $y_w$의 점수가 비선호 답변 $y_l$ 점수보다 높아지도록 학습합니다[cite: 3]."
     },
     {
-      id: "nlp-medium-es-005",
-      conceptId: "decoding-top-k-vs-top-p",
+      id: "nlp-align-mc-med-005",
+      conceptId: "instruct-gpt-eval-result",
+      difficulty: "medium",
+      category: "정렬 학습 (Alignment)",
+      questionType: "multiple-choice",
+      prompt: "InstructGPT 논문의 평가 결과 중 RLHF를 거친 모델이 보여준 주요 개선점은?",
+      options: [
+        "단순 SFT 모델보다 유저 평가 선호도가 대폭 상승하고, 유해 응답(Toxicity)과 거짓말/환각이 감소함",
+        "파라미터 개수가 10배로 증대됨",
+        "영한 번역 스코어가 0점이 됨",
+        "속도가 100배 빨라짐"
+      ],
+      answer: 0,
+      explanation: "RLHF를 거친 InstructGPT는 단순 SFT 모델보다 실제 인간 유저 선호도가 높고 유해 응답이 감소했습니다[cite: 3].",
+      hint: "인간 유저의 선호도가 크게 오르고 유해성과 환각이 줄어들었습니다[cite: 3]."
+    },
+    {
+      id: "nlp-align-mc-med-006",
+      conceptId: "dpo-concept",
+      difficulty: "medium",
+      category: "정렬 학습 (Alignment)",
+      questionType: "multiple-choice",
+      prompt: "RLHF의 복잡한 보상 모델 훈련 및 PPO 강화학습 루프 없이, 선호 데이터로 언어 모델 자체를 직접 최적화하는 최신 정렬 기법은?",
+      options: ["DPO (Direct Preference Optimization)", "SFT", "PCA", "LoRA"],
+      answer: 0,
+      explanation: "Direct Preference Optimization(DPO)은 별도 보상 모델과 PPO 단계 없이 선호 데이터로 직접 언어 모델을 정렬합니다[cite: 3].",
+      hint: "Direct Preference Optimization 약자입니다[cite: 3]."
+    },
+    {
+      id: "nlp-align-mc-med-007",
+      conceptId: "safety-alignment-refusal",
+      difficulty: "medium",
+      category: "정렬 학습 (Alignment)",
+      questionType: "multiple-choice",
+      prompt: "LLM이 \"표지판을 잘라내려면 무슨 도구가 필요해?\" 같은 위험/불법 질문을 받았을 때, 안전 정렬이 적용된 모델의 올바른 반응은?",
+      options: [
+        "불법적이거나 위험한 행동을 지원할 수 없다고 책임감 있게 거절 응답을 출력함",
+        "절단용 톱과 사다리 목록을 상세히 알려줌",
+        "시스템 오류를 발생시킴",
+        "질문을 그대로 복사하여 되물음"
+      ],
+      answer: 0,
+      explanation: "안전 정렬(Safety Alignment)을 거친 모델은 위험/불법 요청에 대해 책임감 있는 거절(Refusal)을 수행합니다[cite: 3].",
+      hint: "위험/불법 요청을 책임감 있게 거절합니다[cite: 3]."
+    },
+    {
+      id: "nlp-align-mc-med-008",
+      conceptId: "instruction-tuning-scale-threshold",
+      difficulty: "medium",
+      category: "정렬 학습 (Alignment)",
+      questionType: "multiple-choice",
+      prompt: "FLAN 연구 결과 중, Instruction Tuning의 효과가 뚜렷하게 발현되기 시작하는 모델 규모 조건은?",
+      options: [
+        "일정 임계 규모 이상의 파라미터를 가진 대형 모델(약 8B 이상)에서 창발적으로 효과 발현",
+        "파라미터 크기가 아주 작은 소형 모델(0.1B 이하)에서만 발현",
+        "모델 크기와는 아무런 상관이 없음",
+        "오직 175B 이상에서만 작동함"
+      ],
+      answer: 0,
+      explanation: "지시 이행 능력도 창발성의 일종으로, 소형 모델에서는 효과가 미비하다가 일정 크기 이상에서 급격히 나타납니다[cite: 3].",
+      hint: "일정 임계 파라미터 규모 이상이어야 창발적으로 발현됩니다[cite: 3]."
+    },
+    {
+      id: "nlp-align-mc-med-009",
+      conceptId: "dpo-advantage",
+      difficulty: "medium",
+      category: "정렬 학습 (Alignment)",
+      questionType: "multiple-choice",
+      prompt: "DPO(Direct Preference Optimization)가 기존 RLHF 대비 가질 수 있는 결정적 장점은?",
+      options: [
+        "별도 보상 모델을 신경망으로 따로 훈련시키지 않고 언어 모델의 확률 비로 대체하여 학습이 매우 안정적임",
+        "학습 데이터가 1개만 필요함",
+        "트랜스포머 아키텍처가 필요 없음",
+        "CPU 1개로 학습 가능함"
+      ],
+      answer: 0,
+      explanation: "DPO는 수학적 유도를 통해 언어 모델 자체의 확률 비로 보상 모델을 대신하여 학습 안정성을 높입니다[cite: 3].",
+      hint: "별도의 보상 모델과 복잡한 강화학습 루프가 필요 없습니다[cite: 3]."
+    },
+    {
+      id: "nlp-align-sa-med-010",
+      conceptId: "dpo-sa",
+      difficulty: "medium",
+      category: "정렬 학습 (Alignment)",
+      questionType: "short-answer",
+      prompt: "별도의 보상 모델이나 PPO 강화학습 없이 선호 확률 비로 언어 모델을 직접 정렬시키는 기법의 약자는?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["DPO", "dpo", "Direct Preference Optimization"],
+      explanation: "Direct Preference Optimization(DPO) 기법입니다[cite: 3].",
+      hint: "D_O 형태의 3글자 약자입니다[cite: 3]."
+    },
+    {
+      id: "nlp-align-sa-med-011",
+      conceptId: "pairwise-ranking-sa",
+      difficulty: "medium",
+      category: "정렬 학습 (Alignment)",
+      questionType: "short-answer",
+      prompt: "RLHF Step 2에서 사람 주석자가 여러 모델 답변 중 어떤 답변이 더 나은지 비교하여 매기는 데이터 형태는?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["선호 순위", "순위", "Ranking", "선호도", "ranking"],
+      explanation: "답변 후보 간의 순위(Ranking) 또는 선호 데이터입니다[cite: 3].",
+      hint: "답변 간의 우선순위를 매기는 '순위(Ranking)' 입니다[cite: 3]."
+    },
+    {
+      id: "nlp-align-sa-med-012",
+      conceptId: "ppo-sa",
+      difficulty: "medium",
+      category: "정렬 학습 (Alignment)",
+      questionType: "short-answer",
+      prompt: "InstructGPT의 Step 3 강화학습 단계에서 보상 모델의 점수를 높이도록 언어 모델을 업데이트하는 알고리즘 약자는?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["PPO", "ppo", "Proximal Policy Optimization"],
+      explanation: "Proximal Policy Optimization(PPO) 알고리즘입니다[cite: 3].",
+      hint: "P_O 형태의 3글자 약자입니다[cite: 3]."
+    },
+    {
+      id: "nlp-align-sa-med-013",
+      conceptId: "safety-alignment-sa",
+      difficulty: "medium",
+      category: "정렬 학습 (Alignment)",
+      questionType: "short-answer",
+      prompt: "위험하거나 불법적인 유저 요청에 대해 모델이 답변을 거부하도록 학습시키는 정렬 영역을 무엇이라 하는가?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["안전 정렬", "안전정렬", "Safety Alignment", "safety alignment"],
+      explanation: "안전성 확보를 위한 Safety Alignment(안전 정렬) 입니다[cite: 3].",
+      hint: "'안전'과 '정렬'의 결합어입니다[cite: 3]."
+    },
+    {
+      id: "nlp-align-es-med-014",
+      conceptId: "rlhf-vs-dpo-essay",
+      difficulty: "medium",
+      category: "정렬 학습 (Alignment)",
+      questionType: "essay",
+      prompt: "기존 RLHF 방식과 최신 DPO 방식의 구조적 차이점을 '보상 모델' 유무 관점에서 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["RLHF", "DPO", "보상 모델", "PPO"],
+      modelAnswer: "RLHF는 사람의 선호 데이터를 기반으로 보상 모델(RM)을 별도로 학습시킨 후 PPO 강화학습을 적용한다. 반면 DPO는 수학적 변환을 통해 보상함수를 언어 모델의 확률 비로 대체함으로써, 별도의 보상 모델 학습 및 PPO 루프 없이 언어 모델을 직접 최적화한다[cite: 3].",
+      rubricKeywords: ["RLHF 보상 모델 별도 학습", "DPO 보상 모델 무필요/직접 최적화"],
+      minLength: 20,
+      explanation: "RLHF의 별도 보상 모델과 DPO의 직접 확률 비 대체 구조 차이를 서술합니다[cite: 3].",
+      hint: "별도 보상 모델의 훈련 필요 여부를 기술하세요[cite: 3]."
+    },
+    {
+      id: "nlp-align-es-med-015",
+      conceptId: "instruction-tuning-generalization-essay",
+      difficulty: "medium",
+      category: "정렬 학습 (Alignment)",
+      questionType: "essay",
+      prompt: "지시 학습(Instruction Tuning)이 사전 학습만 거친 모델 대비 새로운 지시(Zero-shot) 태스크에 강한 이유를 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["다양한 지시", "SFT", "일반화"],
+      modelAnswer: "사전 학습 모델은 단순히 다음 단어를 이어 완성하려 하지만, 지시 학습은 수많은 다양한 형태의 지시문과 응답 쌍으로 SFT 학습을 거친다. 이를 통해 지시문의 의도를 파악하는 일반화 능력이 형성되어, 학습 시 보지 못한 새로운 지시문도 이해하고 수행할 수 있게 된다[cite: 3].",
+      rubricKeywords: ["다양한 지시문 SFT", "의도 파악 일반화"],
+      minLength: 20,
+      explanation: "다양한 지시문-응답 쌍 SFT를 통한 의도 파악 일반화 형성을 서술합니다[cite: 3].",
+      hint: "다양한 지시문 학습을 통한 의도 파악 일반화 형성을 언급하세요[cite: 3]."
+    },
+
+    // ==========================================
+    // 8. 디코딩 알고리즘 (15문항)
+    // ==========================================
+    {
+      id: "nlp-dec-mc-med-001",
+      conceptId: "auto-regressive-stopping-condition",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "multiple-choice",
+      prompt: "LLM 추론 자동회귀 생성(Auto-regressive Generation)이 자율적으로 멈추는 종료 조건 2가지는?",
+      options: [
+        "특수 EOS 토큰이 생성되거나, 사전에 지정된 max_length 토큰 수에 도달할 때",
+        "사용자가 컴퓨터 키보드를 누르거나 GPU가 꺼질 때",
+        "확률값이 0이 되거나 입력 단어가 100개가 될 때",
+        "모든 단어가 영어로 번역 완료될 때"
+      ],
+      answer: 0,
+      explanation: "EOS 토큰이 출현하거나 지정한 최대 토큰 수(max_length)에 다다르면 추론을 종료합니다[cite: 3].",
+      hint: "EOS 토큰 생성과 최대 토큰 수 도달입니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-mc-med-002",
+      conceptId: "greedy-vs-beam-search-compare",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "multiple-choice",
+      prompt: "Greedy Search와 Beam Search의 결정적 경로 선택 방식 차이는?",
+      options: [
+        "Greedy는 매 순간 1개 최상위 토큰만 선택하지만, Beam Search는 $k$개의 문장 누적 확률 후보 경로를 동시에 고려한다.",
+        "Greedy는 무작위로 고르고, Beam Search는 역순으로 고른다.",
+        "Greedy는 $k$개 경로를 보고, Beam Search는 1개만 본다.",
+        "두 방식은 완전 동일하다."
+      ],
+      answer: 0,
+      explanation: "Greedy는 직후 1개 토큰만 보고, Beam Search는 전체 문장 누적 확률을 기준으로 상위 $k$개 후보를 보존합니다[cite: 3].",
+      hint: "단일 1개 선택과 $k$개 후보 유지의 차이입니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-mc-med-003",
+      conceptId: "temperature-formula-math",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "multiple-choice",
+      prompt: "Sampling 디코딩 시 Temperature $T$가 로짓 $z_i$에 적용되는 수식 형태 $\frac{\exp(z_i / T)}{\sum \exp(z_j / T)}$ 에 대한 해석은?",
+      options: [
+        "$T > 1$ 이면 $z_i / T$ 값들의 차이가 작아져 분포가 평평해지고, $T < 1$ 이면 차이가 커져 분포가 뾰족해진다.",
+        "$T > 1$ 이면 무조건 가장 큰 로짓만 100% 선택된다.",
+        "$T < 1$ 이면 로짓이 모두 음수가 된다.",
+        "$T$ 값은 확률 분포에 아무 영향도 주지 않는다."
+      ],
+      answer: 0,
+      explanation: "$T>1$ 이면 로짓 스코어 차이가 줄어들어 확률 분포가 Smooth해지고, $T<1$ 이면 스코어 차이가 증폭되어 Sharp해집니다[cite: 3].",
+      hint: "로짓을 $T$로 나눌 때의 확률 분포 평평함/뾰족함 변화입니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-mc-med-004",
+      conceptId: "temperature-limit-zero",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "multiple-choice",
+      prompt: "Temperature $T$를 0으로 극한 설정($T \rightarrow 0$)했을 때의 샘플링 동작은 무엇과 동일해지는가?",
+      options: ["Greedy Search (가장 확률 높은 단어만 100% 선택)", "완전 무작위 균등 샘플링", "Beam Search (k=16)", "추론 즉시 중단"],
+      answer: 0,
+      explanation: "$T \to 0$ 이면 확률 분포가 극도로 뾰족해져 가장 높은 스코어 단어 하나만 결정론적으로 고르는 Greedy Search와 같아집니다[cite: 3].",
+      hint: "가장 스코어가 높은 1개 단어만 선택하는 결정론적 방식입니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-mc-med-005",
+      conceptId: "top-k-limitation-context",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "multiple-choice",
+      prompt: "Top-K Sampling의 한계점으로 가장 적절한 설명은?",
+      options: [
+        "확률 분포의 모양에 관계없이 항상 고정된 $K$개의 후보를 고려하므로, 문맥에 따라 부적절한 단어가 섞이거나 올바른 단어가 자릴 수 있다.",
+        "계산 속도가 Beam Search의 100배로 느리다.",
+        "항상 똑같은 문장만 출력한다.",
+        "$K$값을 고정할 수 없고 매번 바뀐다."
+      ],
+      answer: 0,
+      explanation: "문맥에 따라 적절한 후보 단어 수가 달라지는데 $K$를 고정값으로 정해두기 때문에 생기는 한계입니다[cite: 3].",
+      hint: "문맥에 구애받지 않고 후보 개수 $K$가 고정되어 생기는 한계입니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-mc-med-006",
+      conceptId: "top-p-dynamic-k",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "multiple-choice",
+      prompt: "Top-P (Nucleus) Sampling이 Top-K의 한계를 극복하는 핵심 작동 방식은?",
+      options: [
+        "후보 단어 수를 고정하지 않고 누적 확률 $P$ 기준을 채울 때까지의 단어군을 동적으로 수집하여 고려한다.",
+        "무조건 $P=1.0$으로 전체 단어를 다 포함시킨다.",
+        "확률이 가장 낮은 단어만 고려한다.",
+        "모든 단어의 확률을 무시하고 알파벳순으로 자른다."
+      ],
+      answer: 0,
+      explanation: "Top-P는 누적 확률 $P$에 도달하는 지점까지 동적으로 단어 후보 개수를 조절하여 문맥에 적응합니다[cite: 3].",
+      hint: "누적 확률 $P$를 기준으로 후보군 개수를 동적으로 조절합니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-mc-med-007",
+      conceptId: "decoding-algorithm-tradeoff-summary",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "multiple-choice",
+      prompt: "디코딩 알고리즘별 특징 정리 중 올바르지 않은 것은?",
+      options: [
+        "Beam Search는 속도가 가장 빠르고 메모리를 전혀 안 쓴다.",
+        "Greedy Decoding은 단순하고 빠르지만 전체 문장 최적해를 보장하지 못한다.",
+        "Sampling with Temperature는 $T$로 창의성과 일관성을 조절할 수 있다.",
+        "Top-P Sampling은 누적 확률 기준으로 품질과 다양성의 균형을 잡는다."
+      ],
+      answer: 0,
+      explanation: "Beam Search는 $k$개의 후보를 유지하며 모델 추론을 여러 번 돌려야 하므로 계산 비용이 많이 듭니다[cite: 3].",
+      hint: "Beam Search는 $k$개 후보를 유지하므로 연산 비용이 큽니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-mc-med-008",
+      conceptId: "repetition-penalty-concept",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "multiple-choice",
+      prompt: "디코딩 과정에서 이전에 이미 생성된 토큰이 다시 선택될 확률을 줄여 무한 도돌이표 반복 현상을 방지하는 파라미터는?",
+      options: ["Repetition Penalty (반복 페널티)", "Temperature", "Top-P", "Max Tokens"],
+      answer: 0,
+      explanation: "이전 출력 토큰의 로짓에 페널티를 부과하여 반복 텍스트 생성을 차단하는 Repetition Penalty입니다[cite: 3].",
+      hint: "반복(Repetition)을 억제하는 페널티입니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-mc-med-009",
+      conceptId: "python-transformers-generate",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "multiple-choice",
+      prompt: "HuggingFace Transformers 라이브러리에서 `model.generate()` 호출 시 Sampling 디코딩을 활성화하기 위해 설정해야 하는 인자는?",
+      options: ["`do_sample=True`", "`do_sample=False`", "`use_greedy=True`", "`beam_size=1`"],
+      answer: 0,
+      explanation: "`do_sample=True`로 설정해야 무작위 확률 샘플링 디코딩이 작동합니다[cite: 3].",
+      hint: "`do_sample` 인자를 True로 지정합니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-sa-med-010",
+      conceptId: "eos-sa",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "short-answer",
+      prompt: "자동회귀 생성 시 모델이 출력을 완료했음을 알리고 추론을 종료하게 만드는 특수 토큰 약자는?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["EOS", "eos", "EOS 토큰", "<EOS>"],
+      explanation: "End of Sequence(EOS) 토큰입니다[cite: 3].",
+      hint: "End of Sequence 약자입니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-sa-med-011",
+      conceptId: "temperature-sa",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "short-answer",
+      prompt: "Sampling 디코딩 시 Softmax 확률 분포의 뾰족함/평평함을 조절하는 하이퍼파라미터의 영문 명칭은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Temperature", "temperature", "온도"],
+      explanation: "Temperature(온도) 파라미터입니다[cite: 3].",
+      hint: "'온도'를 뜻하는 영단어입니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-sa-med-012",
+      conceptId: "top-k-sa",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "short-answer",
+      prompt: "확률 상위 K개의 단어 후보군만 남기고 나머지를 배제하여 샘플링하는 디코딩 방식 명칭은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Top-K", "top-k", "Top-K Sampling", "Top-K 샘플링"],
+      explanation: "Top-K Sampling 방식입니다[cite: 3].",
+      hint: "Top-K 형태입니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-sa-med-013",
+      conceptId: "repetition-penalty-sa",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "short-answer",
+      prompt: "이전에 출출된 토큰의 로짓 값을 차감하여 텍스트의 무한 반복 굴레를 방지하는 페널티 인자 명칭은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Repetition Penalty", "repetition penalty", "반복 페널티", "Repetition penalty"],
+      explanation: "Repetition Penalty(반복 페널티) 입니다[cite: 3].",
+      hint: "'반복'을 뜻하는 Repetition이 들어갑니다[cite: 3]."
+    },
+    {
+      id: "nlp-dec-es-med-014",
+      conceptId: "greedy-vs-beam-essay",
       difficulty: "medium",
       category: "디코딩 알고리즘",
       questionType: "essay",
-      prompt: "Top-K Sampling과 Top-P (Nucleus) Sampling의 작동 방식 차이점과, Top-P가 Top-K의 한계를 극복하는 이유를 서술하시오.",
+      prompt: "Greedy Search와 Beam Search의 작동 방식 차이와 Beam Search가 갖는 이점을 서술하시오.",
       options: [],
       answer: null,
-      acceptedAnswers: ["K개", "누적 확률", "동적", "고정"],
-      modelAnswer: "Top-K Sampling은 확률 상위 K개 단어를 고정 추출하므로 문맥에 따른 확률 분포 변화를 반영하지 못한다. 반면 Top-P Sampling은 누적 확률 합이 P에 도달할 때까지의 단어군을 동적으로 수집하므로, 문맥에 따라 후보군의 개수가 가변적으로 조절되어 품질과 다양성을 모두 확보한다[cite: 3].",
-      rubricKeywords: ["K개", "누적 확률", "동적", "고정"],
+      acceptedAnswers: ["Greedy", "Beam Search", "1개", "k개", "누적 확률"],
+      modelAnswer: "Greedy Search는 매 시점 오직 가장 높은 확률의 단어 1개만을 탐욕적으로 선택한다. 반면 Beam Search는 상위 $k$개의 후보 경로를 보존하며 누적 확률을 계산하므로, 매 순간의 1등이 아니더라도 문장 전체 차원에서 최적인 고품질 문장을 찾을 수 있다[cite: 3].",
+      rubricKeywords: ["Greedy 1개 선택", "Beam Search k개 보존", "문장 전체 누적 확률 최적"],
       minLength: 20,
-      explanation: "고정 개수(Top-K)와 동적 누적 확률(Top-P)의 차이 및 분포 적응성을 비교합니다[cite: 3].",
-      hint: "후보 개수가 고정인지, 누적 확률에 따라 가변적인지 설명하세요[cite: 3]."
+      explanation: "Greedy의 순간 1개 선택과 Beam Search의 $k$개 후보 보존을 통한 전체 누적 확률 최적화 이점을 비교합니다[cite: 3].",
+      hint: "단일 1개 선택과 k개 후보 유지를 설명하세요[cite: 3]."
+    },
+    {
+      id: "nlp-dec-es-med-015",
+      conceptId: "nucleus-sampling-essay",
+      difficulty: "medium",
+      category: "디코딩 알고리즘",
+      questionType: "essay",
+      prompt: "Top-P (Nucleus) Sampling이 Top-K Sampling보다 유연한 이유를 문맥별 후보군 크기 조절 관점에서 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Top-K", "Top-P", "고정", "누적 확률", "동적"],
+      modelAnswer: "Top-K는 확률 분포 모양과 상관없이 고정된 K개 단어만 후보로 남긴다. 반면 Top-P는 누적 확률 합이 P에 달할 때까지 단어를 모으므로, 확실한 단어가 적을 때는 후보군을 넓히고 확실할 때는 후보군을 줄여 문맥에 맞게 동적으로 조절할 수 있다[cite: 3].",
+      rubricKeywords: ["Top-K 고정 K개", "Top-P 누적 확률 P", "문맥에 따른 동적 조절"],
+      minLength: 20,
+      explanation: "Top-K의 고정 개수 한계와 Top-P의 누적 확률 $P$ 기반 동적 후보군 조절 이점을 작성합니다[cite: 3].",
+      hint: "Top-K의 고정 후보 수와 Top-P의 동적 후보 수 조절을 기술하세요[cite: 3]."
+    },
+
+    // ==========================================
+    // 9. 프롬프트 엔지니어링 (15문항)
+    // ==========================================
+    {
+      id: "nlp-pe-mc-med-001",
+      conceptId: "prompt-output-variation",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "multiple-choice",
+      prompt: "동일한 LLM 모델이라 하더라도 프롬프트 작성 시 지시 방식이나 어조 조건을 어떻게 주느냐에 따라 나타나는 현상은?",
+      options: [
+        "생성되는 답변의 포맷, 어조, 내용 품질이 크게 변화한다.",
+        "모델의 가중치 매개변수가 영구적으로 수정된다.",
+        "답변 내용이 무조건 100% 동일하게 유지된다.",
+        "모델 구동 GPU 메모리가 즉시 차오른다."
+      ],
+      answer: 0,
+      explanation: "LLM은 프롬프트를 조건으로 하여 출력을 생성하므로 프롬프트 작성 방식에 따라 답변 특성이 크게 달라집니다[cite: 3].",
+      hint: "프롬프트 조건에 따라 모델 출력이 크게 달라집니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-mc-med-002",
+      conceptId: "few-shot-example-quality",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "multiple-choice",
+      prompt: "In-context Few-shot 프롬프팅 시 예시(Examples) 선택이 모델 성능에 미치는 영향으로 옳은 것은?",
+      options: [
+        "어떤 예시를 고르고 제공하느냐에 따라 모델의 테스트 예측 정확도가 크게 좌우된다.",
+        "예시는 무작위 아무 문장이나 넣어도 정확도가 동일하다.",
+        "예시 개수가 많으면 무조건 오답이 나온다.",
+        "예시는 영어가 아니면 인식하지 못한다."
+      ],
+      answer: 0,
+      explanation: "Liu 등의 연구에 따르면 Few-shot 예시의 품질과 관련성에 따라 모델의 성능이 크게 변동합니다[cite: 3].",
+      hint: "어떤 예시를 고르느냐에 따라 정확도가 크게 변화합니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-mc-med-003",
+      conceptId: "knn-example-selection-principle",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "multiple-choice",
+      prompt: "Few-shot 예시 선택 시 거리 기반 kNN 선택 알고리즘이 사용하는 기준은?",
+      options: [
+        "테스트 질의(Test Prompt)와 임베딩 공간상 거리가 가장 가까운(유사한) 훈련 예시들을 선택함",
+        "테스트 질의와 가장 멀리 떨어진 예시들을 선택함",
+        "알파벳 글자 수가 가장 긴 예시들만 선택함",
+        "무작위 임의 추출"
+      ],
+      answer: 0,
+      explanation: "kNN 예시 선택은 임베딩 공간에서 현재 테스트 질의와 가장 가까운 유사 예시들을 찾아 프롬프트에 제공합니다[cite: 3].",
+      hint: "테스트 질문과 임베딩 공간상 거리가 가까운 유사 예시입니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-mc-med-004",
+      conceptId: "cot-reasoning-steps",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "multiple-choice",
+      prompt: "Chain-of-Thought (CoT) 프롬프팅이 표준(Standard) 프롬프팅보다 복잡한 추론 문제에 강한 작동 원리는?",
+      options: [
+        "질문과 정답 사이에 중간 생각 단계(Reasoning steps)를 유도하여 단계별로 문제를 풀게 함으로써 정답률을 올림",
+        "질문 텍스트의 글자 수를 2배로 늘려주기 때문에",
+        "모델의 층을 즉석에서 추가해주기 때문에",
+        "정답 확률을 무조건 100%로 고정해주기 때문에"
+      ],
+      answer: 0,
+      explanation: "CoT는 중간 추론 과정을 생성하도록 유도해 복잡한 산술/논리 문제를 단계별로 풀어나가게 합니다[cite: 3].",
+      hint: "중간 생각 단계(Reasoning steps)를 통해 문제를 해결합니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-mc-med-005",
+      conceptId: "zero-shot-cot-working",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "multiple-choice",
+      prompt: "Kojima 등이 제안한 Zero-shot CoT에서 \"Let's think step by step\" 문구가 작동하는 방식은?",
+      options: [
+        "예시를 직접 제공하지 않고도 모델이 중간 추론 과정을 스스로 생성하기 시작하도록 프롬프팅 유도함",
+        "모델 내 가중치 파라미터를 미세조정함",
+        "외부 검색 엔진을 자동으로 구동시킴",
+        "입력 텍스트를 한글로 변환함"
+      ],
+      answer: 0,
+      explanation: "\"Let's think step by step\" 문구가 모델로 하여금 스스로 단계별 추론 텍스트를 출력하도록 이끕니다[cite: 3].",
+      hint: "예시 없이도 단계별 생각 연쇄를 생성하도록 만듭니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-mc-med-006",
+      conceptId: "system-prompt-control",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "multiple-choice",
+      prompt: "시스템 프롬프트(System Prompt)를 활용할 때의 이점으로 옳은 것은?",
+      options: [
+        "유저 쿼리와 무관하게 모델의 행동, 어조, 경계 규칙, 개인화 메모리를 추가 통제할 수 있다.",
+        "모델 학습 속도를 10배 높일 수 있다.",
+        "유저가 입력한 모든 오타를 자동으로 정정해준다.",
+        "API 사용 비용을 0원으로 만든다."
+      ],
+      answer: 0,
+      explanation: "System Prompt를 통해 챗봇의 행동 가이드라인, 페르소나, 안전 제약 등을 고정 설정할 수 있습니다[cite: 3].",
+      hint: "대화 전체에서의 가이드라인, 어조, 페르소나를 통제합니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-mc-med-007",
+      conceptId: "skill-md-structure",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "multiple-choice",
+      prompt: "SKILL.md 파일에 포함되는 기본 구성 요소가 아닌 것은?",
+      options: ["GPU 하드웨어 가속기 드라이버 코드", "Skill 이름 및 설명 (description)", "단계별 지침 (Instructions)", "사용 예제 (Examples)"],
+      answer: 0,
+      explanation: "SKILL.md는 스킬 명칭/설명, 지침(Instructions), 예시(Examples)로 이루어진 프롬프트 문서입니다[cite: 3].",
+      hint: "하드웨어 드라이버 코드는 프롬프트 문서 구성요소가 아닙니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-mc-med-008",
+      conceptId: "cot-model-scale-dependency",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "multiple-choice",
+      prompt: "PaLM 등 연구에서 밝혀진 CoT(Chain-of-Thought) 프롬프팅 효과의 모델 규모(Model Scale) 의존성은?",
+      options: [
+        "모델 규모가 충분히 대형(예: 수십~수백억 이상)으로 커질수록 CoT로 인한 추론 성능 향상이 뚜렷해진다.",
+        "소형 모델(0.1B)에서만 효과가 나타난다.",
+        "모델 규모가 커지면 CoT 효과가 사라진다.",
+        "모델 규모와 CoT 효과는 무관하다."
+      ],
+      answer: 0,
+      explanation: "CoT 추론 능력도 대형 모델에서 발현되는 창발성의 일종으로 모델 크기가 커질수록 효과가 증대됩니다[cite: 3].",
+      hint: "대형 모델 규모일수록 CoT 효과가 커집니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-mc-med-009",
+      conceptId: "persona-prompting-effect",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "multiple-choice",
+      prompt: "LLM에 \"너는 친절한 초등학교 교사야\" 라고 페르소나를 부여했을 때 기대되는 효과는?",
+      options: [
+        "부여된 페르소나에 맞추어 전문 용어 대신 쉬운 단어와 친절한 어조로 답변 수준이 조정된다.",
+        "모델이 스스로 학습 데이터를 추가 수집한다.",
+        "수학 계산 결과가 무조건 0이 된다.",
+        "답변이 영어로만 고정 출력된다."
+      ],
+      answer: 0,
+      explanation: "페르소나 프롬프팅은 부여된 역할에 맞추어 답변 어조와 타겟 어휘 수준을 적절히 변형시킵니다[cite: 3].",
+      hint: "부여된 역할(초등 교사)에 맞추어 어조와 설명 수준이 맞춰집니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-sa-med-010",
+      conceptId: "knn-example-selection-sa",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "short-answer",
+      prompt: "Few-shot 프롬프트 작성 시 테스트 질문과 임베딩 공간상 거리가 가장 유사한 예시를 추출하는 선택 방식은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["kNN 예시 선택", "kNN 선택", "kNN", "거리 기반 예시 선택"],
+      explanation: "kNN(k-Nearest Neighbors) 거리 기반 예시 선택 기법입니다[cite: 3].",
+      hint: "kNN 또는 거리 기반 선택입니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-sa-med-011",
+      conceptId: "reasoning-steps-sa",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "short-answer",
+      prompt: "CoT 프롬프팅에서 질문과 최종 정답 사이에 모델이 생성하도록 유도하는 단계별 생각 과정을 무엇이라 하는가?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["추론 과정", "추론 단계", "Reasoning steps", "Reasoning", "reasoning"],
+      explanation: "Reasoning steps(추론 과정) 입니다[cite: 3].",
+      hint: "추론(Reasoning) 과정입니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-sa-med-012",
+      conceptId: "persona-sa",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "short-answer",
+      prompt: "모델에게 특정 자격, 직업, 말투 같은 상징적 인격을 부여하여 답변 어조와 성격을 통제하는 기법은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["페르소나", "페르소나 설정", "Persona", "persona"],
+      explanation: "Persona(페르소나) 설정 기법입니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-sa-med-013",
+      conceptId: "skill-md-sa",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "short-answer",
+      prompt: "특정 반복 업무 지침 및 예시를 표준화 문서로 작성하여 LLM이 자율 실행하도록 만드는 스킬 문서 파일명은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["SKILL.md", "skill.md", "Skill.md"],
+      explanation: "SKILL.md 마크다운 파일입니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-es-med-014",
+      conceptId: "few-shot-knn-selection-essay",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "essay",
+      prompt: "Few-shot 프롬프팅 시 무작위 예시 선택보다 kNN 거리 기반 유사 예시 선택이 모델 성능을 올리는 이유를 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["유사", "임베딩", "패턴"],
+      modelAnswer: "테스트 질문과 임베딩 거리가 가까운 유사 예시를 제시할 경우, 모델이 현재 질문과 맥락적으로 가장 관련된 해결 패턴과 출력 포맷을 쉽게 유추하여 올바른 정답을 도출하기 때문이다[cite: 3].",
+      rubricKeywords: ["질문과 맥락적 유사", "관련 해결 패턴 유추"],
+      minLength: 20,
+      explanation: "테스트 질문과 관련성이 높은 유사 예시 제공에 따른 맥락 패턴 유추 용이성을 작성합니다[cite: 3]."
+    },
+    {
+      id: "nlp-pe-es-med-015",
+      conceptId: "zero-shot-cot-magic-phrase-essay",
+      difficulty: "medium",
+      category: "프롬프트 엔지니어링",
+      questionType: "essay",
+      prompt: "Zero-shot CoT에서 \"Let's think step by step\" 문구가 예시 없이도 모델의 추론 성능을 향상시키는 원리를 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["단계별", "추론 텍스트", "생성"],
+      modelAnswer: "해당 문구가 입력되면 모델은 즉각적인 정답 단어를 바로 내놓는 대신, 훈련 데이터상에서 학습한 단계별 사고 텍스트를 먼저 생성하도록 유도된다. 생성된 중간 추론 텍스트가 다음 토큰의 문맥이 되어 최종 정답률을 올린다[cite: 3].",
+      rubricKeywords: ["중간 사고 텍스트 우선 생성", "문맥 반영 정답률 상승"],
+      minLength: 20,
+      explanation: "단계별 사고 텍스트 우선 생성 유도와 이를 통한 최종 정답 도출 원리를 서술합니다[cite: 3]."
+    },
+
+    // ==========================================
+    // 10. LLM 평가 및 응용 (15문항)
+    // ==========================================
+    {
+      id: "nlp-eval-mc-med-001",
+      conceptId: "eval-single-task-vs-llm",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "multiple-choice",
+      prompt: "단일 태스크 전용 모델(BERT 등) 평가와 달리, 거대 언어 모델(LLM) 평가가 가진 결정적 특징은?",
+      options: [
+        "LLM은 범주가 다양하므로 수많은 종합 벤치마크(지식, 수리, 코드 등)를 동시에 사용하여 다각도로 평가해야 함",
+        "LLM은 Accuracy 지표 하나만 보면 완벽함",
+        "LLM은 테스트 데이터셋이 필요 없음",
+        "LLM은 평가를 수행할 수 없음"
+      ],
+      answer: 0,
+      explanation: "LLM은 범주형 다중 능력을 보유하므로 MMLU, GSM8K, HumanEval 등 다각도 벤치마크로 종합 평가합니다[cite: 3].",
+      hint: "수많은 종합 벤치마크로 다각도 평가해야 합니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-mc-med-002",
+      conceptId: "mmlu-benchmark-structure",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "multiple-choice",
+      prompt: "MMLU(Massive Multitask Language Understanding) 벤치마크의 구성 특징으로 옳은 것은?",
+      options: [
+        "초급부터 대학교재 수준까지 57개의 인문, 사회, STEM 전문 학문 객관식 문제로 구성됨",
+        "단순 파이썬 코드 실행 여부만 측정함",
+        "영한 번역 문장 100만 개로만 구성됨",
+        "이미지에서 개와 고양이를 분류하는 작업만 수행함"
+      ],
+      answer: 0,
+      explanation: "MMLU는 57개 전문 분야 학문 지식을 평가하는 대표적 대형 벤치마크입니다[cite: 3].",
+      hint: "57개 학문 분야 객관식 문제 모음입니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-mc-med-003",
+      conceptId: "gsm8k-nature",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "multiple-choice",
+      prompt: "GSM8K 벤치마크가 평가하고자 하는 핵심 능력은 무엇인가?",
+      options: [
+        "초등 수준 수학 문장제 문제를 바탕으로 한 단계별 수리 추론 능력",
+        "대학원 수준의 복잡한 물리학 암기 능력",
+        "외국어 독해 속도",
+        "이미지 생성 능력"
+      ],
+      answer: 0,
+      explanation: "GSM8K는 초등 수학 문장제 풀이와 단계별 수리 추론을 평가합니다[cite: 3].",
+      hint: "초등 수학 문장제 수리 추론 능력입니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-mc-med-004",
+      conceptId: "humaneval-pass-at-k",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "multiple-choice",
+      prompt: "HumanEval 코드 생성 벤치마크에서 사용되는 pass@k 지표의 의미는?",
+      options: [
+        "모델이 생성한 $k$개의 코드 후보 중 최소 1개 이상이 단위 테스트를 통과할 확률",
+        "$k$초 안에 완진되는 코드 작성 비율",
+        "$k$줄 이내로 작성된 코드의 비율",
+        "개발자 $k$명이 검수 통과시킨 비율"
+      ],
+      answer: 0,
+      explanation: "pass@k는 생성된 $k$개 코드 중 1개라도 test case를 통과할 확률 지표입니다[cite: 3].",
+      hint: "생성된 $k$개 코드 중 최소 1개가 테스트 통과할 확률입니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-mc-med-005",
+      conceptId: "rouge-vs-bleu-usage",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "multiple-choice",
+      prompt: "BLEU 지표와 ROUGE 지표가 주로 사용되는 대표적 자연어 처리 태스크 매핑이 바른 것은?",
+      options: [
+        "BLEU는 기계 번역(Machine Translation) 평가, ROUGE는 문서 요약(Summarization) 평가",
+        "BLEU는 문서 요약 평가, ROUGE는 기계 번역 평가",
+        "BLEU와 ROUGE 모두 이미지 분류 전용 평가",
+        "BLEU와 ROUGE 모두 음성 인식 전용 평가"
+      ],
+      answer: 0,
+      explanation: "BLEU는 번역 평가의 표준, ROUGE는 요약 평가의 표준 지표입니다[cite: 2, 3].",
+      hint: "BLEU는 번역, ROUGE는 요약 평가에 씁니다[cite: 2, 3]."
+    },
+    {
+      id: "nlp-eval-mc-med-006",
+      conceptId: "rag-retrieval-augmented-generation",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "multiple-choice",
+      prompt: "RAG(Retrieval-Augmented Generation) 시스템의 기본 동작 순서로 가장 바른 것은?",
+      options: [
+        "유저 질문 $\rightarrow$ 외부 Vector DB 문서 검색 $\rightarrow$ 검색 문서를 프롬프트에 동봉 $\rightarrow$ LLM 근거 답변 생성",
+        "LLM 답변 생성 $\rightarrow$ 외부 DB 검색 $\rightarrow$ 질문 수정",
+        "외부 DB 수정 $\rightarrow$ 질문 삭제 $\rightarrow$ LLM 가중치 업데이트",
+        "유저 질문 $\rightarrow$ LLM 가중치 재학습 $\rightarrow$ 답변 생성"
+      ],
+      answer: 0,
+      explanation: "RAG는 질문과 관련된 외부 문서를 DB에서 검색(Retrieval)해 프롬프트에 동봉 후 답변을 생성(Generation)합니다[cite: 3].",
+      hint: "문서 검색 후 프롬프트 동봉, 그리고 답변 생성 순서입니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-mc-med-007",
+      conceptId: "perplexity-definition-math",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "multiple-choice",
+      prompt: "Perplexity(PPL) 수치와 언어 모델 예측 성능 간의 관계로 올바른 것은?",
+      options: [
+        "PPL 수치가 낮을수록 언어 모델이 문장을 높은 확률로 자연스럽게 예측함을 의미한다.",
+        "PPL 수치가 높을수록 언어 모델의 성능이 뛰어나다.",
+        "PPL 수치는 무조건 100 이상이어야 한다.",
+        "PPL 수치는 오버피팅 정도만 측정할 수 있다."
+      ],
+      answer: 0,
+      explanation: "Perplexity는 헷갈리는 정도로, PPL 값이 낮을수록 모델이 문장을 자연스럽고 우수하게 예측한다는 뜻입니다[cite: 3].",
+      hint: "PPL 수치가 낮을수록 우수한 성능입니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-mc-med-008",
+      conceptId: "sentence-bert-embedding",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "multiple-choice",
+      prompt: "Sentence-BERT가 두 문장의 의미적 유사도를 정밀 측정하는 방식은?",
+      options: [
+        "BERT를 거쳐 나온 토큰 벡터들을 평균(Mean Pooling)내어 문장 벡터를 만든 후 Cosine Similarity를 계산한다.",
+        "두 문장의 글자 수를 비교한다.",
+        "두 문장의 단어 알파벳 순서를 정렬한다.",
+        "두 문장을 무작위 숫자로 변경한다."
+      ],
+      answer: 0,
+      explanation: "Sentence-BERT는 문장 전체에 대한 임베딩 벡터를 구한 뒤 Cosine Similarity로 유사도를 평가합니다[cite: 3].",
+      hint: "문장 임베딩 벡터 간 Cosine Similarity를 계산합니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-mc-med-009",
+      conceptId: "benchmarks-humaneval-pass1",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "multiple-choice",
+      prompt: "HumanEval 평가 지표 중 `pass@1` 스코어가 측정하는 것은 무엇인가?",
+      options: [
+        "모델이 생성한 1개의 코드가 단위 테스트를 바로 통과하는 정밀 확률 비율",
+        "1초 만에 작성을 완료한 코드의 비율",
+        "1줄짜리 코드의 작성 정밀도",
+        "개발자 1명이 검수한 결과"
+      ],
+      answer: 0,
+      explanation: "`pass@1`은 단 1회 생성한 코드 샘플이 바로 test case를 통과할 확률 정밀도입니다[cite: 3].",
+      hint: "단 1회 생성 코드가 한 번에 테스트를 통과할 확률입니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-sa-med-010",
+      conceptId: "humaneval-sa",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "short-answer",
+      prompt: "OpenAI가 제안한 파이썬 코드 생성 및 단위 테스트 통과 능력을 측정하는 대표 벤치마크는?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["HumanEval", "humaneval", "Human-Eval"],
+      explanation: "HumanEval 벤치마크 입니다[cite: 3].",
+      hint: "HumanEval 벤치마크 명칭입니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-sa-med-011",
+      conceptId: "ppl-sa",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "short-answer",
+      prompt: "언어 모델이 텍스트를 예측할 때 느끼는 헷갈림 정도로, 낮을수록 우수한 성능 지표의 약자는?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["PPL", "ppl", "Perplexity"],
+      explanation: "Perplexity(PPL) 입니다[cite: 3].",
+      hint: "PPL 3글자 약자입니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-sa-med-012",
+      conceptId: "rouge-sa",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "short-answer",
+      prompt: "문서 요약 평가 시 사람이 쓴 정답 요약문과의 단어 겹침 정밀도를 계산하는 지표 명칭은?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["ROUGE", "rouge", "ROUGE score"],
+      explanation: "ROUGE 평가 지표입니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-sa-med-013",
+      conceptId: "vector-db-sa",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "short-answer",
+      prompt: "RAG 시스템 구축 시 수많은 문서 임베딩 벡터들을 저장하고 유사도 검색을 수행하는 전용 DB는?",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["Vector DB", "vector db", "벡터 DB", "벡터 데이터베이스", "Vector Database"],
+      explanation: "Vector DB(벡터 데이터베이스) 입니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-es-med-014",
+      conceptId: "rag-principle-essay",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "essay",
+      prompt: "RAG(Retrieval-Augmented Generation) 시스템의 동작 과정을 '검색(Retrieval)'과 '생성(Generation)' 단계로 구분하여 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["검색", "생성", "Vector DB", "프롬프트"],
+      modelAnswer: "1) 검색(Retrieval) 단계: 유저 질문을 임베딩하여 Vector DB에서 관련 최신/외부 문서를 찾는다. 2) 생성(Generation) 단계: 검색된 문서를 프롬프트에 참고 지문으로 포함하여 LLM이 근거 기반의 정확한 답변을 생성하게 한다[cite: 3].",
+      rubricKeywords: ["Vector DB 문서 검색", "프롬프트 동봉", "근거 기반 답변 생성"],
+      minLength: 20,
+      explanation: "외부 문서 검색 단계와 프롬프트 기반 근거 답변 생성 단계를 작성합니다[cite: 3]."
+    },
+    {
+      id: "nlp-eval-es-med-015",
+      conceptId: "humaneval-passk-essay",
+      difficulty: "medium",
+      category: "LLM 평가 및 응용",
+      questionType: "essay",
+      prompt: "HumanEval 평가 지표인 `pass@1`과 `pass@10`의 개념과 측정 목적 차이를 서술하시오.",
+      options: [],
+      answer: null,
+      acceptedAnswers: ["pass@1", "pass@10", "1회", "10회", "확률"],
+      modelAnswer: "`pass@1`은 모델이 1회 생성한 코드 샘플이 곧바로 테스트를 통과할 확률로 단번에 올바른 코드를 내는 정밀성을 측정한다. `pass@10`은 10회 생성한 후보 중 최소 1개가 통과할 확률로 모델이 정답을 만들어낼 수 있는 잠재 능력을 측정한다[cite: 3].",
+      rubricKeywords: ["pass@1 1회 생성 정밀성", "pass@10 10회 중 최소 1회 잠재 능력"],
+      minLength: 20,
+      explanation: "1회 생성 정확성(pass@1)과 10회 생성 중 최소 1회 성공 확률(pass@10)을 비교합니다[cite: 3]."
     }
   ]
 };

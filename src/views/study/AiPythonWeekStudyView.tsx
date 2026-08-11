@@ -164,6 +164,8 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
   );
 
   const meta = AI_PYTHON_WEEK_META[week];
+  const questionsPerDifficulty =
+    AI_PYTHON_WEEK_QUESTION_BANKS[week]["easy"].length;
   const allSelected =
     availableCategories.length > 0 &&
     availableCategories.every((category) =>
@@ -214,13 +216,13 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
         />
         <div className="relative max-w-[72%] sm:max-w-[70%]">
           <p className="flex items-center gap-2 text-xs font-black tracking-[0.17em] text-white/75">
-            <BrainCircuit className="h-4 w-4" /> AI PYTHON · {meta.weekLabel} · 300 QUESTIONS
+            <BrainCircuit className="h-4 w-4" /> AI PYTHON · {meta.weekLabel} · {meta.questionCount} QUESTIONS
           </p>
           <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
             {meta.title}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-white/75">
-            {meta.description} 난이도마다 100문제씩 준비되어 있습니다.
+            {meta.description} 난이도마다 {questionsPerDifficulty}문제씩 준비되어 있습니다.
           </p>
         </div>
       </section>
@@ -232,14 +234,15 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
           </span>
           <div>
             <h2 className="font-black text-slate-900">난이도</h2>
-            <p className="text-xs text-slate-400">각 난이도별 100문제</p>
+            <p className="text-xs text-slate-400">각 난이도별 {questionsPerDifficulty}문제</p>
           </div>
         </div>
         <div className="grid gap-3 md:grid-cols-3">
           {DIFFICULTIES.map((level) => {
             const levelMeta = DIFFICULTY_META[level];
             const active = level === difficulty;
-            const remaining = AI_PYTHON_WEEK_QUESTION_BANKS[week][level].filter(
+            const levelQuestions = AI_PYTHON_WEEK_QUESTION_BANKS[week][level];
+            const remaining = levelQuestions.filter(
               (question) => !completedQuestionIds.has(question.id),
             ).length;
             return (
@@ -286,8 +289,8 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
                 <p className="mt-1 text-xs text-slate-500">{levelMeta.description}</p>
                 <p className="mt-4 border-t border-slate-100 pt-3 text-[11px] font-bold text-slate-400">
                   {remaining === 0
-                    ? "100문제 풀이 완료"
-                    : `미풀이 ${remaining} / 100`}
+                    ? `${levelQuestions.length}문제 풀이 완료`
+                    : `미풀이 ${remaining} / ${levelQuestions.length}`}
                 </p>
               </button>
             );
