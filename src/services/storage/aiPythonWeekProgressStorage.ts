@@ -4,6 +4,7 @@ import type {
   AiPythonWeekDifficulty,
   AiPythonWeekProgress,
 } from "../../types/aiPythonWeekStudy";
+import { isCurrentAiPythonWeekAttempt } from "../../types/aiPythonWeekStudy.ts";
 
 const STORAGE_VERSION = "v5";
 const KEY_PREFIX = `ssafy-gwangju-2-ai-python-week-progress:${STORAGE_VERSION}`;
@@ -110,7 +111,9 @@ export const aiPythonWeekProgressStorage = {
       if (!raw) return EMPTY_PROGRESS;
       const parsed = JSON.parse(raw) as AiPythonWeekProgress;
       return suppressTombstones(userId, {
-        attempts: Array.isArray(parsed.attempts) ? parsed.attempts : [],
+        attempts: Array.isArray(parsed.attempts)
+          ? parsed.attempts.filter(isCurrentAiPythonWeekAttempt)
+          : [],
       });
     } catch {
       return EMPTY_PROGRESS;

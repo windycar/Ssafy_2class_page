@@ -14,7 +14,7 @@ import type {
   AiPythonWeekDifficulty,
   AiPythonWeekQuestion,
 } from "../types/aiPythonWeekStudy";
-import { AI_PYTHON_WEEK_ATTEMPT_ID_PREFIX } from "../types/aiPythonWeekStudy";
+import { getAiPythonWeekAttemptIdPrefix } from "../types/aiPythonWeekStudy";
 import type { StudySyncState } from "./useStudyProgress";
 
 export function useAiPythonWeekProgress() {
@@ -78,7 +78,7 @@ export function useAiPythonWeekProgress() {
     if (!currentUser) return grade.correct;
 
     const attempt: AiPythonWeekAttempt = {
-      id: `${AI_PYTHON_WEEK_ATTEMPT_ID_PREFIX}${Date.now()}-${question.id}-${Math.random().toString(36).slice(2, 7)}`,
+      id: `${getAiPythonWeekAttemptIdPrefix(week)}${Date.now()}-${question.id}-${Math.random().toString(36).slice(2, 7)}`,
       week,
       questionId: question.id,
       difficulty: question.difficulty,

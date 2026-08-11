@@ -1,6 +1,11 @@
 import { existsSync } from "node:fs";
 import { createServer } from "vite";
 
+const EXPECTED_DIFFICULTY_TYPE_COUNTS = {
+  week1: { "multiple-choice": 75, "short-answer": 15, essay: 10 },
+  week2: { "multiple-choice": 85, "short-answer": 10, essay: 5 },
+};
+
 const server = await createServer({
   server: { middlewareMode: true },
   appType: "custom",
@@ -109,19 +114,26 @@ try {
       }
     });
 
+    const expectedDifficultyCounts = EXPECTED_DIFFICULTY_TYPE_COUNTS[week];
+    const expectedTypeCounts = Object.fromEntries(
+      Object.entries(expectedDifficultyCounts).map(([type, count]) => [
+        type,
+        count * 3,
+      ]),
+    );
     if (
-      typeCounts["multiple-choice"] !== 225 ||
-      typeCounts["short-answer"] !== 45 ||
-      typeCounts.essay !== 30
+      typeCounts["multiple-choice"] !== expectedTypeCounts["multiple-choice"] ||
+      typeCounts["short-answer"] !== expectedTypeCounts["short-answer"] ||
+      typeCounts.essay !== expectedTypeCounts.essay
     ) {
       failures.push(`${week}: 문제 유형 수 오류 ${JSON.stringify(typeCounts)}`);
     }
     for (const difficulty of ["easy", "medium", "hard"]) {
       const counts = difficultyTypeCounts[difficulty];
       if (
-        counts["multiple-choice"] !== 75 ||
-        counts["short-answer"] !== 15 ||
-        counts.essay !== 10
+        counts["multiple-choice"] !== expectedDifficultyCounts["multiple-choice"] ||
+        counts["short-answer"] !== expectedDifficultyCounts["short-answer"] ||
+        counts.essay !== expectedDifficultyCounts.essay
       ) {
         failures.push(
           `${week}/${difficulty}: 문제 유형 수 오류 ${JSON.stringify(counts)}`,
