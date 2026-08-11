@@ -112,10 +112,10 @@ export default function WebStudyView() {
           <ArrowLeft className="h-4 w-4" /> 학습 언어 목록
         </Link>
         <Link
-          to="/study/web/report"
+          to="/study/report"
           className="inline-flex items-center gap-2 rounded-xl border border-cyan-100 bg-white px-4 py-2.5 text-sm font-extrabold text-cyan-800 shadow-sm transition hover:bg-cyan-50"
         >
-          <BarChart3 className="h-4 w-4" /> Web 약점 분석
+          <BarChart3 className="h-4 w-4" /> 틀린 문제 다시 풀기
         </Link>
       </div>
 

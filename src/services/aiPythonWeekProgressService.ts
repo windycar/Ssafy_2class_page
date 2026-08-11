@@ -3,6 +3,7 @@ import {
   aiPythonWeekProgressStorage,
   getAiPythonWeekResetAttemptIds,
 } from "./storage/aiPythonWeekProgressStorage";
+import { reconcileRemoteProgress } from "./storage/reconcileStudyProgress";
 import {
   resetScopedStudyProgress,
   STUDY_ATTEMPT_TABLES,
@@ -15,7 +16,7 @@ import type {
   AiPythonWeekProgress,
   AiPythonWeekQuestionType,
 } from "../types/aiPythonWeekStudy";
-import { AI_PYTHON_WEEK_ATTEMPT_ID_PREFIX } from "../types/aiPythonWeekStudy";
+import { isCurrentAiPythonWeekAttempt } from "../types/aiPythonWeekStudy";
 
 type AiPythonWeekAttemptRow = {
   id: string;
@@ -62,32 +63,24 @@ function toRow(studentId: number, attempt: AiPythonWeekAttempt) {
   };
 }
 
-function mergeProgress(...items: AiPythonWeekProgress[]): AiPythonWeekProgress {
-  const attempts = new Map<string, AiPythonWeekAttempt>();
-  items.forEach((progress) => {
-    progress.attempts.forEach((attempt) => attempts.set(attempt.id, attempt));
-  });
-  return {
-    attempts: [...attempts.values()].sort(
-      (a, b) =>
-        new Date(a.answeredAt).getTime() - new Date(b.answeredAt).getTime(),
-    ),
-  };
-}
-
 function currentBankProgress(
   progress: AiPythonWeekProgress,
 ): AiPythonWeekProgress {
   return {
-    attempts: progress.attempts.filter((attempt) =>
-      attempt.id.startsWith(AI_PYTHON_WEEK_ATTEMPT_ID_PREFIX),
-    ),
+    attempts: progress.attempts.filter(isCurrentAiPythonWeekAttempt),
   };
 }
 
 async function uploadPending(studentId: number) {
   if (!supabase) return;
   const pending = aiPythonWeekProgressStorage.getPending(studentId);
+  const pendingIds = new Set(pending.map((attempt) => attempt.id));
+  const stalePendingIds = aiPythonWeekProgressStorage
+    .getPendingIds(studentId)
+    .filter((id) => !pendingIds.has(id));
+  if (stalePendingIds.length) {
+    aiPythonWeekProgressStorage.markSynced(studentId, stalePendingIds);
+  }
   if (!pending.length) return;
 
   const { error } = await supabase
@@ -111,24 +104,29 @@ export async function loadAiPythonWeekProgress(
     aiPythonWeekProgressStorage.get(studentId),
   );
   if (!supabase) return local;
+  const localIdsBeforeSync = new Set(local.attempts.map((attempt) => attempt.id));
 
   await uploadPending(studentId);
   const { data, error } = await supabase
     .from("ai_python_week_attempts")
     .select("*")
     .eq("student_id", studentId)
-    .order("answered_at", { ascending: true })
+    .order("answered_at", { ascending: false })
     .limit(3000);
 
   if (error) throw error;
   const remote: AiPythonWeekProgress = {
     attempts: currentBankProgress({
-      attempts: ((data ?? []) as AiPythonWeekAttemptRow[]).map(toAttempt),
+      attempts: ((data ?? []) as AiPythonWeekAttemptRow[]).map(toAttempt).reverse(),
     }).attempts,
   };
   return aiPythonWeekProgressStorage.replace(
     studentId,
-    mergeProgress(local, remote),
+    reconcileRemoteProgress(
+      remote,
+      currentBankProgress(aiPythonWeekProgressStorage.get(studentId)),
+      localIdsBeforeSync,
+    ),
   );
 }
 

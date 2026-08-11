@@ -159,14 +159,14 @@ export default function WebQuizView() {
             {mode === "wrong" ? "다시 풀 오답이 없습니다." : "선택한 범위의 문제를 모두 풀었습니다."}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            다른 범위를 선택하거나 학습 리포트에서 지금까지의 성과를 확인하세요.
+            다른 범위를 선택하거나 전체 오답 복습에서 다른 문제 세트를 선택하세요.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link to="/study/web" className="rounded-xl bg-cyan-700 px-5 py-3 text-sm font-extrabold text-white">
               범위 다시 선택
             </Link>
-            <Link to="/study/web/report" className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-extrabold text-slate-600">
-              리포트 보기
+            <Link to="/study/report" className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-extrabold text-slate-600">
+              오답 세트 선택
             </Link>
           </div>
         </section>
@@ -207,7 +207,7 @@ export default function WebQuizView() {
 
   const goNext = () => {
     if (isLast && answered) {
-      navigate("/study/web/report");
+      navigate("/study/report");
       return;
     }
     setCurrentIndex((index) => Math.min(questions.length - 1, index + 1));
@@ -225,8 +225,8 @@ export default function WebQuizView() {
             {syncState === "synced" ? <Cloud className="h-3.5 w-3.5 text-emerald-600" /> : <CloudOff className="h-3.5 w-3.5 text-amber-600" />}
             {syncState === "synced" ? "풀이 저장됨" : "로컬 저장"}
           </span>
-          <Link to="/study/web/report" className="inline-flex items-center gap-2 rounded-xl border border-cyan-100 bg-white px-4 py-2.5 text-sm font-extrabold text-cyan-800 shadow-sm">
-            <BarChart3 className="h-4 w-4" /> 리포트
+          <Link to="/study/report" className="inline-flex items-center gap-2 rounded-xl border border-cyan-100 bg-white px-4 py-2.5 text-sm font-extrabold text-cyan-800 shadow-sm">
+            <BarChart3 className="h-4 w-4" /> 오답 세트 선택
           </Link>
         </div>
       </div>

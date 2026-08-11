@@ -212,26 +212,69 @@ create index if not exists study_attempts_auth_user_idx
 
 alter table public.study_attempts enable row level security;
 
+update public.study_attempts attempts
+set auth_user_id = members.auth_user_id
+from public.members members
+where attempts.auth_user_id is null
+  and members.auth_user_id is not null
+  and coalesce(members.student_id::bigint, 900000000 + members.id)
+    = attempts.student_id;
+
 drop policy if exists "Class study attempt read" on public.study_attempts;
 create policy "Class study attempt read"
   on public.study_attempts
   for select
-  to anon, authenticated
+  to authenticated
   using (
-    auth_user_id is null
-    or (select auth.uid()) = auth_user_id
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = study_attempts.student_id
+    )
   );
 
 drop policy if exists "Class study attempt create" on public.study_attempts;
 create policy "Class study attempt create"
   on public.study_attempts
   for insert
-  to anon, authenticated
+  to authenticated
   with check (
-    student_id > 0
-    and (
-      auth_user_id is null
-      or (select auth.uid()) = auth_user_id
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = study_attempts.student_id
+    )
+  );
+
+drop policy if exists "Class study attempt update" on public.study_attempts;
+create policy "Class study attempt update"
+  on public.study_attempts
+  for update
+  to authenticated
+  using (
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = study_attempts.student_id
+    )
+  )
+  with check (
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = study_attempts.student_id
     )
   );
 
@@ -239,13 +282,21 @@ drop policy if exists "Class study attempt delete" on public.study_attempts;
 create policy "Class study attempt delete"
   on public.study_attempts
   for delete
-  to anon, authenticated
+  to authenticated
   using (
-    auth_user_id is null
-    or (select auth.uid()) = auth_user_id
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = study_attempts.student_id
+    )
   );
 
-grant select, insert, delete on public.study_attempts to anon, authenticated;
+revoke all on table public.study_attempts from anon, authenticated;
+grant select, insert, update, delete on table public.study_attempts to authenticated;
+grant select, insert, update, delete on table public.study_attempts to service_role;
 
 -- Web 학습 문제는 앱 코드에서 관리하고, 사용자별 풀이 기록만 저장합니다.
 create table if not exists public.web_study_attempts (
@@ -275,26 +326,69 @@ create index if not exists web_study_attempts_auth_user_idx
 
 alter table public.web_study_attempts enable row level security;
 
+update public.web_study_attempts attempts
+set auth_user_id = members.auth_user_id
+from public.members members
+where attempts.auth_user_id is null
+  and members.auth_user_id is not null
+  and coalesce(members.student_id::bigint, 900000000 + members.id)
+    = attempts.student_id;
+
 drop policy if exists "Class web study attempt read" on public.web_study_attempts;
 create policy "Class web study attempt read"
   on public.web_study_attempts
   for select
-  to anon, authenticated
+  to authenticated
   using (
-    auth_user_id is null
-    or (select auth.uid()) = auth_user_id
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = web_study_attempts.student_id
+    )
   );
 
 drop policy if exists "Class web study attempt create" on public.web_study_attempts;
 create policy "Class web study attempt create"
   on public.web_study_attempts
   for insert
-  to anon, authenticated
+  to authenticated
   with check (
-    student_id > 0
-    and (
-      auth_user_id is null
-      or (select auth.uid()) = auth_user_id
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = web_study_attempts.student_id
+    )
+  );
+
+drop policy if exists "Class web study attempt update" on public.web_study_attempts;
+create policy "Class web study attempt update"
+  on public.web_study_attempts
+  for update
+  to authenticated
+  using (
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = web_study_attempts.student_id
+    )
+  )
+  with check (
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = web_study_attempts.student_id
     )
   );
 
@@ -302,13 +396,21 @@ drop policy if exists "Class web study attempt delete" on public.web_study_attem
 create policy "Class web study attempt delete"
   on public.web_study_attempts
   for delete
-  to anon, authenticated
+  to authenticated
   using (
-    auth_user_id is null
-    or (select auth.uid()) = auth_user_id
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = web_study_attempts.student_id
+    )
   );
 
-grant select, insert, delete on public.web_study_attempts to anon, authenticated;
+revoke all on table public.web_study_attempts from anon, authenticated;
+grant select, insert, update, delete on table public.web_study_attempts to authenticated;
+grant select, insert, update, delete on table public.web_study_attempts to service_role;
 -- AI 파이썬 기초 문제 풀이 기록을 저장하기 위해 SQL Editor에서 한 번 실행하세요.
 create table if not exists public.ai_python_study_attempts (
   id text primary key,
@@ -332,15 +434,29 @@ create index if not exists ai_python_study_attempts_auth_user_idx
 
 alter table public.ai_python_study_attempts enable row level security;
 
+update public.ai_python_study_attempts attempts
+set auth_user_id = members.auth_user_id
+from public.members members
+where attempts.auth_user_id is null
+  and members.auth_user_id is not null
+  and coalesce(members.student_id::bigint, 900000000 + members.id)
+    = attempts.student_id;
+
 drop policy if exists "Class AI Python study attempt read"
   on public.ai_python_study_attempts;
 create policy "Class AI Python study attempt read"
   on public.ai_python_study_attempts
   for select
-  to anon, authenticated
+  to authenticated
   using (
-    auth_user_id is null
-    or (select auth.uid()) = auth_user_id
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = ai_python_study_attempts.student_id
+    )
   );
 
 drop policy if exists "Class AI Python study attempt create"
@@ -348,12 +464,42 @@ drop policy if exists "Class AI Python study attempt create"
 create policy "Class AI Python study attempt create"
   on public.ai_python_study_attempts
   for insert
-  to anon, authenticated
+  to authenticated
   with check (
-    student_id > 0
-    and (
-      auth_user_id is null
-      or (select auth.uid()) = auth_user_id
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = ai_python_study_attempts.student_id
+    )
+  );
+
+drop policy if exists "Class AI Python study attempt update"
+  on public.ai_python_study_attempts;
+create policy "Class AI Python study attempt update"
+  on public.ai_python_study_attempts
+  for update
+  to authenticated
+  using (
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = ai_python_study_attempts.student_id
+    )
+  )
+  with check (
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = ai_python_study_attempts.student_id
     )
   );
 
@@ -362,13 +508,21 @@ drop policy if exists "Class AI Python study attempt delete"
 create policy "Class AI Python study attempt delete"
   on public.ai_python_study_attempts
   for delete
-  to anon, authenticated
+  to authenticated
   using (
-    auth_user_id is null
-    or (select auth.uid()) = auth_user_id
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1 from public.members members
+      where members.auth_user_id = (select auth.uid())
+        and members.is_active = true
+        and coalesce(members.student_id::bigint, 900000000 + members.id)
+          = ai_python_study_attempts.student_id
+    )
   );
 
-grant select, insert, delete on public.ai_python_study_attempts to anon, authenticated;
+revoke all on table public.ai_python_study_attempts from anon, authenticated;
+grant select, insert, update, delete on table public.ai_python_study_attempts to authenticated;
+grant select, insert, update, delete on table public.ai_python_study_attempts to service_role;
 -- AI Python 1·2주차 문제 풀이 기록
 create table if not exists public.ai_python_week_attempts (
   id text primary key,
@@ -449,8 +603,37 @@ create policy ai_python_week_attempts_delete_self
     )
   );
 
+drop policy if exists ai_python_week_attempts_update_self
+  on public.ai_python_week_attempts;
+create policy ai_python_week_attempts_update_self
+  on public.ai_python_week_attempts
+  for update
+  to authenticated
+  using (
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1
+      from public.members m
+      where m.auth_user_id = (select auth.uid())
+        and m.is_active = true
+        and coalesce(m.student_id::bigint, 900000000 + m.id)
+          = ai_python_week_attempts.student_id
+    )
+  )
+  with check (
+    (select auth.uid()) = auth_user_id
+    and exists (
+      select 1
+      from public.members m
+      where m.auth_user_id = (select auth.uid())
+        and m.is_active = true
+        and coalesce(m.student_id::bigint, 900000000 + m.id)
+          = ai_python_week_attempts.student_id
+    )
+  );
+
 revoke all on table public.ai_python_week_attempts from anon, authenticated;
-grant select, insert, delete on table public.ai_python_week_attempts to authenticated;
+grant select, insert, update, delete on table public.ai_python_week_attempts to authenticated;
 grant select, insert, update, delete on table public.ai_python_week_attempts to service_role;
 
 -- 회원 인증과 커뮤니티 소유권/RLS의 최신 스키마는

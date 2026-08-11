@@ -6,6 +6,7 @@ import {
   resetStudyProgress,
   saveStudyAttempt,
 } from "../services/studyProgressService";
+import { subscribeToStudyProgressRefresh } from "../utils/studyProgressSync";
 import { gradePythonResponse } from "../utils/studyGrading";
 import type { PythonQuestion, StudyAttempt, StudyCategory } from "../types/study";
 
@@ -20,6 +21,7 @@ export function useStudyProgress() {
 
   useEffect(() => {
     let cancelled = false;
+    let refreshInFlight = false;
     setProgress(studyProgressStorage.get(userId));
 
     if (!currentUser) {
@@ -29,21 +31,34 @@ export function useStudyProgress() {
       };
     }
 
-    setSyncState("loading");
-    loadStudyProgress(currentUser.id)
-      .then((loaded) => {
+    const activeUserId = currentUser.id;
+    const refresh = async (showLoading = false) => {
+      if (refreshInFlight) return;
+      refreshInFlight = true;
+      if (showLoading) setSyncState("loading");
+      try {
+        const loaded = await loadStudyProgress(activeUserId);
         if (cancelled) return;
         setProgress(loaded);
         setSyncState("synced");
-      })
-      .catch(() => {
+      } catch {
         if (cancelled) return;
-        setProgress(studyProgressStorage.get(currentUser.id));
+        setProgress(studyProgressStorage.get(activeUserId));
         setSyncState("local");
-      });
+      } finally {
+        refreshInFlight = false;
+      }
+    };
+
+    void refresh(true);
+    const unsubscribe = subscribeToStudyProgressRefresh(
+      "ssafy-gwangju-2-study-",
+      () => void refresh(),
+    );
 
     return () => {
       cancelled = true;
+      unsubscribe();
     };
   }, [currentUser, userId]);
 

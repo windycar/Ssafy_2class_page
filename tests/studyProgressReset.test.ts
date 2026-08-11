@@ -234,15 +234,15 @@ test("AI Python 주차 기록은 선택한 주차·난이도·범위만 서버�
   const userId = 14;
   aiPythonWeekProgressStorage.add(
     userId,
-    aiWeekAttempt("week1-match", "week1", "easy", "AI 기초"),
+    aiWeekAttempt("ai-python-week-v5-week1-match", "week1", "easy", "AI 기초"),
   );
   aiPythonWeekProgressStorage.add(
     userId,
-    aiWeekAttempt("week1-hard", "week1", "hard", "AI 기초"),
+    aiWeekAttempt("ai-python-week-v5-week1-hard", "week1", "hard", "AI 기초"),
   );
   aiPythonWeekProgressStorage.add(
     userId,
-    aiWeekAttempt("week2-easy", "week2", "easy", "NLP 기초"),
+    aiWeekAttempt("ai-python-week-v8-week2-easy", "week2", "easy", "NLP 기초"),
   );
 
   const attemptIds = getAiPythonWeekResetAttemptIds(
@@ -264,11 +264,11 @@ test("AI Python 주차 기록은 선택한 주차·난이도·범위만 서버�
   assert.deepEqual(call, {
     table: "ai_python_week_attempts",
     eq: ["student_id", userId],
-    in: ["id", ["week1-match"]],
+    in: ["id", ["ai-python-week-v5-week1-match"]],
   });
   assert.deepEqual(
     result.progress.attempts.map(({ id }) => id),
-    ["week1-hard", "week2-easy"],
+    ["ai-python-week-v5-week1-hard", "ai-python-week-v8-week2-easy"],
   );
 });
 
@@ -414,4 +414,18 @@ test("한 과목의 초기화는 다른 과목 저장소를 변경하지 않는�
     "web-kept",
   ]);
   assert.deepEqual(aiPythonStudyProgressStorage.get(userId).attempts, []);
+});
+
+test("서버 동기화 결과로 교체하면 다른 기기에서 삭제된 로컬 기록이 되살아나지 않는다", () => {
+  const userId = 5;
+  studyProgressStorage.add(userId, pythonAttempt("stale-local", "easy", "operators"));
+  studyProgressStorage.markSynced(userId, ["stale-local"]);
+
+  const remote = {
+    attempts: [pythonAttempt("remote-kept", "medium", "functions")],
+  };
+  const next = studyProgressStorage.replace(userId, remote);
+
+  assert.deepEqual(next.attempts.map(({ id }) => id), ["remote-kept"]);
+  assert.deepEqual(studyProgressStorage.getPendingIds(userId), []);
 });

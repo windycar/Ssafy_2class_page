@@ -3,6 +3,7 @@ import {
   aiPythonStudyProgressStorage,
   getAiPythonStudyResetAttemptIds,
 } from "./storage/aiPythonStudyProgressStorage";
+import { reconcileRemoteProgress } from "./storage/reconcileStudyProgress";
 import {
   resetScopedStudyProgress,
   STUDY_ATTEMPT_TABLES,
@@ -47,18 +48,6 @@ function toRow(studentId: number, attempt: AiPythonStudyAttempt) {
   };
 }
 
-function mergeProgress(...items: AiPythonStudyProgress[]): AiPythonStudyProgress {
-  const attempts = new Map<string, AiPythonStudyAttempt>();
-  items.forEach((progress) => {
-    progress.attempts.forEach((attempt) => attempts.set(attempt.id, attempt));
-  });
-  return {
-    attempts: [...attempts.values()].sort(
-      (a, b) => new Date(a.answeredAt).getTime() - new Date(b.answeredAt).getTime(),
-    ),
-  };
-}
-
 async function uploadPending(studentId: number) {
   if (!supabase) return;
   const pending = aiPythonStudyProgressStorage.getPending(studentId);
@@ -83,20 +72,28 @@ export async function loadAiPythonStudyProgress(
 ): Promise<AiPythonStudyProgress> {
   const local = aiPythonStudyProgressStorage.get(studentId);
   if (!supabase) return local;
+  const localIdsBeforeSync = new Set(local.attempts.map((attempt) => attempt.id));
 
   await uploadPending(studentId);
   const { data, error } = await supabase
     .from("ai_python_study_attempts")
     .select("*")
     .eq("student_id", studentId)
-    .order("answered_at", { ascending: true })
+    .order("answered_at", { ascending: false })
     .limit(2000);
 
   if (error) throw error;
   const remote: AiPythonStudyProgress = {
-    attempts: ((data ?? []) as AiPythonStudyAttemptRow[]).map(toAttempt),
+    attempts: ((data ?? []) as AiPythonStudyAttemptRow[]).map(toAttempt).reverse(),
   };
-  return aiPythonStudyProgressStorage.replace(studentId, mergeProgress(local, remote));
+  return aiPythonStudyProgressStorage.replace(
+    studentId,
+    reconcileRemoteProgress(
+      remote,
+      aiPythonStudyProgressStorage.get(studentId),
+      localIdsBeforeSync,
+    ),
+  );
 }
 
 export async function saveAiPythonStudyAttempt(studentId: number) {

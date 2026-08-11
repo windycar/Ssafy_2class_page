@@ -4,7 +4,7 @@ import {
   countUniqueSolvedQuestions,
   type AttemptQuestionRow,
 } from "./adminStudyProgress.js";
-import { AI_PYTHON_WEEK_ATTEMPT_ID_PREFIX } from "../src/types/aiPythonWeekStudy.js";
+import { getAiPythonWeekAttemptIdPrefix } from "../src/types/aiPythonWeekStudy.js";
 type AdminRequest = {
   action?: string;
   id?: string | number;
@@ -47,7 +47,12 @@ async function loadAttemptQuestionRows(
       .select("student_id, question_id")
       .order("id", { ascending: true });
     if (table === "ai_python_week_attempts") {
-      query = query.like("id", `${AI_PYTHON_WEEK_ATTEMPT_ID_PREFIX}%`);
+      query = query.or(
+        [
+          `and(week.eq.week1,id.like.${getAiPythonWeekAttemptIdPrefix("week1")}%)`,
+          `and(week.eq.week2,id.like.${getAiPythonWeekAttemptIdPrefix("week2")}%)`,
+        ].join(","),
+      );
     }
     const { data, error } = await query.range(
       from,

@@ -21,12 +21,14 @@ import {
   AI_PYTHON_WEEK_META,
   AI_PYTHON_WEEK_QUESTION_BANKS,
   getAiPythonWeekCategories,
+  getAiPythonWeekQuestion,
   isAiPythonWeek,
 } from "../../data/questionBanks/aiPythonWeekQuestionBank";
 import { useAuth } from "../../hooks/useAuth";
 import { useAiPythonWeekProgress } from "../../hooks/useAiPythonWeekProgress";
 import { gradeAiPythonWeekResponse } from "../../utils/aiPythonWeekGrading";
 import { shuffleArray } from "../../utils/shuffleArray";
+import { getLatestAttemptsByQuestion } from "../../utils/studyProgressStats";
 import type {
   AiPythonWeekDifficulty,
   AiPythonWeekQuestion,
@@ -61,7 +63,7 @@ export default function AiPythonWeekQuizView() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { currentUser } = useAuth();
-  const { progress, recordAnswer } = useAiPythonWeekProgress();
+  const { progress, recordAnswer, syncState } = useAiPythonWeekProgress();
   const rawDifficulty = searchParams.get("difficulty") as AiPythonWeekDifficulty | null;
   const difficulty = DIFFICULTIES.includes(rawDifficulty ?? "easy")
     ? (rawDifficulty ?? "easy")
@@ -100,14 +102,24 @@ export default function AiPythonWeekQuizView() {
   );
 
   useEffect(() => {
-    if (!week || session?.key === sessionKey) return;
-    const eligible = AI_PYTHON_WEEK_QUESTION_BANKS[week][difficulty].filter(
-      (question) => selectedCategories.includes(question.category),
-    );
-    const questions =
-      mode === "all"
-        ? eligible
-        : eligible.filter((question) => !completedQuestionIds.has(question.id));
+    if (!week || session?.key === sessionKey || syncState === "loading") return;
+    let questions: AiPythonWeekQuestion[];
+    if (mode === "wrong") {
+      questions = getLatestAttemptsByQuestion(
+        progress.attempts.filter((attempt) => attempt.week === week),
+      )
+        .filter((attempt) => !attempt.correct)
+        .map((attempt) => getAiPythonWeekQuestion(week, attempt.questionId))
+        .filter((question): question is AiPythonWeekQuestion => Boolean(question));
+    } else {
+      const eligible = AI_PYTHON_WEEK_QUESTION_BANKS[week][difficulty].filter(
+        (question) => selectedCategories.includes(question.category),
+      );
+      questions =
+        mode === "all"
+          ? eligible
+          : eligible.filter((question) => !completedQuestionIds.has(question.id));
+    }
     setSession({ key: sessionKey, questions: shuffleArray(questions) });
     setCurrentIndex(0);
     setAnswers({});
@@ -118,9 +130,11 @@ export default function AiPythonWeekQuizView() {
     completedQuestionIds,
     difficulty,
     mode,
+    progress.attempts,
     selectedCategories,
     session?.key,
     sessionKey,
+    syncState,
     week,
   ]);
 
@@ -156,10 +170,14 @@ export default function AiPythonWeekQuizView() {
             <CheckCircle2 className="h-8 w-8" />
           </span>
           <h1 className="mt-5 text-2xl font-black text-slate-900">
-            선택한 범위의 문제를 모두 풀었습니다.
+            {mode === "wrong"
+              ? "복습할 오답이 없습니다."
+              : "선택한 범위의 문제를 모두 풀었습니다."}
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            전체 문제를 다시 풀거나 다른 난이도를 선택해 주세요.
+            {mode === "wrong"
+              ? "이 문제 세트의 최신 답안이 모두 정답입니다."
+              : "전체 문제를 다시 풀거나 다른 난이도를 선택해 주세요."}
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link
@@ -199,7 +217,7 @@ export default function AiPythonWeekQuizView() {
         >
           <CheckCircle2 className="mx-auto h-14 w-14" />
           <p className="mt-5 text-xs font-black tracking-[0.16em] text-white/70">
-            {meta.weekLabel} · {DIFFICULTY_LABELS[difficulty]} 완료
+            {meta.weekLabel} · {mode === "wrong" ? "오답 복습" : DIFFICULTY_LABELS[difficulty]} 완료
           </p>
           <h1 className="mt-2 text-3xl font-black">문제 풀이를 마쳤습니다.</h1>
           <div className="mx-auto mt-7 grid max-w-xl grid-cols-3 gap-3">
@@ -218,12 +236,14 @@ export default function AiPythonWeekQuizView() {
               type="button"
               onClick={() =>
                 navigate(
-                  `/study/ai-python/${week}/quiz?difficulty=${difficulty}&mode=all&run=${Date.now()}`,
+                  mode === "wrong"
+                    ? `/study/ai-python/${week}/quiz?mode=wrong&run=${Date.now()}`
+                    : `/study/ai-python/${week}/quiz?difficulty=${difficulty}&mode=all&run=${Date.now()}`,
                 )
               }
               className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-violet-800"
             >
-              <RotateCcw className="h-4 w-4" /> 다시 풀기
+              <RotateCcw className="h-4 w-4" /> {mode === "wrong" ? "남은 오답 풀기" : "다시 풀기"}
             </button>
           </div>
         </section>
@@ -293,7 +313,7 @@ export default function AiPythonWeekQuizView() {
           <div className="flex items-center justify-between gap-4 text-xs font-bold text-slate-400">
             <span className="flex items-center gap-1.5">
               <Shuffle className="h-3.5 w-3.5" /> {meta.weekLabel} ·{" "}
-              {DIFFICULTY_LABELS[difficulty]} 랜덤 · {currentIndex + 1} /{" "}
+              {mode === "wrong" ? "전체 난이도 오답" : `${DIFFICULTY_LABELS[difficulty]} 랜덤`} · {currentIndex + 1} /{" "}
               {questions.length}
             </span>
             <span>{Math.round(((currentIndex + 1) / questions.length) * 100)}%</span>

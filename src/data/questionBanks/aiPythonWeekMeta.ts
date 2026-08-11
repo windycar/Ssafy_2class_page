@@ -34,7 +34,7 @@ export const AI_PYTHON_WEEK_META: Record<
     imageSrc: "/images/study-tracks/ai-python-week2.png",
     gradient: "from-[#172554] via-[#3730a3] to-[#7e22ce]",
     accent: "#6366f1",
-    questionCount: 300,
+    questionCount: 450,
   },
 };
 

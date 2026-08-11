@@ -42,6 +42,12 @@ const MEMBER_SELECT = `
   last_login_at
 `;
 
+const LEGACY_STUDY_ATTEMPT_TABLES = [
+  "study_attempts",
+  "web_study_attempts",
+  "ai_python_study_attempts",
+] as const;
+
 export function normalizeLoginId(value: string) {
   return value.trim().replace(/^@/, "").toLocaleLowerCase("en-US");
 }
@@ -51,6 +57,35 @@ export function providerPassword(rawPassword: string) {
     process.env.AUTH_PASSWORD_PEPPER || "ssafy-g2-community-v1";
 
   return `G2@${rawPassword}::${pepper}`;
+}
+
+export function studyOwnerStudentId(
+  member: Pick<MemberRow, "id" | "student_id">,
+) {
+  return member.student_id ?? 900_000_000 + member.id;
+}
+
+async function claimLegacyStudyAttempts(
+  adminClient: SupabaseClient,
+  member: MemberRow,
+  authUserId: string,
+) {
+  const studentId = studyOwnerStudentId(member);
+  const results = await Promise.all(
+    LEGACY_STUDY_ATTEMPT_TABLES.map(async (table) => {
+      const { error } = await adminClient
+        .from(table)
+        .update({ auth_user_id: authUserId })
+        .eq("student_id", studentId)
+        .is("auth_user_id", null);
+
+      return { table, error };
+    }),
+  );
+  const failed = results.find((result) => result.error);
+  if (failed?.error) {
+    throw new Error(`${failed.table}: ${failed.error.message}`);
+  }
 }
 
 function memberEmail(loginId: string) {
@@ -428,6 +463,24 @@ export async function handleAuthRequest(request: Request) {
 
       member =
         updated as MemberRow;
+    }
+
+    try {
+      await claimLegacyStudyAttempts(
+        adminClient,
+        member,
+        authUserId,
+      );
+    } catch (claimError) {
+      console.error(
+        "기존 학습 기록 소유권 연결 실패:",
+        claimError,
+      );
+
+      return jsonError(
+        "학습 기록을 현재 계정에 연결하지 못했습니다. 다시 시도하세요.",
+        500,
+      );
     }
 
     // --------------------------------------------------------

@@ -3,6 +3,7 @@ import {
   getStudyResetAttemptIds,
   studyProgressStorage,
 } from "./storage/studyProgressStorage";
+import { reconcileRemoteProgress } from "./storage/reconcileStudyProgress";
 import {
   resetScopedStudyProgress,
   STUDY_ATTEMPT_TABLES,
@@ -58,18 +59,6 @@ function toRow(studentId: number, attempt: StudyAttempt) {
   };
 }
 
-function mergeProgress(...progressList: StudyProgress[]): StudyProgress {
-  const attempts = new Map<string, StudyAttempt>();
-  progressList.forEach((progress) => {
-    progress.attempts.forEach((attempt) => attempts.set(attempt.id, attempt));
-  });
-  return {
-    attempts: [...attempts.values()].sort(
-      (a, b) => new Date(a.answeredAt).getTime() - new Date(b.answeredAt).getTime(),
-    ),
-  };
-}
-
 async function uploadPending(studentId: number) {
   if (!supabase) return;
   const pending = studyProgressStorage.getPending(studentId);
@@ -92,6 +81,7 @@ async function uploadPending(studentId: number) {
 export async function loadStudyProgress(studentId: number): Promise<StudyProgress> {
   const local = studyProgressStorage.get(studentId);
   if (!supabase) return local;
+  const localIdsBeforeSync = new Set(local.attempts.map((attempt) => attempt.id));
 
   await uploadPending(studentId);
 
@@ -99,14 +89,21 @@ export async function loadStudyProgress(studentId: number): Promise<StudyProgres
     .from("study_attempts")
     .select("*")
     .eq("student_id", studentId)
-    .order("answered_at", { ascending: true })
+    .order("answered_at", { ascending: false })
     .limit(2000);
 
   if (error) throw error;
   const remote: StudyProgress = {
-    attempts: ((data ?? []) as StudyAttemptRow[]).map(toAttempt),
+    attempts: ((data ?? []) as StudyAttemptRow[]).map(toAttempt).reverse(),
   };
-  return studyProgressStorage.replace(studentId, mergeProgress(local, remote));
+  return studyProgressStorage.replace(
+    studentId,
+    reconcileRemoteProgress(
+      remote,
+      studyProgressStorage.get(studentId),
+      localIdsBeforeSync,
+    ),
+  );
 }
 
 export async function saveStudyAttempt(studentId: number): Promise<boolean> {

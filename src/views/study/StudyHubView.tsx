@@ -12,15 +12,16 @@ import { useStudyProgress } from "../../hooks/useStudyProgress";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
 import { useAiPythonStudyProgress } from "../../hooks/useAiPythonStudyProgress";
 import { useAiPythonWeekProgress } from "../../hooks/useAiPythonWeekProgress";
+import { countUnresolvedMistakes } from "../../utils/studyProgressStats";
 import { AI_PYTHON_WEEK_META } from "../../data/questionBanks/aiPythonWeekMeta";
 import pythonHero from "../../assets/study/python-study-hero.png";
 
 export default function StudyHubView() {
   const { currentUser } = useAuth();
-  const { summary: pythonSummary } = useStudyProgress();
-  const { summary: webSummary } = useWebStudyProgress();
-  const { summary: aiPythonSummary } = useAiPythonStudyProgress();
-  const { summary: aiPythonWeekSummary } = useAiPythonWeekProgress();
+  const { progress: pythonProgress, summary: pythonSummary } = useStudyProgress();
+  const { progress: webProgress, summary: webSummary } = useWebStudyProgress();
+  const { progress: aiPythonProgress, summary: aiPythonSummary } = useAiPythonStudyProgress();
+  const { progress: aiPythonWeekProgress, summary: aiPythonWeekSummary } = useAiPythonWeekProgress();
   const total =
     pythonSummary.total +
     webSummary.total +
@@ -32,6 +33,11 @@ export default function StudyHubView() {
     aiPythonSummary.correct +
     aiPythonWeekSummary.correct;
   const accuracy = total ? Math.round((correct / total) * 100) : 0;
+  const reviewCount =
+    countUnresolvedMistakes(pythonProgress.attempts) +
+    countUnresolvedMistakes(webProgress.attempts) +
+    countUnresolvedMistakes(aiPythonProgress.attempts) +
+    countUnresolvedMistakes(aiPythonWeekProgress.attempts);
 
   return (
     <div className="space-y-7 pb-6">
@@ -60,14 +66,14 @@ export default function StudyHubView() {
           </h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-blue-100/75 sm:text-base">
             객관식·단답형·서술형을 실제 시험처럼 풀어보세요. 제출 즉시 정답과 해설을 확인하고,
-            틀린 유형은 자동으로 약점 리포트에 모입니다.
+            틀린 문제는 자동으로 오답 복습에 모입니다.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               to="/study/report"
               className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15"
             >
-              <BarChart3 className="h-4 w-4" /> 내 약점 보기
+              <BarChart3 className="h-4 w-4" /> 틀린 문제 다시 풀기
             </Link>
           </div>
         </div>
@@ -91,7 +97,7 @@ export default function StudyHubView() {
         <StatCard
           icon={<CheckCircle2 className="h-5 w-5" />}
           label="복습 필요"
-          value={`${pythonSummary.incorrect + webSummary.incorrect + aiPythonSummary.incorrect + aiPythonWeekSummary.incorrect}문제`}
+          value={`${reviewCount}문제`}
           helper="오답 노트에 자동 저장"
           tone="mint"
         />
@@ -221,7 +227,7 @@ export default function StudyHubView() {
                 <div className="relative flex h-full flex-col">
                   <div className="flex justify-end">
                     <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-black text-white">
-                      300문제
+                      {meta.questionCount}문제
                     </span>
                   </div>
                   <div className="relative z-10 mt-auto max-w-[68%] sm:max-w-[70%] lg:max-w-[62%] xl:max-w-[65%]">
