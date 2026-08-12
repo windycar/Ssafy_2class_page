@@ -1,4 +1,4 @@
-import { ESSAY_MIN_LENGTH } from "../constants/study";
+import { ESSAY_MIN_LENGTH } from "../constants/study.ts";
 import type { AiPythonWeekQuestion } from "../types/aiPythonWeekStudy";
 
 export interface AiPythonWeekGradeResult {

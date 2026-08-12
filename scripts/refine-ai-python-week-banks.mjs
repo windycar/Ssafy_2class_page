@@ -549,7 +549,7 @@ function generateEssays(difficulty) {
     answer: null,
     modelAnswer,
     rubricKeywords,
-    minLength: difficulty === "easy" ? 30 : difficulty === "medium" ? 50 : 70,
+    minLength: 20,
     explanation: `모범답안에는 ${rubricKeywords.join(", ")}의 관계가 포함되어야 한다.`,
     hint: "용어만 나열하지 말고 원인·절차·결과를 연결해 서술한다.",
   }));

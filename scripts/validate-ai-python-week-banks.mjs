@@ -25,6 +25,7 @@ const EXPECTED_CATEGORIES_PER_DIFFICULTY = {
 };
 
 const server = await createServer({
+  configFile: false,
   server: { middlewareMode: true },
   appType: "custom",
   logLevel: "silent",
@@ -37,6 +38,12 @@ try {
     AI_PYTHON_WEEK_QUESTION_BANKS,
   } = await server.ssrLoadModule(
     "/src/data/questionBanks/aiPythonWeekQuestionBank.ts",
+  );
+  const {
+    hasObviousCorrectAnswerLengthCue,
+    hasSupplementaryOptionParenthetical,
+  } = await server.ssrLoadModule(
+    "/src/data/questionBanks/stabilizeAiPythonWeekOptions.ts",
   );
   const failures = [];
   const report = {};
@@ -61,6 +68,7 @@ try {
       }]),
     );
     const answerPositions = [0, 0, 0, 0];
+    let uniquelyLongestCorrect = 0;
     const hintCounts = new Map();
     const explanationCounts = new Map();
 
@@ -101,6 +109,32 @@ try {
 
       if (!question.prompt.trim() || !question.explanation.trim() || !question.hint.trim()) {
         failures.push(`${week}: 불완전 문항 ${question.id}`);
+      }
+      const requiredExplanationSections =
+        question.questionType === "multiple-choice"
+          ? ["정답인 이유\n"]
+          : question.questionType === "short-answer"
+            ? ["정답인 이유\n"]
+            : ["정답인 이유\n"];
+      const forbiddenExplanationSections = [
+        "풀이 순서",
+        "답안 작성 방법",
+        "답안 구성 방법",
+        "모범 답안의 논리",
+        "반드시 포함할 핵심어",
+        "핵심 절차 또는 사용 목적에 해당한다",
+      ];
+      if (
+        question.explanation.length < 70 ||
+        /\n정답은\s*[“"]/.test(question.explanation) ||
+        requiredExplanationSections.some(
+          (section) => !question.explanation.includes(section),
+        ) ||
+        forbiddenExplanationSections.some((section) =>
+          question.explanation.includes(section),
+        )
+      ) {
+        failures.push(`${week}: 문항별 정답 해설 누락 ${question.id}`);
       }
       const visibleText = [
         question.prompt,
@@ -145,12 +179,41 @@ try {
       }
       if (question.questionType === "multiple-choice" && Number.isInteger(question.answer)) {
         answerPositions[question.answer] += 1;
+        if (hasObviousCorrectAnswerLengthCue(question)) {
+          failures.push(`${week}: 정답 길이 단서 ${question.id}`);
+        }
+        const correctOption = question.options[question.answer];
+        const optionLengths = question.options.map((option) =>
+          option.replace(/\s+/g, " ").replace(/[`*_~$]/g, "").trim().length,
+        );
+        if (
+          optionLengths.every(
+            (length, index) =>
+              index === question.answer ||
+              length < optionLengths[question.answer],
+          )
+        ) {
+          uniquelyLongestCorrect += 1;
+        }
+        const correctHasSupplement =
+          hasSupplementaryOptionParenthetical(correctOption);
+        const supplementCount = question.options.filter((option) =>
+          hasSupplementaryOptionParenthetical(option),
+        ).length;
+        if (correctHasSupplement && supplementCount === 1) {
+          failures.push(`${week}: 정답만 괄호 보충 표기 ${question.id}`);
+        }
       }
       if (
         question.questionType !== "multiple-choice" &&
         !(question.acceptedAnswers?.length || question.modelAnswer)
       ) {
         failures.push(`${week}: 주관식 정답 누락 ${question.id}`);
+      }
+      if (question.questionType === "essay" && question.minLength !== 20) {
+        failures.push(
+          `${week}: 서술형 최소 글자 수 ${question.id} (${question.minLength ?? "미지정"}자)`,
+        );
       }
     });
 
@@ -216,6 +279,11 @@ try {
     if (Math.max(...answerPositions) - Math.min(...answerPositions) > 2) {
       failures.push(`${week}: 객관식 정답 위치 편중 ${JSON.stringify(answerPositions)}`);
     }
+    if (uniquelyLongestCorrect > typeCounts["multiple-choice"] * 0.35) {
+      failures.push(
+        `${week}: 가장 긴 보기가 정답인 문항 편중 ${uniquelyLongestCorrect}/${typeCounts["multiple-choice"]}`,
+      );
+    }
     const maxHintReuse = Math.max(...hintCounts.values());
     const maxExplanationReuse = Math.max(...explanationCounts.values());
     if (maxHintReuse > 20) {
@@ -236,6 +304,7 @@ try {
       typeCounts,
       difficultyTypeCounts,
       answerPositions,
+      uniquelyLongestCorrect,
       maxHintReuse,
       maxExplanationReuse,
       categories: new Set(questions.map((question) => question.category)).size,

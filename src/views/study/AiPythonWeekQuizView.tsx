@@ -316,6 +316,9 @@ export default function AiPythonWeekQuizView() {
       current.questionType === "essay" &&
       response.length < (current.minLength ?? ESSAY_MIN_LENGTH)
     ) {
+      toast.error(
+        `서술형 답안은 ${current.minLength ?? ESSAY_MIN_LENGTH}자 미만으로 제출할 수 없습니다.`,
+      );
       return;
     }
     submitResponse(response);
@@ -462,7 +465,7 @@ export default function AiPythonWeekQuizView() {
                 </label>
                 <span className="text-xs font-bold text-slate-400">
                   {current.questionType === "essay"
-                    ? `최소 ${current.minLength ?? ESSAY_MIN_LENGTH}자 · 현재 ${currentDraft.trim().length}자`
+                    ? `${current.minLength ?? ESSAY_MIN_LENGTH}자 미만 제출 제한 · 현재 ${currentDraft.trim().length}자`
                     : "답안만 입력하세요"}
                 </span>
               </div>
@@ -524,7 +527,7 @@ export default function AiPythonWeekQuizView() {
                   >
                     {currentAnswer.correct ? "정답입니다!" : "정답을 다시 확인해 보세요."}
                   </p>
-                  {!currentAnswer.correct && current.questionType !== "multiple-choice" ? (
+                  {!currentAnswer.correct && current.questionType === "short-answer" ? (
                     <p className="mt-2 whitespace-pre-wrap text-sm font-bold text-slate-800">
                       모범 답안:{" "}
                       <MathText
@@ -532,9 +535,7 @@ export default function AiPythonWeekQuizView() {
                       />
                     </p>
                   ) : null}
-                  <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-700">
-                    <MathText text={current.explanation} />
-                  </p>
+                  <ExplanationContent explanation={current.explanation} />
                   {current.questionType === "essay" && gradeDetails ? (
                     <p className="mt-2 text-xs text-slate-500">
                       일치 핵심어:{" "}
@@ -614,6 +615,32 @@ function ResultStat({ label, value }: { label: string; value: string }) {
     <div className="rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur">
       <p className="text-[11px] font-bold text-white/60">{label}</p>
       <p className="mt-1 text-2xl font-black">{value}</p>
+    </div>
+  );
+}
+
+function ExplanationContent({ explanation }: { explanation: string }) {
+  return (
+    <div className="mt-4 space-y-2 text-sm leading-6 text-slate-700">
+      {explanation.split("\n").map((line, index) => {
+        const text = line.trim();
+        if (!text) return <div key={`space-${index}`} className="h-1" />;
+        if (text === "정답인 이유") {
+          return (
+            <h2
+              key={`${text}-${index}`}
+              className="pt-1 text-sm font-black text-slate-900"
+            >
+              {text}
+            </h2>
+          );
+        }
+        return (
+          <p key={`${text}-${index}`}>
+            <MathText text={text} />
+          </p>
+        );
+      })}
     </div>
   );
 }
