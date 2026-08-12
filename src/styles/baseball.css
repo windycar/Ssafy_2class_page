@@ -723,17 +723,62 @@
   will-change: top, left, opacity, transform;
 }
 
-.baseball-live-ball > i,
-.baseball-batted-ball > i {
+.baseball-ball-rotation {
   position: absolute;
   inset: 0;
   display: block;
-  background-image: var(--pitch-sprite);
-  background-position: 0 0;
-  background-repeat: no-repeat;
-  background-size: 1000% 100%;
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--pitch-color) 68%, white));
-  animation: baseball-pitch-sprite-10 480ms steps(9, end) infinite;
+  transform-origin: center;
+  animation: baseball-ball-spin var(--ball-spin-duration, 260ms) linear infinite;
+}
+
+.baseball-ball-body {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--pitch-color) 58%, white));
+  user-select: none;
+}
+
+.baseball-ball-trail {
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  left: 50%;
+  width: 190%;
+  height: 52%;
+  pointer-events: none;
+  transform: translate(-100%, -50%) rotate(0deg);
+  transform-origin: right center;
+}
+
+.baseball-ball-trail i {
+  position: absolute;
+  top: 50%;
+  width: 22%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--pitch-color) 74%, white);
+  filter: blur(6px);
+  opacity: 0.42;
+  transform: translateY(-50%);
+}
+
+.baseball-ball-trail i:nth-child(1) { right: 0; }
+.baseball-ball-trail i:nth-child(2) { right: 24%; opacity: 0.3; transform: translateY(-50%) scale(0.82); }
+.baseball-ball-trail i:nth-child(3) { right: 49%; opacity: 0.2; transform: translateY(-50%) scale(0.64); }
+.baseball-ball-trail i:nth-child(4) { right: 72%; opacity: 0.1; transform: translateY(-50%) scale(0.48); }
+
+.baseball-live-ball.is-batting .baseball-ball-trail {
+  transform: translate(-100%, -50%) rotate(25deg);
+}
+
+.baseball-live-ball.is-pitching .baseball-ball-trail {
+  transform: translate(-100%, -50%) rotate(-28deg);
+}
+
+.baseball-batted-ball .baseball-ball-trail {
+  transform: translate(-100%, -50%) rotate(220deg);
 }
 
 .baseball-live-ball::after,
@@ -772,19 +817,27 @@
 }
 
 .baseball-live-ball.is-fastball {
+  --ball-spin-duration: 140ms;
   animation-timing-function: linear;
 }
 
 .baseball-live-ball.is-curve {
+  --ball-spin-duration: 330ms;
   animation-timing-function: cubic-bezier(0.32, 0.02, 0.58, 1);
 }
 
 .baseball-live-ball.is-slider {
+  --ball-spin-duration: 210ms;
   animation-timing-function: cubic-bezier(0.3, 0.12, 0.48, 1);
 }
 
 .baseball-live-ball.is-changeup {
+  --ball-spin-duration: 420ms;
   animation-timing-function: cubic-bezier(0.24, 0.08, 0.58, 1);
+}
+
+.baseball-batted-ball {
+  --ball-spin-duration: 110ms;
 }
 
 .baseball-pitch-readout {
@@ -1276,9 +1329,9 @@
   100% { top: 5%; left: 19%; opacity: 0.18; transform: translate(-50%, -50%) scale(0.28); }
 }
 
-@keyframes baseball-pitch-sprite-10 {
-  from { background-position: 0 0; }
-  to { background-position: 100% 0; }
+@keyframes baseball-ball-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes baseball-arrival-ring {
@@ -1462,9 +1515,8 @@
 @media (prefers-reduced-motion: reduce) {
   .baseball-batter-character,
   .baseball-live-ball,
-  .baseball-live-ball > i,
   .baseball-batted-ball,
-  .baseball-batted-ball > i,
+  .baseball-ball-rotation,
   .baseball-arrival-ring,
   .baseball-pitch-readout,
   .baseball-play-feedback,

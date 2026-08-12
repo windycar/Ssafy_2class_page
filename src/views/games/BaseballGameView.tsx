@@ -23,10 +23,10 @@ import baseballArena from "../../assets/games/baseball-arena-facing.png";
 import baseballBatterSprite from "../../assets/games/baseball-batter-sprite.png";
 import baseballBattingField from "../../assets/games/baseball-batting-field.png";
 import baseballPitchingField from "../../assets/games/baseball-pitching-field.png";
-import baseballChangeupSprites from "../../assets/games/baseball-pitch-changeup-10.png";
-import baseballCurveSprites from "../../assets/games/baseball-pitch-curve-10.png";
-import baseballFastballSprites from "../../assets/games/baseball-pitch-fastball-10.png";
-import baseballSliderSprites from "../../assets/games/baseball-pitch-slider-10.png";
+import {
+  BASEBALL_BALL_BODY_SRC,
+  BaseballPitchBall,
+} from "../../components/games/baseball/BaseballPitchBall";
 import { useAuth } from "../../hooks/useAuth";
 import { useBaseballMatchChannel } from "../../hooks/useBaseballMatchChannel";
 import { baseballRoomStorage } from "../../services/storage/baseballRoomStorage";
@@ -109,13 +109,6 @@ const PITCH_TYPES: PitchType[] = [
   { id: "slider", name: "슬라이더", speed: [132, 141], color: "#a78bfa" },
   { id: "changeup", name: "체인지업", speed: [113, 122], color: "#34d399" },
 ];
-
-const PITCH_SPRITES: Record<PitchVisualKind, string> = {
-  fastball: baseballFastballSprites,
-  curve: baseballCurveSprites,
-  slider: baseballSliderSprites,
-  changeup: baseballChangeupSprites,
-};
 
 const BATTED_OUTCOMES = new Set<PlateOutcome>([
   "foul",
@@ -294,6 +287,12 @@ export default function BaseballGameView() {
     onlineRoom?.players.length === 2 && onlineRoom.status !== "cancelled"
   );
   const canControl = isOnlineTurn && opponentConnected;
+
+  useEffect(() => {
+    const ballImage = new Image();
+    ballImage.src = BASEBALL_BALL_BODY_SRC;
+    void ballImage.decode().catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     gameRef.current = game;
@@ -736,7 +735,6 @@ export default function BaseballGameView() {
       "--pitch-mid-two-left": `${trajectory.second.x}%`,
       "--pitch-mid-two-top": `${trajectory.second.y}%`,
       "--pitch-color": pitch.pitchType.color,
-      "--pitch-sprite": `url("${PITCH_SPRITES[pitch.pitchType.id]}")`,
     } as CSSProperties;
   }, [actionMode, pitch]);
 
@@ -895,12 +893,14 @@ export default function BaseballGameView() {
 
           {pitch && (
             <>
-              <span
+              <BaseballPitchBall
                 key={`ball-${pitch.id}`}
-                className={`baseball-live-ball is-${actionMode} is-${pitchPhase} is-${pitch.pitchType.id}`}
+                variant="pitch"
+                pitchKind={pitch.pitchType.id}
+                actionMode={actionMode}
+                phase={pitchPhase}
                 style={pitchStyle}
-                aria-hidden="true"
-              ><i /></span>
+              />
               <div className={`baseball-pitch-readout is-${pitchPhase}`}>
                 <span>{pitch.pitchType.name}</span>
                 <strong>{pitch.speed} km/h</strong>
@@ -909,7 +909,12 @@ export default function BaseballGameView() {
           )}
 
           {pitch && actionMode === "batting" && feedback && lastOutcome && BATTED_OUTCOMES.has(lastOutcome) && (
-            <span className={`baseball-batted-ball is-${feedback.tone}`} style={pitchStyle} aria-hidden="true"><i /></span>
+            <BaseballPitchBall
+              variant="batted"
+              pitchKind={pitch.pitchType.id}
+              tone={feedback.tone}
+              style={pitchStyle}
+            />
           )}
 
           {isOnlineMatch && opponentConnected && !isOnlineTurn && !feedback && !halfTransition && (
