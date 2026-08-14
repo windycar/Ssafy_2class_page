@@ -23,6 +23,7 @@ import {
   AI_PYTHON_WEEK_META,
   AI_PYTHON_WEEK_QUESTION_BANKS,
   getAiPythonWeekCategories,
+  getAiPythonWeekDifficulties,
   getAiPythonWeekQuestion,
   isAiPythonWeek,
 } from "../../data/questionBanks/aiPythonWeekQuestionBank";
@@ -32,11 +33,11 @@ import { gradeAiPythonWeekResponse } from "../../utils/aiPythonWeekGrading";
 import { shuffleArray } from "../../utils/shuffleArray";
 import { getLatestAttemptsByQuestion } from "../../utils/studyProgressStats";
 import type {
+  AiPythonWeek,
   AiPythonWeekDifficulty,
   AiPythonWeekQuestion,
 } from "../../types/aiPythonWeekStudy";
 
-const DIFFICULTIES: AiPythonWeekDifficulty[] = ["easy", "medium", "hard"];
 const ANSWER_LABELS = ["A", "B", "C", "D"];
 const DIFFICULTY_LABELS: Record<AiPythonWeekDifficulty, string> = {
   easy: "초급",
@@ -102,9 +103,17 @@ export default function AiPythonWeekQuizView() {
   const { currentUser } = useAuth();
   const { progress, recordAnswer, syncState } = useAiPythonWeekProgress();
   const rawDifficulty = searchParams.get("difficulty") as AiPythonWeekDifficulty | null;
-  const difficulty = DIFFICULTIES.includes(rawDifficulty ?? "easy")
-    ? (rawDifficulty ?? "easy")
-    : "easy";
+  const hasDifficultyLevels = week
+    ? AI_PYTHON_WEEK_META[week].hasDifficultyLevels
+    : true;
+  const availableDifficulties = week
+    ? getAiPythonWeekDifficulties(week)
+    : (["easy"] as AiPythonWeekDifficulty[]);
+  const difficulty = !hasDifficultyLevels
+    ? "easy"
+    : availableDifficulties.includes(rawDifficulty ?? "easy")
+      ? (rawDifficulty ?? "easy")
+      : "easy";
   const mode = searchParams.get("mode");
   const run = searchParams.get("run") ?? "0";
   const allCategories = useMemo(
@@ -178,7 +187,7 @@ export default function AiPythonWeekQuizView() {
   if (!week) {
     return (
       <section className="rounded-3xl border border-slate-200 bg-white p-12 text-center">
-        <h1 className="text-2xl font-black text-slate-900">주차를 찾을 수 없습니다.</h1>
+        <h1 className="text-2xl font-black text-slate-900">문제 세트를 찾을 수 없습니다.</h1>
         <Link to="/study" className="mt-5 inline-flex font-bold text-violet-700">
           학습 과목으로 돌아가기
         </Link>
@@ -187,6 +196,14 @@ export default function AiPythonWeekQuizView() {
   }
 
   const meta = AI_PYTHON_WEEK_META[week];
+  const buildAllQuestionsHref = () => {
+    const params = new URLSearchParams({
+      mode: "all",
+      run: String(Date.now()),
+    });
+    if (hasDifficultyLevels) params.set("difficulty", difficulty);
+    return `/study/ai-python/${week}/quiz?${params.toString()}`;
+  };
   const sessionReady = session?.key === sessionKey;
   const questions = sessionReady ? session.questions : [];
 
@@ -214,7 +231,9 @@ export default function AiPythonWeekQuizView() {
           <p className="mt-2 text-sm text-slate-500">
             {mode === "wrong"
               ? "이 문제 세트의 최신 답안이 모두 정답입니다."
-              : "전체 문제를 다시 풀거나 다른 난이도를 선택해 주세요."}
+              : hasDifficultyLevels
+                ? "전체 문제를 다시 풀거나 다른 난이도를 선택해 주세요."
+                : "전체 문제를 다시 풀거나 다른 출제 범위를 선택해 주세요."}
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link
@@ -225,11 +244,7 @@ export default function AiPythonWeekQuizView() {
             </Link>
             <button
               type="button"
-              onClick={() =>
-                navigate(
-                  `/study/ai-python/${week}/quiz?difficulty=${difficulty}&mode=all&run=${Date.now()}`,
-                )
-              }
+              onClick={() => navigate(buildAllQuestionsHref())}
               className="rounded-xl bg-violet-700 px-5 py-3 text-sm font-extrabold text-white"
             >
               전체 다시 풀기
@@ -254,7 +269,13 @@ export default function AiPythonWeekQuizView() {
         >
           <CheckCircle2 className="mx-auto h-14 w-14" />
           <p className="mt-5 text-xs font-black tracking-[0.16em] text-white/70">
-            {meta.weekLabel} · {mode === "wrong" ? "오답 복습" : DIFFICULTY_LABELS[difficulty]} 완료
+            {meta.sectionLabel ?? meta.weekLabel} ·{" "}
+            {mode === "wrong"
+              ? "오답 복습"
+              : hasDifficultyLevels
+                ? DIFFICULTY_LABELS[difficulty]
+                : "전체 문제"}{" "}
+            완료
           </p>
           <h1 className="mt-2 text-3xl font-black">문제 풀이를 마쳤습니다.</h1>
           <div className="mx-auto mt-7 grid max-w-xl grid-cols-3 gap-3">
@@ -267,7 +288,7 @@ export default function AiPythonWeekQuizView() {
               to={`/study/ai-python/${week}`}
               className="rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-extrabold text-white"
             >
-              난이도·범위 선택
+              {hasDifficultyLevels ? "난이도·범위 선택" : "출제 범위 선택"}
             </Link>
             <button
               type="button"
@@ -275,7 +296,7 @@ export default function AiPythonWeekQuizView() {
                 navigate(
                   mode === "wrong"
                     ? `/study/ai-python/${week}/quiz?mode=wrong&run=${Date.now()}`
-                    : `/study/ai-python/${week}/quiz?difficulty=${difficulty}&mode=all&run=${Date.now()}`,
+                    : buildAllQuestionsHref(),
                 )
               }
               className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-violet-800"
@@ -352,8 +373,14 @@ export default function AiPythonWeekQuizView() {
         <header className="border-b border-slate-100 bg-slate-50/80 px-5 py-4 sm:px-8">
           <div className="flex items-center justify-between gap-4 text-xs font-bold text-slate-400">
             <span className="flex items-center gap-1.5">
-              <Shuffle className="h-3.5 w-3.5" /> {meta.weekLabel} ·{" "}
-              {mode === "wrong" ? "전체 난이도 오답" : `${DIFFICULTY_LABELS[difficulty]} 랜덤`} · {currentIndex + 1} /{" "}
+              <Shuffle className="h-3.5 w-3.5" /> {meta.sectionLabel ?? meta.weekLabel} ·{" "}
+              {mode === "wrong"
+                ? hasDifficultyLevels
+                  ? "전체 난이도 오답"
+                  : "오답 복습"
+                : hasDifficultyLevels
+                  ? `${DIFFICULTY_LABELS[difficulty]} 랜덤`
+                  : "전체 랜덤"} · {currentIndex + 1} /{" "}
               {questions.length}
             </span>
             <span>{Math.round(((currentIndex + 1) / questions.length) * 100)}%</span>
@@ -371,9 +398,11 @@ export default function AiPythonWeekQuizView() {
             <span className="rounded-full bg-violet-600 px-3 py-1 text-[11px] font-black text-white">
               {current.category}
             </span>
-            <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-black text-indigo-700">
-              {DIFFICULTY_LABELS[current.difficulty]}
-            </span>
+            {hasDifficultyLevels ? (
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-[11px] font-black text-indigo-700">
+                {DIFFICULTY_LABELS[current.difficulty]}
+              </span>
+            ) : null}
             <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[11px] font-black text-amber-700">
               {QUESTION_TYPE_LABELS[current.questionType]}
             </span>
@@ -599,7 +628,13 @@ export default function AiPythonWeekQuizView() {
   );
 }
 
-function BackLink({ week, title }: { week: "week1" | "week2"; title: string }) {
+function BackLink({
+  week,
+  title,
+}: {
+  week: AiPythonWeek;
+  title: string;
+}) {
   return (
     <Link
       to={`/study/ai-python/${week}`}

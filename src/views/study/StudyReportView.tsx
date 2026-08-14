@@ -47,6 +47,11 @@ export default function StudyReportView() {
     "ai-python-week2": countUnresolvedMistakes(
       aiPythonWeek.progress.attempts.filter((attempt) => attempt.week === "week2"),
     ),
+    "ai-python-week3-1": countUnresolvedMistakes(
+      aiPythonWeek.progress.attempts.filter(
+        (attempt) => attempt.week === "week3-1",
+      ),
+    ),
   };
   const reviewOptions = STUDY_REVIEW_TRACKS.map((track) => ({
     ...track,
@@ -147,7 +152,7 @@ export default function StudyReportView() {
           </span>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {reviewOptions.map((option) => {
             const selected = selectedReview?.id === option.id;
             return (
@@ -231,7 +236,10 @@ export default function StudyReportView() {
           </span>
           <p className="mt-4 text-xs font-bold text-slate-400">복습할 문제 세트</p>
           <p className="mt-1 text-2xl font-black text-slate-900">
-            {reviewableTrackCount} <span className="text-sm text-slate-400">/ 5개</span>
+            {reviewableTrackCount}{" "}
+            <span className="text-sm text-slate-400">
+              / {STUDY_REVIEW_TRACKS.length}개
+            </span>
           </p>
         </div>
       </section>

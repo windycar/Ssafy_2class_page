@@ -8,6 +8,10 @@ import {
 test("교체된 주차별 문제은행은 현재 버전 기록만 사용한다", () => {
   assert.equal(getAiPythonWeekAttemptIdPrefix("week1"), "ai-python-week-v6-");
   assert.equal(getAiPythonWeekAttemptIdPrefix("week2"), "ai-python-week-v8-");
+  assert.equal(
+    getAiPythonWeekAttemptIdPrefix("week3-1"),
+    "ai-python-week3-1-v1-",
+  );
 
   assert.equal(
     isCurrentAiPythonWeekAttempt({ id: "ai-python-week-v5-old", week: "week1" }),
@@ -32,5 +36,19 @@ test("교체된 주차별 문제은행은 현재 버전 기록만 사용한다",
   assert.equal(
     isCurrentAiPythonWeekAttempt({ id: "ai-python-week-v8-new", week: "week2" }),
     true,
+  );
+  assert.equal(
+    isCurrentAiPythonWeekAttempt({
+      id: "ai-python-week3-1-v1-new",
+      week: "week3-1",
+    }),
+    true,
+  );
+  assert.equal(
+    isCurrentAiPythonWeekAttempt({
+      id: "ai-python-week3-1-v0-old",
+      week: "week3-1",
+    }),
+    false,
   );
 });

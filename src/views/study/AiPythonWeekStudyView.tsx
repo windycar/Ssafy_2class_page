@@ -17,6 +17,7 @@ import {
   AI_PYTHON_WEEK_META,
   AI_PYTHON_WEEK_QUESTION_BANKS,
   getAiPythonWeekCategories,
+  getAiPythonWeekDifficulties,
   isAiPythonWeek,
 } from "../../data/questionBanks/aiPythonWeekQuestionBank";
 import { useAiPythonWeekProgress } from "../../hooks/useAiPythonWeekProgress";
@@ -26,7 +27,6 @@ import type {
   AiPythonWeekQuestionType,
 } from "../../types/aiPythonWeekStudy";
 
-const DIFFICULTIES: AiPythonWeekDifficulty[] = ["easy", "medium", "hard"];
 const QUESTION_TYPES: AiPythonWeekQuestionType[] = [
   "multiple-choice",
   "short-answer",
@@ -96,7 +96,7 @@ export default function AiPythonWeekStudyView() {
   if (!isAiPythonWeek(weekParam)) {
     return (
       <section className="rounded-3xl border border-slate-200 bg-white p-12 text-center">
-        <h1 className="text-2xl font-black text-slate-900">주차를 찾을 수 없습니다.</h1>
+        <h1 className="text-2xl font-black text-slate-900">문제 세트를 찾을 수 없습니다.</h1>
         <Link to="/study" className="mt-5 inline-flex font-bold text-violet-700">
           학습 과목으로 돌아가기
         </Link>
@@ -111,6 +111,7 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
   const navigate = useNavigate();
   const { progress, resetProgress } = useAiPythonWeekProgress();
   const categories = useMemo(() => getAiPythonWeekCategories(week), [week]);
+  const difficulties = useMemo(() => getAiPythonWeekDifficulties(week), [week]);
   const [difficulty, setDifficulty] = useState<AiPythonWeekDifficulty>("easy");
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
     getAvailableCategoriesForDifficulty(week, "easy"),
@@ -164,6 +165,10 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
   );
 
   const meta = AI_PYTHON_WEEK_META[week];
+  const hasDifficultyLevels = meta.hasDifficultyLevels;
+  const selectionLabel = hasDifficultyLevels
+    ? DIFFICULTY_META[difficulty].label
+    : (meta.sectionLabel ?? "전체");
   const questionsPerDifficulty =
     AI_PYTHON_WEEK_QUESTION_BANKS[week]["easy"].length;
   const allSelected =
@@ -175,16 +180,16 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
   const startQuiz = () => {
     if (!remainingQuestions.length || !selectedCategories.length) return;
     const params = new URLSearchParams({
-      difficulty,
       categories: selectedCategories.join(","),
     });
+    if (hasDifficultyLevels) params.set("difficulty", difficulty);
     navigate(`/study/ai-python/${week}/quiz?${params.toString()}`);
   };
 
   const resetSelectedProgress = async () => {
     if (!resettableCount) return;
     const confirmed = window.confirm(
-      `${meta.title} · ${DIFFICULTY_META[difficulty].label}의 선택 범위 풀이 기록 ${resettableCount}개를 초기화할까요?`,
+      `${meta.title} · ${selectionLabel}의 선택 범위 풀이 기록 ${resettableCount}개를 초기화할까요?`,
     );
     if (!confirmed) return;
     const reset = await resetProgress(week, difficulty, selectedCategories);
@@ -216,98 +221,111 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
         />
         <div className="relative max-w-[72%] sm:max-w-[70%]">
           <p className="flex items-center gap-2 text-xs font-black tracking-[0.17em] text-white/75">
-            <BrainCircuit className="h-4 w-4" /> AI PYTHON · {meta.weekLabel} · {meta.questionCount} QUESTIONS
+            <BrainCircuit className="h-4 w-4" /> AI PYTHON · {meta.weekLabel}
+            {meta.sectionLabel ? ` · ${meta.sectionLabel}` : ""} ·{" "}
+            {meta.questionCount} QUESTIONS
           </p>
           <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
             {meta.title}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-white/75">
-            {meta.description} 난이도마다 {questionsPerDifficulty}문제씩 준비되어 있습니다.
+            {meta.description}{" "}
+            {hasDifficultyLevels
+              ? `난이도마다 ${questionsPerDifficulty}문제씩 준비되어 있습니다.`
+              : `${meta.sectionLabel} 문제 ${meta.questionCount}개가 준비되어 있습니다.`}
           </p>
         </div>
       </section>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-        <div className="mb-5 flex items-center gap-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
-            01
-          </span>
-          <div>
-            <h2 className="font-black text-slate-900">난이도</h2>
-            <p className="text-xs text-slate-400">각 난이도별 {questionsPerDifficulty}문제</p>
+      {hasDifficultyLevels ? (
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="mb-5 flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
+              01
+            </span>
+            <div>
+              <h2 className="font-black text-slate-900">난이도</h2>
+              <p className="text-xs text-slate-400">
+                각 난이도별 {questionsPerDifficulty}문제
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="grid gap-3 md:grid-cols-3">
-          {DIFFICULTIES.map((level) => {
-            const levelMeta = DIFFICULTY_META[level];
-            const active = level === difficulty;
-            const levelQuestions = AI_PYTHON_WEEK_QUESTION_BANKS[week][level];
-            const remaining = levelQuestions.filter(
-              (question) => !completedQuestionIds.has(question.id),
-            ).length;
-            return (
-              <button
-                key={level}
-                type="button"
-                onClick={() => {
-                  setDifficulty(level);
-                  setSelectedCategories(
-                    getAvailableCategoriesForDifficulty(week, level),
-                  );
-                }}
-                className={`rounded-2xl border-2 p-5 text-left transition ${
-                  active
-                    ? "border-violet-500 bg-violet-50 shadow-[0_10px_28px_rgba(124,58,237,0.12)]"
-                    : "border-slate-100 hover:border-violet-200"
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <span
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${levelMeta.gradient} text-white`}
-                  >
-                    {level === "easy" ? (
-                      <Sparkles className="h-5 w-5" />
-                    ) : level === "medium" ? (
-                      <Layers3 className="h-5 w-5" />
-                    ) : (
-                      <Gauge className="h-5 w-5" />
-                    )}
-                  </span>
-                  <span
-                    className={`flex h-6 w-6 items-center justify-center rounded-full border ${
-                      active
-                        ? "border-violet-500 bg-violet-500 text-white"
-                        : "border-slate-200 text-transparent"
-                    }`}
-                  >
-                    <Check className="h-3.5 w-3.5" />
-                  </span>
-                </div>
-                <h3 className="mt-4 text-xl font-black text-slate-900">
-                  {levelMeta.label}
-                </h3>
-                <p className="mt-1 text-xs text-slate-500">{levelMeta.description}</p>
-                <p className="mt-4 border-t border-slate-100 pt-3 text-[11px] font-bold text-slate-400">
-                  {remaining === 0
-                    ? `${levelQuestions.length}문제 풀이 완료`
-                    : `미풀이 ${remaining} / ${levelQuestions.length}`}
-                </p>
-              </button>
-            );
-          })}
-        </div>
-      </section>
+          <div className="grid gap-3 md:grid-cols-3">
+            {difficulties.map((level) => {
+              const levelMeta = DIFFICULTY_META[level];
+              const active = level === difficulty;
+              const levelQuestions = AI_PYTHON_WEEK_QUESTION_BANKS[week][level];
+              const remaining = levelQuestions.filter(
+                (question) => !completedQuestionIds.has(question.id),
+              ).length;
+              return (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => {
+                    setDifficulty(level);
+                    setSelectedCategories(
+                      getAvailableCategoriesForDifficulty(week, level),
+                    );
+                  }}
+                  className={`rounded-2xl border-2 p-5 text-left transition ${
+                    active
+                      ? "border-violet-500 bg-violet-50 shadow-[0_10px_28px_rgba(124,58,237,0.12)]"
+                      : "border-slate-100 hover:border-violet-200"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <span
+                      className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${levelMeta.gradient} text-white`}
+                    >
+                      {level === "easy" ? (
+                        <Sparkles className="h-5 w-5" />
+                      ) : level === "medium" ? (
+                        <Layers3 className="h-5 w-5" />
+                      ) : (
+                        <Gauge className="h-5 w-5" />
+                      )}
+                    </span>
+                    <span
+                      className={`flex h-6 w-6 items-center justify-center rounded-full border ${
+                        active
+                          ? "border-violet-500 bg-violet-500 text-white"
+                          : "border-slate-200 text-transparent"
+                      }`}
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                    </span>
+                  </div>
+                  <h3 className="mt-4 text-xl font-black text-slate-900">
+                    {levelMeta.label}
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {levelMeta.description}
+                  </p>
+                  <p className="mt-4 border-t border-slate-100 pt-3 text-[11px] font-bold text-slate-400">
+                    {remaining === 0
+                      ? `${levelQuestions.length}문제 풀이 완료`
+                      : `미풀이 ${remaining} / ${levelQuestions.length}`}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
-              02
+              {hasDifficultyLevels ? "02" : "01"}
             </span>
             <div>
               <h2 className="font-black text-slate-900">출제 범위</h2>
               <p className="text-xs text-slate-400">
-                현재 난이도: {availableCategories.length}개 영역 출제 가능 · {categories.length - availableCategories.length}개 영역 문제 없음
+                {hasDifficultyLevels
+                  ? `현재 난이도: ${availableCategories.length}개 영역 출제 가능 · ${categories.length - availableCategories.length}개 영역 문제 없음`
+                  : `${meta.sectionLabel}: ${availableCategories.length}개 영역에서 출제`}
               </p>
             </div>
           </div>
@@ -364,7 +382,9 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
                 </span>
                 <span className="shrink-0 text-[10px] font-black text-slate-400">
                   {!hasQuestions
-                    ? "이 난이도 문제 없음"
+                    ? hasDifficultyLevels
+                      ? "이 난이도 문제 없음"
+                      : "문제 없음"
                     : remaining === 0
                       ? "풀이 완료"
                       : `미풀이 ${remaining} / ${categoryQuestions.length}`}
@@ -378,7 +398,7 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
         <div className="mb-5 flex items-center gap-3">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
-            03
+            {hasDifficultyLevels ? "03" : "02"}
           </span>
           <div>
             <h2 className="font-black text-slate-900">문제 유형</h2>
@@ -415,7 +435,7 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
           <div>
             <p className="text-sm font-black text-slate-900">
               {selectedCategories.length
-                ? `${DIFFICULTY_META[difficulty].label} · 미풀이 ${remainingQuestions.length}문제`
+                ? `${selectionLabel} · 미풀이 ${remainingQuestions.length}문제`
                 : "출제 범위를 선택하세요"}
             </p>
             <p className="text-xs text-slate-500">

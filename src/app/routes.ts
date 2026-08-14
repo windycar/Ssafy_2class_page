@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router";
 import { lazy } from "react";
 import Root from "./Root";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
+import RouteErrorBoundary from "../components/common/RouteErrorBoundary";
 
 const LoginView = lazy(() => import("../views/LoginView"));
 const HomeView = lazy(() => import("../views/HomeView"));
@@ -37,6 +38,7 @@ export const router = createBrowserRouter([
   {
     path: "/",
     Component: Root,
+    ErrorBoundary: RouteErrorBoundary,
     children: [
       { path: "login", Component: LoginView },
       { path: "game-login", Component: LoginView },

@@ -5,7 +5,14 @@ import { STUDY_REVIEW_TRACKS } from "../src/config/studyReviewTracks.ts";
 test("모든 학습 문제 세트가 오답 복습 설정에 등록된다", () => {
   assert.deepEqual(
     STUDY_REVIEW_TRACKS.map((track) => track.id),
-    ["python", "web", "ai-python", "ai-python-week1", "ai-python-week2"],
+    [
+      "python",
+      "web",
+      "ai-python",
+      "ai-python-week1",
+      "ai-python-week2",
+      "ai-python-week3-1",
+    ],
   );
   assert.equal(
     STUDY_REVIEW_TRACKS.every((track) => track.href.includes("mode=wrong")),

@@ -14,15 +14,24 @@ const EXPECTED_DIFFICULTY_TYPE_COUNTS = {
       { "multiple-choice": 120, "short-answer": 20, essay: 10 },
     ]),
   ),
+  "week3-1": {
+    easy: { "multiple-choice": 60, "short-answer": 10, essay: 5 },
+    medium: { "multiple-choice": 60, "short-answer": 10, essay: 5 },
+    hard: { "multiple-choice": 0, "short-answer": 0, essay: 0 },
+  },
 };
 const EXPECTED_QUESTIONS_PER_DIFFICULTY = {
   week1: { easy: 105, medium: 105, hard: 90 },
   week2: { easy: 150, medium: 150, hard: 150 },
+  "week3-1": { easy: 75, medium: 75, hard: 0 },
 };
 const EXPECTED_CATEGORIES_PER_DIFFICULTY = {
   week1: { easy: 7, medium: 7, hard: 6 },
   week2: { easy: 10, medium: 10, hard: 10 },
+  "week3-1": { easy: 5, medium: 5, hard: 0 },
 };
+
+const AI_PYTHON_WEEK_TRACKS = ["week1", "week2", "week3-1"];
 
 const server = await createServer({
   configFile: false,
@@ -48,7 +57,7 @@ try {
   const failures = [];
   const report = {};
 
-  for (const week of ["week1", "week2"]) {
+  for (const week of AI_PYTHON_WEEK_TRACKS) {
     const bank = AI_PYTHON_WEEK_QUESTION_BANKS[week];
     const questions = AI_PYTHON_WEEK_ALL_QUESTIONS[week];
     const ids = new Set();

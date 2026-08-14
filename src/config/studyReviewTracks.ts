@@ -47,7 +47,7 @@ export const STUDY_REVIEW_TRACKS: readonly StudyReviewTrack[] = [
   },
   {
     id: "ai-python-week1",
-    label: "AI Python 1주차",
+    label: "AI Python 1번째",
     description: "AI·ML·선형회귀·모델 평가",
     href: "/study/ai-python/week1/quiz?mode=wrong",
     tone: "pink",
@@ -56,11 +56,20 @@ export const STUDY_REVIEW_TRACKS: readonly StudyReviewTrack[] = [
   },
   {
     id: "ai-python-week2",
-    label: "AI Python 2주차",
+    label: "AI Python 2번째",
     description: "NLP·RNN·Transformer·LLM",
     href: "/study/ai-python/week2/quiz?mode=wrong",
     tone: "blue",
     source: "ai-python-week",
     week: "week2",
+  },
+  {
+    id: "ai-python-week3-1",
+    label: "AI Python 3-1",
+    description: "CNN·ResNet·Attention·ViT",
+    href: "/study/ai-python/week3-1/quiz?mode=wrong",
+    tone: "violet",
+    source: "ai-python-week",
+    week: "week3-1",
   },
 ] as const;

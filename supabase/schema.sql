@@ -523,12 +523,12 @@ create policy "Class AI Python study attempt delete"
 revoke all on table public.ai_python_study_attempts from anon, authenticated;
 grant select, insert, update, delete on table public.ai_python_study_attempts to authenticated;
 grant select, insert, update, delete on table public.ai_python_study_attempts to service_role;
--- AI Python 1·2주차 문제 풀이 기록
+-- AI Python 번째별 문제 풀이 기록
 create table if not exists public.ai_python_week_attempts (
   id text primary key,
   student_id integer not null check (student_id > 0),
   auth_user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
-  week text not null check (week in ('week1', 'week2')),
+  week text not null check (week in ('week1', 'week2', 'week3-1')),
   question_id text not null,
   difficulty text not null check (difficulty in ('easy', 'medium', 'hard')),
   category text not null,
