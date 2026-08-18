@@ -77,6 +77,8 @@ const CATEGORY_COLORS = [
   "#9333ea",
 ];
 
+const AI_PYTHON_WEEK_3_SECTIONS = ["week3-1", "week3-2"] as const;
+
 function getAvailableCategoriesForDifficulty(
   week: AiPythonWeek,
   difficulty: AiPythonWeekDifficulty,
@@ -112,6 +114,9 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
   const { progress, resetProgress } = useAiPythonWeekProgress();
   const categories = useMemo(() => getAiPythonWeekCategories(week), [week]);
   const difficulties = useMemo(() => getAiPythonWeekDifficulties(week), [week]);
+  const isWeek3Group = AI_PYTHON_WEEK_3_SECTIONS.some(
+    (sectionWeek) => sectionWeek === week,
+  );
   const [difficulty, setDifficulty] = useState<AiPythonWeekDifficulty>("easy");
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
     getAvailableCategoriesForDifficulty(week, "easy"),
@@ -237,11 +242,78 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
         </div>
       </section>
 
-      {hasDifficultyLevels ? (
+      {isWeek3Group ? (
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
           <div className="mb-5 flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
               01
+            </span>
+            <div>
+              <h2 className="font-black text-slate-900">세부 범위</h2>
+              <p className="text-xs text-slate-400">3번째 문제은행의 학습 범위를 선택하세요.</p>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {AI_PYTHON_WEEK_3_SECTIONS.map((sectionWeek) => {
+              const sectionMeta = AI_PYTHON_WEEK_META[sectionWeek];
+              const active = sectionWeek === week;
+              const sectionCompleted = new Set(
+                progress.attempts
+                  .filter((attempt) => attempt.week === sectionWeek)
+                  .map((attempt) => attempt.questionId),
+              ).size;
+              const remaining = Math.max(
+                sectionMeta.questionCount - sectionCompleted,
+                0,
+              );
+              return (
+                <button
+                  key={sectionWeek}
+                  type="button"
+                  onClick={() => navigate(`/study/ai-python/${sectionWeek}`)}
+                  className={`rounded-2xl border-2 p-5 text-left transition ${
+                    active
+                      ? "border-violet-500 bg-violet-50 shadow-[0_10px_28px_rgba(124,58,237,0.12)]"
+                      : "border-slate-100 hover:border-violet-200"
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 text-sm font-black text-white">
+                      {sectionMeta.sectionLabel}
+                    </span>
+                    <span
+                      className={`flex h-6 w-6 items-center justify-center rounded-full border ${
+                        active
+                          ? "border-violet-500 bg-violet-500 text-white"
+                          : "border-slate-200 text-transparent"
+                      }`}
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                    </span>
+                  </div>
+                  <h3 className="mt-4 text-xl font-black text-slate-900">
+                    {sectionMeta.shortTitle}
+                  </h3>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {sectionMeta.description}
+                  </p>
+                  <p className="mt-4 border-t border-slate-100 pt-3 text-[11px] font-bold text-slate-400">
+                    {remaining === 0
+                      ? `${sectionMeta.questionCount}문제 풀이 완료`
+                      : `미풀이 ${remaining} / ${sectionMeta.questionCount}`}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
+
+      {hasDifficultyLevels ? (
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+          <div className="mb-5 flex items-center gap-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
+              {isWeek3Group ? "02" : "01"}
             </span>
             <div>
               <h2 className="font-black text-slate-900">난이도</h2>
@@ -318,7 +390,7 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
-              {hasDifficultyLevels ? "02" : "01"}
+              {isWeek3Group ? "03" : hasDifficultyLevels ? "02" : "01"}
             </span>
             <div>
               <h2 className="font-black text-slate-900">출제 범위</h2>
@@ -398,7 +470,7 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
         <div className="mb-5 flex items-center gap-3">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
-            {hasDifficultyLevels ? "03" : "02"}
+            {isWeek3Group ? "04" : hasDifficultyLevels ? "03" : "02"}
           </span>
           <div>
             <h2 className="font-black text-slate-900">문제 유형</h2>

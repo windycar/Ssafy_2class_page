@@ -72,4 +72,13 @@ export const STUDY_REVIEW_TRACKS: readonly StudyReviewTrack[] = [
     source: "ai-python-week",
     week: "week3-1",
   },
+  {
+    id: "ai-python-week3-2",
+    label: "AI Python 3-2",
+    description: "CLIP·VLM·LLaVA·SAM·비주얼 프롬프팅",
+    href: "/study/ai-python/week3-2/quiz?mode=wrong",
+    tone: "violet",
+    source: "ai-python-week",
+    week: "week3-2",
+  },
 ] as const;

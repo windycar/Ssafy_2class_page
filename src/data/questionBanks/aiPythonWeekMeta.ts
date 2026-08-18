@@ -57,6 +57,20 @@ export const AI_PYTHON_WEEK_META: Record<
     questionCount: 150,
     hasDifficultyLevels: true,
   },
+  "week3-2": {
+    weekLabel: "3번째",
+    sectionLabel: "3-2",
+    title: "AI 파이썬 3-2",
+    cardTitle: "AI 파이썬 3-2",
+    shortTitle: "멀티모달 AI",
+    description: "CLIP과 VLM부터 비주얼 프롬프팅과 세그멘테이션까지 학습합니다.",
+    topics: "CLIP · VLM · LLaVA · SAM",
+    imageSrc: "/images/study-tracks/ai-python-week3.png",
+    gradient: "from-[#102044] via-[#4338a8] to-[#8b2fc9]",
+    accent: "#22d3ee",
+    questionCount: 150,
+    hasDifficultyLevels: true,
+  },
 };
 
 export const AI_PYTHON_WEEK_CARD_GROUPS = [
@@ -73,7 +87,13 @@ export const AI_PYTHON_WEEK_CARD_GROUPS = [
   {
     id: "week3",
     ...AI_PYTHON_WEEK_META["week3-1"],
-    links: [{ week: "week3-1", label: "3-1 문제 풀기" }],
+    title: "AI 파이썬 3번째",
+    cardTitle: "AI 파이썬 3번째",
+    shortTitle: "컴퓨터 비전 · 멀티모달 AI",
+    description: "3-1 컴퓨터 비전과 3-2 멀티모달 AI를 함께 학습합니다.",
+    topics: "3-1 CNN · ResNet · ViT · 3-2 CLIP · VLM · SAM",
+    questionCount: 300,
+    links: [{ week: "week3-1", label: "3-1 · 3-2 범위 선택하기" }],
   },
 ] as const;
 

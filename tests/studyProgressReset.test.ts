@@ -320,6 +320,54 @@ test("AI Python 3-1 중급 기록은 선택한 범위만 초기화한다", async
   );
 });
 
+test("AI Python 3-2 중급 기록은 선택한 범위만 초기화한다", async () => {
+  const userId = 16;
+  aiPythonWeekProgressStorage.add(
+    userId,
+    aiWeekAttempt(
+      "ai-python-week3-2-v1-clip",
+      "week3-2",
+      "medium",
+      "AI 파운데이션 모델과 CLIP 구조 및 원리",
+    ),
+  );
+  aiPythonWeekProgressStorage.add(
+    userId,
+    aiWeekAttempt(
+      "ai-python-week3-2-v1-vlm",
+      "week3-2",
+      "easy",
+      "시각언어모델(VLM) 및 LLaVA",
+    ),
+  );
+
+  const attemptIds = getAiPythonWeekResetAttemptIds(
+    aiPythonWeekProgressStorage.get(userId),
+    "week3-2",
+    "medium",
+    ["AI 파운데이션 모델과 CLIP 구조 및 원리"],
+  );
+  const { call, client } = createDeleteClient();
+  const result = await resetScopedStudyProgress(
+    client,
+    STUDY_ATTEMPT_TABLES.aiPythonWeek,
+    userId,
+    attemptIds,
+    () => aiPythonWeekProgressStorage.remove(userId, attemptIds),
+  );
+
+  assert.equal(result.synced, true);
+  assert.deepEqual(call, {
+    table: "ai_python_week_attempts",
+    eq: ["student_id", userId],
+    in: ["id", ["ai-python-week3-2-v1-clip"]],
+  });
+  assert.deepEqual(
+    result.progress.attempts.map(({ id }) => id),
+    ["ai-python-week3-2-v1-vlm"],
+  );
+});
+
 test("Python은 현재 난이도와 선택 범위에 일치하는 기록만 초기화한다", () => {
   const userId = 1;
   studyProgressStorage.add(userId, pythonAttempt("python-match", "easy", "operators"));

@@ -52,6 +52,11 @@ export default function StudyReportView() {
         (attempt) => attempt.week === "week3-1",
       ),
     ),
+    "ai-python-week3-2": countUnresolvedMistakes(
+      aiPythonWeek.progress.attempts.filter(
+        (attempt) => attempt.week === "week3-2",
+      ),
+    ),
   };
   const reviewOptions = STUDY_REVIEW_TRACKS.map((track) => ({
     ...track,
