@@ -34,6 +34,7 @@ import {
 } from "../src/utils/specialMockExamGrading.ts";
 import { canAccessSpecialMockExam } from "../src/utils/specialMockExamAccess.ts";
 import {
+  buildSpecialMockExamReviewAnswers,
   calculateSpecialMockExamScore,
   getSpecialMockExamReviewStatus,
   hasPassedSpecialMockExam,
@@ -200,6 +201,63 @@ test("과목평가 2회차에는 서로 충돌하지 않는 30문제짜리 모�
   assert.equal(SPECIAL_MOCK_EXAM_META[3].label, "모의고사 3회차");
   assert.equal(SPECIAL_MOCK_EXAM_BANKS[3][0].sourceId, "r3-mc-001");
   assert.match(SPECIAL_MOCK_EXAM_BANKS[3][0].prompt, /과적합/);
+});
+
+test("모든 문제에는 다시 보기에서 표시할 정답과 해설이 있다", () => {
+  const questions = Object.values(SPECIAL_MOCK_EXAM_BANKS).flat();
+
+  questions.forEach((question) => {
+    assert.ok(question.explanation.trim(), `${question.id}: 해설 누락`);
+    if (question.questionType === "multiple-choice") {
+      assert.ok(question.answer !== null, `${question.id}: 정답 누락`);
+    } else {
+      assert.ok(
+        question.modelAnswer?.trim() || question.acceptedAnswers?.[0]?.trim(),
+        `${question.id}: 모범 답안 누락`,
+      );
+    }
+  });
+});
+
+test("풀이 기록 다시 보기는 최신 답안과 미답변을 포함해 30문제를 복원한다", () => {
+  const questions = SPECIAL_MOCK_EXAM_BANKS[1];
+  const questionId = questions[0].id;
+  const textQuestion = questions.find(
+    ({ questionType }) => questionType !== "multiple-choice",
+  );
+  assert.ok(textQuestion);
+  const attempts = [
+    attempt("old", 1, questionId, false, "2026-08-19T00:00:00.000Z"),
+    {
+      ...attempt("latest", 1, questionId, true, "2026-08-19T00:01:00.000Z"),
+      selectedAnswer: 2,
+    },
+    {
+      ...attempt(
+        "text",
+        1,
+        textQuestion.id,
+        true,
+        "2026-08-19T00:02:00.000Z",
+      ),
+      questionType: textQuestion.questionType,
+      selectedAnswer: null,
+      responseText: "저장된 서술형 답안",
+    },
+  ];
+
+  const restored = buildSpecialMockExamReviewAnswers(questions, attempts);
+
+  assert.equal(Object.keys(restored).length, 30);
+  assert.deepEqual(restored[questionId], { response: 2, correct: true });
+  assert.deepEqual(restored[textQuestion.id], {
+    response: "저장된 서술형 답안",
+    correct: true,
+  });
+  assert.deepEqual(restored[questions[1].id], {
+    response: null,
+    correct: false,
+  });
 });
 
 test("코드 예시는 문제 제목과 분리된 코드 영역에 저장된다", () => {

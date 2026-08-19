@@ -40,6 +40,7 @@ import { shuffleArray } from "../../utils/shuffleArray";
 import { getLatestAttemptsByQuestion } from "../../utils/studyProgressStats";
 import { isAnsweredSpecialMockExamAttempt } from "../../utils/specialMockExamGrading";
 import {
+  buildSpecialMockExamReviewAnswers,
   calculateSpecialMockExamScore,
   getSpecialMockExamReviewStatus,
   hasPassedSpecialMockExam,
@@ -83,6 +84,7 @@ export default function SpecialMockExamQuizView() {
   const { currentUser } = useAuth();
   const { progress, recordAnswers, syncState } = useSpecialMockExamProgress();
   const mode = searchParams.get("mode");
+  const isSavedReview = mode === "review";
   const run = searchParams.get("run") ?? "0";
   const sessionKey = `${currentUser?.id ?? 0}:assessment-${assessmentRound ?? "invalid"}:mock-${mockRound ?? "invalid"}:${mode ?? "standard"}:${run}`;
   const [session, setSession] = useState<QuizSession | null>(null);
@@ -104,14 +106,15 @@ export default function SpecialMockExamQuizView() {
       return;
     }
 
+    const roundAttempts = progress.attempts.filter(
+      (attempt) =>
+        attempt.mockRound === mockRound &&
+        isAnsweredSpecialMockExamAttempt(attempt),
+    );
     let questions: SpecialMockExamQuestion[];
     if (mode === "wrong") {
       questions = getLatestAttemptsByQuestion(
-        progress.attempts.filter(
-          (attempt) =>
-            attempt.mockRound === mockRound &&
-            isAnsweredSpecialMockExamAttempt(attempt),
-        ),
+        roundAttempts,
       )
         .filter((attempt) => !attempt.correct)
         .map((attempt) =>
@@ -124,16 +127,24 @@ export default function SpecialMockExamQuizView() {
       questions = [...SPECIAL_MOCK_EXAM_BANKS[mockRound]];
     }
 
-    setSession({ key: sessionKey, questions: shuffleArray(questions) });
+    const sessionQuestions = isSavedReview
+      ? questions
+      : shuffleArray(questions);
+    setSession({ key: sessionKey, questions: sessionQuestions });
     setCurrentIndex(0);
-    setAnswers({});
+    setAnswers(
+      isSavedReview
+        ? buildSpecialMockExamReviewAnswers(sessionQuestions, roundAttempts)
+        : {},
+    );
     setDraftAnswers({});
     setReviewQuestionIds([]);
     setHintOpen(false);
-    setFinished(false);
-    setReviewingAnswers(false);
+    setFinished(isSavedReview);
+    setReviewingAnswers(isSavedReview);
   }, [
     assessmentRound,
+    isSavedReview,
     mode,
     mockRound,
     progress.attempts,
@@ -402,7 +413,9 @@ export default function SpecialMockExamQuizView() {
                 <Shuffle className="h-3.5 w-3.5" /> 과목평가 2회차 · 모의고사
                 {mockRound}회차 ·{` `}
                 {reviewingAnswers
-                  ? "전체 답변 다시 보기"
+                  ? isSavedReview
+                    ? "저장된 풀이 기록"
+                    : "전체 답변 다시 보기"
                   : mode === "wrong"
                     ? "오답 복습"
                     : "실전 시험"}{` `}
@@ -660,8 +673,12 @@ export default function SpecialMockExamQuizView() {
               type="button"
               onClick={() => {
                 if (reviewingAnswers && isLast) {
-                  setReviewingAnswers(false);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  if (isSavedReview) {
+                    navigate("/study/special-mock");
+                  } else {
+                    setReviewingAnswers(false);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
                   return;
                 }
                 setCurrentIndex((index) =>
@@ -672,7 +689,11 @@ export default function SpecialMockExamQuizView() {
               disabled={!reviewingAnswers && isLast}
               className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-extrabold text-white disabled:opacity-35"
             >
-              {reviewingAnswers && isLast ? "채점 결과" : "다음"}{" "}
+              {reviewingAnswers && isLast
+                ? isSavedReview
+                  ? "목록으로"
+                  : "채점 결과"
+                : "다음"}{" "}
               <ArrowRight className="h-4 w-4" />
             </button>
           </footer>
@@ -686,14 +707,21 @@ export default function SpecialMockExamQuizView() {
           answerRate={reviewingAnswers ? score : answerRate}
           answeredCount={answeredCount}
           reviewMode={reviewingAnswers}
+          actionLabel={
+            isSavedReview ? "모의고사 목록으로 돌아가기" : undefined
+          }
           onSelect={(index) => {
             setCurrentIndex(index);
             setHintOpen(false);
           }}
           onAction={() => {
             if (reviewingAnswers) {
-              setReviewingAnswers(false);
-              window.scrollTo({ top: 0, behavior: "smooth" });
+              if (isSavedReview) {
+                navigate("/study/special-mock");
+              } else {
+                setReviewingAnswers(false);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }
               return;
             }
             finishAndGrade();
@@ -788,7 +816,16 @@ function AnswerReviewFeedback({
               />
             </div>
           ) : (
-            <div className="mt-4">
+            <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <ReviewAnswerBox
+                label="내 답안"
+                text={
+                  typeof answer?.response === "string"
+                    ? answer.response
+                    : "미답변"
+                }
+                muted={typeof answer?.response !== "string"}
+              />
               <ReviewAnswerBox label="모범 답안" text={modelAnswer} />
             </div>
           )}
@@ -840,6 +877,7 @@ function ExamAnswerPanel({
   answerRate,
   answeredCount,
   reviewMode,
+  actionLabel,
   onSelect,
   onAction,
 }: {
@@ -850,6 +888,7 @@ function ExamAnswerPanel({
   answerRate: number;
   answeredCount: number;
   reviewMode: boolean;
+  actionLabel?: string;
   onSelect: (index: number) => void;
   onAction: () => void;
 }) {
@@ -970,7 +1009,8 @@ function ExamAnswerPanel({
         onClick={onAction}
         className="mt-6 w-full rounded-xl border-2 border-slate-900 bg-white px-4 py-3.5 text-sm font-black text-slate-900 transition hover:bg-slate-900 hover:text-white"
       >
-        {reviewMode ? "채점 결과로 돌아가기" : "시험 종료 및 채점"}
+        {actionLabel ??
+          (reviewMode ? "채점 결과로 돌아가기" : "시험 종료 및 채점")}
       </button>
       <p className="mt-3 text-center text-[10px] leading-4 text-slate-500">
         {reviewMode

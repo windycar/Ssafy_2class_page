@@ -246,6 +246,17 @@ export default function SpecialMockExamView() {
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
+                  <Link
+                    to={`/study/special-mock/2/${round}/quiz?mode=review`}
+                    className="mt-3 flex w-full items-center justify-between gap-3 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-violet-800 transition hover:border-violet-300 hover:bg-violet-100"
+                  >
+                    <span className="inline-flex items-center gap-2 text-sm font-extrabold">
+                      <FileCheck2 className="h-4 w-4" /> 전체 문제·풀이 보기
+                    </span>
+                    <span className="text-[10px] font-bold text-violet-500">
+                      내 답안·정답·해설
+                    </span>
+                  </Link>
                 </div>
               </article>
             );
