@@ -44,6 +44,49 @@ const MEMBER_SELECT = `
   last_login_at
 `;
 
+const LEGACY_MEMBER_SELECT = `
+  id,
+  student_id,
+  name,
+  username,
+  login_id,
+  class_name,
+  role,
+  auth_user_id,
+  auth_email,
+  is_active,
+  must_change_password,
+  password_changed_at,
+  last_login_at
+`;
+
+type SupabaseQueryError = {
+  code?: string;
+  message?: string;
+} | null;
+
+export function isMissingSpecialMockExamAccessColumn(
+  error: SupabaseQueryError,
+) {
+  if (!error) return false;
+  return (
+    error.code === "42703" ||
+    error.code === "PGRST204" ||
+    /can_access_special_mock_exam/i.test(error.message ?? "")
+  );
+}
+
+function normalizeMemberRow(
+  member: Omit<MemberRow, "can_access_special_mock_exam"> &
+    Partial<Pick<MemberRow, "can_access_special_mock_exam">>,
+): MemberRow {
+  return {
+    ...member,
+    can_access_special_mock_exam:
+      member.can_access_special_mock_exam === true,
+  };
+}
+
 const LEGACY_STUDY_ATTEMPT_TABLES = [
   "study_attempts",
   "web_study_attempts",
@@ -184,14 +227,21 @@ async function verifiedMember(
     } as const;
   }
 
-  const {
-    data,
-    error,
-  } = await adminClient
+  let memberResult = await adminClient
     .from("members")
     .select(MEMBER_SELECT)
     .eq("auth_user_id", userData.user.id)
     .maybeSingle();
+
+  if (isMissingSpecialMockExamAccessColumn(memberResult.error)) {
+    memberResult = await adminClient
+      .from("members")
+      .select(LEGACY_MEMBER_SELECT)
+      .eq("auth_user_id", userData.user.id)
+      .maybeSingle();
+  }
+
+  const { data, error } = memberResult;
 
   if (error) {
     console.error(
@@ -216,7 +266,7 @@ async function verifiedMember(
     } as const;
   }
 
-  const member = data as MemberRow;
+  const member = normalizeMemberRow(data as MemberRow);
 
   if (!member.is_active) {
     return {
@@ -324,14 +374,21 @@ export async function handleAuthRequest(request: Request) {
     /**
      * members 조회는 반드시 adminClient
      */
-    const {
-      data,
-      error,
-    } = await adminClient
+    let memberResult = await adminClient
       .from("members")
       .select(MEMBER_SELECT)
       .eq("login_id", loginId)
       .maybeSingle();
+
+    if (isMissingSpecialMockExamAccessColumn(memberResult.error)) {
+      memberResult = await adminClient
+        .from("members")
+        .select(LEGACY_MEMBER_SELECT)
+        .eq("login_id", loginId)
+        .maybeSingle();
+    }
+
+    const { data, error } = memberResult;
 
     if (error) {
       console.error(
@@ -347,7 +404,7 @@ export async function handleAuthRequest(request: Request) {
 
     if (
       !data ||
-      !(data as MemberRow).is_active
+      !normalizeMemberRow(data as MemberRow).is_active
     ) {
       return jsonError(
         "아이디 또는 비밀번호가 올바르지 않습니다.",
@@ -355,7 +412,7 @@ export async function handleAuthRequest(request: Request) {
       );
     }
 
-    let member = data as MemberRow;
+    let member = normalizeMemberRow(data as MemberRow);
 
     let authUserId =
       member.auth_user_id;
@@ -439,7 +496,7 @@ export async function handleAuthRequest(request: Request) {
         })
         .eq("id", member.id)
         .is("auth_user_id", null)
-        .select(MEMBER_SELECT)
+        .select(LEGACY_MEMBER_SELECT)
         .single();
 
       if (
@@ -465,8 +522,11 @@ export async function handleAuthRequest(request: Request) {
         );
       }
 
-      member =
-        updated as MemberRow;
+      member = normalizeMemberRow({
+        ...(updated as MemberRow),
+        can_access_special_mock_exam:
+          member.can_access_special_mock_exam,
+      });
     }
 
     try {
@@ -739,7 +799,7 @@ export async function handleAuthRequest(request: Request) {
         "id",
         verified.member.id,
       )
-      .select(MEMBER_SELECT)
+      .select(LEGACY_MEMBER_SELECT)
       .single();
 
     if (
@@ -791,7 +851,11 @@ export async function handleAuthRequest(request: Request) {
       ok: true,
       profile:
         toProfile(
-          updated as MemberRow,
+          normalizeMemberRow({
+            ...(updated as MemberRow),
+            can_access_special_mock_exam:
+              verified.member.can_access_special_mock_exam,
+          }),
         ),
     });
   }

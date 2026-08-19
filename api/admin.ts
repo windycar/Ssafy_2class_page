@@ -39,6 +39,28 @@ const ATTEMPT_TABLES = [
   "special_mock_exam_attempts",
 ] as const;
 const ATTEMPT_PAGE_SIZE = 1000;
+const MEMBER_LIST_SELECT =
+  "id, student_id, name, username, login_id, class_name, role, auth_user_id, is_active, can_access_special_mock_exam, must_change_password, password_changed_at, last_login_at, created_at";
+const LEGACY_MEMBER_LIST_SELECT =
+  "id, student_id, name, username, login_id, class_name, role, auth_user_id, is_active, must_change_password, password_changed_at, last_login_at, created_at";
+
+type SupabaseQueryError = {
+  code?: string;
+  message?: string;
+} | null;
+
+export function isMissingSpecialMockExamSchema(error: SupabaseQueryError) {
+  if (!error) return false;
+  return (
+    error.code === "42703" ||
+    error.code === "42P01" ||
+    error.code === "PGRST204" ||
+    error.code === "PGRST205" ||
+    /can_access_special_mock_exam|special_mock_exam_attempts/i.test(
+      error.message ?? "",
+    )
+  );
+}
 
 async function loadAttemptQuestionRows(
   client: SupabaseClient,
@@ -73,6 +95,13 @@ async function loadAttemptQuestionRows(
       from + ATTEMPT_PAGE_SIZE - 1,
     );
 
+    if (
+      error &&
+      table === "special_mock_exam_attempts" &&
+      isMissingSpecialMockExamSchema(error)
+    ) {
+      return [];
+    }
     if (error) throw error;
     const page = (data ?? []) as AttemptQuestionRow[];
     rows.push(...page);
@@ -138,12 +167,23 @@ export async function handleAdminRequest(request: Request) {
   if (body.action === "verify") return Response.json({ ok: true });
 
   if (body.action === "members.list") {
-    const { data, error } = await client
+    let membersResult = await client
       .from("members")
-      .select("id, student_id, name, username, login_id, class_name, role, auth_user_id, is_active, can_access_special_mock_exam, must_change_password, password_changed_at, last_login_at, created_at")
+      .select(MEMBER_LIST_SELECT)
       .order("role", { ascending: true })
       .order("class_name", { ascending: true })
       .order("name", { ascending: true });
+
+    if (isMissingSpecialMockExamSchema(membersResult.error)) {
+      membersResult = await client
+        .from("members")
+        .select(LEGACY_MEMBER_LIST_SELECT)
+        .order("role", { ascending: true })
+        .order("class_name", { ascending: true })
+        .order("name", { ascending: true });
+    }
+
+    const { data, error } = membersResult;
     if (error) return jsonError(error.message, 400);
 
     let solvedByStudent: Map<number, number>;
@@ -166,6 +206,8 @@ export async function handleAdminRequest(request: Request) {
       ok: true,
       members: (data ?? []).map(({ auth_user_id, ...member }) => ({
         ...member,
+        can_access_special_mock_exam:
+          member.can_access_special_mock_exam === true,
         auth_provisioned: Boolean(auth_user_id),
         solved_question_count:
           solvedByStudent.get(
@@ -195,10 +237,9 @@ export async function handleAdminRequest(request: Request) {
         class_name: className,
         role: "member",
         is_active: true,
-        can_access_special_mock_exam: false,
         must_change_password: true,
       })
-      .select("id, student_id, name, username, login_id, class_name, role, is_active, can_access_special_mock_exam, must_change_password, created_at")
+      .select("id, student_id, name, username, login_id, class_name, role, is_active, must_change_password, created_at")
       .single();
     if (error) {
       const message = error.code === "23505" ? "이미 사용 중인 아이디 또는 교육생 번호입니다." : error.message;
@@ -208,6 +249,7 @@ export async function handleAdminRequest(request: Request) {
       ok: true,
       member: {
         ...data,
+        can_access_special_mock_exam: false,
         auth_provisioned: false,
         solved_question_count: 0,
       },
@@ -243,6 +285,12 @@ export async function handleAdminRequest(request: Request) {
       .eq("role", "member")
       .select("id")
       .maybeSingle();
+    if (isMissingSpecialMockExamSchema(error)) {
+      return jsonError(
+        "특별 모의고사 권한 DB 업데이트가 아직 적용되지 않았습니다.",
+        503,
+      );
+    }
     if (error) return jsonError(error.message, 400);
     if (!data) return jsonError("권한을 변경할 회원을 찾을 수 없습니다.", 404);
     return Response.json({ ok: true });

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   normalizeLoginId,
   providerPassword,
+  isMissingSpecialMockExamAccessColumn,
   studyOwnerStudentId,
 } from "../api/auth.ts";
 import {
@@ -38,5 +39,22 @@ test("세션의 Auth 사용자와 API 회원 프로필이 같은 계정인지 �
 test("학습 기록 소유자 ID는 교육생 ID를 우선하고 관리자는 충돌 없는 ID를 쓴다", () => {
   assert.equal(studyOwnerStudentId({ id: 18, student_id: 18 }), 18);
   assert.equal(studyOwnerStudentId({ id: 24, student_id: null }), 900_000_024);
+});
+
+test("특별 모의고사 권한 열이 아직 없는 DB 오류만 호환 대상으로 판별한다", () => {
+  assert.equal(
+    isMissingSpecialMockExamAccessColumn({
+      code: "PGRST204",
+      message: "Could not find the 'can_access_special_mock_exam' column",
+    }),
+    true,
+  );
+  assert.equal(
+    isMissingSpecialMockExamAccessColumn({
+      code: "42501",
+      message: "permission denied",
+    }),
+    false,
+  );
 });
 
