@@ -1,11 +1,12 @@
 import type { AiPythonWeek } from "../types/aiPythonWeekStudy";
+import type { SpecialMockExamRound } from "../types/specialMockExam";
 
 type BaseReviewTrack = {
   id: string;
   label: string;
   description: string;
   href: string;
-  tone: "indigo" | "cyan" | "violet" | "pink" | "blue";
+  tone: "indigo" | "cyan" | "violet" | "pink" | "blue" | "amber";
 };
 
 export type StudyReviewTrack = BaseReviewTrack &
@@ -14,6 +15,7 @@ export type StudyReviewTrack = BaseReviewTrack &
     | { source: "web" }
     | { source: "ai-python" }
     | { source: "ai-python-week"; week: AiPythonWeek }
+    | { source: "special-mock-exam"; round: SpecialMockExamRound }
   );
 
 /**
@@ -80,5 +82,50 @@ export const STUDY_REVIEW_TRACKS: readonly StudyReviewTrack[] = [
     tone: "violet",
     source: "ai-python-week",
     week: "week3-2",
+  },
+  {
+    id: "special-mock-a2-r1",
+    label: "특별 모의고사 2-1",
+    description: "과목평가 2회차 · 모의고사 1회차",
+    href: "/study/special-mock/2/1/quiz?mode=wrong",
+    tone: "amber",
+    source: "special-mock-exam",
+    round: 1,
+  },
+  {
+    id: "special-mock-a2-r2",
+    label: "특별 모의고사 2-2",
+    description: "과목평가 2회차 · 모의고사 2회차",
+    href: "/study/special-mock/2/2/quiz?mode=wrong",
+    tone: "amber",
+    source: "special-mock-exam",
+    round: 2,
+  },
+  {
+    id: "special-mock-a2-r3",
+    label: "특별 모의고사 2-3",
+    description: "과목평가 2회차 · 모의고사 3회차",
+    href: "/study/special-mock/2/3/quiz?mode=wrong",
+    tone: "amber",
+    source: "special-mock-exam",
+    round: 3,
+  },
+  {
+    id: "special-mock-a2-r4",
+    label: "특별 모의고사 2-4",
+    description: "과목평가 2회차 · 모의고사 4회차",
+    href: "/study/special-mock/2/4/quiz?mode=wrong",
+    tone: "amber",
+    source: "special-mock-exam",
+    round: 4,
+  },
+  {
+    id: "special-mock-a2-r5",
+    label: "특별 모의고사 2-5",
+    description: "과목평가 2회차 · 모의고사 5회차",
+    href: "/study/special-mock/2/5/quiz?mode=wrong",
+    tone: "amber",
+    source: "special-mock-exam",
+    round: 5,
   },
 ] as const;

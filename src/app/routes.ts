@@ -31,6 +31,12 @@ const AiPythonWeekStudyView = lazy(
 const AiPythonWeekQuizView = lazy(
   () => import("../views/study/AiPythonWeekQuizView"),
 );
+const SpecialMockExamView = lazy(
+  () => import("../views/study/SpecialMockExamView"),
+);
+const SpecialMockExamQuizView = lazy(
+  () => import("../views/study/SpecialMockExamQuizView"),
+);
 const AttendanceDocumentView = lazy(() => import("../views/AttendanceDocumentView"));
 const NotFoundView = lazy(() => import("../views/NotFoundView"));
 
@@ -68,6 +74,11 @@ export const router = createBrowserRouter([
           { path: "study/ai-python/quiz", Component: AiPythonQuizView },
           { path: "study/ai-python/:week", Component: AiPythonWeekStudyView },
           { path: "study/ai-python/:week/quiz", Component: AiPythonWeekQuizView },
+          { path: "study/special-mock", Component: SpecialMockExamView },
+          {
+            path: "study/special-mock/:assessmentRound/:mockRound/quiz",
+            Component: SpecialMockExamQuizView,
+          },
           { path: "attendance", Component: AttendanceDocumentView },
           { path: "*", Component: NotFoundView },
         ],

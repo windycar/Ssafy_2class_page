@@ -5,6 +5,10 @@ import {
   type AttemptQuestionRow,
 } from "./adminStudyProgress.js";
 import { getAiPythonWeekAttemptIdPrefix } from "../src/types/aiPythonWeekStudy.js";
+import {
+  getSpecialMockExamAttemptIdPrefix,
+  SPECIAL_MOCK_EXAM_ROUNDS,
+} from "../src/types/specialMockExam.js";
 type AdminRequest = {
   action?: string;
   id?: string | number;
@@ -31,6 +35,7 @@ const ATTEMPT_TABLES = [
   "web_study_attempts",
   "ai_python_study_attempts",
   "ai_python_week_attempts",
+  "special_mock_exam_attempts",
 ] as const;
 const ATTEMPT_PAGE_SIZE = 1000;
 
@@ -52,6 +57,14 @@ async function loadAttemptQuestionRows(
           `and(week.eq.week1,id.like.${getAiPythonWeekAttemptIdPrefix("week1")}%)`,
           `and(week.eq.week2,id.like.${getAiPythonWeekAttemptIdPrefix("week2")}%)`,
         ].join(","),
+      );
+    }
+    if (table === "special_mock_exam_attempts") {
+      query = query.or(
+        SPECIAL_MOCK_EXAM_ROUNDS.map(
+          (round) =>
+            `and(mock_round.eq.${round},id.like.${getSpecialMockExamAttemptIdPrefix(round)}%)`,
+        ).join(","),
       );
     }
     const { data, error } = await query.range(

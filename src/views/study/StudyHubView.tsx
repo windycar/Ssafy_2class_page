@@ -12,6 +12,7 @@ import { useStudyProgress } from "../../hooks/useStudyProgress";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
 import { useAiPythonStudyProgress } from "../../hooks/useAiPythonStudyProgress";
 import { useAiPythonWeekProgress } from "../../hooks/useAiPythonWeekProgress";
+import { useSpecialMockExamProgress } from "../../hooks/useSpecialMockExamProgress";
 import { countUnresolvedMistakes } from "../../utils/studyProgressStats";
 import { AI_PYTHON_WEEK_CARD_GROUPS } from "../../data/questionBanks/aiPythonWeekMeta";
 import pythonHero from "../../assets/study/python-study-hero.png";
@@ -22,22 +23,29 @@ export default function StudyHubView() {
   const { progress: webProgress, summary: webSummary } = useWebStudyProgress();
   const { progress: aiPythonProgress, summary: aiPythonSummary } = useAiPythonStudyProgress();
   const { progress: aiPythonWeekProgress, summary: aiPythonWeekSummary } = useAiPythonWeekProgress();
+  const {
+    progress: specialMockExamProgress,
+    summary: specialMockExamSummary,
+  } = useSpecialMockExamProgress();
   const total =
     pythonSummary.total +
     webSummary.total +
     aiPythonSummary.total +
-    aiPythonWeekSummary.total;
+    aiPythonWeekSummary.total +
+    specialMockExamSummary.total;
   const correct =
     pythonSummary.correct +
     webSummary.correct +
     aiPythonSummary.correct +
-    aiPythonWeekSummary.correct;
+    aiPythonWeekSummary.correct +
+    specialMockExamSummary.correct;
   const accuracy = total ? Math.round((correct / total) * 100) : 0;
   const reviewCount =
     countUnresolvedMistakes(pythonProgress.attempts) +
     countUnresolvedMistakes(webProgress.attempts) +
     countUnresolvedMistakes(aiPythonProgress.attempts) +
-    countUnresolvedMistakes(aiPythonWeekProgress.attempts);
+    countUnresolvedMistakes(aiPythonWeekProgress.attempts) +
+    countUnresolvedMistakes(specialMockExamProgress.attempts);
 
   return (
     <div className="space-y-7 pb-6">
@@ -218,6 +226,42 @@ export default function StudyHubView() {
                 </p>
                 <span className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold">
                   출제 범위 선택하기
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </span>
+              </div>
+            </div>
+          </Link>
+
+          <Link
+            to="/study/special-mock"
+            className="group relative min-h-[290px] overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-br from-[#17143f] via-[#4d35ad] to-[#b36a16] p-6 text-white shadow-[0_18px_45px_rgba(77,53,173,0.22)] transition hover:-translate-y-1"
+          >
+            <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full border-[28px] border-white/5" />
+            <div className="absolute -bottom-14 right-16 h-36 w-36 rounded-full bg-amber-200/10 blur-2xl" />
+            <img
+              src="/images/study-tracks/special-mock-exam.png"
+              alt=""
+              aria-hidden="true"
+              className="pointer-events-none absolute -bottom-1 right-0 h-[124px] w-[124px] object-contain drop-shadow-[0_14px_24px_rgba(22,15,64,0.36)] transition duration-300 group-hover:-translate-y-1 group-hover:scale-105 sm:h-[140px] sm:w-[140px] lg:h-[132px] lg:w-[132px] xl:h-[150px] xl:w-[150px]"
+            />
+            <div className="relative flex h-full flex-col">
+              <div className="flex justify-end">
+                <span className="rounded-full bg-amber-100/20 px-3 py-1 text-[11px] font-black text-amber-50">
+                  5세트 · 150문제
+                </span>
+              </div>
+              <div className="relative z-10 mt-auto max-w-[66%] sm:max-w-[68%] lg:max-w-[60%] xl:max-w-[64%]">
+                <p className="text-xs font-black tracking-[0.18em] text-amber-100/80">
+                  SPECIAL EXAM
+                </p>
+                <h3 className="mt-1 whitespace-nowrap text-2xl font-black sm:text-3xl">
+                  특별 모의고사
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-amber-50/80">
+                  과목평가 2회차 실전 문제를 5개 모의고사로 점검합니다.
+                </p>
+                <span className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold">
+                  모의고사 선택하기
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </span>
               </div>

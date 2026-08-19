@@ -18,6 +18,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useAiPythonStudyProgress } from "../../hooks/useAiPythonStudyProgress";
 import { useAiPythonWeekProgress } from "../../hooks/useAiPythonWeekProgress";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
+import { useSpecialMockExamProgress } from "../../hooks/useSpecialMockExamProgress";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
 import { countUnresolvedMistakes } from "../../utils/studyProgressStats";
 
@@ -27,6 +28,7 @@ const TRACK_COLORS: Record<StudyReviewTrack["tone"], string> = {
   violet: "#7c3aed",
   pink: "#db2777",
   blue: "#2563eb",
+  amber: "#d97706",
 };
 
 export default function StudyReportView() {
@@ -35,6 +37,7 @@ export default function StudyReportView() {
   const web = useWebStudyProgress();
   const aiPython = useAiPythonStudyProgress();
   const aiPythonWeek = useAiPythonWeekProgress();
+  const specialMockExam = useSpecialMockExamProgress();
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
 
   const wrongCounts: Record<string, number> = {
@@ -57,6 +60,31 @@ export default function StudyReportView() {
         (attempt) => attempt.week === "week3-2",
       ),
     ),
+    "special-mock-a2-r1": countUnresolvedMistakes(
+      specialMockExam.progress.attempts.filter(
+        (attempt) => attempt.mockRound === 1,
+      ),
+    ),
+    "special-mock-a2-r2": countUnresolvedMistakes(
+      specialMockExam.progress.attempts.filter(
+        (attempt) => attempt.mockRound === 2,
+      ),
+    ),
+    "special-mock-a2-r3": countUnresolvedMistakes(
+      specialMockExam.progress.attempts.filter(
+        (attempt) => attempt.mockRound === 3,
+      ),
+    ),
+    "special-mock-a2-r4": countUnresolvedMistakes(
+      specialMockExam.progress.attempts.filter(
+        (attempt) => attempt.mockRound === 4,
+      ),
+    ),
+    "special-mock-a2-r5": countUnresolvedMistakes(
+      specialMockExam.progress.attempts.filter(
+        (attempt) => attempt.mockRound === 5,
+      ),
+    ),
   };
   const reviewOptions = STUDY_REVIEW_TRACKS.map((track) => ({
     ...track,
@@ -77,6 +105,7 @@ export default function StudyReportView() {
     web.syncState,
     aiPython.syncState,
     aiPythonWeek.syncState,
+    specialMockExam.syncState,
   ];
   const syncState = syncStates.some((state) => state === "loading")
     ? "loading"

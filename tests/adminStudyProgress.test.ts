@@ -16,8 +16,12 @@ test("counts each solved question once per question bank", () => {
     ],
     [],
     [],
+    [
+      { student_id: 101, question_id: "assessment-2-round-1-exam-mc-001" },
+      { student_id: 101, question_id: "assessment-2-round-1-exam-mc-001" },
+    ],
   ]);
 
-  assert.equal(counts.get(101), 4);
+  assert.equal(counts.get(101), 5);
   assert.equal(counts.get(202), 1);
 });

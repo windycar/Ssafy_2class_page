@@ -10,6 +10,7 @@
     "test:bang": "node --experimental-strip-types --test tests/bangResponseRules.test.ts",
     "test:study-reset": "node --experimental-strip-types --test tests/studyProgressReset.test.ts",
     "test:admin-study": "node --experimental-strip-types --test tests/adminStudyProgress.test.ts",
+    "test:special-mock": "node --experimental-strip-types --test tests/specialMockExam.test.ts",
     "test:auth-community": "node --experimental-strip-types --test tests/authHelpers.test.ts tests/communityServices.test.ts",
     "validate:study": "node scripts/validate-study-bank.mjs",
     "validate:web-study": "node scripts/validate-web-study-bank.mjs",
