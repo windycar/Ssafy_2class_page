@@ -71,33 +71,51 @@ export function useSpecialMockExamProgress() {
     };
   }, [currentUser, hasAccess]);
 
+  const recordAnswers = (
+    mockRound: SpecialMockExamRound,
+    responses: Array<{
+      question: SpecialMockExamQuestion;
+      response: number | string;
+    }>,
+  ) => {
+    const graded = responses.map(({ question, response }) => ({
+      question,
+      response,
+      correct: gradeSpecialMockExamResponse(question, response).correct,
+    }));
+    if (!currentUser || !hasAccess) return graded;
+
+    const submittedAt = Date.now();
+    const answeredAt = new Date(submittedAt).toISOString();
+    const attempts: SpecialMockExamAttempt[] = graded.map(
+      ({ question, response, correct }, index) => ({
+        id: `${getSpecialMockExamAttemptIdPrefix(mockRound)}${submittedAt}-${index}-${question.sourceId}-${Math.random().toString(36).slice(2, 7)}`,
+        assessmentRound: 2,
+        mockRound,
+        questionId: question.id,
+        difficulty: question.difficulty,
+        category: question.category,
+        questionType: question.questionType,
+        selectedAnswer: typeof response === "number" ? response : null,
+        responseText: typeof response === "string" ? response : undefined,
+        correct,
+        answeredAt,
+      }),
+    );
+    setProgress(specialMockExamProgressStorage.addMany(currentUser.id, attempts));
+    setSyncState("loading");
+    saveSpecialMockExamAttempt(currentUser.id)
+      .then((saved) => setSyncState(saved ? "synced" : "local"))
+      .catch(() => setSyncState("local"));
+    return graded;
+  };
+
   const recordAnswer = (
     mockRound: SpecialMockExamRound,
     question: SpecialMockExamQuestion,
     response: number | string,
   ) => {
-    const grade = gradeSpecialMockExamResponse(question, response);
-    if (!currentUser || !hasAccess) return grade.correct;
-
-    const attempt: SpecialMockExamAttempt = {
-      id: `${getSpecialMockExamAttemptIdPrefix(mockRound)}${Date.now()}-${question.sourceId}-${Math.random().toString(36).slice(2, 7)}`,
-      assessmentRound: 2,
-      mockRound,
-      questionId: question.id,
-      difficulty: question.difficulty,
-      category: question.category,
-      questionType: question.questionType,
-      selectedAnswer: typeof response === "number" ? response : null,
-      responseText: typeof response === "string" ? response : undefined,
-      correct: grade.correct,
-      answeredAt: new Date().toISOString(),
-    };
-    setProgress(specialMockExamProgressStorage.add(currentUser.id, attempt));
-    setSyncState("loading");
-    saveSpecialMockExamAttempt(currentUser.id)
-      .then((saved) => setSyncState(saved ? "synced" : "local"))
-      .catch(() => setSyncState("local"));
-    return grade.correct;
+    return recordAnswers(mockRound, [{ question, response }])[0].correct;
   };
 
   const resetProgress = async (mockRound: SpecialMockExamRound) => {
@@ -147,6 +165,7 @@ export function useSpecialMockExamProgress() {
     progress,
     summary,
     recordAnswer,
+    recordAnswers,
     resetProgress,
     syncState,
   };

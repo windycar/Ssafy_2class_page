@@ -106,6 +106,21 @@ export const specialMockExamProgressStorage = {
     return next;
   },
 
+  addMany(userId: number, attempts: SpecialMockExamAttempt[]) {
+    if (!attempts.length) return this.get(userId);
+    const next = write(userId, {
+      attempts: [...this.get(userId).attempts, ...attempts],
+    });
+    const pendingIds = this.getPendingIds(userId);
+    safeSet(
+      pendingKeyFor(userId),
+      JSON.stringify([
+        ...new Set([...pendingIds, ...attempts.map(({ id }) => id)]),
+      ]),
+    );
+    return next;
+  },
+
   replace(userId: number, progress: SpecialMockExamProgress) {
     return write(userId, progress);
   },

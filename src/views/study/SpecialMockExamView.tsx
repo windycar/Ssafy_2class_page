@@ -27,6 +27,7 @@ import {
   countUnresolvedMistakes,
   getLatestAttemptsByQuestion,
 } from "../../utils/studyProgressStats";
+import { hasPassedSpecialMockExam } from "../../utils/specialMockExamResult";
 
 export default function SpecialMockExamView() {
   const { progress, resetProgress, syncState } = useSpecialMockExamProgress();
@@ -165,9 +166,7 @@ export default function SpecialMockExamView() {
               ? Math.round((latestCorrect / completed) * 100)
               : 0;
             const completedAll = completed === questions.length;
-            const startHref = `/study/special-mock/2/${round}/quiz${
-              completedAll ? "?mode=all" : ""
-            }`;
+            const startHref = `/study/special-mock/2/${round}/quiz?mode=all`;
 
             return (
               <article
@@ -187,6 +186,19 @@ export default function SpecialMockExamView() {
                   <h3 className="mt-5 text-xl font-black text-slate-900">
                     {SPECIAL_MOCK_EXAM_META[round].label}
                   </h3>
+                  {completedAll ? (
+                    <span
+                      className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-black ${
+                        hasPassedSpecialMockExam(accuracy)
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-rose-50 text-rose-600"
+                      }`}
+                    >
+                      {hasPassedSpecialMockExam(accuracy)
+                        ? "60점 이상 통과"
+                        : "미통과 · 재응시 필요"}
+                    </span>
+                  ) : null}
                   <p className="mt-1 min-h-10 text-sm leading-5 text-slate-500">
                     {SPECIAL_MOCK_EXAM_META[round].description}
                   </p>
@@ -202,7 +214,7 @@ export default function SpecialMockExamView() {
                       to={startHref}
                       className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-extrabold text-white"
                     >
-                      {completedAll ? "전체 다시 풀기" : `${30 - completed}문제 풀기`}
+                      {completedAll ? "다시 응시하기" : "모의고사 시작"}
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                     {wrong > 0 ? (

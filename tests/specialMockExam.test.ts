@@ -28,6 +28,11 @@ import {
 } from "../src/utils/studyProgressStats.ts";
 import { gradeSpecialMockExamResponse } from "../src/utils/specialMockExamGrading.ts";
 import { canAccessSpecialMockExam } from "../src/utils/specialMockExamAccess.ts";
+import {
+  calculateSpecialMockExamScore,
+  hasPassedSpecialMockExam,
+  SPECIAL_MOCK_EXAM_PASS_SCORE,
+} from "../src/utils/specialMockExamResult.ts";
 
 class LocalStorageMock {
   private values = new Map<string, string>();
@@ -106,6 +111,14 @@ function createDeleteClient() {
 }
 
 beforeEach(() => localStorageMock.clear());
+
+test("특별 모의고사는 60점 이상만 통과한다", () => {
+  assert.equal(SPECIAL_MOCK_EXAM_PASS_SCORE, 60);
+  assert.equal(calculateSpecialMockExamScore(17, 30), 57);
+  assert.equal(calculateSpecialMockExamScore(18, 30), 60);
+  assert.equal(hasPassedSpecialMockExam(59), false);
+  assert.equal(hasPassedSpecialMockExam(60), true);
+});
 
 test("특별 모의고사는 승인된 회원과 관리자만 접근한다", () => {
   assert.equal(canAccessSpecialMockExam(null), false);
@@ -214,6 +227,25 @@ test("풀이 기록은 사용자별 pending으로 저장되고 회차별 초기�
     specialMockExamProgressStorage.get(userId).attempts.map(({ id }) => id),
     [round2.id],
     "초기화 tombstone이 서버의 오래된 기록 부활을 막아야 한다",
+  );
+});
+
+test("시험 종료 시 여러 답안을 하나의 pending 묶음으로 저장한다", () => {
+  const userId = 55;
+  const attempts = [
+    attempt("batch-1", 3, SPECIAL_MOCK_EXAM_BANKS[3][0].id, true),
+    attempt("batch-2", 3, SPECIAL_MOCK_EXAM_BANKS[3][1].id, false),
+  ];
+
+  specialMockExamProgressStorage.addMany(userId, attempts);
+
+  assert.deepEqual(
+    specialMockExamProgressStorage.getPendingIds(userId),
+    attempts.map(({ id }) => id),
+  );
+  assert.deepEqual(
+    specialMockExamProgressStorage.get(userId).attempts.map(({ id }) => id),
+    attempts.map(({ id }) => id),
   );
 });
 
