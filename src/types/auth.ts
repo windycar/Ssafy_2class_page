@@ -10,6 +10,7 @@ export interface AuthUser extends Student {
   className: string;
   role: MemberRole;
   isActive: boolean;
+  canAccessSpecialMockExam: boolean;
   mustChangePassword: boolean;
   passwordChangedAt: string | null;
   lastLoginAt: string | null;

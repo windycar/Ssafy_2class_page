@@ -21,6 +21,7 @@ import { useStudyProgress } from "../../hooks/useStudyProgress";
 import { useSpecialMockExamProgress } from "../../hooks/useSpecialMockExamProgress";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
 import { countUnresolvedMistakes } from "../../utils/studyProgressStats";
+import { canAccessSpecialMockExam } from "../../utils/specialMockExamAccess";
 
 const TRACK_COLORS: Record<StudyReviewTrack["tone"], string> = {
   indigo: "#4f46e5",
@@ -33,6 +34,7 @@ const TRACK_COLORS: Record<StudyReviewTrack["tone"], string> = {
 
 export default function StudyReportView() {
   const { currentUser } = useAuth();
+  const hasSpecialMockExamAccess = canAccessSpecialMockExam(currentUser);
   const python = useStudyProgress();
   const web = useWebStudyProgress();
   const aiPython = useAiPythonStudyProgress();
@@ -86,7 +88,10 @@ export default function StudyReportView() {
       ),
     ),
   };
-  const reviewOptions = STUDY_REVIEW_TRACKS.map((track) => ({
+  const reviewOptions = STUDY_REVIEW_TRACKS.filter(
+    (track) =>
+      track.source !== "special-mock-exam" || hasSpecialMockExamAccess,
+  ).map((track) => ({
     ...track,
     wrongCount: wrongCounts[track.id] ?? 0,
   }));
@@ -105,7 +110,7 @@ export default function StudyReportView() {
     web.syncState,
     aiPython.syncState,
     aiPythonWeek.syncState,
-    specialMockExam.syncState,
+    ...(hasSpecialMockExamAccess ? [specialMockExam.syncState] : []),
   ];
   const syncState = syncStates.some((state) => state === "loading")
     ? "loading"
@@ -272,7 +277,7 @@ export default function StudyReportView() {
           <p className="mt-1 text-2xl font-black text-slate-900">
             {reviewableTrackCount}{" "}
             <span className="text-sm text-slate-400">
-              / {STUDY_REVIEW_TRACKS.length}개
+              / {reviewOptions.length}개
             </span>
           </p>
         </div>

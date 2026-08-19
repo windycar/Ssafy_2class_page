@@ -16,6 +16,7 @@ type ServerProfile = {
   className: string;
   role: MemberRole;
   isActive: boolean;
+  canAccessSpecialMockExam: boolean;
   mustChangePassword: boolean;
   passwordChangedAt: string | null;
   lastLoginAt: string | null;
@@ -42,6 +43,7 @@ function toAuthUser(profile: ServerProfile): AuthUser {
     className: profile.className,
     role: profile.role,
     isActive: profile.isActive,
+    canAccessSpecialMockExam: profile.canAccessSpecialMockExam,
     mustChangePassword: profile.mustChangePassword,
     passwordChangedAt: profile.passwordChangedAt,
     lastLoginAt: profile.lastLoginAt,

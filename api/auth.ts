@@ -13,6 +13,7 @@ type MemberRow = {
   auth_user_id: string | null;
   auth_email: string | null;
   is_active: boolean;
+  can_access_special_mock_exam: boolean;
   must_change_password: boolean;
   password_changed_at: string | null;
   last_login_at: string | null;
@@ -37,6 +38,7 @@ const MEMBER_SELECT = `
   auth_user_id,
   auth_email,
   is_active,
+  can_access_special_mock_exam,
   must_change_password,
   password_changed_at,
   last_login_at
@@ -116,6 +118,8 @@ function toProfile(member: MemberRow) {
     className: member.class_name,
     role: member.role,
     isActive: member.is_active,
+    canAccessSpecialMockExam:
+      member.role === "admin" || member.can_access_special_mock_exam,
     mustChangePassword: member.must_change_password,
     passwordChangedAt: member.password_changed_at,
     lastLoginAt: member.last_login_at,

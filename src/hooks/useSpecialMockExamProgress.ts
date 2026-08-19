@@ -10,27 +10,29 @@ import { gradeSpecialMockExamResponse } from "../utils/specialMockExamGrading";
 import { subscribeToStudyProgressRefresh } from "../utils/studyProgressSync";
 import type {
   SpecialMockExamAttempt,
+  SpecialMockExamProgress,
   SpecialMockExamQuestion,
   SpecialMockExamRound,
 } from "../types/specialMockExam";
 import { getSpecialMockExamAttemptIdPrefix } from "../types/specialMockExam";
 import type { StudySyncState } from "./useStudyProgress";
+import { canAccessSpecialMockExam } from "../utils/specialMockExamAccess";
 
 export function useSpecialMockExamProgress() {
   const { currentUser } = useAuth();
-  const userId = currentUser?.id ?? 0;
-  const [progress, setProgress] = useState(() =>
-    specialMockExamProgressStorage.get(userId),
-  );
+  const hasAccess = canAccessSpecialMockExam(currentUser);
+  const [progress, setProgress] = useState<SpecialMockExamProgress>({
+    attempts: [],
+  });
   const [syncState, setSyncState] = useState<StudySyncState>("loading");
   const resetInFlight = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     let refreshInFlight = false;
-    setProgress(specialMockExamProgressStorage.get(userId));
 
-    if (!currentUser) {
+    if (!currentUser || !hasAccess) {
+      setProgress({ attempts: [] });
       setSyncState("local");
       return () => {
         cancelled = true;
@@ -38,6 +40,7 @@ export function useSpecialMockExamProgress() {
     }
 
     const activeUserId = currentUser.id;
+    setProgress(specialMockExamProgressStorage.get(activeUserId));
     const refresh = async (showLoading = false) => {
       if (refreshInFlight) return;
       refreshInFlight = true;
@@ -66,7 +69,7 @@ export function useSpecialMockExamProgress() {
       cancelled = true;
       unsubscribe();
     };
-  }, [currentUser, userId]);
+  }, [currentUser, hasAccess]);
 
   const recordAnswer = (
     mockRound: SpecialMockExamRound,
@@ -74,7 +77,7 @@ export function useSpecialMockExamProgress() {
     response: number | string,
   ) => {
     const grade = gradeSpecialMockExamResponse(question, response);
-    if (!currentUser) return grade.correct;
+    if (!currentUser || !hasAccess) return grade.correct;
 
     const attempt: SpecialMockExamAttempt = {
       id: `${getSpecialMockExamAttemptIdPrefix(mockRound)}${Date.now()}-${question.sourceId}-${Math.random().toString(36).slice(2, 7)}`,
@@ -98,7 +101,12 @@ export function useSpecialMockExamProgress() {
   };
 
   const resetProgress = async (mockRound: SpecialMockExamRound) => {
-    if (!currentUser || syncState === "loading" || resetInFlight.current) {
+    if (
+      !currentUser ||
+      !hasAccess ||
+      syncState === "loading" ||
+      resetInFlight.current
+    ) {
       return false;
     }
     if (!progress.attempts.some((attempt) => attempt.mockRound === mockRound)) {

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test, { beforeEach } from "node:test";
+import { readFileSync } from "node:fs";
 import {
   SPECIAL_MOCK_EXAM_BANKS,
   SPECIAL_MOCK_EXAM_META,
@@ -26,6 +27,7 @@ import {
   getLatestAttemptsByQuestion,
 } from "../src/utils/studyProgressStats.ts";
 import { gradeSpecialMockExamResponse } from "../src/utils/specialMockExamGrading.ts";
+import { canAccessSpecialMockExam } from "../src/utils/specialMockExamAccess.ts";
 
 class LocalStorageMock {
   private values = new Map<string, string>();
@@ -104,6 +106,49 @@ function createDeleteClient() {
 }
 
 beforeEach(() => localStorageMock.clear());
+
+test("특별 모의고사는 승인된 회원과 관리자만 접근한다", () => {
+  assert.equal(canAccessSpecialMockExam(null), false);
+  assert.equal(
+    canAccessSpecialMockExam({
+      role: "member",
+      canAccessSpecialMockExam: false,
+    }),
+    false,
+  );
+  assert.equal(
+    canAccessSpecialMockExam({
+      role: "member",
+      canAccessSpecialMockExam: true,
+    }),
+    true,
+  );
+  assert.equal(
+    canAccessSpecialMockExam({
+      role: "admin",
+      canAccessSpecialMockExam: false,
+    }),
+    true,
+  );
+});
+
+test("특별 모의고사 서버 기록도 활성 계정과 승인 권한을 함께 검사한다", () => {
+  const migration = readFileSync(
+    new URL(
+      "../supabase/migrations/20260819110000_special_mock_exam_access.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(migration, /m\.auth_user_id = \(select auth\.uid\(\)\)/);
+  assert.match(migration, /m\.is_active = true/);
+  assert.match(
+    migration,
+    /m\.role = 'admin' or m\.can_access_special_mock_exam = true/,
+  );
+  assert.doesNotMatch(migration, /to anon/);
+});
 
 test("과목평가 2회차에는 서로 충돌하지 않는 30문제짜리 모의고사 5세트가 있다", () => {
   const allIds = Object.values(SPECIAL_MOCK_EXAM_BANKS).flatMap((questions) => {

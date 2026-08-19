@@ -637,6 +637,9 @@ grant select, insert, update, delete on table public.ai_python_week_attempts to 
 grant select, insert, update, delete on table public.ai_python_week_attempts to service_role;
 
 -- 특별 모의고사 문제 풀이 기록
+alter table if exists public.members
+  add column if not exists can_access_special_mock_exam boolean not null default false;
+
 create table if not exists public.special_mock_exam_attempts (
   id text primary key,
   student_id integer not null check (student_id > 0),
@@ -676,6 +679,7 @@ create policy special_mock_exam_attempts_select_self
       from public.members m
       where m.auth_user_id = (select auth.uid())
         and m.is_active = true
+        and (m.role = 'admin' or m.can_access_special_mock_exam = true)
         and coalesce(m.student_id::bigint, 900000000 + m.id)
           = special_mock_exam_attempts.student_id
     )
@@ -694,6 +698,7 @@ create policy special_mock_exam_attempts_insert_self
       from public.members m
       where m.auth_user_id = (select auth.uid())
         and m.is_active = true
+        and (m.role = 'admin' or m.can_access_special_mock_exam = true)
         and coalesce(m.student_id::bigint, 900000000 + m.id)
           = special_mock_exam_attempts.student_id
     )
@@ -712,6 +717,7 @@ create policy special_mock_exam_attempts_delete_self
       from public.members m
       where m.auth_user_id = (select auth.uid())
         and m.is_active = true
+        and (m.role = 'admin' or m.can_access_special_mock_exam = true)
         and coalesce(m.student_id::bigint, 900000000 + m.id)
           = special_mock_exam_attempts.student_id
     )

@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router";
 import { lazy } from "react";
 import Root from "./Root";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
+import SpecialMockExamRoute from "../components/auth/SpecialMockExamRoute";
 import RouteErrorBoundary from "../components/common/RouteErrorBoundary";
 
 const LoginView = lazy(() => import("../views/LoginView"));
@@ -74,10 +75,15 @@ export const router = createBrowserRouter([
           { path: "study/ai-python/quiz", Component: AiPythonQuizView },
           { path: "study/ai-python/:week", Component: AiPythonWeekStudyView },
           { path: "study/ai-python/:week/quiz", Component: AiPythonWeekQuizView },
-          { path: "study/special-mock", Component: SpecialMockExamView },
           {
-            path: "study/special-mock/:assessmentRound/:mockRound/quiz",
-            Component: SpecialMockExamQuizView,
+            Component: SpecialMockExamRoute,
+            children: [
+              { path: "study/special-mock", Component: SpecialMockExamView },
+              {
+                path: "study/special-mock/:assessmentRound/:mockRound/quiz",
+                Component: SpecialMockExamQuizView,
+              },
+            ],
           },
           { path: "attendance", Component: AttendanceDocumentView },
           { path: "*", Component: NotFoundView },

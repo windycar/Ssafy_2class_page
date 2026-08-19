@@ -59,6 +59,7 @@ type AdminMember = {
     | "admin";
 
   is_active: boolean;
+  can_access_special_mock_exam: boolean;
   must_change_password: boolean;
   last_login_at: string | null;
   created_at: string;
@@ -620,6 +621,75 @@ export default function AdminView() {
           error instanceof Error
             ? error.message
             : "회원 상태를 변경하지 못했습니다.",
+        );
+      } finally {
+        setWorkingId(null);
+      }
+    };
+
+  /**
+   * =========================================================
+   * 특별 모의고사 접근 승인 / 취소
+   * =========================================================
+   */
+  const toggleSpecialMockExamAccess =
+    async (
+      member: AdminMember,
+    ) => {
+      const nextAccess =
+        !member.can_access_special_mock_exam;
+
+      if (
+        !window.confirm(
+          `${member.name} 님의 특별 모의고사 접근을 ${
+            nextAccess
+              ? "승인"
+              : "취소"
+          }할까요?`,
+        )
+      ) {
+        return;
+      }
+
+      setWorkingId(
+        `special-mock-${member.id}`,
+      );
+
+      try {
+        await request(
+          "members.setSpecialMockExamAccess",
+          {
+            id: member.id,
+            canAccessSpecialMockExam:
+              nextAccess,
+          },
+        );
+
+        setMembers(
+          (list) =>
+            list.map(
+              (item) =>
+                item.id ===
+                member.id
+                  ? {
+                      ...item,
+                      can_access_special_mock_exam:
+                        nextAccess,
+                    }
+                  : item,
+            ),
+        );
+
+        toast.success(
+          nextAccess
+            ? "특별 모의고사 접근을 승인했습니다."
+            : "특별 모의고사 접근 승인을 취소했습니다.",
+        );
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "특별 모의고사 권한을 변경하지 못했습니다.",
         );
       } finally {
         setWorkingId(null);
@@ -1395,6 +1465,21 @@ export default function AdminView() {
                           </span>
                         )}
 
+                      {member.role ===
+                        "member" && (
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            member.can_access_special_mock_exam
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-slate-100 text-slate-500"
+                          }`}
+                        >
+                          {member.can_access_special_mock_exam
+                            ? "특별 모의고사 승인"
+                            : "특별 모의고사 미승인"}
+                        </span>
+                      )}
+
                     </div>
 
                     <p className="mt-1 text-xs text-gray-400">
@@ -1445,7 +1530,29 @@ export default function AdminView() {
 
                   {member.role !==
                     "admin" && (
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
+
+                      <button
+                        onClick={() =>
+                          void toggleSpecialMockExamAccess(
+                            member,
+                          )
+                        }
+                        disabled={
+                          workingId ===
+                          `special-mock-${member.id}`
+                        }
+                        className={`inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-xs font-bold ${
+                          member.can_access_special_mock_exam
+                            ? "border-slate-200 text-slate-600 hover:bg-slate-50"
+                            : "border-violet-200 text-violet-700 hover:bg-violet-50"
+                        }`}
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        {member.can_access_special_mock_exam
+                          ? "승인 취소"
+                          : "모의고사 승인"}
+                      </button>
 
                       <button
                         onClick={() =>

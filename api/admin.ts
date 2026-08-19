@@ -21,6 +21,7 @@ type AdminRequest = {
   className?: string;
   studentId?: number | null;
   isActive?: boolean;
+  canAccessSpecialMockExam?: boolean;
 };
 
 type AdminIdentity = {
@@ -139,7 +140,7 @@ export async function handleAdminRequest(request: Request) {
   if (body.action === "members.list") {
     const { data, error } = await client
       .from("members")
-      .select("id, student_id, name, username, login_id, class_name, role, auth_user_id, is_active, must_change_password, password_changed_at, last_login_at, created_at")
+      .select("id, student_id, name, username, login_id, class_name, role, auth_user_id, is_active, can_access_special_mock_exam, must_change_password, password_changed_at, last_login_at, created_at")
       .order("role", { ascending: true })
       .order("class_name", { ascending: true })
       .order("name", { ascending: true });
@@ -194,9 +195,10 @@ export async function handleAdminRequest(request: Request) {
         class_name: className,
         role: "member",
         is_active: true,
+        can_access_special_mock_exam: false,
         must_change_password: true,
       })
-      .select("id, student_id, name, username, login_id, class_name, role, is_active, must_change_password, created_at")
+      .select("id, student_id, name, username, login_id, class_name, role, is_active, can_access_special_mock_exam, must_change_password, created_at")
       .single();
     if (error) {
       const message = error.code === "23505" ? "이미 사용 중인 아이디 또는 교육생 번호입니다." : error.message;
@@ -222,6 +224,28 @@ export async function handleAdminRequest(request: Request) {
     }
     const { error } = await client.from("members").update({ is_active: body.isActive }).eq("id", memberId);
     return error ? jsonError(error.message, 400) : Response.json({ ok: true });
+  }
+
+  if (body.action === "members.setSpecialMockExamAccess") {
+    const memberId = Number(body.id);
+    if (
+      !Number.isInteger(memberId) ||
+      typeof body.canAccessSpecialMockExam !== "boolean"
+    ) {
+      return jsonError("특별 모의고사 권한 요청이 올바르지 않습니다.", 400);
+    }
+    const { data, error } = await client
+      .from("members")
+      .update({
+        can_access_special_mock_exam: body.canAccessSpecialMockExam,
+      })
+      .eq("id", memberId)
+      .eq("role", "member")
+      .select("id")
+      .maybeSingle();
+    if (error) return jsonError(error.message, 400);
+    if (!data) return jsonError("권한을 변경할 회원을 찾을 수 없습니다.", 404);
+    return Response.json({ ok: true });
   }
 
   if (body.action === "members.resetPassword") {
