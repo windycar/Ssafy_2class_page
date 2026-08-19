@@ -39,7 +39,6 @@ const ROUND_STYLES = {
     soft: "bg-blue-50",
     border: "border-blue-100",
     progress: "bg-blue-600",
-    focus: "AI·ML FOUNDATION",
   },
   2: {
     gradient: "from-[#321667] via-[#6840b8] to-[#b06ed6]",
@@ -47,7 +46,6 @@ const ROUND_STYLES = {
     soft: "bg-violet-50",
     border: "border-violet-100",
     progress: "bg-violet-600",
-    focus: "REGRESSION · NLP · VISION",
   },
   3: {
     gradient: "from-[#5d1938] via-[#a83261] to-[#ea718d]",
@@ -55,7 +53,6 @@ const ROUND_STYLES = {
     soft: "bg-rose-50",
     border: "border-rose-100",
     progress: "bg-rose-600",
-    focus: "TRANSFORMER · GENERATIVE AI",
   },
   4: {
     gradient: "from-[#074348] via-[#087c76] to-[#51b6a5]",
@@ -63,7 +60,6 @@ const ROUND_STYLES = {
     soft: "bg-teal-50",
     border: "border-teal-100",
     progress: "bg-teal-600",
-    focus: "SUPERVISED · MULTIMODAL",
   },
   5: {
     gradient: "from-[#5c3510] via-[#a76513] to-[#e7a83b]",
@@ -71,7 +67,6 @@ const ROUND_STYLES = {
     soft: "bg-amber-50",
     border: "border-amber-100",
     progress: "bg-amber-600",
-    focus: "VISION · FOUNDATION MODEL",
   },
 } as const satisfies Record<
   SpecialMockExamRound,
@@ -81,7 +76,6 @@ const ROUND_STYLES = {
     soft: string;
     border: string;
     progress: string;
-    focus: string;
   }
 >;
 
@@ -305,14 +299,9 @@ export default function SpecialMockExamView() {
                       </span>
                     </div>
                     <div className="flex items-end justify-between gap-4">
-                      <div>
-                        <p className="text-[10px] font-black tracking-[0.15em] text-white/65">
-                          {style.focus}
-                        </p>
-                        <strong className="mt-1 block text-2xl font-black tracking-tight">
-                          모의고사 {round}회차
-                        </strong>
-                      </div>
+                      <strong className="block text-2xl font-black tracking-tight">
+                        모의고사 {round}회차
+                      </strong>
                       <span className="text-5xl font-black leading-none text-white/20">
                         0{round}
                       </span>
