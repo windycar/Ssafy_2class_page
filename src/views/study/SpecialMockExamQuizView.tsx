@@ -40,6 +40,10 @@ import {
   hasPassedSpecialMockExam,
   SPECIAL_MOCK_EXAM_PASS_SCORE,
 } from "../../utils/specialMockExamResult";
+import {
+  normalizeSpecialMockExamMath,
+  SPECIAL_MOCK_EXAM_MATH_SEGMENT_PATTERN,
+} from "../../utils/specialMockExamText";
 
 const ANSWER_LABELS = ["A", "B", "C", "D"];
 const DIFFICULTY_LABELS: Record<SpecialMockExamDifficulty, string> = {
@@ -53,8 +57,6 @@ const QUESTION_TYPE_LABELS: Record<SpecialMockExamQuestionType, string> = {
   "short-answer": "단답형",
   essay: "서술형",
 };
-const MATH_SEGMENT_PATTERN = /(\$\$[\s\S]+?\$\$|\$[^$\r\n]+?\$)/g;
-
 type SessionAnswer = {
   response: number | string;
   correct?: boolean;
@@ -752,34 +754,39 @@ function ResultStat({ label, value }: { label: string; value: string }) {
 }
 
 function MathText({ text }: { text: string }) {
+  const normalizedText = normalizeSpecialMockExamMath(text);
+
   return (
     <>
-      {text.split(MATH_SEGMENT_PATTERN).map((segment, index) => {
-        const displayMode = segment.startsWith("$$") && segment.endsWith("$$");
-        const inlineMode =
-          !displayMode && segment.startsWith("$") && segment.endsWith("$");
-        if (!displayMode && !inlineMode) return segment;
+      {normalizedText
+        .split(SPECIAL_MOCK_EXAM_MATH_SEGMENT_PATTERN)
+        .map((segment, index) => {
+          const displayMode =
+            segment.startsWith("$$") && segment.endsWith("$$");
+          const inlineMode =
+            !displayMode && segment.startsWith("$") && segment.endsWith("$");
+          if (!displayMode && !inlineMode) return segment;
 
-        const delimiterLength = displayMode ? 2 : 1;
-        const expression = segment.slice(delimiterLength, -delimiterLength);
-        const html = katex.renderToString(expression, {
-          displayMode,
-          throwOnError: false,
-          strict: false,
-          output: "htmlAndMathml",
-        });
-        return (
-          <span
-            key={`${index}-${expression}`}
-            className={
-              displayMode
-                ? "my-2 block max-w-full overflow-x-auto py-1 text-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                : "inline-block max-w-full overflow-visible align-middle"
-            }
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-        );
-      })}
+          const delimiterLength = displayMode ? 2 : 1;
+          const expression = segment.slice(delimiterLength, -delimiterLength);
+          const html = katex.renderToString(expression, {
+            displayMode,
+            throwOnError: false,
+            strict: false,
+            output: "htmlAndMathml",
+          });
+          return (
+            <span
+              key={`${index}-${expression}`}
+              className={
+                displayMode
+                  ? "my-2 block max-w-full overflow-x-auto py-1 text-center [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  : "inline-block max-w-full overflow-visible align-middle"
+              }
+              dangerouslySetInnerHTML={{ __html: html }}
+            />
+          );
+        })}
     </>
   );
 }

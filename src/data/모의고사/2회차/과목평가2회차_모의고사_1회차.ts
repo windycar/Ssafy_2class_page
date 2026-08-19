@@ -135,7 +135,8 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     difficulty: "medium",
     category: "자연어 처리 및 텍스트 모델",
     questionType: "multiple-choice",
-    prompt: "다음 PyTorch 코드에서 실행되는 텐서 연산 결과 context의 형상(Shape)으로 올바른 것은?\n\nimport torch\nimport torch.nn.functional as F\n# Q, K, V: (Batch=2, Heads=4, Seq_len=8, Head_dim=64)\nQ = torch.randn(2, 4, 8, 64)\nK = torch.randn(2, 4, 8, 64)\nV = torch.randn(2, 4, 8, 64)\nscores = torch.matmul(Q, K.transpose(-2, -1)) / 8.0\nattn_weights = F.softmax(scores, dim=-1)\ncontext = torch.matmul(attn_weights, V)",
+    prompt: "다음 PyTorch 코드에서 실행되는 텐서 연산 결과 context의 형상(Shape)으로 올바른 것은?",
+    code: "import torch\nimport torch.nn.functional as F\n\n# Q, K, V: (Batch=2, Heads=4, Seq_len=8, Head_dim=64)\nQ = torch.randn(2, 4, 8, 64)\nK = torch.randn(2, 4, 8, 64)\nV = torch.randn(2, 4, 8, 64)\nscores = torch.matmul(Q, K.transpose(-2, -1)) / 8.0\nattn_weights = F.softmax(scores, dim=-1)\ncontext = torch.matmul(attn_weights, V)",
     options: [
       "(2, 4, 8, 8)",
       "(2, 4, 64, 64)",
@@ -326,7 +327,8 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     difficulty: "medium",
     category: "시각-언어 모델(VLM) 및 멀티모달 정합",
     questionType: "multiple-choice",
-    prompt: "다음 PyTorch 코드에서 실행되는 Zero-shot 분류 연산 시, C개의 텍스트 카테고리 중 가장 확률이 높은 클래스를 예측하기 위해 적용해야 하는 Softmax의 올바른 차원 축(dim)은?\n\n# image_embeds: (1, 512), text_embeds: (C, 512)\nlogits = image_embeds @ text_embeds.T  # Shape: (1, C)\nprobs = F.softmax(logits, dim=?)",
+    prompt: "다음 PyTorch 코드에서 실행되는 Zero-shot 분류 연산 시, C개의 텍스트 카테고리 중 가장 확률이 높은 클래스를 예측하기 위해 적용해야 하는 Softmax의 올바른 차원 축(dim)은?",
+    code: "# image_embeds: (1, 512), text_embeds: (C, 512)\nlogits = image_embeds @ text_embeds.T  # Shape: (1, C)\nprobs = F.softmax(logits, dim=?)",
     options: [
       "dim = 0",
       "dim = 1 (또는 dim = -1)",

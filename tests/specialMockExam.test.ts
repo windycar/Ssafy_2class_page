@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test, { beforeEach } from "node:test";
 import { readFileSync } from "node:fs";
+import katex from "katex";
 import {
   SPECIAL_MOCK_EXAM_BANKS,
   SPECIAL_MOCK_EXAM_META,
@@ -33,6 +34,8 @@ import {
   hasPassedSpecialMockExam,
   SPECIAL_MOCK_EXAM_PASS_SCORE,
 } from "../src/utils/specialMockExamResult.ts";
+import { normalizeSpecialMockExamMath } from "../src/utils/specialMockExamText.ts";
+import { shuffleArray } from "../src/utils/shuffleArray.ts";
 
 class LocalStorageMock {
   private values = new Map<string, string>();
@@ -176,6 +179,84 @@ test("과목평가 2회차에는 서로 충돌하지 않는 30문제짜리 모�
   assert.equal(SPECIAL_MOCK_EXAM_META[3].label, "모의고사 3회차");
   assert.equal(SPECIAL_MOCK_EXAM_BANKS[3][0].sourceId, "r3-mc-001");
   assert.match(SPECIAL_MOCK_EXAM_BANKS[3][0].prompt, /과적합/);
+});
+
+test("코드 예시는 문제 제목과 분리된 코드 영역에 저장된다", () => {
+  const questions = Object.values(SPECIAL_MOCK_EXAM_BANKS).flat();
+  const codeQuestions = questions.filter(({ code }) => Boolean(code));
+
+  assert.equal(codeQuestions.length, 2);
+  codeQuestions.forEach(({ prompt, code }) => {
+    assert.doesNotMatch(prompt, /\n(?:#|import |[A-Za-z_]+\s*=)/);
+    assert.ok(code?.includes("\n"));
+  });
+  assert.match(
+    SPECIAL_MOCK_EXAM_BANKS[1].find(
+      ({ sourceId }) => sourceId === "exam-mc-018",
+    )?.code ?? "",
+    /image_embeds/,
+  );
+});
+
+test("기존 ASCII 수식 표기도 KaTeX 수식으로 정규화한다", () => {
+  const normalized = normalizeSpecialMockExamMath(
+    "R^2, sqrt(d_k), h_t = tanh(W_hh * h_(t-1) + W_xh * x_t + b_h)",
+  );
+
+  assert.ok(normalized.includes(String.raw`$R^2$`));
+  assert.ok(normalized.includes(String.raw`$\sqrt{d_k}$`));
+  assert.ok(
+    normalized.includes(
+      String.raw`$h_t = \tanh(W_{hh}h_{t-1} + W_{xh}x_t + b_h)$`,
+    ),
+  );
+  assert.equal(
+    normalizeSpecialMockExamMath(String.raw`$x_1 + x_2$`),
+    String.raw`$x_1 + x_2$`,
+  );
+});
+
+test("모든 특별 모의고사 수식은 오류 없이 렌더링된다", () => {
+  const mathPattern = /(\$\$[\s\S]+?\$\$|\$[^$\r\n]+?\$)/g;
+  const questions = Object.values(SPECIAL_MOCK_EXAM_BANKS).flat();
+
+  questions.forEach((question) => {
+    const texts = [
+      question.prompt,
+      ...question.options,
+      question.hint,
+      question.explanation,
+      question.modelAnswer ?? "",
+    ];
+    texts.forEach((text) => {
+      const normalized = normalizeSpecialMockExamMath(text);
+      const expressions = normalized.match(mathPattern) ?? [];
+      expressions.forEach((expression) => {
+        const delimiterLength = expression.startsWith("$$") ? 2 : 1;
+        assert.doesNotThrow(
+          () =>
+            katex.renderToString(
+              expression.slice(delimiterLength, -delimiterLength),
+              { throwOnError: true },
+            ),
+          `${question.id}: ${expression}`,
+        );
+      });
+    });
+  });
+});
+
+test("모의고사 문제 순서는 응시 시작 시 무작위 순서로 복사된다", () => {
+  const original = SPECIAL_MOCK_EXAM_BANKS[1].slice(0, 6).map(({ id }) => id);
+  const shuffled = shuffleArray(original, () => 0);
+
+  assert.notDeepEqual(shuffled, original);
+  assert.deepEqual([...shuffled].sort(), [...original].sort());
+  assert.deepEqual(
+    SPECIAL_MOCK_EXAM_BANKS[1].slice(0, 6).map(({ id }) => id),
+    original,
+    "원본 문제은행 순서는 변경하지 않아야 한다",
+  );
 });
 
 test("특별 모의고사 5세트가 오답 선택 화면에 모두 등록된다", () => {
