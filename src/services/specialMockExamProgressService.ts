@@ -17,6 +17,7 @@ import type {
   SpecialMockExamRound,
 } from "../types/specialMockExam";
 import { isCurrentSpecialMockExamAttempt } from "../types/specialMockExam";
+import { isAnsweredSpecialMockExamAttempt } from "../utils/specialMockExamGrading";
 
 type SpecialMockExamAttemptRow = {
   id: string;
@@ -70,7 +71,11 @@ function currentBankProgress(
   progress: SpecialMockExamProgress,
 ): SpecialMockExamProgress {
   return {
-    attempts: progress.attempts.filter(isCurrentSpecialMockExamAttempt),
+    attempts: progress.attempts.filter(
+      (attempt) =>
+        isCurrentSpecialMockExamAttempt(attempt) &&
+        isAnsweredSpecialMockExamAttempt(attempt),
+    ),
   };
 }
 

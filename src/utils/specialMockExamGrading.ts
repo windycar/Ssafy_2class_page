@@ -1,5 +1,8 @@
 import { ESSAY_MIN_LENGTH } from "../constants/study.ts";
-import type { SpecialMockExamQuestion } from "../types/specialMockExam";
+import type {
+  SpecialMockExamAttempt,
+  SpecialMockExamQuestion,
+} from "../types/specialMockExam";
 
 export interface SpecialMockExamGradeResult {
   correct: boolean;
@@ -14,6 +17,24 @@ function normalize(value: string) {
 
 function compact(value: string) {
   return normalize(value).replace(/\s+/g, "").toLowerCase();
+}
+
+export function hasSpecialMockExamResponse(
+  response: number | string | null | undefined,
+) {
+  return (
+    typeof response === "number" ||
+    (typeof response === "string" && response.trim().length > 0)
+  );
+}
+
+export function isAnsweredSpecialMockExamAttempt(
+  attempt: Pick<SpecialMockExamAttempt, "selectedAnswer" | "responseText">,
+) {
+  return (
+    typeof attempt.selectedAnswer === "number" ||
+    hasSpecialMockExamResponse(attempt.responseText)
+  );
 }
 
 export function gradeSpecialMockExamResponse(

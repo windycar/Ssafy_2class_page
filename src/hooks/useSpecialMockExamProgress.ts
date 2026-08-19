@@ -6,7 +6,11 @@ import {
   saveSpecialMockExamAttempt,
 } from "../services/specialMockExamProgressService";
 import { specialMockExamProgressStorage } from "../services/storage/specialMockExamProgressStorage";
-import { gradeSpecialMockExamResponse } from "../utils/specialMockExamGrading";
+import {
+  gradeSpecialMockExamResponse,
+  hasSpecialMockExamResponse,
+  isAnsweredSpecialMockExamAttempt,
+} from "../utils/specialMockExamGrading";
 import { subscribeToStudyProgressRefresh } from "../utils/studyProgressSync";
 import type {
   SpecialMockExamAttempt,
@@ -84,10 +88,14 @@ export function useSpecialMockExamProgress() {
       correct: gradeSpecialMockExamResponse(question, response).correct,
     }));
     if (!currentUser || !hasAccess) return graded;
+    const submittedAnswers = graded.filter(({ response }) =>
+      hasSpecialMockExamResponse(response),
+    );
+    if (!submittedAnswers.length) return graded;
 
     const submittedAt = Date.now();
     const answeredAt = new Date(submittedAt).toISOString();
-    const attempts: SpecialMockExamAttempt[] = graded.map(
+    const attempts: SpecialMockExamAttempt[] = submittedAnswers.map(
       ({ question, response, correct }, index) => ({
         id: `${getSpecialMockExamAttemptIdPrefix(mockRound)}${submittedAt}-${index}-${question.sourceId}-${Math.random().toString(36).slice(2, 7)}`,
         assessmentRound: 2,
@@ -151,8 +159,11 @@ export function useSpecialMockExamProgress() {
   };
 
   const summary = useMemo(() => {
-    const total = progress.attempts.length;
-    const correct = progress.attempts.filter(({ correct }) => correct).length;
+    const answeredAttempts = progress.attempts.filter(
+      isAnsweredSpecialMockExamAttempt,
+    );
+    const total = answeredAttempts.length;
+    const correct = answeredAttempts.filter(({ correct }) => correct).length;
     return {
       total,
       correct,

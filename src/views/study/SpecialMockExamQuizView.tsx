@@ -38,6 +38,7 @@ import type {
 import { isSpecialMockExamRound } from "../../types/specialMockExam";
 import { shuffleArray } from "../../utils/shuffleArray";
 import { getLatestAttemptsByQuestion } from "../../utils/studyProgressStats";
+import { isAnsweredSpecialMockExamAttempt } from "../../utils/specialMockExamGrading";
 import {
   calculateSpecialMockExamScore,
   getSpecialMockExamReviewStatus,
@@ -107,7 +108,9 @@ export default function SpecialMockExamQuizView() {
     if (mode === "wrong") {
       questions = getLatestAttemptsByQuestion(
         progress.attempts.filter(
-          (attempt) => attempt.mockRound === mockRound,
+          (attempt) =>
+            attempt.mockRound === mockRound &&
+            isAnsweredSpecialMockExamAttempt(attempt),
         ),
       )
         .filter((attempt) => !attempt.correct)

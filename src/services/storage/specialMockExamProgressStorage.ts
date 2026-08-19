@@ -4,6 +4,7 @@ import type {
   SpecialMockExamRound,
 } from "../../types/specialMockExam";
 import { isCurrentSpecialMockExamAttempt } from "../../types/specialMockExam.ts";
+import { isAnsweredSpecialMockExamAttempt } from "../../utils/specialMockExamGrading.ts";
 
 const STORAGE_VERSION = "v1";
 const KEY_PREFIX = `ssafy-gwangju-2-special-mock-progress:${STORAGE_VERSION}`;
@@ -64,7 +65,15 @@ function suppressTombstones(
 
 function write(userId: number, progress: SpecialMockExamProgress) {
   const visible = suppressTombstones(userId, progress);
-  const next = { attempts: visible.attempts.slice(-CACHE_LIMIT) };
+  const next = {
+    attempts: visible.attempts
+      .filter(
+        (attempt) =>
+          isCurrentSpecialMockExamAttempt(attempt) &&
+          isAnsweredSpecialMockExamAttempt(attempt),
+      )
+      .slice(-CACHE_LIMIT),
+  };
   safeSet(keyFor(userId), JSON.stringify(next));
   return next;
 }
@@ -86,7 +95,11 @@ export const specialMockExamProgressStorage = {
       const parsed = JSON.parse(raw) as SpecialMockExamProgress;
       return suppressTombstones(userId, {
         attempts: Array.isArray(parsed.attempts)
-          ? parsed.attempts.filter(isCurrentSpecialMockExamAttempt)
+          ? parsed.attempts.filter(
+              (attempt) =>
+                isCurrentSpecialMockExamAttempt(attempt) &&
+                isAnsweredSpecialMockExamAttempt(attempt),
+            )
           : [],
       });
     } catch {
@@ -95,6 +108,7 @@ export const specialMockExamProgressStorage = {
   },
 
   add(userId: number, attempt: SpecialMockExamAttempt) {
+    if (!isAnsweredSpecialMockExamAttempt(attempt)) return this.get(userId);
     const next = write(userId, {
       attempts: [...this.get(userId).attempts, attempt],
     });
@@ -107,15 +121,19 @@ export const specialMockExamProgressStorage = {
   },
 
   addMany(userId: number, attempts: SpecialMockExamAttempt[]) {
-    if (!attempts.length) return this.get(userId);
+    const answeredAttempts = attempts.filter(isAnsweredSpecialMockExamAttempt);
+    if (!answeredAttempts.length) return this.get(userId);
     const next = write(userId, {
-      attempts: [...this.get(userId).attempts, ...attempts],
+      attempts: [...this.get(userId).attempts, ...answeredAttempts],
     });
     const pendingIds = this.getPendingIds(userId);
     safeSet(
       pendingKeyFor(userId),
       JSON.stringify([
-        ...new Set([...pendingIds, ...attempts.map(({ id }) => id)]),
+        ...new Set([
+          ...pendingIds,
+          ...answeredAttempts.map(({ id }) => id),
+        ]),
       ]),
     );
     return next;

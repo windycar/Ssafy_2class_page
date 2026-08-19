@@ -27,7 +27,11 @@ import {
   countUnresolvedMistakes,
   getLatestAttemptsByQuestion,
 } from "../src/utils/studyProgressStats.ts";
-import { gradeSpecialMockExamResponse } from "../src/utils/specialMockExamGrading.ts";
+import {
+  gradeSpecialMockExamResponse,
+  hasSpecialMockExamResponse,
+  isAnsweredSpecialMockExamAttempt,
+} from "../src/utils/specialMockExamGrading.ts";
 import { canAccessSpecialMockExam } from "../src/utils/specialMockExamAccess.ts";
 import {
   calculateSpecialMockExamScore,
@@ -345,6 +349,48 @@ test("시험 종료 시 여러 답안을 하나의 pending 묶음으로 저장�
     specialMockExamProgressStorage.get(userId).attempts.map(({ id }) => id),
     attempts.map(({ id }) => id),
   );
+});
+
+test("미답변은 채점만 하고 완료 기록과 오답 기록에는 저장하지 않는다", () => {
+  const userId = 56;
+  const unanswered: SpecialMockExamAttempt = {
+    ...attempt(
+      "unanswered",
+      1,
+      SPECIAL_MOCK_EXAM_BANKS[1][0].id,
+      false,
+    ),
+    selectedAnswer: null,
+    responseText: undefined,
+  };
+  const answered = attempt(
+    "answered",
+    1,
+    SPECIAL_MOCK_EXAM_BANKS[1][1].id,
+    false,
+  );
+
+  assert.equal(hasSpecialMockExamResponse(null), false);
+  assert.equal(hasSpecialMockExamResponse("  "), false);
+  assert.equal(hasSpecialMockExamResponse(0), true);
+  assert.equal(isAnsweredSpecialMockExamAttempt(unanswered), false);
+  assert.equal(
+    isAnsweredSpecialMockExamAttempt({
+      selectedAnswer: null,
+      responseText: "작성한 단답형 답안",
+    }),
+    true,
+  );
+
+  specialMockExamProgressStorage.addMany(userId, [unanswered, answered]);
+
+  assert.deepEqual(
+    specialMockExamProgressStorage.get(userId).attempts.map(({ id }) => id),
+    [answered.id],
+  );
+  assert.deepEqual(specialMockExamProgressStorage.getPendingIds(userId), [
+    answered.id,
+  ]);
 });
 
 test("서버 기록으로 교체할 때 요청 중 새로 생긴 로컬 답안만 보존한다", () => {

@@ -28,6 +28,7 @@ import {
   getLatestAttemptsByQuestion,
 } from "../../utils/studyProgressStats";
 import { hasPassedSpecialMockExam } from "../../utils/specialMockExamResult";
+import { isAnsweredSpecialMockExamAttempt } from "../../utils/specialMockExamGrading";
 
 export default function SpecialMockExamView() {
   const { progress, resetProgress, syncState } = useSpecialMockExamProgress();
@@ -156,7 +157,9 @@ export default function SpecialMockExamView() {
           {SPECIAL_MOCK_EXAM_ROUNDS.map((round) => {
             const questions = SPECIAL_MOCK_EXAM_BANKS[round];
             const attempts = progress.attempts.filter(
-              (attempt) => attempt.mockRound === round,
+              (attempt) =>
+                attempt.mockRound === round &&
+                isAnsweredSpecialMockExamAttempt(attempt),
             );
             const latest = getLatestAttemptsByQuestion(attempts);
             const completed = latest.length;
