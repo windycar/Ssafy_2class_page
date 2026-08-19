@@ -18,7 +18,7 @@ function compact(value: string) {
 
 export function gradeSpecialMockExamResponse(
   question: SpecialMockExamQuestion,
-  response: number | string,
+  response: number | string | null,
 ): SpecialMockExamGradeResult {
   if (question.questionType === "multiple-choice") {
     const correct = typeof response === "number" && response === question.answer;

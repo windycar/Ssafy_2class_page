@@ -58,7 +58,7 @@ const QUESTION_TYPE_LABELS: Record<SpecialMockExamQuestionType, string> = {
   essay: "서술형",
 };
 type SessionAnswer = {
-  response: number | string;
+  response: number | string | null;
   correct?: boolean;
 };
 
@@ -317,23 +317,11 @@ export default function SpecialMockExamQuizView() {
   };
 
   const finishAndGrade = () => {
-    const firstUnansweredIndex = questions.findIndex(
-      (question) => !answers[question.id],
-    );
-    if (firstUnansweredIndex >= 0) {
-      setCurrentIndex(firstUnansweredIndex);
-      setHintOpen(false);
-      toast.error(
-        `미답변 ${questions.length - answeredCount}문제를 모두 작성한 뒤 채점해 주세요.`,
-      );
-      return;
-    }
-
     const graded = recordAnswers(
       mockRound,
       questions.map((question) => ({
         question,
-        response: answers[question.id].response,
+        response: answers[question.id]?.response ?? null,
       })),
     );
     setAnswers(
@@ -723,7 +711,7 @@ function ExamAnswerPanel({
         시험 종료 및 채점
       </button>
       <p className="mt-3 text-center text-[10px] leading-4 text-slate-500">
-        답변 {answeredCount}/{questions.length} · 모든 답안을 작성해야 채점됩니다.
+        답변 {answeredCount}/{questions.length} · 미답변은 오답으로 처리됩니다.
       </p>
     </aside>
   );

@@ -75,7 +75,7 @@ export function useSpecialMockExamProgress() {
     mockRound: SpecialMockExamRound,
     responses: Array<{
       question: SpecialMockExamQuestion;
-      response: number | string;
+      response: number | string | null;
     }>,
   ) => {
     const graded = responses.map(({ question, response }) => ({

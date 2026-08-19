@@ -384,4 +384,9 @@ test("객관식 답안은 문제은행 정답 인덱스로 채점한다", () => 
     ).correct,
     false,
   );
+  assert.equal(
+    gradeSpecialMockExamResponse(question, null).correct,
+    false,
+    "미답변도 오답으로 채점해야 한다",
+  );
 });
