@@ -5,12 +5,9 @@ import {
   ArrowRight,
   Check,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   Clipboard,
   Code2,
   Flag,
-  Lightbulb,
   ListChecks,
   RotateCcw,
   Shuffle,
@@ -92,7 +89,6 @@ export default function SpecialMockExamQuizView() {
   const [answers, setAnswers] = useState<Record<string, SessionAnswer>>({});
   const [draftAnswers, setDraftAnswers] = useState<Record<string, string>>({});
   const [reviewQuestionIds, setReviewQuestionIds] = useState<string[]>([]);
-  const [hintOpen, setHintOpen] = useState(false);
   const [finished, setFinished] = useState(false);
   const [reviewingAnswers, setReviewingAnswers] = useState(false);
 
@@ -139,7 +135,6 @@ export default function SpecialMockExamQuizView() {
     );
     setDraftAnswers({});
     setReviewQuestionIds([]);
-    setHintOpen(false);
     setFinished(isSavedReview);
     setReviewingAnswers(isSavedReview);
   }, [
@@ -324,7 +319,6 @@ export default function SpecialMockExamQuizView() {
       ...currentAnswers,
       [current.id]: { response },
     }));
-    setHintOpen(false);
   };
 
   const submitTextAnswer = () => {
@@ -622,33 +616,14 @@ export default function SpecialMockExamQuizView() {
                 status={currentReviewStatus}
               />
             ) : (
-              <>
-                <div className="mt-5 flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3">
-                  <p className="flex items-center gap-2 text-xs font-bold text-blue-700">
-                    <ListChecks className="h-4 w-4" />
-                    {answered
-                      ? "답안이 저장되었습니다. 최종 채점 전까지 수정할 수 있습니다."
-                      : "답안을 선택하거나 입력해 주세요. 정답은 최종 채점 후 공개됩니다."}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setHintOpen((open) => !open)}
-                    className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-700"
-                  >
-                    <Lightbulb className="h-4 w-4" /> 힌트
-                    {hintOpen ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                {hintOpen ? (
-                  <p className="mt-3 rounded-xl border border-amber-100 bg-amber-50/60 px-4 py-3 text-sm leading-6 text-amber-900">
-                    <MathText text={current.hint} />
-                  </p>
-                ) : null}
-              </>
+              <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3">
+                <p className="flex items-center gap-2 text-xs font-bold text-blue-700">
+                  <ListChecks className="h-4 w-4" />
+                  {answered
+                    ? "답안이 저장되었습니다. 최종 채점 전까지 수정할 수 있습니다."
+                    : "답안을 선택하거나 입력해 주세요. 정답은 최종 채점 후 공개됩니다."}
+                </p>
+              </div>
             )}
           </div>
 
@@ -657,7 +632,6 @@ export default function SpecialMockExamQuizView() {
               type="button"
               onClick={() => {
                 setCurrentIndex((index) => Math.max(0, index - 1));
-                setHintOpen(false);
               }}
               disabled={currentIndex === 0}
               className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 disabled:opacity-35"
@@ -684,7 +658,6 @@ export default function SpecialMockExamQuizView() {
                 setCurrentIndex((index) =>
                   Math.min(questions.length - 1, index + 1),
                 );
-                setHintOpen(false);
               }}
               disabled={!reviewingAnswers && isLast}
               className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-extrabold text-white disabled:opacity-35"
@@ -712,7 +685,6 @@ export default function SpecialMockExamQuizView() {
           }
           onSelect={(index) => {
             setCurrentIndex(index);
-            setHintOpen(false);
           }}
           onAction={() => {
             if (reviewingAnswers) {
