@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   ArrowLeft,
   ArrowRight,
+  Check,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
@@ -14,6 +15,8 @@ import {
   RotateCcw,
   Shuffle,
   Trophy,
+  X,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import katex from "katex";
@@ -37,6 +40,7 @@ import { shuffleArray } from "../../utils/shuffleArray";
 import { getLatestAttemptsByQuestion } from "../../utils/studyProgressStats";
 import {
   calculateSpecialMockExamScore,
+  getSpecialMockExamReviewStatus,
   hasPassedSpecialMockExam,
   SPECIAL_MOCK_EXAM_PASS_SCORE,
 } from "../../utils/specialMockExamResult";
@@ -87,6 +91,7 @@ export default function SpecialMockExamQuizView() {
   const [reviewQuestionIds, setReviewQuestionIds] = useState<string[]>([]);
   const [hintOpen, setHintOpen] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [reviewingAnswers, setReviewingAnswers] = useState(false);
 
   useEffect(() => {
     if (
@@ -123,6 +128,7 @@ export default function SpecialMockExamQuizView() {
     setReviewQuestionIds([]);
     setHintOpen(false);
     setFinished(false);
+    setReviewingAnswers(false);
   }, [
     assessmentRound,
     mode,
@@ -202,16 +208,17 @@ export default function SpecialMockExamQuizView() {
     );
   }
 
-  if (finished) {
-    const sessionAnswers = Object.values(answers);
-    const correctCount = sessionAnswers.filter(
-      ({ correct }) => correct === true,
-    ).length;
-    const score = calculateSpecialMockExamScore(
-      correctCount,
-      questions.length,
-    );
-    const passed = hasPassedSpecialMockExam(score);
+  const sessionAnswers = Object.values(answers);
+  const correctCount = sessionAnswers.filter(
+    ({ correct }) => correct === true,
+  ).length;
+  const score = calculateSpecialMockExamScore(correctCount, questions.length);
+  const passed = hasPassedSpecialMockExam(score);
+  const unansweredCount = sessionAnswers.filter(
+    ({ response }) => response === null,
+  ).length;
+
+  if (finished && !reviewingAnswers) {
     return (
       <div className="space-y-5 pb-8">
         <BackLink />
@@ -247,6 +254,17 @@ export default function SpecialMockExamQuizView() {
             <ResultStat label="결과" value={passed ? "통과" : "미통과"} />
           </div>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentIndex(0);
+                setReviewingAnswers(true);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-violet-800"
+            >
+              <ListChecks className="h-4 w-4" /> 답변 다시 보기
+            </button>
             <Link
               to="/study/special-mock"
               className="rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-extrabold text-white"
@@ -262,7 +280,7 @@ export default function SpecialMockExamQuizView() {
                     : buildAllQuestionsHref(),
                 )
               }
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold text-violet-800"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-extrabold text-white"
             >
               <RotateCcw className="h-4 w-4" />
               {mode === "wrong" ? "남은 오답 풀기" : "전체 다시 풀기"}
@@ -275,10 +293,13 @@ export default function SpecialMockExamQuizView() {
 
   const current = questions[currentIndex];
   const currentAnswer = answers[current.id];
-  const answered = Boolean(currentAnswer);
+  const answered =
+    currentAnswer !== undefined && currentAnswer.response !== null;
+  const currentReviewStatus = getSpecialMockExamReviewStatus(currentAnswer);
   const currentDraft = draftAnswers[current.id] ?? "";
   const answeredCount = questions.filter((question) =>
-    Boolean(answers[question.id]),
+    answers[question.id] !== undefined &&
+    answers[question.id].response !== null,
   ).length;
   const answerRate = Math.round((answeredCount / questions.length) * 100);
   const reviewQuestionIdSet = new Set(reviewQuestionIds);
@@ -333,6 +354,7 @@ export default function SpecialMockExamQuizView() {
       ),
     );
     setFinished(true);
+    setReviewingAnswers(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -341,15 +363,31 @@ export default function SpecialMockExamQuizView() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <BackLink />
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
-            답변 {answeredCount}/{questions.length}
-          </span>
-          <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-700">
-            검토 {reviewQuestionIds.length}
-          </span>
-          <span className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-700">
-            {SPECIAL_MOCK_EXAM_PASS_SCORE}점 이상 통과
-          </span>
+          {reviewingAnswers ? (
+            <>
+              <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
+                정답 {correctCount}
+              </span>
+              <span className="rounded-full bg-red-50 px-3 py-1.5 text-xs font-black text-red-600">
+                오답 {questions.length - correctCount - unansweredCount}
+              </span>
+              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-600">
+                미답변 {unansweredCount}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
+                답변 {answeredCount}/{questions.length}
+              </span>
+              <span className="rounded-full bg-amber-50 px-3 py-1.5 text-xs font-black text-amber-700">
+                검토 {reviewQuestionIds.length}
+              </span>
+              <span className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-black text-violet-700">
+                {SPECIAL_MOCK_EXAM_PASS_SCORE}점 이상 통과
+              </span>
+            </>
+          )}
         </div>
       </div>
 
@@ -359,10 +397,16 @@ export default function SpecialMockExamQuizView() {
             <div className="flex items-center justify-between gap-4 text-xs font-bold text-slate-400">
               <span className="flex items-center gap-1.5">
                 <Shuffle className="h-3.5 w-3.5" /> 과목평가 2회차 · 모의고사
-                {mockRound}회차 · {mode === "wrong" ? "오답 복습" : "실전 시험"} ·{` `}
+                {mockRound}회차 ·{` `}
+                {reviewingAnswers
+                  ? "전체 답변 다시 보기"
+                  : mode === "wrong"
+                    ? "오답 복습"
+                    : "실전 시험"}{` `}
+                ·{` `}
                 {currentIndex + 1} / {questions.length}
               </span>
-              <span>채점 전</span>
+              <span>{reviewingAnswers ? `${score}점` : "채점 전"}</span>
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
               <div
@@ -385,18 +429,22 @@ export default function SpecialMockExamQuizView() {
                   {QUESTION_TYPE_LABELS[current.questionType]}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={toggleReview}
-                className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-extrabold transition ${
-                  reviewQuestionIdSet.has(current.id)
-                    ? "border-amber-400 bg-amber-50 text-amber-800"
-                    : "border-slate-200 text-slate-500 hover:border-amber-300 hover:text-amber-700"
-                }`}
-              >
-                <Flag className="h-3.5 w-3.5" />
-                {reviewQuestionIdSet.has(current.id) ? "검토 해제" : "검토 표시"}
-              </button>
+              {!reviewingAnswers ? (
+                <button
+                  type="button"
+                  onClick={toggleReview}
+                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-extrabold transition ${
+                    reviewQuestionIdSet.has(current.id)
+                      ? "border-amber-400 bg-amber-50 text-amber-800"
+                      : "border-slate-200 text-slate-500 hover:border-amber-300 hover:text-amber-700"
+                  }`}
+                >
+                  <Flag className="h-3.5 w-3.5" />
+                  {reviewQuestionIdSet.has(current.id)
+                    ? "검토 해제"
+                    : "검토 표시"}
+                </button>
+              ) : null}
             </div>
 
             <h1 className="whitespace-pre-wrap text-xl font-black leading-8 tracking-tight text-slate-900 sm:text-2xl">
@@ -430,25 +478,44 @@ export default function SpecialMockExamQuizView() {
               <div className="mt-6 grid gap-3">
                 {current.options.map((option, optionIndex) => {
                   const selected = currentAnswer?.response === optionIndex;
+                  const correctOption = current.answer === optionIndex;
+                  const showCorrect = reviewingAnswers && correctOption;
+                  const showWrong =
+                    reviewingAnswers && selected && !correctOption;
                   return (
                     <button
                       key={`${current.id}-${optionIndex}`}
                       type="button"
                       onClick={() => submitResponse(optionIndex)}
+                      disabled={reviewingAnswers}
                       className={`group flex min-h-[58px] w-full items-center gap-3 rounded-2xl border-2 px-4 py-3 text-left transition ${
-                        selected
-                          ? "border-violet-500 bg-violet-50 text-violet-950 shadow-[0_8px_20px_rgba(109,40,217,0.08)]"
-                          : "border-slate-200 text-slate-700 hover:border-violet-300 hover:bg-violet-50/40"
+                        showCorrect
+                          ? "border-emerald-400 bg-emerald-50 text-emerald-950"
+                          : showWrong
+                            ? "border-red-400 bg-red-50 text-red-950"
+                            : selected
+                              ? "border-violet-500 bg-violet-50 text-violet-950 shadow-[0_8px_20px_rgba(109,40,217,0.08)]"
+                              : "border-slate-200 text-slate-700 hover:border-violet-300 hover:bg-violet-50/40 disabled:hover:border-slate-200 disabled:hover:bg-white"
                       }`}
                     >
                       <span
                         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black ${
-                          selected
-                            ? "bg-violet-600 text-white"
-                            : "bg-slate-100 text-slate-500"
+                          showCorrect
+                            ? "bg-emerald-500 text-white"
+                            : showWrong
+                              ? "bg-red-500 text-white"
+                              : selected
+                                ? "bg-violet-600 text-white"
+                                : "bg-slate-100 text-slate-500"
                         }`}
                       >
-                        {ANSWER_LABELS[optionIndex]}
+                        {showCorrect ? (
+                          <Check className="h-4 w-4" />
+                        ) : showWrong ? (
+                          <X className="h-4 w-4" />
+                        ) : (
+                          ANSWER_LABELS[optionIndex]
+                        )}
                       </span>
                       <span className="min-w-0 flex-1 whitespace-pre-wrap font-mono text-sm font-bold">
                         <MathText text={option} />
@@ -456,6 +523,18 @@ export default function SpecialMockExamQuizView() {
                     </button>
                   );
                 })}
+              </div>
+            ) : reviewingAnswers ? (
+              <div className="mt-6 rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-4">
+                <p className="text-xs font-black text-slate-500">내 답안</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm font-bold leading-7 text-slate-800">
+                  {typeof currentAnswer?.response === "string" &&
+                  currentAnswer.response ? (
+                    <MathText text={currentAnswer.response} />
+                  ) : (
+                    <span className="text-slate-400">미답변</span>
+                  )}
+                </p>
               </div>
             ) : (
               <form
@@ -520,31 +599,41 @@ export default function SpecialMockExamQuizView() {
               </form>
             )}
 
-            <div className="mt-5 flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3">
-              <p className="flex items-center gap-2 text-xs font-bold text-blue-700">
-                <ListChecks className="h-4 w-4" />
-                {answered
-                  ? "답안이 저장되었습니다. 최종 채점 전까지 수정할 수 있습니다."
-                  : "답안을 선택하거나 입력해 주세요. 정답은 최종 채점 후 공개됩니다."}
-              </p>
-              <button
-                type="button"
-                onClick={() => setHintOpen((open) => !open)}
-                className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-700"
-              >
-                <Lightbulb className="h-4 w-4" /> 힌트
+            {reviewingAnswers ? (
+              <AnswerReviewFeedback
+                question={current}
+                answer={currentAnswer}
+                status={currentReviewStatus}
+              />
+            ) : (
+              <>
+                <div className="mt-5 flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3">
+                  <p className="flex items-center gap-2 text-xs font-bold text-blue-700">
+                    <ListChecks className="h-4 w-4" />
+                    {answered
+                      ? "답안이 저장되었습니다. 최종 채점 전까지 수정할 수 있습니다."
+                      : "답안을 선택하거나 입력해 주세요. 정답은 최종 채점 후 공개됩니다."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setHintOpen((open) => !open)}
+                    className="inline-flex items-center gap-1.5 text-xs font-extrabold text-amber-700"
+                  >
+                    <Lightbulb className="h-4 w-4" /> 힌트
+                    {hintOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
                 {hintOpen ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-            {hintOpen ? (
-              <p className="mt-3 rounded-xl border border-amber-100 bg-amber-50/60 px-4 py-3 text-sm leading-6 text-amber-900">
-                <MathText text={current.hint} />
-              </p>
-            ) : null}
+                  <p className="mt-3 rounded-xl border border-amber-100 bg-amber-50/60 px-4 py-3 text-sm leading-6 text-amber-900">
+                    <MathText text={current.hint} />
+                  </p>
+                ) : null}
+              </>
+            )}
           </div>
 
           <footer className="flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-4 sm:px-8">
@@ -560,18 +649,28 @@ export default function SpecialMockExamQuizView() {
               <ArrowLeft className="h-4 w-4" /> 이전
             </button>
             <span className="hidden text-xs font-bold text-slate-400 sm:block">
-              답변 {answeredCount} / {questions.length}
+              {reviewingAnswers
+                ? `전체 답변 ${currentIndex + 1} / ${questions.length}`
+                : `답변 ${answeredCount} / ${questions.length}`}
             </span>
             <button
               type="button"
               onClick={() => {
-                setCurrentIndex((index) => Math.min(questions.length - 1, index + 1));
+                if (reviewingAnswers && isLast) {
+                  setReviewingAnswers(false);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  return;
+                }
+                setCurrentIndex((index) =>
+                  Math.min(questions.length - 1, index + 1),
+                );
                 setHintOpen(false);
               }}
-              disabled={isLast}
+              disabled={!reviewingAnswers && isLast}
               className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-5 py-2.5 text-sm font-extrabold text-white disabled:opacity-35"
             >
-              다음 <ArrowRight className="h-4 w-4" />
+              {reviewingAnswers && isLast ? "채점 결과" : "다음"}{" "}
+              <ArrowRight className="h-4 w-4" />
             </button>
           </footer>
         </section>
@@ -581,13 +680,21 @@ export default function SpecialMockExamQuizView() {
           answers={answers}
           currentIndex={currentIndex}
           reviewQuestionIds={reviewQuestionIdSet}
-          answerRate={answerRate}
+          answerRate={reviewingAnswers ? score : answerRate}
           answeredCount={answeredCount}
+          reviewMode={reviewingAnswers}
           onSelect={(index) => {
             setCurrentIndex(index);
             setHintOpen(false);
           }}
-          onFinish={finishAndGrade}
+          onAction={() => {
+            if (reviewingAnswers) {
+              setReviewingAnswers(false);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              return;
+            }
+            finishAndGrade();
+          }}
         />
       </div>
     </div>
@@ -605,6 +712,123 @@ export default function SpecialMockExamQuizView() {
   }
 }
 
+function AnswerReviewFeedback({
+  question,
+  answer,
+  status,
+}: {
+  question: SpecialMockExamQuestion;
+  answer?: SessionAnswer;
+  status: ReturnType<typeof getSpecialMockExamReviewStatus>;
+}) {
+  const correctOptionIndex = question.answer ?? -1;
+  const selectedOptionIndex =
+    typeof answer?.response === "number" ? answer.response : -1;
+  const selectedOption = question.options[selectedOptionIndex];
+  const correctOption = question.options[correctOptionIndex];
+  const modelAnswer =
+    question.modelAnswer ?? question.acceptedAnswers?.[0] ?? "등록된 모범 답안이 없습니다.";
+  const tone =
+    status === "correct"
+      ? "border-emerald-200 bg-emerald-50/80"
+      : status === "incorrect"
+        ? "border-red-200 bg-red-50/75"
+        : "border-slate-200 bg-slate-50";
+  const title =
+    status === "correct"
+      ? "정답입니다."
+      : status === "incorrect"
+        ? "오답입니다."
+        : "미답변으로 오답 처리되었습니다.";
+
+  return (
+    <div className={`mt-5 rounded-2xl border p-5 ${tone}`}>
+      <div className="flex items-start gap-3">
+        {status === "correct" ? (
+          <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-emerald-600" />
+        ) : status === "incorrect" ? (
+          <XCircle className="mt-0.5 h-6 w-6 shrink-0 text-red-500" />
+        ) : (
+          <ListChecks className="mt-0.5 h-6 w-6 shrink-0 text-slate-500" />
+        )}
+        <div className="min-w-0 flex-1">
+          <p
+            className={`font-black ${
+              status === "correct"
+                ? "text-emerald-800"
+                : status === "incorrect"
+                  ? "text-red-700"
+                  : "text-slate-700"
+            }`}
+          >
+            {title}
+          </p>
+
+          {question.questionType === "multiple-choice" ? (
+            <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+              <ReviewAnswerBox
+                label="내 답안"
+                text={
+                  selectedOption
+                    ? `${ANSWER_LABELS[selectedOptionIndex]}. ${selectedOption}`
+                    : "미답변"
+                }
+                muted={!selectedOption}
+              />
+              <ReviewAnswerBox
+                label="정답"
+                text={
+                  correctOption
+                    ? `${ANSWER_LABELS[correctOptionIndex]}. ${correctOption}`
+                    : "정답 정보 없음"
+                }
+              />
+            </div>
+          ) : (
+            <div className="mt-4">
+              <ReviewAnswerBox label="모범 답안" text={modelAnswer} />
+            </div>
+          )}
+
+          <div className="mt-4 border-t border-slate-900/10 pt-4">
+            <p className="text-xs font-black text-slate-500">해설</p>
+            <div className="mt-2 space-y-2 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+              {question.explanation.split("\n").map((line, index) => (
+                <p key={`${question.id}-explanation-${index}`}>
+                  <MathText text={line} />
+                </p>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReviewAnswerBox({
+  label,
+  text,
+  muted = false,
+}: {
+  label: string;
+  text: string;
+  muted?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-white/80 bg-white/75 px-4 py-3">
+      <p className="text-[11px] font-black text-slate-500">{label}</p>
+      <p
+        className={`mt-1 whitespace-pre-wrap font-bold leading-6 ${
+          muted ? "text-slate-400" : "text-slate-800"
+        }`}
+      >
+        <MathText text={text} />
+      </p>
+    </div>
+  );
+}
+
 function ExamAnswerPanel({
   questions,
   answers,
@@ -612,8 +836,9 @@ function ExamAnswerPanel({
   reviewQuestionIds,
   answerRate,
   answeredCount,
+  reviewMode,
   onSelect,
-  onFinish,
+  onAction,
 }: {
   questions: SpecialMockExamQuestion[];
   answers: Record<string, SessionAnswer>;
@@ -621,13 +846,16 @@ function ExamAnswerPanel({
   reviewQuestionIds: Set<string>;
   answerRate: number;
   answeredCount: number;
+  reviewMode: boolean;
   onSelect: (index: number) => void;
-  onFinish: () => void;
+  onAction: () => void;
 }) {
   return (
     <aside className="rounded-[1.5rem] border border-amber-200 bg-[#fffdf8] p-5 shadow-[0_16px_38px_rgba(120,83,20,0.08)] lg:sticky lg:top-24">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-sm font-black text-slate-900">답안 현황</h2>
+        <h2 className="text-sm font-black text-slate-900">
+          {reviewMode ? "채점 결과" : "답안 현황"}
+        </h2>
         <strong className="text-2xl font-black text-amber-700">
           {answerRate}%
         </strong>
@@ -668,27 +896,47 @@ function ExamAnswerPanel({
       <div className="mt-4 grid grid-cols-5 gap-2">
         {questions.map((question, index) => {
           const isCurrent = index === currentIndex;
-          const isAnswered = Boolean(answers[question.id]);
+          const answer = answers[question.id];
+          const isAnswered =
+            answer !== undefined && answer.response !== null;
           const isReview = reviewQuestionIds.has(question.id);
+          const reviewStatus = getSpecialMockExamReviewStatus(answer);
+          const reviewTone =
+            reviewStatus === "correct"
+              ? "border-emerald-400 bg-emerald-50 text-emerald-800"
+              : reviewStatus === "incorrect"
+                ? "border-red-400 bg-red-50 text-red-700"
+                : "border-slate-300 bg-slate-100 text-slate-500";
+          const examTone = isCurrent
+            ? "border-amber-700 bg-amber-700 text-white"
+            : isReview
+              ? "border-amber-400 bg-amber-50 text-amber-900"
+              : isAnswered
+                ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                : "border-stone-200 bg-white text-slate-700 hover:border-amber-300";
           return (
             <button
               key={question.id}
               type="button"
               onClick={() => onSelect(index)}
               aria-current={isCurrent ? "step" : undefined}
-              aria-label={`${index + 1}번 문제${isAnswered ? ", 답변 완료" : ", 미답변"}${isReview ? ", 검토 표시" : ""}`}
+              aria-label={`${index + 1}번 문제, ${
+                reviewMode
+                  ? reviewStatus === "correct"
+                    ? "정답"
+                    : reviewStatus === "incorrect"
+                      ? "오답"
+                      : "미답변"
+                  : isAnswered
+                    ? "답변 완료"
+                    : "미답변"
+              }${!reviewMode && isReview ? ", 검토 표시" : ""}`}
               className={`relative flex aspect-square items-center justify-center rounded-lg border text-xs font-black transition ${
-                isCurrent
-                  ? "border-amber-700 bg-amber-700 text-white"
-                  : isReview
-                    ? "border-amber-400 bg-amber-50 text-amber-900"
-                    : isAnswered
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-                      : "border-stone-200 bg-white text-slate-700 hover:border-amber-300"
-              }`}
+                reviewMode ? reviewTone : examTone
+              } ${reviewMode && isCurrent ? "ring-2 ring-amber-600 ring-offset-2" : ""}`}
             >
               {index + 1}
-              {isReview ? (
+              {!reviewMode && isReview ? (
                 <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-500" />
               ) : null}
             </button>
@@ -697,21 +945,34 @@ function ExamAnswerPanel({
       </div>
 
       <div className="mt-5 flex flex-wrap gap-x-3 gap-y-2 text-[10px] font-bold text-slate-500">
-        <LegendDot tone="bg-emerald-500" label="답변 완료" />
-        <LegendDot tone="bg-white ring-1 ring-stone-300" label="미답변" />
-        <LegendDot tone="bg-amber-500" label="검토 표시" />
-        <LegendDot tone="bg-amber-800" label="현재 문제" />
+        {reviewMode ? (
+          <>
+            <LegendDot tone="bg-emerald-500" label="정답" />
+            <LegendDot tone="bg-red-500" label="오답" />
+            <LegendDot tone="bg-slate-300" label="미답변" />
+            <LegendDot tone="bg-amber-700" label="현재 문제" />
+          </>
+        ) : (
+          <>
+            <LegendDot tone="bg-emerald-500" label="답변 완료" />
+            <LegendDot tone="bg-white ring-1 ring-stone-300" label="미답변" />
+            <LegendDot tone="bg-amber-500" label="검토 표시" />
+            <LegendDot tone="bg-amber-800" label="현재 문제" />
+          </>
+        )}
       </div>
 
       <button
         type="button"
-        onClick={onFinish}
+        onClick={onAction}
         className="mt-6 w-full rounded-xl border-2 border-slate-900 bg-white px-4 py-3.5 text-sm font-black text-slate-900 transition hover:bg-slate-900 hover:text-white"
       >
-        시험 종료 및 채점
+        {reviewMode ? "채점 결과로 돌아가기" : "시험 종료 및 채점"}
       </button>
       <p className="mt-3 text-center text-[10px] leading-4 text-slate-500">
-        답변 {answeredCount}/{questions.length} · 미답변은 오답으로 처리됩니다.
+        {reviewMode
+          ? `맞힌 문제와 틀린 문제를 모두 확인합니다.`
+          : `답변 ${answeredCount}/${questions.length} · 미답변은 오답으로 처리됩니다.`}
       </p>
     </aside>
   );

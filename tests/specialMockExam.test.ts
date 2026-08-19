@@ -31,6 +31,7 @@ import { gradeSpecialMockExamResponse } from "../src/utils/specialMockExamGradin
 import { canAccessSpecialMockExam } from "../src/utils/specialMockExamAccess.ts";
 import {
   calculateSpecialMockExamScore,
+  getSpecialMockExamReviewStatus,
   hasPassedSpecialMockExam,
   SPECIAL_MOCK_EXAM_PASS_SCORE,
 } from "../src/utils/specialMockExamResult.ts";
@@ -121,6 +122,22 @@ test("특별 모의고사는 60점 이상만 통과한다", () => {
   assert.equal(calculateSpecialMockExamScore(18, 30), 60);
   assert.equal(hasPassedSpecialMockExam(59), false);
   assert.equal(hasPassedSpecialMockExam(60), true);
+});
+
+test("채점 후 정답·오답·미답변을 모두 답변 다시 보기에서 구분한다", () => {
+  assert.equal(
+    getSpecialMockExamReviewStatus({ response: 1, correct: true }),
+    "correct",
+  );
+  assert.equal(
+    getSpecialMockExamReviewStatus({ response: "오답", correct: false }),
+    "incorrect",
+  );
+  assert.equal(
+    getSpecialMockExamReviewStatus({ response: null, correct: false }),
+    "unanswered",
+  );
+  assert.equal(getSpecialMockExamReviewStatus(), "unanswered");
 });
 
 test("특별 모의고사는 승인된 회원과 관리자만 접근한다", () => {

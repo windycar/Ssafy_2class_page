@@ -11,3 +11,16 @@ export function calculateSpecialMockExamScore(
 export function hasPassedSpecialMockExam(score: number) {
   return score >= SPECIAL_MOCK_EXAM_PASS_SCORE;
 }
+
+export type SpecialMockExamReviewStatus =
+  | "correct"
+  | "incorrect"
+  | "unanswered";
+
+export function getSpecialMockExamReviewStatus(answer?: {
+  response: number | string | null;
+  correct?: boolean;
+}): SpecialMockExamReviewStatus {
+  if (!answer || answer.response === null) return "unanswered";
+  return answer.correct === true ? "correct" : "incorrect";
+}
