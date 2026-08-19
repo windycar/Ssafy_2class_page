@@ -31,7 +31,7 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     difficulty: "medium",
     category: "머신러닝 기초 및 방법론",
     questionType: "multiple-choice",
-    prompt: "모형 가정 Y = f*(X) + e 에서 모델 예측치의 기대 테스트 오차를 분해했을 때, 모델 학습과 구조 개선을 통해 줄일 수 있는 오차(Reducible Error)의 구성 항목은?",
+    prompt: "모형 가정 Y = f*(X) + e 에서 모델 예측치의 기대 테스트 오차를 분해했을 때, 모델 학습과 구조 개선을 통해 줄일 수 있는 오차의 구성 항목은?",
     options: [
       "모델의 편향 제곱과 모델 분산의 합",
       "데이터 수집 과정에서 유입된 측정 오차 e의 분산",
@@ -51,7 +51,7 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     prompt: "선형 회귀 모델의 결정계수 R^2 = 1 - (SS_res / SS_tot) 계산 결과가 0.85로 도출되었을 때의 통계적 의미로 올바른 것은?",
     options: [
       "모든 데이터 샘플의 잔차 오차가 0.85 이하로 보장됨",
-      "목표 변수 Y의 전체 변동량 중 약 85%를 해당 회귀 모델이 설명해 냄",
+      "회귀 모델이 Y의 전체 변동량 중 약 85%를 설명함",
       "독립 변수 X와 종속 변수 Y의 상관계수 수치가 정확히 0.85임",
       "학습 데이터 중 15%가 이상치로 판정되어 모델에서 제외됨"
     ],
@@ -65,11 +65,11 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     difficulty: "medium",
     category: "머신러닝 기초 및 방법론",
     questionType: "multiple-choice",
-    prompt: "다중선형회귀에서 최소제곱 추정량 공식 beta = (X^T X)^(-1) X^T y 가 유일한 역행렬 해로 도출되기 위한 필수 수학적 조건은?",
+    prompt: "다중선형회귀에서 최소제곱 추정량 공식 beta = ^(-1) X^T y 가 유일한 역행렬 해로 도출되기 위한 필수 수학적 조건은?",
     options: [
       "피처의 개수 p가 데이터 샘플 수 n보다 훨씬 커야 함",
       "모든 독립 변수가 범주형 데이터로만 구성되어야 함",
-      "행렬 X^T X의 역행렬이 존재해야 하며, 독립 변수 간에 완전한 다중공선성이 없어야 함",
+      "X^T X가 가역이며 X의 열벡터가 선형 독립이어야 함",
       "오차항의 분산이 무한대로 발산해야 함"
     ],
     answer: 2,
@@ -82,12 +82,12 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     difficulty: "medium",
     category: "머신러닝 기초 및 방법론",
     questionType: "multiple-choice",
-    prompt: "질병 진단 시스템처럼 실제 양성 환자를 정상으로 잘못 판단하는 제2종 오류(False Negative)가 치명적인 분야에서 가장 우선적으로 높여야 하는 지표는?",
+    prompt: "질병 진단 시스템처럼 실제 양성 환자를 정상으로 잘못 판단하는 제2종 오류가 치명적인 분야에서 가장 우선적으로 높여야 하는 지표는?",
     options: [
-      "특이도 (Specificity)",
-      "정밀도 (Precision)",
-      "평균 제곱 오차 (MSE)",
-      "재현율 (Recall / Sensitivity)"
+      "특이도 ",
+      "정밀도 ",
+      "평균 제곱 오차 ",
+      "재현율 "
     ],
     answer: 3,
     explanation: "실제 양성 환자 중 모델이 놓치지 않고 잡아낸 비율인 재현율(Recall = TP / (TP + FN))을 높여야 미진단(FN)을 최소화할 수 있습니다.",
@@ -101,9 +101,9 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     difficulty: "medium",
     category: "자연어 처리 및 텍스트 모델",
     questionType: "multiple-choice",
-    prompt: "Word2Vec의 Skip-gram 모델에 Negative Sampling(SGNS)을 적용했을 때 Softmax 대비 연산 속도가 대폭 향상되는 원리는?",
+    prompt: "Word2Vec의 Skip-gram 모델에 Negative Sampling을 적용했을 때 Softmax 대비 연산 속도가 대폭 향상되는 원리는?",
     options: [
-      "전체 어휘 사전 V에 대한 분모 합산 연산 대신, 참 단어 1개와 k개의 오답 단어만 추출해 시그모이드 이진 분류 문제로 단순화하므로",
+      "전체 어휘 대신 참 단어와 k개 음성 샘플만 이진 분류함",
       "단어 임베딩 벡터의 모든 원소를 1비트 정수로 압축하기 때문에",
       "문맥 윈도우 크기를 0으로 줄여 주변 단어 연산을 생략하기 때문에",
       "텍스트 데이터를 2차원 이미지 픽셀 행렬로 변환해 처리하므로"
@@ -118,10 +118,10 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     difficulty: "medium",
     category: "자연어 처리 및 텍스트 모델",
     questionType: "multiple-choice",
-    prompt: "LSTM이 단순 RNN의 고질적인 기울기 소실(Vanishing Gradient) 문제를 구조적으로 완화하는 원리는?",
+    prompt: "LSTM이 단순 RNN의 고질적인 기울기 소실 문제를 구조적으로 완화하는 원리는?",
     options: [
       "모든 게이트의 활성화 함수를 평균 풀링으로 대체했기 때문에",
-      "Cell State의 덧셈 기반 정보 전달 경로와 게이트 구조를 통해 장기 의존성 학습 시 기울기 소실을 완화하므로",
+      "셀 상태의 덧셈 경로와 게이트로 장기 정보를 보존함",
       "은닉 상태 벡터의 차원을 타임스텝마다 2배로 증폭시키므로",
       "출력층에서 소프트맥스 함수를 완전히 제거하고 선형 회귀만 수행하므로"
     ],
@@ -135,8 +135,8 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     difficulty: "medium",
     category: "자연어 처리 및 텍스트 모델",
     questionType: "multiple-choice",
-    prompt: "다음 PyTorch 코드에서 실행되는 텐서 연산 결과 context의 형상(Shape)으로 올바른 것은?",
-    code: "import torch\nimport torch.nn.functional as F\n\n# Q, K, V: (Batch=2, Heads=4, Seq_len=8, Head_dim=64)\nQ = torch.randn(2, 4, 8, 64)\nK = torch.randn(2, 4, 8, 64)\nV = torch.randn(2, 4, 8, 64)\nscores = torch.matmul(Q, K.transpose(-2, -1)) / 8.0\nattn_weights = F.softmax(scores, dim=-1)\ncontext = torch.matmul(attn_weights, V)",
+    prompt: "다음 PyTorch 코드에서 실행되는 텐서 연산 결과 context의 형상으로 올바른 것은?",
+    code: "import torch\nimport torch.nn.functional as F\n\n# Q, K, V: \nQ = torch.randn(2, 4, 8, 64)\nK = torch.randn(2, 4, 8, 64)\nV = torch.randn(2, 4, 8, 64)\nscores = torch.matmul(Q, K.transpose(-2, -1)) / 8.0\nattn_weights = F.softmax(scores, dim=-1)\ncontext = torch.matmul",
     options: [
       "(2, 4, 8, 8)",
       "(2, 4, 64, 64)",
@@ -158,7 +158,7 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
       "어텐션 가중치 행렬의 모든 값을 1로 통일하기 위함",
       "행렬의 가로세로 차원을 절반으로 축소하기 위함",
       "위치 인코딩 벡터를 자동으로 생성하여 주입하기 위함",
-      "차원 d_k가 커짐에 따라 내적값이 커져 Softmax 출력이 지나치게 극단화되고 기울기가 작아지는 현상을 완화하기 위함"
+      "내적값 증가로 소프트맥스가 포화되는 현상을 완화함"
     ],
     answer: 3,
     explanation: "차원 d_k가 커질수록 Q와 K의 내적값 분산도 커질 수 있습니다. 이 값이 지나치게 커지면 Softmax 분포가 매우 뾰족해져 기울기가 작아지고 학습이 불안정해질 수 있으므로 sqrt(d_k)로 나누어 스케일을 조절합니다.",
@@ -170,12 +170,12 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     difficulty: "medium",
     category: "자연어 처리 및 텍스트 모델",
     questionType: "multiple-choice",
-    prompt: "DeepMind의 Chinchilla 연구가 규명한 연산 최적(Compute-Optimal) LLM 학습 법칙의 핵심 결론은?",
+    prompt: "DeepMind의 Chinchilla 연구가 규명한 연산 최적 LLM 학습 법칙의 핵심 결론은?",
     options: [
-      "고정된 컴퓨팅 예산에서 모델 파라미터 수만 키우기보다 모델 크기와 학습 데이터 토큰 수를 균형 있게 함께 확장해야 함",
+      "모델 크기와 학습 토큰 수를 연산 예산에 맞춰 함께 확장함",
       "모델 파라미터 수만 극대화하고 학습 토큰 수는 최소화해야 함",
       "학습 토큰 수만 늘리고 모델 파라미터는 1B 이하로 고정해야 함",
-      "모델의 손실값(Loss)은 파라미터 크기나 데이터양과 무관함"
+      "모델의 손실값은 파라미터 크기나 데이터양과 무관함"
     ],
     answer: 0,
     explanation: "Chinchilla 법칙은 고정된 연산 자원 조건에서 모델 파라미터 크기와 학습 토큰 수를 균형 있게 함께 확장해야 최적의 성능을 달성함을 규명했습니다.",
@@ -187,10 +187,10 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     difficulty: "medium",
     category: "자연어 처리 및 텍스트 모델",
     questionType: "multiple-choice",
-    prompt: "DPO(Direct Preference Optimization)가 기존 PPO 기반 RLHF 파이프라인 대비 갖는 가장 큰 구조적 이점은?",
+    prompt: "DPO가 기존 PPO 기반 RLHF 파이프라인 대비 갖는 가장 큰 구조적 이점은?",
     options: [
       "인간 선호도 비교 데이터셋이 전혀 필요 없음",
-      "별도의 복잡한 보상 모델 학습 및 PPO 강화학습 루프 없이, 선호 데이터셋으로 직접 분류 손실을 통해 정책을 최적화함",
+      "보상 모델과 PPO 없이 선호 데이터로 정책을 직접 최적화함",
       "역전파 미분 계산을 완전히 생략하고 텍스트를 생성함",
       "오직 1개의 단어만 출력하도록 제한하여 환각을 없앰"
     ],
@@ -204,7 +204,7 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     id: "exam-mc-011",
     conceptId: "alexnet-conv1-size-calc",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
     prompt: "입력 해상도 W=227, 커널 크기 K=11, 패딩 P=0, 스트라이드 S=4 일 때, 합성곱 연산 후 생성되는 출력 특징 맵의 가로세로 해상도는?",
     options: [
@@ -221,14 +221,14 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     id: "exam-mc-012",
     conceptId: "vggnet-3x3-stack-receptive-param-calc",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
-    prompt: "동일한 7x7 수용 영역(Receptive Field)을 확보할 때, 7x7 필터 1개를 사용하는 것 대비 3x3 필터 3개를 중첩하여 사용할 때의 파라미터 수 비교 결과는? (입출력 채널 C로 동일)",
+    prompt: "동일한 7x7 수용 영역을 확보할 때, 7x7 필터 1개를 사용하는 것 대비 3x3 필터 3개를 중첩하여 사용할 때의 파라미터 수 비교 결과는? (입출력 채널 C로 동일)",
     options: [
       "두 방식의 파라미터 수가 수학적으로 완벽히 동일함",
       "3x3 중첩 방식의 파라미터가 2배 더 많아짐",
       "7x7 1개 방식이 연산량과 파라미터를 50% 절감함",
-      "7x7 1개는 49 C^2 이고, 3x3 3개는 27 C^2 이므로 3x3 중첩 방식이 파라미터를 약 45% 절감함"
+      "3x3 중첩은 27 C^2로, 49 C^2인 7x7보다 약 45% 적음"
     ],
     answer: 3,
     explanation: "7x7 1개 면적(49) 대비 3x3 세 번 중첩 면적(9x3=27)이므로 가중치 파라미터 수가 약 44.9% 감소합니다.",
@@ -238,11 +238,11 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     id: "exam-mc-013",
     conceptId: "resnet-skip-connection-projection",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
-    prompt: "ResNet 잔차 블록 H(x) = F(x) + x 에서, 레이어 F(x)를 거치며 채널 수가 증가하여 입력 x와 차원이 불일치할 때 지름길 통로(Skip Connection)에 적용하는 해결책은?",
+    prompt: "ResNet 잔차 블록 H(x) = F(x) + x 에서, 레이어 F(x)를 거치며 채널 수가 증가하여 입력 x와 차원이 불일치할 때 지름길 통로에 적용하는 해결책은?",
     options: [
-      "지름길 통로에 1x1 합성곱을 적용하여 x의 채널 차원을 F(x)와 동일하게 투영(Projection)해 줌",
+      "지름길에 1x1 합성곱을 적용해 채널 수를 맞춤",
       "서브레이어 F(x)의 가중치를 영 행렬로 초기화함",
       "지름길 연결을 끊어버리고 일반 평탄 네트워크로 전환함",
       "입력 x의 가로세로 해상도를 2배로 확장함"
@@ -255,7 +255,7 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     id: "exam-mc-014",
     conceptId: "mobilenet-depthwise-separable-ratio-formula",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
     prompt: "표준 합성곱 연산량 대비 MobileNet의 Depthwise Separable 합성곱 연산량 비율을 나타내는 올바른 수식은? (N: 출력 채널 수, D_K: 커널 크기)",
     options: [
@@ -272,13 +272,13 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     id: "exam-mc-015",
     conceptId: "plain-net-degradation-phenomenon",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
-    prompt: "ResNet 논문에서 지름길 연결이 없는 일반 평탄 네트워크(Plain Net)의 층을 20층에서 56층으로 깊게 쌓았을 때 관찰된 '열화(Degradation)' 현상은?",
+    prompt: "ResNet 논문에서 지름길 연결이 없는 일반 평탄 네트워크의 층을 20층에서 56층으로 깊게 쌓았을 때 관찰된 '열화' 현상은?",
     options: [
       "훈련 오차는 0이 되었으나 테스트 오차만 과적합으로 급증함",
       "가중치 파라미터가 0개로 축소되어 연산이 중단됨",
-      "과적합 때문이 아닌데도 깊은 네트워크의 훈련 오차가 얕은 네트워크보다 오히려 더 커지는 최적화 난항 현상",
+      "깊은 모델의 훈련 오차가 얕은 모델보다 커지는 현상",
       "모든 활성화 맵의 채널 수가 흑백으로 강제 변환됨"
     ],
     answer: 2,
@@ -289,7 +289,7 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     id: "exam-mc-016",
     conceptId: "mobilenet-depthwise-channel-independence",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
     prompt: "입력 채널이 64개일 때 MobileNet의 Depthwise Convolution(3x3 커널)을 통과한 출력 특징 맵의 채널 수는?",
     options: [
@@ -308,12 +308,12 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     id: "exam-mc-017",
     conceptId: "clip-similarity-matrix-diagonal",
     difficulty: "medium",
-    category: "시각-언어 모델(VLM) 및 멀티모달 정합",
+    category: "시각-언어 모델 및 멀티모달 정합",
     questionType: "multiple-choice",
     prompt: "N개의 이미지와 N개의 텍스트로 구성된 배치에서 CLIP 대조학습 수행 시 N x N 코사인 유사도 행렬의 주대각선 원소들이 갖는 의미는?",
     options: [
-      "실제 일치하는 정답 양성(Positive) 페어들의 유사도이며, 이 값들이 최대화되도록 학습됨",
-      "일치하지 않는 오답 음성(Negative) 페어들의 유사도",
+      "서로 대응하는 이미지-텍스트 양성 쌍의 유사도",
+      "일치하지 않는 오답 음성 페어들의 유사도",
       "이미지 인코더의 패딩 영역 비율",
       "소프트맥스 함수의 미분 오차값"
     ],
@@ -325,10 +325,10 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     id: "exam-mc-018",
     conceptId: "clip-code-dim-analysis",
     difficulty: "medium",
-    category: "시각-언어 모델(VLM) 및 멀티모달 정합",
+    category: "시각-언어 모델 및 멀티모달 정합",
     questionType: "multiple-choice",
-    prompt: "다음 PyTorch 코드에서 실행되는 Zero-shot 분류 연산 시, C개의 텍스트 카테고리 중 가장 확률이 높은 클래스를 예측하기 위해 적용해야 하는 Softmax의 올바른 차원 축(dim)은?",
-    code: "# image_embeds: (1, 512), text_embeds: (C, 512)\nlogits = image_embeds @ text_embeds.T  # Shape: (1, C)\nprobs = F.softmax(logits, dim=?)",
+    prompt: "다음 PyTorch 코드에서 실행되는 Zero-shot 분류 연산 시, C개의 텍스트 카테고리 중 가장 확률이 높은 클래스를 예측하기 위해 적용해야 하는 Softmax의 올바른 차원 축은?",
+    code: "# image_embeds: (1, 512), text_embeds: \nlogits = image_embeds @ text_embeds.T  # Shape: \nprobs = F.softmax(logits, dim=?)",
     options: [
       "dim = 0",
       "dim = 1 (또는 dim = -1)",
@@ -343,13 +343,13 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     id: "exam-mc-019",
     conceptId: "siglip-distributed-efficiency",
     difficulty: "medium",
-    category: "시각-언어 모델(VLM) 및 멀티모달 정합",
+    category: "시각-언어 모델 및 멀티모달 정합",
     questionType: "multiple-choice",
     prompt: "구글의 SigLIP이 기존 CLIP의 Softmax 대조 손실 대비 대규모 GPU 분산 학습에서 통신 효율이 뛰어난 수학적 원리는?",
     options: [
       "모든 모달리티의 가중치를 0으로 초기화하기 때문에",
       "텍스트 인코더를 완전히 제거했기 때문에",
-      "전체 배치에 대한 Softmax 전역 정규화가 필요하지 않고 개별 이미지-텍스트 쌍에 독립적인 Sigmoid 손실을 적용할 수 있어 분산 학습의 통신 부담을 줄일 수 있으므로",
+      "쌍별 독립 시그모이드 손실로 전역 정규화를 피함",
       "이미지 해상도를 무조건 10x10으로 압축하므로"
     ],
     answer: 2,
@@ -360,7 +360,7 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     id: "exam-mc-020",
     conceptId: "imagebind-six-modalities-anchor",
     difficulty: "medium",
-    category: "시각-언어 모델(VLM) 및 멀티모달 정합",
+    category: "시각-언어 모델 및 멀티모달 정합",
     questionType: "multiple-choice",
     prompt: "메타의 ImageBind가 이미지, 텍스트, 오디오, 깊이, 열화상, IMU 6개 모달리티를 단일 공간에 묶을 때 중심 매개체로 활용한 모달리티는?",
     options: [
@@ -381,9 +381,9 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     difficulty: "medium",
     category: "VLM 및 비전 파운데이션 모델",
     questionType: "multiple-choice",
-    prompt: "LLaVA의 2단계 학습 파이프라인에서 Step 1(사전학습)과 Step 2(파인튜닝)의 모듈 학습/동결(Freeze) 구분을 바르게 설명한 것은?",
+    prompt: "LLaVA의 2단계 학습 파이프라인에서 Step 1(사전학습)과 Step 2(파인튜닝)의 모듈 학습/동결 구분을 바르게 설명한 것은?",
     options: [
-      "Step 1: 선형 프로젝션 레이어(W)만 학습(비전/LLM 동결) / Step 2: 프로젝션 레이어와 LLM을 함께 미세조정(비전 동결)",
+      "1단계는 투영층만, 2단계는 투영층과 LLM을 학습함",
       "Step 1: 전체 모듈 학습 / Step 2: 전체 모듈 동결",
       "Step 1: 비전 인코더만 학습 / Step 2: 언어 모델만 학습",
       "Step 1: LLM만 학습 / Step 2: 프로젝션 레이어만 학습"
@@ -401,7 +401,7 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     prompt: "Qwen2-VL이 1D 텍스트, 2D 이미지, 3D 비디오 위치를 통합 모델링하기 위해 사용하는 M-ROPE의 3차원 위치 성분 축은?",
     options: [
       "밝기, 채도, 명도",
-      "시간(Time), 높이(Height), 너비(Width)",
+      "시간, 높이, 너비",
       "스트라이드, 패딩, 커널",
       "쿼리, 키, 값"
     ],
@@ -419,7 +419,7 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     options: [
       "SAM이 마스크 생성 → 마스크를 텍스트로 변환 → Grounding DINO가 삭제",
       "이미지 픽셀 흑백화 → 플랫튼 연산 → 소프트맥스 분류",
-      "사용자가 텍스트 프롬프트 입력 → Grounding DINO가 바운딩 박스 탐지 → SAM이 해당 박스를 프롬프트로 받아 정밀 마스크 생성",
+      "Grounding DINO로 박스를 찾고 SAM으로 마스크를 생성함",
       "음성 신호 입력 → 오디오 인코딩 → 3D 메쉬 생성"
     ],
     answer: 2,
@@ -432,12 +432,12 @@ export const SSAFY_AI_MOCK_EXAM_30Q: StudyQuestion[] = [
     difficulty: "medium",
     category: "VLM 및 비전 파운데이션 모델",
     questionType: "multiple-choice",
-    prompt: "메타의 Sapiens 모델이 사람(Human) 이미지에 대해 수행하는 4대 비전 태스크의 조합으로 올바른 것은?",
+    prompt: "메타의 Sapiens 모델이 사람 이미지에 대해 수행하는 4대 비전 태스크의 조합으로 올바른 것은?",
     options: [
       "음성 변환, 악보 생성, 텍스트 요약, 번역",
       "자율주행 경로 계획, 라이다 포인트 필터링, 장애물 회피, 제동",
       "차트 분석, 영수증 OCR, 웹페이지 코딩, 스팸 필터링",
-      "2D 포즈 추정, 신체 부위 세그멘테이션, 깊이 추정, 표면 법선(Surface Normal) 추정"
+      "2D 포즈, 신체 분할, 깊이, 표면 법선 추정"
     ],
     answer: 3,
     explanation: "Sapiens는 3000만 장의 인체 이미지로 학습되어 포즈 추정, 신체 부위 분할, 깊이 추정, 표면 법선 추정 4대 태스크를 지원합니다.",

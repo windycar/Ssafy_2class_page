@@ -33,8 +33,8 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     questionType: "multiple-choice",
     prompt: "아파트 가격 예측 모델을 지도학습으로 만든다고 할 때, '면적·방 개수·역과의 거리'와 '실제 거래 가격', 그리고 학습 과정의 관계를 가장 올바르게 설명한 것은?",
     options: [
-      "면적·방 개수·역과의 거리는 입력 특징(Feature), 실제 거래 가격은 정답(Label)이며, 학습은 가설 공간에서 입력과 정답의 관계를 잘 설명하는 함수를 찾는 과정임",
-      "면적·방 개수·역과의 거리가 정답(Label)이고 실제 거래 가격은 입력 특징(Feature)임",
+      "면적·방 수·역 거리는 입력, 거래 가격은 정답이며 둘의 관계 함수를 학습함",
+      "면적·방 개수·역과의 거리가 정답이고 실제 거래 가격은 입력 특징임",
       "지도학습에서는 정답 데이터가 없어야 하므로 실제 거래 가격을 학습에 사용하면 안 됨",
       "가설 공간은 학습에 사용한 아파트 데이터 행 자체만을 모아둔 집합을 의미함"
     ],
@@ -48,10 +48,10 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     difficulty: "medium",
     category: "머신러닝 기초 및 방법론",
     questionType: "multiple-choice",
-    prompt: "전통적인 소프트웨어 프로그래밍(Traditional Programming)과 머신러닝(Machine Learning)의 문제 해결 패러다임 차이에 대한 설명으로 가장 올바른 것은?",
+    prompt: "전통적인 소프트웨어 프로그래밍과 머신러닝의 문제 해결 패러다임 차이에 대한 설명으로 가장 올바른 것은?",
     options: [
       "전통적 프로그래밍은 데이터와 정답을 주면 규칙을 출력하고, 머신러닝은 규칙만 주면 데이터를 출력함",
-      "전통적 프로그래밍은 사람이 직접 작성한 규칙과 데이터를 입력받아 결과를 내놓고, 머신러닝은 데이터와 결과를 바탕으로 모델이 규칙(함수)을 학습함",
+      "전통 방식은 사람이 규칙을 작성하고, 머신러닝은 데이터에서 규칙을 학습함",
       "머신러닝은 항상 수작업 if-else 하드코딩 규칙만으로 알고리즘을 제어함",
       "전통적 프로그래밍과 머신러닝은 데이터 입력 구조와 학습 메커니즘이 완전히 동일함"
     ],
@@ -65,11 +65,11 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     difficulty: "medium",
     category: "머신러닝 기초 및 방법론",
     questionType: "multiple-choice",
-    prompt: "회귀 모델의 대표적인 성능 지표인 결정계수(R^2)와 잔차표준오차(RSE)에 대한 설명으로 가장 올바른 것은?",
+    prompt: "회귀 모델의 대표적인 성능 지표인 결정계수(R^2)와 잔차표준오차에 대한 설명으로 가장 올바른 것은?",
     options: [
       "R^2은 각 회귀계수의 p-value를 모두 더한 값이고, RSE는 독립변수 개수를 나타냄",
       "R^2과 RSE는 모두 분류 정확도를 나타내므로 값이 클수록 항상 좋은 모델임",
-      "R^2은 모델이 종속변수의 변동을 얼마나 설명하는지 나타내고, RSE는 실제값과 회귀선 사이에 남는 잔차의 전형적인 크기를 나타냄",
+      "R^2은 설명된 변동 비율, RSE는 잔차의 전형적 크기를 나타냄",
       "R^2이 0에 가까울수록 설명력이 높고 RSE가 클수록 예측 오차가 작다는 뜻임"
     ],
     answer: 2,
@@ -87,7 +87,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
       "변수를 추가할수록 모델이 무조건 단순해지고 해석도 항상 쉬워짐",
       "새로운 변수를 추가하면 기존 회귀계수는 절대 변하지 않으며 과적합 가능성도 사라짐",
       "설명변수를 많이 넣을수록 모든 변수의 영향력이 자동으로 인과관계로 확정됨",
-      "유용한 변수를 추가하면 더 많은 정보를 반영해 설명력이 향상될 수 있지만, 불필요한 변수까지 추가하면 과적합 위험과 해석 복잡성이 커질 수 있음"
+      "유용한 변수는 설명력을 높이지만 불필요한 변수는 과적합과 해석 복잡성을 키움"
     ],
     answer: 3,
     explanation: "다중회귀는 여러 설명변수를 함께 고려할 수 있어 설명력을 높일 수 있지만, 불필요한 변수를 과도하게 추가하면 과적합 위험이 커지고 모델 해석도 복잡해질 수 있습니다.",
@@ -99,9 +99,9 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     difficulty: "medium",
     category: "자연어 처리 및 텍스트 모델",
     questionType: "multiple-choice",
-    prompt: "원-핫 인코딩(One-hot Encoding) 대신 워드 임베딩(Word Embedding)을 사용하는 핵심 이유로 가장 올바른 것은?",
+    prompt: "원-핫 인코딩 대신 워드 임베딩을 사용하는 핵심 이유로 가장 올바른 것은?",
     options: [
-      "단어를 밀집된 연속 벡터로 표현하여 단어 사이의 의미적 유사성과 관계를 벡터 공간의 거리로 반영할 수 있기 때문에",
+      "밀집 벡터의 거리로 단어 간 의미와 관계를 표현할 수 있음",
       "모든 단어를 반드시 1차원의 동일한 숫자 하나로 표현하여 단어 간 차이를 없애기 때문에",
       "문장 내 단어 순서를 별도의 학습 없이 완벽하게 보존하기 때문에",
       "어휘 수가 증가할수록 임베딩 벡터의 모든 차원이 자동으로 0이 되기 때문에"
@@ -116,10 +116,10 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     difficulty: "medium",
     category: "자연어 처리 및 텍스트 모델",
     questionType: "multiple-choice",
-    prompt: "순환 신경망(RNN)의 입출력 구조 유형과 대표적인 응용 태스크의 연결로 가장 올바른 것은?",
+    prompt: "순환 신경망의 입출력 구조 유형과 대표적인 응용 태스크의 연결로 가장 올바른 것은?",
     options: [
       "One-to-Many 구조 - 시퀀스 텍스트를 입력받아 긍정/부정을 분류하는 감정 분석",
-      "Many-to-One 구조 - 단어 시퀀스를 입력받아 마지막 시점의 은닉 상태로 전체 문장의 감정을 분류하는 감정 분석",
+      "다대일 구조: 단어 시퀀스를 받아 문장 감정을 하나의 값으로 분류함",
       "Many-to-Many 구조 - 단일 이미지를 입력받아 문장 캡션을 순차 출력하는 이미지 캡셔닝",
       "One-to-One 구조 - 영어 문장을 입력받아 한국어 문장으로 순차 번역하는 기계 번역"
     ],
@@ -133,11 +133,11 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     difficulty: "medium",
     category: "자연어 처리 및 텍스트 모델",
     questionType: "multiple-choice",
-    prompt: "트랜스포머의 Self-Attention 연산 전에 입력 단어 임베딩에 위치 인코딩(Positional Encoding)을 더해주어야 하는 결정적 이유는?",
+    prompt: "트랜스포머의 Self-Attention 연산 전에 입력 단어 임베딩에 위치 인코딩을 더해주어야 하는 결정적 이유는?",
     options: [
       "어텐션 연산 시 소프트맥스 함수의 계산량을 0으로 줄이기 위해",
       "모든 단어 벡터를 흑백 픽셀로 변환하여 메모리를 절감하기 위해",
-      "Self-Attention 연산 자체는 단어의 순서(위치)에 상관없이 값의 유사도만 계산하므로, 토큰의 순서 정보를 모델에 주입하기 위해",
+      "셀프 어텐션만으로 알 수 없는 토큰 순서를 모델에 주입함",
       "어휘 사전의 크기를 2배로 확장하기 위해"
     ],
     answer: 2,
@@ -150,12 +150,12 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     difficulty: "medium",
     category: "자연어 처리 및 텍스트 모델",
     questionType: "multiple-choice",
-    prompt: "GPT와 같은 자기회귀(Auto-regressive) 언어 모델이 사전학습 시 사용하는 Causal Language Modeling(CLM) 목적함수의 동작 방식은?",
+    prompt: "GPT와 같은 자기회귀 언어 모델이 사전학습 시 사용하는 Causal Language Modeling 목적함수의 동작 방식은?",
     options: [
       "문장 전체를 양방향으로 한 번에 보고 마스킹된 빈칸 단어를 채워 넣도록 학습함",
       "문장의 감정이 긍정인지 부정인지를 맞추는 지도학습 손실만을 최적화함",
       "단어 벡터들을 1차원으로 합산하여 문장 길이를 회귀 예측함",
-      "이전 시점까지 주어진 단어 시퀀스를 조건으로 하여 바로 다음 시점에 등장할 토큰의 확률을 최대화하도록 학습함"
+      "이전 토큰을 조건으로 다음 토큰의 확률을 최대화함"
     ],
     answer: 3,
     explanation: "CLM은 이전 토큰들 $x_1, \\dots, x_{t-1}$이 주어졌을 때 다음 토큰 $x_t$가 등장할 조건부 확률을 최대화(교차 엔트로피 최소화)하도록 학습합니다.",
@@ -169,7 +169,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     questionType: "multiple-choice",
     prompt: "LLM 텍스트 생성 시 Top-k와 Top-p 샘플링을 결합하여 적용할 때의 일반적인 필터링 동작 방식은?",
     options: [
-      "확률이 높은 상위 k개의 토큰 후보를 먼저 선별한 후, 그 안에서 누적 확률이 p에 도달하는 토큰들만 다시 압축하여 샘플링함",
+      "상위 k개 후보에서 누적 확률 p 범위의 토큰만 다시 샘플링함",
       "확률이 가장 낮은 하위 k개 토큰과 하위 p% 토큰만을 골라 무작위 추출함",
       "모든 토큰의 확률을 동일하게 1/k로 만든 뒤 무작위 선택함",
       "생성되는 문장의 글자 수를 정확히 k개와 p개 사이로 고정함"
@@ -187,7 +187,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     prompt: "정답 문장이 하나로 정해져 있지 않은 요약·스토리 생성 결과를 '일관성, 유창성, 관련성'처럼 여러 기준으로 평가하려 할 때 강의자료에서 소개한 방법으로 가장 적절한 것은?",
     options: [
       "출력 문장의 글자 수만 세어 길이가 긴 모델을 항상 더 우수하다고 판단함",
-      "평가할 태스크와 생성 텍스트, 평가 기준을 거대 언어 모델에 제공하여 점수와 평가 결과를 얻는 LLM-as-Judge(G-Eval) 방식을 사용함",
+      "평가 기준과 생성문을 다른 LLM이 채점하는 LLM-as-Judge를 사용함",
       "정답이 없더라도 모든 생성 문장을 Accuracy 하나만으로 평가함",
       "이미지 분류용 CNN의 마지막 Softmax 확률을 텍스트 품질 점수로 그대로 사용함"
     ],
@@ -201,13 +201,13 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     id: "r4-mc-011",
     conceptId: "stride-effect-on-feature-map-and-flops",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
-    prompt: "합성곱 계층에서 스트라이드(Stride)를 1에서 2로 늘렸을 때 출력 특징 맵의 해상도 및 연산량 변화로 가장 올바른 것은?",
+    prompt: "합성곱 계층에서 스트라이드를 1에서 2로 늘렸을 때 출력 특징 맵의 해상도 및 연산량 변화로 가장 올바른 것은?",
     options: [
       "출력 특징 맵의 가로세로 해상도가 2배 커지고 연산량도 4배 증가함",
       "특징 맵의 채널 수가 2배로 증가하고 연산량에는 변화가 없음",
-      "가로세로 공간 해상도가 약 절반(1/2)으로 줄어들며, 출력 화소 수가 약 1/4로 감소하여 연산량도 크게 줄어듦",
+      "가로세로가 절반으로 줄어 출력 화소 수가 약 1/4이 됨",
       "가중치 파라미터 개수가 정확히 절반으로 감소함"
     ],
     answer: 2,
@@ -218,14 +218,14 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     id: "r4-mc-012",
     conceptId: "alexnet-vs-vggnet-filter-architecture",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
     prompt: "AlexNet과 VGGNet의 구조적 차이점에 대한 설명 중 가장 올바른 것은?",
     options: [
       "AlexNet은 3x3 필터만 단일하게 사용했고, VGGNet은 11x11 필터를 주로 사용함",
       "AlexNet은 지름길 연결을 사용했고, VGGNet은 지름길 연결을 완전히 배제함",
       "AlexNet은 완전 연결 계층이 없었고, VGGNet에서 완전 연결 계층이 처음 도입됨",
-      "AlexNet은 11x11, 5x5 등 다양한 크기의 대형 필터를 혼용했으나, VGGNet은 3x3 소형 필터만을 깊게 중첩하여 망을 구성함"
+      "AlexNet은 큰 필터를 혼용하고 VGGNet은 3x3 필터를 깊게 중첩함"
     ],
     answer: 3,
     explanation: "AlexNet은 초반에 11x11, 5x5 대형 필터를 사용했으나, VGGNet은 3x3 필터를 여러 개 쌓아 파라미터를 줄이고 비선형성을 강화하는 설계를 정립했습니다.",
@@ -235,11 +235,11 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     id: "r4-mc-013",
     conceptId: "resnet-gradient-highway-formula",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
     prompt: "ResNet 잔차 블록 H(x) = F(x) + x 의 역전파 미분식 dH/dx = dF/dx + 1 에서, 우변의 '+ 1' 항이 갖는 아키텍처적 의미는?",
     options: [
-      "상위 계층의 오차 기울기가 가중치 계수를 거치지 않고 입력 x 쪽으로 최소 1만큼 직접 전달되어 깊은 망에서도 기울기 소실을 방지함",
+      "잔차 덧셈 경로로 기울기가 가중치 없이 이전 계층에 직접 전달됨",
       "신경망의 출력 활성화 값을 무조건 1.0으로 고정하여 정규화함",
       "역전파 계산 시 모든 가중치 기울기를 1씩 증가시켜 학습 속도를 100배 가속함",
       "손실 함수의 값을 항상 양수로 유지해 주는 편향 상수 역할을 함"
@@ -252,12 +252,12 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     id: "r4-mc-014",
     conceptId: "mobilenet-pointwise-conv-role",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
-    prompt: "MobileNet의 Depthwise Separable Convolution에서 두 번째 단계인 Pointwise Convolution(1x1 Conv)의 핵심 역할은?",
+    prompt: "MobileNet의 Depthwise Separable Convolution에서 두 번째 단계인 Pointwise Convolution의 핵심 역할은?",
     options: [
       "공간 해상도를 절반으로 줄이는 다운샘플링 연산을 전담함",
-      "Depthwise 계층에서 채널별로 독립 분리 처리된 특징들을 1x1 필터로 선형 결합하고 원하는 출력 채널 수로 매핑함",
+      "채널별 특징을 1x1 필터로 결합해 출력 채널 수로 매핑함",
       "모든 채널의 특징 맵을 흑백 단일 채널로 강제 통합함",
       "가중치 파라미터 없이 윈도우 내 최대값을 추출함"
     ],
@@ -269,13 +269,13 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     id: "r4-mc-015",
     conceptId: "vit-cls-token-purpose",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
-    prompt: "Vision Transformer(ViT)에서 이미지 패치 임베딩 시퀀스 맨 앞에 학습 가능한 클래스 토큰([CLS])을 추가하여 사용하는 주된 목적은?",
+    prompt: "Vision Transformer에서 이미지 패치 임베딩 시퀀스 맨 앞에 학습 가능한 클래스 토큰을 추가하여 사용하는 주된 목적은?",
     options: [
       "이미지의 해상도를 2배로 업샘플링하기 위해",
       "위치 인코딩 벡터를 0으로 초기화하기 위해",
-      "모든 패치 토큰들과 Self-Attention을 수행하여 이미지 전체를 아우르는 전역 표현을 모으고 최종 분류 헤드의 입력으로 사용하기 위해",
+      "[CLS] 토큰이 전체 패치의 전역 표현을 모아 분류 헤드에 전달함",
       "이미지 패치의 채널 수를 1개로 줄이기 위해"
     ],
     answer: 2,
@@ -286,14 +286,14 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     id: "r4-mc-016",
     conceptId: "conv-filter-channel-depth-rule",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
-    prompt: "3채널 RGB 입력 이미지에 3x3 크기의 합성곱 필터를 적용할 때, 단일 필터 1개의 가중치 텐서 형상(Depth x Height x Width)에 대한 규칙으로 올바른 것은?",
+    prompt: "3채널 RGB 입력 이미지에 3x3 크기의 합성곱 필터를 적용할 때, 단일 필터 1개의 가중치 텐서 형상에 대한 규칙으로 올바른 것은?",
     options: [
       "필터의 깊이는 입력 채널 수와 무관하게 항상 1이어야 함",
       "필터의 가로세로 크기는 항상 입력 이미지의 가로세로 크기와 같아야 함",
       "필터의 깊이는 항상 출력 채널 수와 동일하게 설정되어야 함",
-      "단일 합성곱 필터의 깊이(Channel Depth)는 입력 데이터의 채널 수(3)와 반드시 동일해야 함 (3x3x3)"
+      "필터 깊이는 입력 채널 수 3과 같으므로 3x3x3임"
     ],
     answer: 3,
     explanation: "합성곱 필터는 입력 채널 전체에 걸쳐 3차원 부피 연산을 수행하므로, 필터 1개의 채널 깊이는 항상 입력 채널 수 C_in과 일치해야 합니다.",
@@ -305,11 +305,11 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     id: "r4-mc-017",
     conceptId: "clip-model-known-limitations",
     difficulty: "medium",
-    category: "시각-언어 모델(VLM) 및 멀티모달 정합",
+    category: "시각-언어 모델 및 멀티모달 정합",
     questionType: "multiple-choice",
     prompt: "OpenAI의 CLIP 모델이 가진 구조적 한계점에 대한 설명으로 가장 올바른 것은?",
     options: [
-      "이미지 전역 임베딩 정합 중심이어서 객체의 정밀 바운딩 박스 좌표 검출이나 픽셀 마스크 분할, 복잡한 공간 관계 및 카운팅 인식에 취약함",
+      "전역 정합 중심이라 정밀 위치·마스크·공간 관계·개수 인식에 취약함",
       "새로운 카테고리의 텍스트 라벨이 들어오면 제로샷 분류가 완전히 불가능함",
       "비전 인코더와 텍스트 인코더가 모두 1차원 합성곱으로만 구성되어 있음",
       "인터넷 웹 데이터셋을 학습에 전혀 활용할 수 없음"
@@ -322,12 +322,12 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     id: "r4-mc-018",
     conceptId: "siglip-sigmoid-saturation-negative-pairs",
     difficulty: "medium",
-    category: "시각-언어 모델(VLM) 및 멀티모달 정합",
+    category: "시각-언어 모델 및 멀티모달 정합",
     questionType: "multiple-choice",
     prompt: "SigLIP이 CLIP의 Softmax 기반 대조학습과 달리 Sigmoid 기반 손실함수를 사용할 때, 이미 충분히 유사도가 낮아진 음성 페어에 대한 학습 영향이 제한되는 이유로 가장 적절한 것은?",
     options: [
       "음성 페어의 임베딩을 학습 시작 전에 모두 삭제하기 때문에",
-      "Sigmoid 함수가 충분히 작은 로짓 구간에서 포화되어 이미 잘 분리된 음성 페어의 추가 손실·기울기 영향이 작아질 수 있기 때문에",
+      "시그모이드 포화로 이미 분리된 음성 쌍의 추가 기울기가 작아짐",
       "모든 음성 페어의 라벨을 +1로 바꾸어 양성 페어처럼 학습하기 때문에",
       "이미지 인코더와 텍스트 인코더가 동일한 가중치를 공유하기 때문에"
     ],
@@ -339,13 +339,13 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     id: "r4-mc-019",
     conceptId: "imagebind-embedding-arithmetic-concept",
     difficulty: "medium",
-    category: "시각-언어 모델(VLM) 및 멀티모달 정합",
+    category: "시각-언어 모델 및 멀티모달 정합",
     questionType: "multiple-choice",
-    prompt: "ImageBind의 공통 임베딩 공간에서 수행할 수 있는 멀티모달 벡터 산술 연산(Embedding Arithmetic)의 예시로 가장 올바른 것은?",
+    prompt: "ImageBind의 공통 임베딩 공간에서 수행할 수 있는 멀티모달 벡터 산술 연산의 예시로 가장 올바른 것은?",
     options: [
-      "텍스트 파일의 용량(KB)과 이미지 파일의 해상도를 덧셈함",
+      "텍스트 파일의 용량과 이미지 파일의 해상도를 덧셈함",
       "오디오 파형의 주파수를 흑백 이미지의 픽셀 좌표로 뺄셈함",
-      "새(Bird) 이미지 벡터에 파도 소리 오디오 벡터를 더하여 '바닷가에 있는 새' 이미지를 검색해 냄",
+      "새 이미지 벡터와 파도 소리 벡터를 더해 바닷가의 새 이미지를 검색함",
       "모든 모달리티 벡터를 0차원 스칼라로 압축하여 삭제함"
     ],
     answer: 2,
@@ -356,14 +356,14 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     id: "r4-mc-020",
     conceptId: "llava-visual-instruction-data-format",
     difficulty: "medium",
-    category: "시각-언어 모델(VLM) 및 멀티모달 정합",
+    category: "시각-언어 모델 및 멀티모달 정합",
     questionType: "multiple-choice",
-    prompt: "LLaVA 모델의 2단계 파인튜닝(Visual Instruction Tuning)에서 모델을 학습시키기 위해 사용하는 데이터셋의 기본 구성 형태는?",
+    prompt: "LLaVA 모델의 2단계 파인튜닝에서 모델을 학습시키기 위해 사용하는 데이터셋의 기본 구성 형태는?",
     options: [
       "단순 1000개 클래스의 원-핫 라벨 번호",
       "3D 포인트 클라우드 좌표와 C++ 소스 코드",
       "1차원 음성 주파수 스펙트로그램 신호",
-      "이미지(Image), 사용자의 자연어 질문/명령 지시문(Instruction), 이에 대한 상세 답변(Response) 쌍"
+      "이미지, 자연어 지시문, 상세 답변의 쌍"
     ],
     answer: 3,
     explanation: "시각 지시 튜닝은 이미지와 함께 '이 그림의 상황을 설명해줘' 같은 다양한 형태의 질문 지시문 및 정답 답변 대화 쌍으로 구성됩니다.",
@@ -377,9 +377,9 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     difficulty: "medium",
     category: "VLM 및 비전 파운데이션 모델",
     questionType: "multiple-choice",
-    prompt: "강의자료에서 소개한 SAM(Segment Anything Model)이 사용자의 의도에 따라 원하는 영역의 마스크를 추출하기 위해 받을 수 있는 프롬프트 입력의 조합으로 가장 올바른 것은?",
+    prompt: "강의자료에서 소개한 SAM이 사용자의 의도에 따라 원하는 영역의 마스크를 추출하기 위해 받을 수 있는 프롬프트 입력의 조합으로 가장 올바른 것은?",
     options: [
-      "클릭(Point), 박스(Box), 부분 세그먼트, 텍스트 등의 입력",
+      "클릭, 박스, 부분 세그먼트, 텍스트 등의 입력",
       "오디오 파형, MIDI 신호, 음성 스펙트로그램만 입력",
       "SQL 쿼리와 데이터베이스 테이블만 입력",
       "GPS 좌표와 자이로 센서 값만 입력"
@@ -394,7 +394,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     difficulty: "medium",
     category: "VLM 및 비전 파운데이션 모델",
     questionType: "multiple-choice",
-    prompt: "Depth Anything v2가 예측하는 깊이 맵(Depth Map)을 직접 활용할 수 있는 응용 분야의 조합으로 강의자료와 가장 일치하는 것은?",
+    prompt: "Depth Anything v2가 예측하는 깊이 맵을 직접 활용할 수 있는 응용 분야의 조합으로 강의자료와 가장 일치하는 것은?",
     options: [
       "문서 맞춤법 검사, 음성 합성, 스팸 메일 분류",
       "자율주행, 로봇 비전, 3D 복원",
@@ -411,11 +411,11 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
     difficulty: "medium",
     category: "VLM 및 비전 파운데이션 모델",
     questionType: "multiple-choice",
-    prompt: "메타의 Sapiens 모델이 수행하는 4대 태스크 중 '표면 법선(Surface Normal) 추정'이 출력하는 정보의 의미는?",
+    prompt: "메타의 Sapiens 모델이 수행하는 4대 태스크 중 '표면 법선 추정'이 출력하는 정보의 의미는?",
     options: [
       "사람의 음성 높낮이를 나타내는 1차원 주파수 곡선",
       "사람이 착용한 옷의 브랜드 텍스트 레이블",
-      "인체 표면 각 픽셀 지점에서의 3차원 기울기 방향 벡터(수직 벡터) 정보",
+      "인체 표면 각 픽셀의 3차원 수직 방향 벡터",
       "인체 내부 장기의 위치 좌표 목록"
     ],
     answer: 2,
@@ -433,7 +433,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_4: StudyQuestion[] = [
       "공장 설비의 기계적 모터를 물리적으로 자동 분해함",
       "생산 제품의 단가를 자동으로 50% 할인하여 결제함",
       "모든 검사 대상 부품을 무조건 불량품으로 자동 폐기함",
-      "부품 이미지에서 결함의 유무 및 위치를 시각적으로 짚어내고 자연어 대화 인터페이스로 결함 상태를 설명해 줌"
+      "결함의 유무와 위치를 표시하고 자연어로 상태를 설명함"
     ],
     answer: 3,
     explanation: "단순 O/X 판정을 넘어 결함 부위의 위치와 형태적 특징을 시각적으로 제시하고 대화형으로 질의응답할 수 있어 현장 점검의 직관성을 높입니다.",

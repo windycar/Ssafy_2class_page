@@ -31,9 +31,9 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     difficulty: "medium",
     category: "머신러닝 기초 및 방법론",
     questionType: "multiple-choice",
-    prompt: "분류(Classification) 문제와 분류 함수의 목표에 대한 설명으로 가장 올바른 것은?",
+    prompt: "분류 문제와 분류 함수의 목표에 대한 설명으로 가장 올바른 것은?",
     options: [
-      "입력 특징 벡터 X가 주어졌을 때 정해진 범주 중 하나를 예측하며, 경우에 따라 각 범주에 속할 확률 P(Y=k|X)를 추정하는 것이 유용함",
+      "입력 특징으로 정해진 범주와 각 범주에 속할 확률을 예측함",
       "분류는 종속변수가 반드시 연속형 실수인 경우에만 사용할 수 있음",
       "분류 함수는 입력 데이터의 평균과 분산만 계산하며 범주 예측은 수행하지 않음",
       "분류 문제에서는 정답 범주가 존재하면 확률값을 절대 사용할 수 없음"
@@ -51,7 +51,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     prompt: "0(비응급)과 1(응급)을 예측하는 이진 분류 문제에 일반 선형회귀를 그대로 사용하는 것이 부적절한 주된 이유와 로지스틱 회귀의 해결 방법으로 가장 올바른 것은?",
     options: [
       "선형회귀는 입력 변수를 하나만 사용할 수 있으므로 분류에 사용할 수 없음",
-      "선형회귀 출력은 0보다 작거나 1보다 큰 값도 낼 수 있어 확률로 해석하기 어렵고, 로지스틱 회귀는 Sigmoid를 사용해 출력을 0~1 범위의 확률로 제한함",
+      "선형회귀 출력은 확률 범위를 벗어나지만, 로지스틱 회귀는 시그모이드로 0~1에 제한함",
       "선형회귀는 반드시 음수 가중치만 학습하므로 분류 경계를 만들 수 없음",
       "로지스틱 회귀는 선형식을 제거하고 모든 입력을 원-핫 벡터로 바꾸기 때문에 분류가 가능함"
     ],
@@ -69,7 +69,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     options: [
       "Odds는 p 자체이고 Logit은 1-p를 의미함",
       "Odds는 p(1-p)이고 Logit은 sqrt(p)를 의미함",
-      "Odds는 p/(1-p)이며, Logit은 log(p/(1-p))로 정의되고 로지스틱 회귀에서는 이 Logit이 입력의 선형식으로 표현됨",
+      "Odds=p/(1-p), Logit=log",
       "Odds와 Logit은 모두 항상 0~1 범위의 값만 가짐"
     ],
     answer: 2,
@@ -82,12 +82,12 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     difficulty: "medium",
     category: "머신러닝 기초 및 방법론",
     questionType: "multiple-choice",
-    prompt: "로지스틱 회귀에서 모수 beta를 추정할 때 사용하는 최대우도추정(Maximum Likelihood Estimation, MLE)의 핵심 아이디어로 가장 올바른 것은?",
+    prompt: "로지스틱 회귀에서 모수 beta를 추정할 때 사용하는 최대우도추정의 핵심 아이디어로 가장 올바른 것은?",
     options: [
       "모든 회귀계수를 0으로 만들어 가장 단순한 모델을 선택함",
       "실제값과 예측값의 거리만을 이용해 RSS를 최소화하는 것만 사용함",
       "입력 데이터의 개수가 가장 적어지는 beta를 선택함",
-      "현재 확률 모델이 관측된 정답 데이터를 만들어낼 우도(Likelihood)가 최대가 되도록 beta를 선택하며, 계산 편의를 위해 Log-Likelihood를 최대화할 수 있음"
+      "관측 데이터의 우도가 최대가 되도록 beta를 선택함"
     ],
     answer: 3,
     explanation: "로지스틱 회귀는 확률 모델이므로 관측된 데이터가 나타날 가능성인 우도(Likelihood)를 가장 크게 만드는 모수를 찾습니다. 곱 형태의 우도는 로그를 취해 합 형태의 Log-Likelihood로 바꾸어 최대화할 수 있습니다.",
@@ -101,7 +101,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     questionType: "multiple-choice",
     prompt: "Word2Vec의 두 학습 방식인 CBOW와 Skip-Gram의 입출력 관계에 대한 설명으로 가장 올바른 것은?",
     options: [
-      "CBOW는 주변 문맥 단어들을 입력받아 중심 단어를 예측하고, Skip-Gram은 중심 단어 하나를 입력받아 주변 문맥 단어들을 예측함",
+      "CBOW는 문맥으로 중심 단어를, Skip-Gram은 중심 단어로 문맥을 예측함",
       "CBOW는 중심 단어를 입력받아 다음 문장 전체를 생성하고, Skip-Gram은 단어의 형태소 품사를 분류함",
       "CBOW는 오직 1개의 단어만 입력받을 수 있으며, Skip-Gram은 전체 어휘 사전을 동시에 입력받음",
       "두 방식 모두 문장의 단어 순서를 완벽히 보존하는 인과적 마스크 어텐션 계층을 기반으로 동작함"
@@ -137,7 +137,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     options: [
       "각 헤드의 차원 d_k = 512 이며, 모든 헤드의 출력을 평균 냄",
       "각 헤드의 차원 d_k = 4096 이며, 모든 헤드의 출력을 행렬 곱함",
-      "각 헤드의 차원 d_k = 64 (512 / 8) 이며, 8개 헤드의 어텐션 결과를 Concat(이어붙이기)한 후 선형 변환함",
+      "d_k=64이며 8개 헤드 출력을 이어 붙인 뒤 선형 변환함",
       "각 헤드의 차원 d_k = 8 이며, 가장 점수가 높은 1개 헤드만 선택함"
     ],
     answer: 2,
@@ -155,7 +155,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
       "출력 행렬의 차원을 절반으로 다운샘플링하기 위해",
       "단어 간의 상대적 거리를 계산하여 위치 정보를 주입하기 위해",
       "어텐션 가중치 행렬의 모든 원소 합을 0으로 맞추기 위해",
-      "d_k 차원이 커짐에 따라 내적값의 분산이 커져 Softmax 출력이 지나치게 뾰족해지고 기울기가 작아지는 현상을 완화하기 위해"
+      "내적값 증가로 소프트맥스가 포화되는 현상을 완화함"
     ],
     answer: 3,
     explanation: "벡터 차원이 클수록 내적 결과의 분산이 비례하여 증가하므로, Softmax의 포화로 인한 기울기 감소를 막기 위해 sqrt(d_k)로 나누어 분산을 일정하게 유지합니다.",
@@ -167,9 +167,9 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     difficulty: "medium",
     category: "자연어 처리 및 텍스트 모델",
     questionType: "multiple-choice",
-    prompt: "거대 언어 모델의 인간 선호도 정렬(Alignment) 기법인 DPO(Direct Preference Optimization)에 대한 설명으로 가장 올바른 것은?",
+    prompt: "거대 언어 모델의 인간 선호도 정렬 기법인 DPO에 대한 설명으로 가장 올바른 것은?",
     options: [
-      "별도의 보상 모델(Reward Model) 학습이나 복잡한 강화학습(PPO) 루프 없이, 선호-비선호 데이터셋으로 언어 모델을 직접 분류 손실로 최적화함",
+      "보상 모델과 PPO 없이 선호 데이터로 정책을 직접 최적화함",
       "모델 파라미터를 갱신하지 않고 프롬프트 예시만을 변경하여 정렬을 수행함",
       "오직 텍스트 요약 태스크에만 적용 가능한 특수 목적 손실 함수임",
       "사전학습된 비전 인코더의 가중치를 텍스트 토큰에 맞추어 역전파함"
@@ -184,10 +184,10 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     difficulty: "medium",
     category: "자연어 처리 및 텍스트 모델",
     questionType: "multiple-choice",
-    prompt: "LLM 텍스트 생성 시 Top-k 샘플링과 Top-p (Nucleus) 샘플링의 후보 토큰군 선정 방식의 차이로 가장 올바른 것은?",
+    prompt: "LLM 텍스트 생성 시 Top-k 샘플링과 Top-p  샘플링의 후보 토큰군 선정 방식의 차이로 가장 올바른 것은?",
     options: [
       "Top-k는 단어의 글자 수가 k개 이하인 단어만 고르고, Top-p는 p번째 문장만 선택함",
-      "Top-k는 확률 순위 상위 k개의 고정된 개수를 후보로 삼고, Top-p는 누적 확률이 p에 도달할 때까지의 가변적인 토큰 집합을 후보로 삼음",
+      "Top-k는 상위 k개, Top-p는 누적 확률 p까지의 토큰을 후보로 삼음",
       "Top-k는 언제나 결정론적 단일 토큰만 출력하고, Top-p는 전체 어휘 사전을 균등 확률로 추출함",
       "두 방식 모두 확률값과 무관하게 사전 순서대로 앞선 토큰들을 선택함"
     ],
@@ -201,9 +201,9 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     id: "r5-mc-011",
     conceptId: "conv-receptive-field-stacking-3x3",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
-    prompt: "스트라이드가 1이고 패딩이 0인 3x3 합성곱 계층을 3개 연속으로 중첩하여 쌓았을 때, 마지막 계층의 특징 맵의 한 점이 참조하는 원본 입력의 유효 수용 영역(Receptive Field) 크기는?",
+    prompt: "스트라이드가 1이고 패딩이 0인 3x3 합성곱 계층을 3개 연속으로 중첩하여 쌓았을 때, 마지막 계층의 특징 맵의 한 점이 참조하는 원본 입력의 유효 수용 영역 크기는?",
     options: [
       "3x3",
       "5x5",
@@ -218,14 +218,14 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     id: "r5-mc-012",
     conceptId: "vggnet-homogeneous-3x3-design",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
     prompt: "VGGNet이 AlexNet과 차별화하여 신경망의 모든 합성곱 계층 필터 크기를 3x3으로 단일화하고 깊게 쌓음으로써 얻은 핵심 이점은?",
     options: [
       "합성곱 계층의 연산량을 0으로 만들어 GPU 없이 학습 가능하게 함",
-      "완전 연결 계층(FC Layer)의 파라미터 수를 100개 미만으로 축소함",
+      "완전 연결 계층의 파라미터 수를 100개 미만으로 축소함",
       "이미지의 색상 채널을 자동으로 1채널로 변환하여 메모리를 절감함",
-      "동일한 수용 영역 대비 가중치 파라미터 수를 줄이고, 층마다 활성화 함수(ReLU)를 더 많이 배치하여 비선형 판별 표현력을 극대화함"
+      "같은 수용 영역에서 매개변수를 줄이고 비선형성을 늘릴 수 있음"
     ],
     answer: 3,
     explanation: "소형 3x3 필터를 여러 층 쌓으면 큰 필터 1개와 같은 시야를 가지면서도 파라미터가 절감되고 비선형 활성화 함수가 늘어나 표현력이 대폭 향상됩니다.",
@@ -235,11 +235,11 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     id: "r5-mc-013",
     conceptId: "resnet-skip-connection-gradient-flow",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
-    prompt: "ResNet 잔차 블록 H(x) = F(x) + x 에서 지름길 연결(Skip Connection)이 신경망의 층이 매우 깊어져도 학습을 가능하게 만드는 핵심 원리는?",
+    prompt: "ResNet 잔차 블록 H(x) = F(x) + x 에서 지름길 연결이 신경망의 층이 매우 깊어져도 학습을 가능하게 만드는 핵심 원리는?",
     options: [
-      "역전파 시 기울기 계산에서 dH/dx = dF/dx + 1 이 성립하여, 가중치 계수를 거치지 않고 오차 기울기가 이전 계층으로 직접 전달되는 덧셈 경로를 제공하므로",
+      "덧셈 경로를 통해 기울기가 가중치 없이 이전 계층으로 전달됨",
       "신경망의 모든 층의 가중치 값을 항상 1.0으로 고정하기 때문에",
       "입력 이미지의 해상도를 매 블록마다 절반으로 강제 축소하기 때문에",
       "소프트맥스 교차 엔트로피 손실 함수를 계산하지 않아도 되기 때문에"
@@ -252,12 +252,12 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     id: "r5-mc-014",
     conceptId: "mobilenet-depthwise-vs-pointwise-roles",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
     prompt: "MobileNet의 Depthwise Separable Convolution을 이루는 Depthwise Conv와 Pointwise Conv의 역할 분담으로 올바른 것은?",
     options: [
       "Depthwise Conv는 채널을 1개로 합치고, Pointwise Conv는 공간 해상도를 2배로 늘림",
-      "Depthwise Conv는 각 채널별 공간(Spatial) 특징을 독립 추출하고, Pointwise Conv(1x1)는 채널 간(Channel) 정보를 선형 결합함",
+      "Depthwise는 채널별 공간 특징을 추출하고, Pointwise는 채널 정보를 결합함",
       "Depthwise Conv는 1차원 평탄화를 수행하고, Pointwise Conv는 맥스 풀링을 수행함",
       "두 연산 모두 공간 특징과 채널 특징을 동시에 3차원 필터로 한 번에 연산함"
     ],
@@ -269,13 +269,13 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     id: "r5-mc-015",
     conceptId: "vit-linear-projection-and-cls-token",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
-    prompt: "Vision Transformer(ViT)의 입력 데이터 전처리 및 토큰 구성 과정에 대한 설명으로 가장 올바른 것은?",
+    prompt: "Vision Transformer의 입력 데이터 전처리 및 토큰 구성 과정에 대한 설명으로 가장 올바른 것은?",
     options: [
       "이미지 전체를 단 1개의 픽셀로 압축하여 트랜스포머 인코더에 입력함",
       "합성곱 필터만을 100층 이상 중첩하여 채널 차원을 1차원으로 만듦",
-      "이미지를 작은 패치(예: 16x16)로 분할하여 1차원 벡터로 펼친 후 선형 투영(Linear Projection)하며, 맨 앞에 [CLS] 토큰을 붙이고 위치 임베딩을 더함",
+      "이미지를 패치로 나눠 선형 투영하고 [CLS] 토큰과 위치 임베딩을 더함",
       "입력 이미지의 RGB 색상 채널을 모두 삭제하고 흑백 바이너리 코드로 변환함"
     ],
     answer: 2,
@@ -286,14 +286,14 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     id: "r5-mc-016",
     conceptId: "fcn-vs-cnn-parameter-efficiency",
     difficulty: "medium",
-    category: "합성곱 신경망(CNN) 및 대표 비전 모델",
+    category: "합성곱 신경망 및 대표 비전 모델",
     questionType: "multiple-choice",
-    prompt: "이미지 데이터 처리 시 완전 연결 계층(FCN) 대비 합성곱 계층(CNN)이 파라미터 수를 획기적으로 줄일 수 있는 구조적 이유는?",
+    prompt: "이미지 데이터 처리 시 완전 연결 계층 대비 합성곱 계층이 파라미터 수를 획기적으로 줄일 수 있는 구조적 이유는?",
     options: [
       "합성곱 계층은 비선형 활성화 함수를 전혀 사용하지 않기 때문에",
       "합성곱 계층은 이미지를 처리할 때 GPU 메모리를 전혀 사용하지 않기 때문에",
       "합성곱 계층은 이미지의 모든 픽셀을 0으로 초기화하기 때문에",
-      "이미지 전체 영역에 동일한 필터 가중치를 공유(Weight Sharing)하고, 국소 영역의 화소들만 연결(Local Connectivity)하기 때문에"
+      "국소 연결과 가중치 공유로 매개변수 수를 줄임"
     ],
     answer: 3,
     explanation: "CNN은 국소적인 영역만을 연결하는 지역 연결성과 동일한 필터를 이미지 전역에 이동시키며 재사용하는 가중치 공유 덕분에 파라미터 수가 크게 절감됩니다.",
@@ -305,11 +305,11 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     id: "r5-mc-017",
     conceptId: "clip-contrastive-symmetric-loss-math",
     difficulty: "medium",
-    category: "시각-언어 모델(VLM) 및 멀티모달 정합",
+    category: "시각-언어 모델 및 멀티모달 정합",
     questionType: "multiple-choice",
     prompt: "N개의 이미지와 N개의 텍스트로 구성된 배치에서 CLIP의 대조학습 손실함수 계산 방식으로 가장 올바른 것은?",
     options: [
-      "N x N 코사인 유사도 행렬에서 대각선(양성) 유사도는 높이고 비대각선(음성) 유사도는 낮추도록 Image-to-Text와 Text-to-Image 방향의 교차 엔트로피 손실을 평균 냄",
+      "대각선 양성 쌍은 높이고 비대각선 음성 쌍은 낮추는 양방향 손실의 평균",
       "이미지 인코더의 출력 벡터만을 단독으로 사용하여 MSE 손실을 계산함",
       "대각선에 위치한 양성 페어의 유사도만을 더하고 음성 페어는 손실 계산에서 배제함",
       "모든 이미지와 텍스트를 하나의 문자열 파일로 합쳐 언어 모델링 손실만 계산함"
@@ -322,12 +322,12 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     id: "r5-mc-018",
     conceptId: "clip-zero-shot-classification-flow",
     difficulty: "medium",
-    category: "시각-언어 모델(VLM) 및 멀티모달 정합",
+    category: "시각-언어 모델 및 멀티모달 정합",
     questionType: "multiple-choice",
-    prompt: "CLIP을 이용하여 추가 학습 없이 새로운 이미지를 제로샷(Zero-shot) 분류하는 과정으로 가장 올바른 것은?",
+    prompt: "CLIP을 이용하여 추가 학습 없이 새로운 이미지를 제로샷 분류하는 과정으로 가장 올바른 것은?",
     options: [
       "새 데이터셋으로 이미지 인코더 전체를 다시 학습한 뒤 새로운 FC 분류기를 붙임",
-      "후보 카테고리를 'A photo of a {object}.'와 같은 텍스트로 만들고 텍스트 임베딩을 준비한 뒤, 입력 이미지 임베딩과의 유사도를 비교하여 가장 높은 카테고리를 선택함",
+      "후보 텍스트와 이미지 임베딩의 유사도가 가장 높은 범주를 선택함",
       "텍스트 인코더를 제거하고 이미지 픽셀 평균값만으로 카테고리를 선택함",
       "후보 클래스 이름의 글자 수와 이미지 해상도를 비교해 가장 가까운 값을 선택함"
     ],
@@ -339,13 +339,13 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     id: "r5-mc-019",
     conceptId: "siglip-sigmoid-saturation-noisy-negative",
     difficulty: "medium",
-    category: "시각-언어 모델(VLM) 및 멀티모달 정합",
+    category: "시각-언어 모델 및 멀티모달 정합",
     questionType: "multiple-choice",
     prompt: "SigLIP이 Softmax 대신 Sigmoid 기반 손실을 사용할 때, 이미 충분히 유사도가 낮아진 음성 이미지-텍스트 쌍에 대한 학습 영향이 제한될 수 있는 이유는?",
     options: [
       "음성 페어는 손실 계산에서 처음부터 완전히 제외되기 때문에",
       "음성 페어의 라벨을 양성(+1)으로 자동 변경하기 때문에",
-      "Sigmoid 함수가 충분히 작은 로짓 구간에서 포화되어 이미 잘 분리된 음성 페어를 계속 더 멀리 밀어내는 영향이 작아질 수 있기 때문에",
+      "시그모이드 포화로 이미 분리된 음성 쌍의 추가 기울기가 작아짐",
       "이미지와 텍스트 임베딩의 차원을 항상 1차원으로 줄이기 때문에"
     ],
     answer: 2,
@@ -356,7 +356,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     id: "r5-mc-020",
     conceptId: "imagebind-six-modalities-anchor",
     difficulty: "medium",
-    category: "시각-언어 모델(VLM) 및 멀티모달 정합",
+    category: "시각-언어 모델 및 멀티모달 정합",
     questionType: "multiple-choice",
     prompt: "메타의 ImageBind가 이미지, 텍스트, 오디오, 깊이, 열화상, IMU 6개 모달리티를 단일 벡터 공간으로 결합할 때 중심 매개체로 활용한 모달리티는?",
     options: [
@@ -377,9 +377,9 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     difficulty: "medium",
     category: "VLM 및 비전 파운데이션 모델",
     questionType: "multiple-choice",
-    prompt: "LLaVA의 2단계 학습 전략에서 Step 1(사전학습)과 Step 2(시각 지시 파인튜닝)의 모듈 학습/동결(Freeze) 상태 구분으로 올바른 것은?",
+    prompt: "LLaVA의 2단계 학습 전략에서 Step 1(사전학습)과 Step 2(시각 지시 파인튜닝)의 모듈 학습/동결 상태 구분으로 올바른 것은?",
     options: [
-      "Step 1: 선형 프로젝션 레이어만 학습(비전 인코더/LLM 동결) / Step 2: 프로젝션 레이어와 LLM을 함께 미세조정(비전 인코더 동결)",
+      "1단계는 투영층만, 2단계는 투영층과 LLM을 학습함",
       "Step 1: 전체 모듈 학습 / Step 2: 전체 모듈 동결",
       "Step 1: 비전 인코더만 학습 / Step 2: 언어 모델만 학습",
       "Step 1: LLM만 학습 / Step 2: 프로젝션 레이어만 학습"
@@ -397,7 +397,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     prompt: "Qwen2-VL이 텍스트, 2D 이미지, 3D 비디오 위치 정보를 통합 인코딩하기 위해 M-ROPE에서 사용하는 3차원 좌표 성분 축의 조합은?",
     options: [
       "밝기, 채도, 명도",
-      "시간(Time), 높이(Height), 너비(Width)",
+      "시간, 높이, 너비",
       "스트라이드, 패딩, 커널 크기",
       "쿼리, 키, 값"
     ],
@@ -415,7 +415,7 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     options: [
       "SAM이 마스크를 먼저 생성하고 Grounding DINO가 이를 텍스트 파일로 변환함",
       "이미지를 흑백으로 변환한 후 AlexNet으로 분류하고 ResNet으로 박스를 그림",
-      "Grounding DINO가 텍스트를 기반으로 바운딩 박스를 오픈 보캡 탐지하고, 이 박스 좌표를 프롬프트로 SAM에 전달하여 정밀 마스크를 자동 생성함",
+      "Grounding DINO로 박스를 찾고 SAM으로 마스크를 생성함",
       "Sapiens가 깊이 지도를 추출하고 MobileNet이 채널을 축소하여 텍스트를 출력함"
     ],
     answer: 2,
@@ -428,12 +428,12 @@ export const SSAFY_AI_MOCK_EXAM_ROUND_5: StudyQuestion[] = [
     difficulty: "medium",
     category: "VLM 및 비전 파운데이션 모델",
     questionType: "multiple-choice",
-    prompt: "메타의 Sapiens 모델이 사람(Human) 이미지에 대해 전문적으로 수행하는 4대 비전 태스크의 구성으로 올바른 것은?",
+    prompt: "메타의 Sapiens 모델이 사람 이미지에 대해 전문적으로 수행하는 4대 비전 태스크의 구성으로 올바른 것은?",
     options: [
-      "객체 바운딩 박스 탐지, 광학 흐름(Optical Flow) 추정, 이미지 조도 보정, 시맨틱 세그멘테이션",
+      "객체 바운딩 박스 탐지, 광학 흐름 추정, 이미지 조도 보정, 시맨틱 세그멘테이션",
       "인스턴스 세그멘테이션, 3D 바운딩 박스 추정, 이미지 초해상화, 특징점 디스크립터 매칭",
       "파놉틱 세그멘테이션, 엣지 경계선 검출, 비디오 모션 트래킹, 파노라마 이미지 스티칭",
-      "2D 인체 포즈 추정, 신체 부위 세그멘테이션, 깊이 추정, 표면 법선(Surface Normal) 추정"
+      "2D 포즈, 신체 분할, 깊이, 표면 법선 추정"
     ],
     answer: 3,
     explanation: "Sapiens는 약 3000만 장의 인체 데이터로 사전학습되어 사람 중심의 2D 포즈, 신체 부위 분할, 3D 깊이, 표면 법선 벡터 추정 4대 태스크를 지원합니다.",

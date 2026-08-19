@@ -149,15 +149,13 @@ export default function StudyHubView() {
                 <ShieldCheck className="h-3 w-3" />
                 ADMIN APPROVED
               </span>
-              <span className="rounded-full bg-amber-100/20 px-2.5 py-1 text-[10px] font-black text-amber-50">
-                2회차 · 5세트 · 150문제
-              </span>
+             
             </div>
             <h2 className="text-2xl font-black tracking-tight sm:text-3xl">
               특별 모의고사
             </h2>
             <p className="mt-1.5 text-xs leading-5 text-amber-50/80 sm:text-sm">
-              관리자 승인을 받은 학습자만 이용할 수 있는 과목평가 실전 모의고사입니다.
+              선택을 받은 학습자만 이용할 수 있는 과목평가 실전 모의고사입니다.
             </p>
             <span className="mt-4 inline-flex items-center gap-2 text-sm font-extrabold">
               모의고사 입장
