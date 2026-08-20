@@ -368,6 +368,54 @@ test("AI Python 3-2 중급 기록은 선택한 범위만 초기화한다", async
   );
 });
 
+test("AI Python 4-1 중급 기록은 선택한 범위만 초기화한다", async () => {
+  const userId = 17;
+  aiPythonWeekProgressStorage.add(
+    userId,
+    aiWeekAttempt(
+      "ai-python-week4-1-v1-rag",
+      "week4-1",
+      "medium",
+      "검색증강 생성 및 정보검색",
+    ),
+  );
+  aiPythonWeekProgressStorage.add(
+    userId,
+    aiWeekAttempt(
+      "ai-python-week4-1-v1-agent",
+      "week4-1",
+      "easy",
+      "거대 언어 모델의 도구 활용 및 에이전트",
+    ),
+  );
+
+  const attemptIds = getAiPythonWeekResetAttemptIds(
+    aiPythonWeekProgressStorage.get(userId),
+    "week4-1",
+    "medium",
+    ["검색증강 생성 및 정보검색"],
+  );
+  const { call, client } = createDeleteClient();
+  const result = await resetScopedStudyProgress(
+    client,
+    STUDY_ATTEMPT_TABLES.aiPythonWeek,
+    userId,
+    attemptIds,
+    () => aiPythonWeekProgressStorage.remove(userId, attemptIds),
+  );
+
+  assert.equal(result.synced, true);
+  assert.deepEqual(call, {
+    table: "ai_python_week_attempts",
+    eq: ["student_id", userId],
+    in: ["id", ["ai-python-week4-1-v1-rag"]],
+  });
+  assert.deepEqual(
+    result.progress.attempts.map(({ id }) => id),
+    ["ai-python-week4-1-v1-agent"],
+  );
+});
+
 test("Python은 현재 난이도와 선택 범위에 일치하는 기록만 초기화한다", () => {
   const userId = 1;
   studyProgressStorage.add(userId, pythonAttempt("python-match", "easy", "operators"));

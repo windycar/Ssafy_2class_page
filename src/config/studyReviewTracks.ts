@@ -84,6 +84,15 @@ export const STUDY_REVIEW_TRACKS: readonly StudyReviewTrack[] = [
     week: "week3-2",
   },
   {
+    id: "ai-python-week4-1",
+    label: "AI Python 4-1",
+    description: "SFT·RLHF·RAG·Tool Use·Agent",
+    href: "/study/ai-python/week4-1/quiz?mode=wrong",
+    tone: "violet",
+    source: "ai-python-week",
+    week: "week4-1",
+  },
+  {
     id: "special-mock-a2-r1",
     label: "특별 모의고사 2-1",
     description: "과목평가 2회차 · 모의고사 1회차",

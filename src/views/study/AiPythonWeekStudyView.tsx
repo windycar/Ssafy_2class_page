@@ -77,7 +77,25 @@ const CATEGORY_COLORS = [
   "#9333ea",
 ];
 
-const AI_PYTHON_WEEK_3_SECTIONS = ["week3-1", "week3-2"] as const;
+const AI_PYTHON_WEEK_SECTION_GROUPS: Partial<
+  Record<
+    AiPythonWeek,
+    { groupLabel: string; sections: readonly AiPythonWeek[] }
+  >
+> = {
+  "week3-1": {
+    groupLabel: "3번째",
+    sections: ["week3-1", "week3-2"],
+  },
+  "week3-2": {
+    groupLabel: "3번째",
+    sections: ["week3-1", "week3-2"],
+  },
+  "week4-1": {
+    groupLabel: "4번째",
+    sections: ["week4-1"],
+  },
+};
 
 function getAvailableCategoriesForDifficulty(
   week: AiPythonWeek,
@@ -114,9 +132,7 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
   const { progress, resetProgress } = useAiPythonWeekProgress();
   const categories = useMemo(() => getAiPythonWeekCategories(week), [week]);
   const difficulties = useMemo(() => getAiPythonWeekDifficulties(week), [week]);
-  const isWeek3Group = AI_PYTHON_WEEK_3_SECTIONS.some(
-    (sectionWeek) => sectionWeek === week,
-  );
+  const sectionGroup = AI_PYTHON_WEEK_SECTION_GROUPS[week];
   const [difficulty, setDifficulty] = useState<AiPythonWeekDifficulty>("easy");
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() =>
     getAvailableCategoriesForDifficulty(week, "easy"),
@@ -242,7 +258,7 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
         </div>
       </section>
 
-      {isWeek3Group ? (
+      {sectionGroup ? (
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
           <div className="mb-5 flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
@@ -250,11 +266,13 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
             </span>
             <div>
               <h2 className="font-black text-slate-900">세부 범위</h2>
-              <p className="text-xs text-slate-400">3번째 문제은행의 학습 범위를 선택하세요.</p>
+              <p className="text-xs text-slate-400">
+                {sectionGroup.groupLabel} 문제은행의 학습 범위를 선택하세요.
+              </p>
             </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            {AI_PYTHON_WEEK_3_SECTIONS.map((sectionWeek) => {
+            {sectionGroup.sections.map((sectionWeek) => {
               const sectionMeta = AI_PYTHON_WEEK_META[sectionWeek];
               const active = sectionWeek === week;
               const sectionCompleted = new Set(
@@ -313,7 +331,7 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
         <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
           <div className="mb-5 flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
-              {isWeek3Group ? "02" : "01"}
+              {sectionGroup ? "02" : "01"}
             </span>
             <div>
               <h2 className="font-black text-slate-900">난이도</h2>
@@ -390,7 +408,7 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
-              {isWeek3Group ? "03" : hasDifficultyLevels ? "02" : "01"}
+              {sectionGroup ? "03" : hasDifficultyLevels ? "02" : "01"}
             </span>
             <div>
               <h2 className="font-black text-slate-900">출제 범위</h2>
@@ -470,7 +488,7 @@ function AiPythonWeekStudyContent({ week }: { week: AiPythonWeek }) {
       <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
         <div className="mb-5 flex items-center gap-3">
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-xs font-black text-white">
-            {isWeek3Group ? "04" : hasDifficultyLevels ? "03" : "02"}
+            {sectionGroup ? "04" : hasDifficultyLevels ? "03" : "02"}
           </span>
           <div>
             <h2 className="font-black text-slate-900">문제 유형</h2>

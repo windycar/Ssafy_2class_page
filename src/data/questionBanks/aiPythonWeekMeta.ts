@@ -71,6 +71,20 @@ export const AI_PYTHON_WEEK_META: Record<
     questionCount: 150,
     hasDifficultyLevels: true,
   },
+  "week4-1": {
+    weekLabel: "4번째",
+    sectionLabel: "4-1",
+    title: "AI 파이썬 4-1",
+    cardTitle: "AI 파이썬 4번째",
+    shortTitle: "LLM 정렬 · RAG · 에이전트",
+    description: "LLM 사후 학습과 정렬부터 RAG, 도구 활용, 에이전트까지 학습합니다.",
+    topics: "SFT · RLHF · RAG · Tool Use · Agent",
+    imageSrc: "/images/study-tracks/ai-python-week4.png",
+    gradient: "from-[#102044] via-[#4338a8] to-[#8b2fc9]",
+    accent: "#22d3ee",
+    questionCount: 120,
+    hasDifficultyLevels: true,
+  },
 };
 
 export const AI_PYTHON_WEEK_CARD_GROUPS = [
@@ -94,6 +108,13 @@ export const AI_PYTHON_WEEK_CARD_GROUPS = [
     topics: "3-1 CNN · ResNet · ViT · 3-2 CLIP · VLM · SAM",
     questionCount: 300,
     links: [{ week: "week3-1", label: "3-1 · 3-2 범위 선택하기" }],
+  },
+  {
+    id: "week4",
+    ...AI_PYTHON_WEEK_META["week4-1"],
+    title: "AI 파이썬 4번째",
+    cardTitle: "AI 파이썬 4번째",
+    links: [{ week: "week4-1", label: "4-1 범위 선택하기" }],
   },
 ] as const;
 

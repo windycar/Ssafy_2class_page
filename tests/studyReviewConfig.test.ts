@@ -14,6 +14,12 @@ test("모든 학습 문제 세트가 오답 복습 설정에 등록된다", () =
       "ai-python-week2",
       "ai-python-week3-1",
       "ai-python-week3-2",
+      "ai-python-week4-1",
+      "special-mock-a2-r1",
+      "special-mock-a2-r2",
+      "special-mock-a2-r3",
+      "special-mock-a2-r4",
+      "special-mock-a2-r5",
     ],
   );
   assert.equal(
@@ -45,4 +51,13 @@ test("AI Python 3번째 카드는 3-1·3-2 범위 선택 화면으로 연결한�
     ["week3-1"],
   );
   assert.equal(thirdCard?.questionCount, 300);
+});
+
+test("AI Python 4번째 카드는 4-1 범위 선택 화면으로 연결한다", () => {
+  const fourthCard = AI_PYTHON_WEEK_CARD_GROUPS.find((card) => card.id === "week4");
+  assert.deepEqual(
+    fourthCard?.links.map((link) => link.week),
+    ["week4-1"],
+  );
+  assert.equal(fourthCard?.questionCount, 120);
 });
