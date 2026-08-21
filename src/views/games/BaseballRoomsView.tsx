@@ -6,7 +6,10 @@ import { toast } from "sonner";
 import BaseballRoomCreateModal from "../../components/games/baseball/BaseballRoomCreateModal";
 import { useAuth } from "../../hooks/useAuth";
 import { useBaseballRooms } from "../../hooks/useBaseballRooms";
-import type { BaseballRoom } from "../../types/baseballRoom";
+import {
+  BASEBALL_ROOM_SCHEMA_VERSION,
+  type BaseballRoom,
+} from "../../types/baseballRoom";
 import type { GameRoomStatus } from "../../types/game";
 import { createId } from "../../utils/createId";
 
@@ -34,6 +37,8 @@ const TABS = [
   { key: "finished", label: "종료된 게임" },
 ] as const;
 
+const ROOM_SEATS = [0, 1] as const;
+
 export default function BaseballRoomsView() {
   const { rooms, createRoom } = useBaseballRooms();
   const { currentUser } = useAuth();
@@ -52,8 +57,11 @@ export default function BaseballRoomsView() {
   const handleCreate = (data: { title: string; description: string; isPublic: boolean }) => {
     if (!currentUser) return;
     const now = new Date().toISOString();
+    const roomId = createId("baseball");
     const room: BaseballRoom = {
-      id: createId("baseball"),
+      schemaVersion: BASEBALL_ROOM_SCHEMA_VERSION,
+      revision: 0,
+      id: roomId,
       title: data.title,
       description: data.description,
       hostStudentId: currentUser.id,
@@ -61,6 +69,7 @@ export default function BaseballRoomsView() {
       isPublic: data.isPublic,
       status: "recruiting",
       players: [{
+        seat: 0,
         studentId: currentUser.id,
         authId: currentUser.authId,
         name: currentUser.name,
@@ -72,7 +81,7 @@ export default function BaseballRoomsView() {
       }],
       activityLogs: [{
         id: createId("baseball-log"),
-        roomId: "",
+        roomId,
         type: "create",
         message: `${currentUser.name} 님이 야구 게임방을 만들었습니다.`,
         createdAt: now,
@@ -135,9 +144,18 @@ export default function BaseballRoomsView() {
                 {room.description && <p className="text-xs leading-relaxed text-gray-500">{room.description}</p>}
                 <div className="flex items-center gap-1.5 text-xs text-gray-500"><Users className="h-3.5 w-3.5 text-blue-600" /><span>{room.players.length}/2명</span></div>
                 <div className="flex items-center gap-1">
-                  {room.players.map((player) => (
-                    <div key={player.studentId} title={player.name} className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-blue-100 text-xs font-bold text-blue-800 shadow-sm">{player.name[0]}</div>
-                  ))}
+                  {ROOM_SEATS.map((seat) => {
+                    const player = room.players.find((candidate) => candidate.seat === seat);
+                    return (
+                      <div
+                        key={seat}
+                        title={player ? `${seat + 1}P ${player.name}` : `${seat + 1}P 빈 좌석`}
+                        className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-xs font-bold shadow-sm ${player ? "bg-blue-100 text-blue-800" : "bg-gray-100 text-gray-300"}`}
+                      >
+                        {player?.name[0] ?? seat + 1}
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="flex items-center gap-2">
                   {room.hostStudentId === currentUser?.id && <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">방장</span>}

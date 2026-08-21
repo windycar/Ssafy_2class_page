@@ -266,8 +266,7 @@ export default function BaseballGameView() {
   const [eventLog, setEventLog] = useState<string[]>([]);
   const [onlineMatchId, setOnlineMatchId] = useState(onlineRoom?.matchId ?? "");
   const [onlineSeat, setOnlineSeat] = useState<TeamIndex | null>(() => {
-    const seat = onlineRoom?.players.findIndex((player) => player.studentId === currentUser?.id) ?? -1;
-    return seat === 0 || seat === 1 ? seat as TeamIndex : null;
+    return onlineRoom?.players.find((player) => player.studentId === currentUser?.id)?.seat ?? null;
   });
 
   const pitchIdRef = useRef(0);
@@ -324,7 +323,7 @@ export default function BaseballGameView() {
     if (!roomId || !onlineRoom || !currentUser) return;
     if (initializedOnlineRoomRef.current === onlineRoom.id) return;
 
-    const seat = onlineRoom.players.findIndex((player) => player.studentId === currentUser.id);
+    const seat = onlineRoom.players.find((player) => player.studentId === currentUser.id)?.seat;
     if ((seat !== 0 && seat !== 1) || onlineRoom.status !== "playing" || !onlineRoom.gameState || !onlineRoom.matchId) {
       navigate(`/games/baseball/rooms/${onlineRoom.id}`, { replace: true });
       return;
@@ -357,6 +356,7 @@ export default function BaseballGameView() {
     if (!activeRoom) return;
     const updated: BaseballRoom = {
       ...activeRoom,
+      revision: activeRoom.revision + 1,
       gameState: state,
       status: finished ? "finished" : "playing",
       finishedAt: finished ? new Date().toISOString() : activeRoom.finishedAt,
@@ -482,7 +482,10 @@ export default function BaseballGameView() {
     clearPitchTimers();
     const nextGame = selectedMode === "solo"
       ? createGameState("CPU", "나")
-      : createGameState(onlinePlayers?.[0]?.name ?? "1P", onlinePlayers?.[1]?.name ?? "2P");
+      : createGameState(
+          onlinePlayers?.find((player) => player.seat === 0)?.name ?? "1P",
+          onlinePlayers?.find((player) => player.seat === 1)?.name ?? "2P",
+        );
     gameRef.current = nextGame;
     setMode(selectedMode);
     setGame(nextGame);

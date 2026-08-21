@@ -21,7 +21,8 @@ function applyMany(state: BaseballGameState, outcomes: PlateOutcome[]) {
 test("four balls award a walk and three strikes record an out", () => {
   let state = createGameState();
   state = applyMany(state, ["ball", "ball", "ball", "ball"]);
-  assert.equal(state.bases.first, true);
+  assert.equal(state.bases.first?.currentBase, 1);
+  assert.equal(state.bases.first?.playerId, "cpu-yoon-taesung");
   assert.equal(state.count.balls, 0);
 
   state = applyMany(state, ["calledStrike", "foul", "foul"]);
@@ -34,16 +35,24 @@ test("four balls award a walk and three strikes record an out", () => {
 test("walks force runners and hits advance every occupied base", () => {
   let state = createGameState();
   state = applyMany(state, ["single", "single", "single"]);
-  assert.deepEqual(state.bases, { first: true, second: true, third: true });
+  assert.deepEqual(
+    [state.bases.first?.currentBase, state.bases.second?.currentBase, state.bases.third?.currentBase],
+    [1, 2, 3],
+  );
+  assert.equal(new Set([
+    state.bases.first?.playerId,
+    state.bases.second?.playerId,
+    state.bases.third?.playerId,
+  ]).size, 3, "각 베이스는 서로 다른 주자 신원을 보존해야 한다");
 
   const walk = applyMany(state, ["ball", "ball", "ball", "ball"]);
   assert.equal(walk.teams[0].runs, 1);
-  assert.deepEqual(walk.bases, { first: true, second: true, third: true });
+  assert.ok(walk.bases.first && walk.bases.second && walk.bases.third);
 
   const grandSlam = applyPlateOutcome(walk, "homeRun").state;
   assert.equal(grandSlam.teams[0].runs, 5);
   assert.equal(grandSlam.teams[0].hits, 4);
-  assert.deepEqual(grandSlam.bases, { first: false, second: false, third: false });
+  assert.deepEqual(grandSlam.bases, { first: null, second: null, third: null });
 });
 
 test("three outs switch offense and defense and clear the bases", () => {
@@ -52,7 +61,7 @@ test("three outs switch offense and defense and clear the bases", () => {
   assert.equal(state.half, "bottom");
   assert.equal(state.battingTeam, 1);
   assert.deepEqual(state.count, { balls: 0, strikes: 0, outs: 0 });
-  assert.deepEqual(state.bases, { first: false, second: false, third: false });
+  assert.deepEqual(state.bases, { first: null, second: null, third: null });
 });
 
 test("a tie after three innings goes to extras", () => {

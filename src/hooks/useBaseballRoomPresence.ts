@@ -29,6 +29,7 @@ export function useBaseballRoomPresence(
 
     updateRoom({
       ...roomRef.current,
+      revision: roomRef.current.revision + 1,
       players: roomRef.current.players.map((item) => (
         item.studentId === currentUserId
           ? { ...item, sessionId: sessionIdRef.current, lastSeenAt: new Date().toISOString() }

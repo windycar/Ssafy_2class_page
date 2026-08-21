@@ -1,4 +1,22 @@
-import type { BaseballRoom } from "../../types/baseballRoom";
+import type { BaseballRoom, BaseballRoomPlayer } from "../../types/baseballRoom";
+import type { TeamIndex } from "./baseballEngine";
+
+export const BASEBALL_ROOM_SEATS = [0, 1] as const satisfies readonly TeamIndex[];
+
+export function getBaseballPlayerAtSeat(
+  players: readonly BaseballRoomPlayer[],
+  seat: TeamIndex,
+) {
+  return players.find((player) => player.seat === seat);
+}
+
+export function getFirstFreeBaseballSeat(
+  players: readonly BaseballRoomPlayer[],
+): TeamIndex | null {
+  return BASEBALL_ROOM_SEATS.find(
+    (seat) => getBaseballPlayerAtSeat(players, seat) === undefined,
+  ) ?? null;
+}
 
 export function removeBaseballPlayer(
   room: BaseballRoom,
@@ -31,6 +49,7 @@ export function removeBaseballPlayer(
 
   return {
     ...room,
+    revision: room.revision + 1,
     hostStudentId: nextHost?.studentId ?? room.hostStudentId,
     players,
     status,

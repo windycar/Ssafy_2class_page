@@ -11,6 +11,11 @@ import type { GameRoomStatus } from "../../types/game";
 import { copyToClipboard } from "../../utils/copyToClipboard";
 import { createId } from "../../utils/createId";
 import { createGameState } from "../../utils/games/baseballEngine";
+import {
+  BASEBALL_ROOM_SEATS,
+  getBaseballPlayerAtSeat,
+  getFirstFreeBaseballSeat,
+} from "../../utils/games/baseballRoomMembership";
 
 const STATUS_LABEL: Record<GameRoomStatus, string> = {
   recruiting: "모집 중",
@@ -82,15 +87,22 @@ function BaseballRoomContent({ room, currentUser, setRoom, navigate }: {
   const me = room.players.find((player) => player.studentId === currentUserId);
   const isJoined = Boolean(me);
   const isHost = room.hostStudentId === currentUserId;
-  const canJoin = !isJoined && room.status === "recruiting" && room.players.length < 2 && Boolean(currentUser);
-  const allReady = room.players.length === 2 && room.players.every((player) => player.isReady);
+  const firstFreeSeat = getFirstFreeBaseballSeat(room.players);
+  const canJoin = !isJoined
+    && room.status === "recruiting"
+    && firstFreeSeat !== null
+    && Boolean(currentUser);
+  const allReady = BASEBALL_ROOM_SEATS.every(
+    (seat) => getBaseballPlayerAtSeat(room.players, seat)?.isReady === true,
+  );
 
   useBaseballRoomPresence(room, currentUserId, setRoom);
 
   const handleJoin = () => {
-    if (!currentUser || !canJoin) return;
+    if (!currentUser || !canJoin || firstFreeSeat === null) return;
     const now = new Date().toISOString();
     const player: BaseballRoomPlayer = {
+      seat: firstFreeSeat,
       studentId: currentUser.id,
       authId: currentUser.authId,
       name: currentUser.name,
@@ -102,6 +114,7 @@ function BaseballRoomContent({ room, currentUser, setRoom, navigate }: {
     };
     setRoom({
       ...room,
+      revision: room.revision + 1,
       status: "ready",
       players: [...room.players, player],
       activityLogs: [{
@@ -127,6 +140,7 @@ function BaseballRoomContent({ room, currentUser, setRoom, navigate }: {
     if (!me) return;
     setRoom({
       ...room,
+      revision: room.revision + 1,
       players: room.players.map((player) => (
         player.studentId === me.studentId
           ? { ...player, isReady: !player.isReady, status: player.isReady ? "waiting" : "ready" }
@@ -138,7 +152,9 @@ function BaseballRoomContent({ room, currentUser, setRoom, navigate }: {
 
   const handleStart = () => {
     if (!isHost) return;
-    if (room.players.length !== 2) {
+    const visitor = getBaseballPlayerAtSeat(room.players, 0);
+    const home = getBaseballPlayerAtSeat(room.players, 1);
+    if (!visitor || !home) {
       toast.error(`2명이 모두 참여해야 합니다. 현재 ${room.players.length}명입니다.`);
       return;
     }
@@ -148,9 +164,10 @@ function BaseballRoomContent({ room, currentUser, setRoom, navigate }: {
     }
 
     const now = new Date().toISOString();
-    const gameState = createGameState(room.players[0].name, room.players[1].name);
+    const gameState = createGameState(visitor.name, home.name);
     setRoom({
       ...room,
+      revision: room.revision + 1,
       status: "playing",
       startedAt: now,
       matchId: createId("baseball-match"),
@@ -170,7 +187,12 @@ function BaseballRoomContent({ room, currentUser, setRoom, navigate }: {
 
   const handleCancel = () => {
     if (!isHost || !window.confirm("야구 게임방을 취소할까요?")) return;
-    setRoom({ ...room, status: "cancelled", finishedAt: new Date().toISOString() });
+    setRoom({
+      ...room,
+      revision: room.revision + 1,
+      status: "cancelled",
+      finishedAt: new Date().toISOString(),
+    });
     toast.success("게임방이 취소되었습니다.");
     navigate("/games/baseball/rooms");
   };
@@ -228,8 +250,8 @@ function BaseballRoomContent({ room, currentUser, setRoom, navigate }: {
       <div>
         <h2 className="mb-3 text-sm font-extrabold text-gray-700">참여자 ({room.players.length}/2)</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {[0, 1].map((seat) => {
-            const player = room.players[seat];
+          {BASEBALL_ROOM_SEATS.map((seat) => {
+            const player = getBaseballPlayerAtSeat(room.players, seat);
             return (
               <div key={seat} className={`rounded-2xl border p-4 ${player ? "border-blue-200 bg-white" : "border-dashed border-gray-200 bg-gray-50"}`}>
                 <div className="flex items-center justify-between">
