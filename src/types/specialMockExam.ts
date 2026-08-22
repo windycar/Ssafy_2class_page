@@ -10,16 +10,16 @@ export type SpecialMockExamRound = 1 | 2 | 3 | 4 | 5;
 export const SPECIAL_MOCK_EXAM_ROUNDS = [1, 2, 3, 4, 5] as const satisfies
   readonly SpecialMockExamRound[];
 
-export const SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND = 30;
+export const SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND = 32;
 export const SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT =
   SPECIAL_MOCK_EXAM_ROUNDS.length * SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND;
 
 export const SPECIAL_MOCK_EXAM_BANK_VERSIONS = {
-  1: "v1",
-  2: "v1",
-  3: "v1",
-  4: "v1",
-  5: "v1",
+  1: "v2",
+  2: "v2",
+  3: "v2",
+  4: "v2",
+  5: "v2",
 } as const satisfies Record<SpecialMockExamRound, string>;
 
 export function getSpecialMockExamAttemptIdPrefix(round: SpecialMockExamRound) {

@@ -188,19 +188,19 @@ test("특별 모의고사 서버 기록도 활성 계정과 승인 권한을 함
   assert.doesNotMatch(migration, /to anon/);
 });
 
-test("과목평가 2회차에는 서로 충돌하지 않는 30문제짜리 모의고사 5세트가 있다", () => {
+test("과목평가 2회차에는 서로 충돌하지 않는 32문제짜리 모의고사 5세트가 있다", () => {
   const allIds = Object.values(SPECIAL_MOCK_EXAM_BANKS).flatMap((questions) => {
-    assert.equal(questions.length, 30);
-    assert.equal(new Set(questions.map(({ id }) => id)).size, 30);
+    assert.equal(questions.length, 32);
+    assert.equal(new Set(questions.map(({ id }) => id)).size, 32);
     return questions.map(({ id }) => id);
   });
 
-  assert.equal(allIds.length, 150);
+  assert.equal(allIds.length, 160);
   assert.equal(allIds.length, SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT);
-  assert.equal(new Set(allIds).size, 150);
+  assert.equal(new Set(allIds).size, 160);
   assert.equal(SPECIAL_MOCK_EXAM_META[3].label, "모의고사 3회차");
-  assert.equal(SPECIAL_MOCK_EXAM_BANKS[3][0].sourceId, "r3-mc-001");
-  assert.match(SPECIAL_MOCK_EXAM_BANKS[3][0].prompt, /과적합/);
+  assert.equal(SPECIAL_MOCK_EXAM_BANKS[3][0].sourceId, "k3-mc-001");
+  assert.match(SPECIAL_MOCK_EXAM_BANKS[3][0].prompt, /CLIP/);
 });
 
 test("모든 문제에는 다시 보기에서 표시할 정답과 해설이 있다", () => {
@@ -219,7 +219,7 @@ test("모든 문제에는 다시 보기에서 표시할 정답과 해설이 있�
   });
 });
 
-test("풀이 기록 다시 보기는 최신 답안과 미답변을 포함해 30문제를 복원한다", () => {
+test("풀이 기록 다시 보기는 최신 답안과 미답변을 포함해 32문제를 복원한다", () => {
   const questions = SPECIAL_MOCK_EXAM_BANKS[1];
   const questionId = questions[0].id;
   const textQuestion = questions.find(
@@ -248,7 +248,7 @@ test("풀이 기록 다시 보기는 최신 답안과 미답변을 포함해 30�
 
   const restored = buildSpecialMockExamReviewAnswers(questions, attempts);
 
-  assert.equal(Object.keys(restored).length, 30);
+  assert.equal(Object.keys(restored).length, 32);
   assert.deepEqual(restored[questionId], { response: 2, correct: true });
   assert.deepEqual(restored[textQuestion.id], {
     response: "저장된 서술형 답안",
@@ -260,21 +260,27 @@ test("풀이 기록 다시 보기는 최신 답안과 미답변을 포함해 30�
   });
 });
 
-test("코드 예시는 문제 제목과 분리된 코드 영역에 저장된다", () => {
+test("문제은행의 문항 유형과 서술형 채점 정보가 유지된다", () => {
   const questions = Object.values(SPECIAL_MOCK_EXAM_BANKS).flat();
-  const codeQuestions = questions.filter(({ code }) => Boolean(code));
-
-  assert.equal(codeQuestions.length, 2);
-  codeQuestions.forEach(({ prompt, code }) => {
-    assert.doesNotMatch(prompt, /\n(?:#|import |[A-Za-z_]+\s*=)/);
-    assert.ok(code?.includes("\n"));
-  });
-  assert.match(
-    SPECIAL_MOCK_EXAM_BANKS[1].find(
-      ({ sourceId }) => sourceId === "exam-mc-018",
-    )?.code ?? "",
-    /image_embeds/,
+  assert.equal(
+    questions.filter(({ questionType }) => questionType === "multiple-choice")
+      .length,
+    130,
   );
+  assert.equal(
+    questions.filter(({ questionType }) => questionType === "short-answer")
+      .length,
+    20,
+  );
+  const essayQuestions = questions.filter(
+    ({ questionType }) => questionType === "essay",
+  );
+  assert.equal(essayQuestions.length, 10);
+  essayQuestions.forEach((question) => {
+    assert.ok(question.modelAnswer?.trim(), `${question.id}: 모범 답안 누락`);
+    assert.ok(question.rubricKeywords?.length, `${question.id}: 채점 키워드 누락`);
+    assert.ok(question.minLength, `${question.id}: 최소 답변 길이 누락`);
+  });
 });
 
 test("기존 ASCII 수식 표기도 KaTeX 수식으로 정규화한다", () => {

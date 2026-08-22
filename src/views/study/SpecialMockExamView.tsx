@@ -20,7 +20,9 @@ import {
 import { useSpecialMockExamProgress } from "../../hooks/useSpecialMockExamProgress";
 import {
   SPECIAL_MOCK_EXAM_ASSESSMENT_ROUNDS,
+  SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND,
   SPECIAL_MOCK_EXAM_ROUNDS,
+  SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT,
   type SpecialMockExamRound,
 } from "../../types/specialMockExam";
 import { isAnsweredSpecialMockExamAttempt } from "../../utils/specialMockExamGrading";
@@ -132,13 +134,16 @@ export default function SpecialMockExamView() {
             </span>
           </h1>
           <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-slate-200/80 sm:text-base">
-            과목평가 2회차 핵심 범위를 30문제씩 점검합니다. 문제 순서는 매번
+            과목평가 2회차 핵심 범위를 {SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND}문제씩 점검합니다. 문제 순서는 매번
             바뀌며, 60점 이상이면 통과입니다.
           </p>
 
           <div className="mt-7 grid max-w-xl grid-cols-3 gap-2.5">
             <HeroStat value="5세트" label="실전 모의고사" />
-            <HeroStat value="150문제" label="전체 문제" />
+            <HeroStat
+              value={`${SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT}문제`}
+              label="전체 문제"
+            />
             <HeroStat value="60점" label="통과 기준" />
           </div>
 
@@ -228,7 +233,7 @@ export default function SpecialMockExamView() {
             </p>
           </div>
           <span className="rounded-full border border-violet-100 bg-violet-50 px-3.5 py-2 text-xs font-black text-violet-700">
-            세트당 30문제 · 총 150문제
+            세트당 {SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND}문제 · 총 {SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT}문제
           </span>
         </div>
 
@@ -339,7 +344,7 @@ export default function SpecialMockExamView() {
                   <div className="mt-4 grid grid-cols-3 gap-2">
                     <RoundStat
                       label="완료"
-                      value={`${completed}/30`}
+                      value={`${completed}/${SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND}`}
                       tone={`${style.soft} ${style.accent}`}
                     />
                     <RoundStat
@@ -414,8 +419,8 @@ export default function SpecialMockExamView() {
       <section className="grid gap-3 sm:grid-cols-3">
         <InfoCard
           icon={<FileCheck2 className="h-5 w-5" />}
-          title="실전형 30문제"
-          description="객관식 24문제, 단답형 4문제, 서술형 2문제로 구성됩니다."
+          title={`실전형 ${SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND}문제`}
+          description="객관식 26문제, 단답형 4문제, 서술형 2문제로 구성됩니다."
         />
         <InfoCard
           icon={<RotateCcw className="h-5 w-5" />}
