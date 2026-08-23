@@ -249,14 +249,13 @@ export default function AttendanceDocumentView() {
 
     const fileReaders = acceptedFiles.map((file) => new Promise<EvidenceFile>((resolve) => {
       const isImage = file.type.startsWith("image/");
-      if (!isImage) {
-        resolve({ name: file.name, kind: "pdf", url: "" });
-        return;
-      }
-
       const reader = new FileReader();
-      reader.onload = () => resolve({ name: file.name, kind: "image", url: String(reader.result ?? "") });
-      reader.onerror = () => resolve({ name: file.name, kind: "image", url: "" });
+      reader.onload = () => resolve({
+        name: file.name,
+        kind: isImage ? "image" : "pdf",
+        url: String(reader.result ?? ""),
+      });
+      reader.onerror = () => resolve({ name: file.name, kind: isImage ? "image" : "pdf", url: "" });
       reader.readAsDataURL(file);
     }));
 
@@ -346,15 +345,18 @@ export default function AttendanceDocumentView() {
                 </span>
               </label>
               {confirmation.evidenceFiles.length > 0 && (
-                <ul className="space-y-2 rounded-xl border border-gray-100 bg-gray-50 p-3" aria-label="선택한 증빙자료 목록">
+                <div className="grid gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3 sm:grid-cols-2" aria-label="선택한 증빙자료 목록">
                   {confirmation.evidenceFiles.map((file, index) => (
-                    <li key={`${file.name}-${index}`} className="flex items-center gap-2 text-xs text-gray-600">
-                      <FileText className="h-3.5 w-3.5 flex-none text-[#1259AA]" />
-                      <span className="min-w-0 flex-1 truncate">{file.name}</span>
-                      <button type="button" onClick={() => removeEvidence(index)} className="flex-none font-bold text-gray-400 hover:text-red-500">삭제</button>
-                    </li>
+                    <div key={`${file.name}-${index}`} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                      <EvidencePreview file={file} index={index} />
+                      <div className="flex items-center gap-2 border-t border-gray-100 px-3 py-2">
+                        <FileText className="h-3.5 w-3.5 flex-none text-[#1259AA]" />
+                        <span className="min-w-0 flex-1 truncate text-xs text-gray-600">{file.name}</span>
+                        <button type="button" onClick={() => removeEvidence(index)} className="flex-none text-xs font-bold text-gray-400 hover:text-red-500">삭제</button>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </div>
           ) : (
@@ -445,15 +447,22 @@ function ConfirmationDocument({ form }: { form: ConfirmationForm }) {
       {form.evidenceFiles.length > 0 && (
         <div className="mt-8 border-t border-dashed border-gray-300 pt-4">
           <p className="text-xs font-bold text-gray-600">첨부 증빙 ({form.evidenceFiles.length}개)</p>
-          <div className="mt-3 space-y-3">
+          <div className="mt-3 grid grid-cols-2 gap-3">
             {form.evidenceFiles.map((file, index) => (
               file.kind === "image" && file.url ? (
-                <figure key={`${file.name}-${index}`}>
-                  <img src={file.url} alt={`첨부 증빙자료 ${index + 1}: ${file.name}`} className="max-h-44 max-w-full object-contain" />
+                <figure key={`${file.name}-${index}`} className="min-w-0 overflow-hidden rounded border border-gray-200 p-2">
+                  <img src={file.url} alt={`첨부 증빙자료 ${index + 1}: ${file.name}`} className="h-40 w-full object-contain" />
                   <figcaption className="mt-1 text-[11px] text-gray-500">{file.name}</figcaption>
                 </figure>
+              ) : file.kind === "pdf" && file.url ? (
+                <figure key={`${file.name}-${index}`} className="min-w-0 overflow-hidden rounded border border-gray-200">
+                  <object data={file.url} type="application/pdf" aria-label={`첨부 PDF ${index + 1}: ${file.name}`} className="h-40 w-full bg-gray-50">
+                    <p className="p-3 text-xs text-gray-600">PDF 미리보기를 지원하지 않는 환경입니다.</p>
+                  </object>
+                  <figcaption className="border-t border-gray-200 p-2 text-[11px] text-gray-500">{file.name}</figcaption>
+                </figure>
               ) : (
-                <p key={`${file.name}-${index}`} className="text-xs text-gray-600">PDF 첨부: {file.name}</p>
+                <p key={`${file.name}-${index}`} className="rounded border border-gray-200 p-3 text-xs text-gray-600">첨부파일: {file.name}</p>
               )
             ))}
           </div>
@@ -462,6 +471,22 @@ function ConfirmationDocument({ form }: { form: ConfirmationForm }) {
       <p className="mt-10 text-center text-lg font-black tracking-[0.18em]">SSAFY 광주 캠퍼스</p>
     </DocumentShell>
   );
+}
+
+function EvidencePreview({ file, index }: { file: EvidenceFile; index: number }) {
+  if (file.kind === "image" && file.url) {
+    return <img src={file.url} alt={`선택한 증빙사진 ${index + 1}: ${file.name}`} className="h-36 w-full bg-gray-50 object-contain" />;
+  }
+
+  if (file.kind === "pdf" && file.url) {
+    return (
+      <object data={file.url} type="application/pdf" aria-label={`선택한 PDF ${index + 1}: ${file.name}`} className="h-36 w-full bg-gray-50">
+        <div className="flex h-full items-center justify-center p-3 text-center text-xs text-gray-500">PDF 미리보기</div>
+      </object>
+    );
+  }
+
+  return <div className="flex h-36 items-center justify-center bg-gray-50 p-3 text-center text-xs text-gray-500">미리보기를 불러올 수 없습니다.</div>;
 }
 
 function ChangeDocument({ form }: { form: ChangeForm }) {
