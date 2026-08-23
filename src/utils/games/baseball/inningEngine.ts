@@ -198,7 +198,7 @@ export function applyPlateOutcome(
 ): GameTransition {
   if (currentState.status === "finished") {
     return {
-      state: currentState,
+      state: cloneGameState(currentState),
       message: "경기가 종료되었습니다.",
       runsScored: 0,
       scoredRunners: [],

@@ -200,7 +200,8 @@ const PLAY_RESULT_CODES = new Set([
   "GROUND_OUT_SS", "GROUND_OUT_3B", "FLY_OUT_LF", "FLY_OUT_CF", "FLY_OUT_RF",
   "LINE_OUT", "POP_OUT", "SINGLE_LEFT", "SINGLE_CENTER", "SINGLE_RIGHT",
   "INFIELD_SINGLE", "DOUBLE_LEFT", "DOUBLE_CENTER", "DOUBLE_RIGHT", "TRIPLE",
-  "HOME_RUN_LEFT", "HOME_RUN_CENTER", "HOME_RUN_RIGHT", "DOUBLE_PLAY", "SAC_FLY", "ERROR",
+  "HOME_RUN_LEFT", "HOME_RUN_CENTER", "HOME_RUN_RIGHT", "DOUBLE_PLAY", "FIELDER_CHOICE",
+  "SAC_FLY", "ERROR",
 ]);
 const ACTIVE_PLAY_PHASES = new Set([
   "AWAITING_PITCH", "PITCH_RELEASED", "AWAITING_BATTER", "CONTACT",
@@ -295,6 +296,9 @@ function isBasesState(value: unknown): value is BasesState {
 }
 
 function isV2Team(value: unknown): value is BaseballTeamState {
+  const roster = isRecord(value) && isNonEmptyString(value.rosterId)
+    ? getBaseballRoster(value.rosterId)
+    : undefined;
   if (!isRecord(value)
     || !isNonEmptyString(value.id)
     || !isNonEmptyString(value.name)
@@ -302,9 +306,11 @@ function isV2Team(value: unknown): value is BaseballTeamState {
     || !isNonEmptyString(value.themeColor)
     || !isNonEmptyString(value.accentColor)
     || !isNonEmptyString(value.rosterId)
-    || !getBaseballRoster(value.rosterId)
+    || !roster
+    || value.id !== roster.id
     || !isStringArrayWithUniqueValues(value.lineupPlayerIds)
     || value.lineupPlayerIds.length !== 9
+    || value.lineupPlayerIds.some((playerId, index) => roster.lineupPlayerIds[index] !== playerId)
     || value.lineupPlayerIds.some((playerId) => {
       const player = getBaseballPlayer(playerId);
       return !player || player.position === "P";
@@ -319,6 +325,7 @@ function isV2Team(value: unknown): value is BaseballTeamState {
     || !isRecord(value.pitcher)
     || !hasExactlyKeys(value.pitcher, PITCHER_STATE_KEYS)
     || !isKnownPlayerId(value.pitcher.playerId)
+    || value.pitcher.playerId !== roster.startingPitcherId
     || !getBaseballPlayer(value.pitcher.playerId)?.pitching
     || !isNonNegativeSafeInteger(value.pitcher.pitchCount)
     || !isFiniteInRange(value.pitcher.stamina, 0, 100)

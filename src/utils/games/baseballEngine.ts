@@ -13,6 +13,23 @@ export * from "./baseball/types.ts";
 export * from "./baseball/gameState.ts";
 export * from "./baseball/normalizeGameState.ts";
 export * from "./baseball/inningEngine.ts";
+export * from "./baseball/random.ts";
+export * from "./baseball/pitchEngine.ts";
+export {
+  IDEAL_SWING_PROGRESS,
+  STRIKE_ZONE as V2_STRIKE_ZONE,
+  resolveBatterAction,
+} from "./baseball/battingEngine.ts";
+export type {
+  BatterAction,
+  BatterActionResolution,
+  ResolvedContact,
+  TakeResolution,
+} from "./baseball/battingEngine.ts";
+export * from "./baseball/ballInPlayEngine.ts";
+export * from "./baseball/baseRunningEngine.ts";
+export * from "./baseball/cpuPitchingAI.ts";
+export * from "./baseball/cpuBattingAI.ts";
 
 export const SWEET_SPOT = 0.72;
 

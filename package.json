@@ -8,7 +8,7 @@
     "build": "vite build",
     "dev": "vite",
     "test:bang": "node --experimental-strip-types --test tests/bangResponseRules.test.ts",
-    "test:baseball": "node --experimental-strip-types --test tests/baseballEngine.test.ts tests/baseballStateV2.test.ts tests/baseballRoomMembership.test.ts tests/baseballRoomNormalization.test.ts",
+    "test:baseball": "node --experimental-strip-types --test tests/baseballEngine.test.ts tests/baseballStateV2.test.ts tests/baseballRoomMembership.test.ts tests/baseballRoomNormalization.test.ts tests/baseballPitchEngineV2.test.ts tests/baseballBattingEngineV2.test.ts tests/baseballBallInPlayEngineV2.test.ts tests/baseballBaseRunningEngineV2.test.ts tests/baseballCpuPitchingAI.test.ts tests/baseballCpuBattingAI.test.ts",
     "test:study-reset": "node --experimental-strip-types --test tests/studyProgressReset.test.ts",
     "test:admin-study": "node --experimental-strip-types --test tests/adminStudyProgress.test.ts",
     "test:auth-community": "node --experimental-strip-types --test tests/authHelpers.test.ts tests/communityServices.test.ts",

@@ -500,7 +500,7 @@ export default function BaseballGameView() {
       title: "PLAY BALL!",
       subtitle: selectedMode === "solo"
         ? "1회초 · 내가 먼저 수비합니다."
-        : `1회초 · ${onlinePlayers?.[0]?.name ?? "1P"} 공격부터 시작합니다.`,
+        : `1회초 · ${onlinePlayers?.find((player) => player.seat === 0)?.name ?? "1P"} 공격부터 시작합니다.`,
     });
   };
 

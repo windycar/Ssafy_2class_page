@@ -169,6 +169,15 @@ test("V2 정규화는 불완전한 중첩 상태와 깨진 불변식을 엄격�
   assertInvalid((state) => { state.teams[0].shortName = ""; });
   assertInvalid((state) => { state.teams[0].lineupPlayerIds.fill("cpu-yoon-taesung"); });
   assertInvalid((state) => { state.teams[0].lineupPlayerIds[0] = "toString"; });
+  assertInvalid((state) => {
+    const swapped = state.teams[0].lineupPlayerIds[0];
+    state.teams[0].lineupPlayerIds[0] = state.teams[0].lineupPlayerIds[1];
+    state.teams[0].lineupPlayerIds[1] = swapped;
+  });
+  assertInvalid((state) => {
+    state.teams[0].pitcher = { ...state.teams[1].pitcher };
+    state.teams[0].pitcherStats = structuredClone(state.teams[1].pitcherStats);
+  });
   assertInvalid((state) => { state.teams[1].pitcherStats = {}; });
   assertInvalid((state) => { delete state.teams[0].batterStats["cpu-yoon-taesung"]; });
   assertInvalid((state) => { state.teams[0].batterStats["cpu-yoon-taesung"].pa = 0.5; });

@@ -45,15 +45,15 @@
 
 ### B. 실제 플레이 결정 파이프라인
 
-- [ ] seed 기반 결정적 난수 소스 도입
-- [ ] 7구종(포심/투심/슬라이더/커브/체인지업/포크/커터)과 Bezier 투구 궤적 도입
-- [ ] 투수 능력·체력·제구 타이밍으로 실제 위치와 PitchQuality 계산
-- [ ] TAKE 및 CONTACT/NORMAL/POWER 스윙 입력 도입
-- [ ] 타자 능력, handedness, PCI 중첩, 타이밍, 투구 품질로 접촉 품질 계산
-- [ ] 접촉 이후에만 exitVelocity, launchAngle, horizontalAngle, spin 계산
-- [ ] 타구 물리로 GROUND/LINER/FLY/POPUP과 수비 zone 계산
-- [ ] 타구 도착 시간과 수비수 도달/포구/송구 시간을 비교해 OUT/HIT/ERROR 결정
-- [ ] 신원 기반 주루, force/tag, 병살, 희생플라이, 득점 타이밍 계산
+- [x] seed 기반 결정적 난수 소스 도입
+- [x] 7구종(포심/투심/슬라이더/커브/체인지업/포크/커터)과 Bezier 투구 궤적 도입
+- [x] 투수 능력·체력·제구 타이밍으로 실제 위치와 PitchQuality 계산
+- [x] TAKE 및 CONTACT/NORMAL/POWER 스윙 입력 도입
+- [x] 타자 능력, handedness, PCI 중첩, 타이밍, 투구 품질로 접촉 품질 계산
+- [x] 접촉 이후에만 exitVelocity, launchAngle, horizontalAngle, spin 계산
+- [x] 타구 물리로 GROUND/LINER/FLY/POPUP과 수비 zone 계산
+- [x] 타구 도착 시간과 수비수 도달/포구/송구 시간을 비교해 OUT/HIT/ERROR 결정
+- [x] 신원 기반 주루, force/tag, 병살, 희생플라이, 득점 타이밍 계산
 - [ ] 최종 결과는 물리·수비·주루 해석의 마지막 단계에서만 생성
 - [ ] CPU도 사용자와 동일한 투구·접촉·타구·수비·주루 엔진 사용
 

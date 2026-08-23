@@ -366,6 +366,7 @@ export type BaseballPlayResultCode =
   | "HOME_RUN_CENTER"
   | "HOME_RUN_RIGHT"
   | "DOUBLE_PLAY"
+  | "FIELDER_CHOICE"
   | "SAC_FLY"
   | "ERROR";
 
