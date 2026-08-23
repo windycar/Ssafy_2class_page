@@ -156,12 +156,27 @@ async function renderPdfPreviewPages(dataUrl: string) {
   return { pageUrls, totalPageCount: pdf.numPages };
 }
 
-async function appendCanvasToPdf(pdfDocument: PDFDocument, canvas: HTMLCanvasElement) {
+const getSafePdfSliceBottom = (documentRoot: HTMLElement, canvas: HTMLCanvasElement, top: number, idealBottom: number) => {
+  if (idealBottom >= canvas.height) return idealBottom;
+  const rootRect = documentRoot.getBoundingClientRect();
+  const pixelsPerCssPixel = canvas.width / Math.max(1, rootRect.width);
+  const keepTogetherElements = Array.from(documentRoot.querySelectorAll<HTMLElement>("[data-pdf-keep-together]"));
+  const safeTop = keepTogetherElements
+    .map((element) => Math.round((element.getBoundingClientRect().top - rootRect.top) * pixelsPerCssPixel))
+    .filter((elementTop) => elementTop > top + 2 && elementTop < idealBottom)
+    .sort((first, second) => second - first)[0];
+
+  return safeTop ?? idealBottom;
+};
+
+async function appendCanvasToPdf(pdfDocument: PDFDocument, canvas: HTMLCanvasElement, documentRoot: HTMLElement) {
   const pixelsPerPoint = canvas.width / A4_WIDTH;
   const pagePixelHeight = Math.max(1, Math.floor(A4_HEIGHT * pixelsPerPoint));
 
-  for (let top = 0; top < canvas.height; top += pagePixelHeight) {
-    const sliceHeight = Math.min(pagePixelHeight, canvas.height - top);
+  for (let top = 0; top < canvas.height;) {
+    const idealBottom = Math.min(pagePixelHeight + top, canvas.height);
+    const bottom = getSafePdfSliceBottom(documentRoot, canvas, top, idealBottom);
+    const sliceHeight = Math.max(1, bottom - top);
     const slice = document.createElement("canvas");
     slice.width = canvas.width;
     slice.height = sliceHeight;
@@ -175,6 +190,7 @@ async function appendCanvasToPdf(pdfDocument: PDFDocument, canvas: HTMLCanvasEle
     const page = pdfDocument.addPage([A4_WIDTH, A4_HEIGHT]);
     const imageHeight = sliceHeight / pixelsPerPoint;
     page.drawImage(image, { x: 0, y: A4_HEIGHT - imageHeight, width: A4_WIDTH, height: imageHeight });
+    top = bottom;
   }
 }
 
@@ -498,7 +514,7 @@ export default function AttendanceDocumentView() {
 
       const canvas = await renderAttendanceCanvas(html2canvas, documentRoot);
       const pdfDocument = await PDFDocument.create();
-      await appendCanvasToPdf(pdfDocument, canvas);
+      await appendCanvasToPdf(pdfDocument, canvas, documentRoot);
 
       const pdfFiles = documentType === "confirmation"
         ? confirmation.evidenceFiles.filter((file) => file.kind === "pdf" && file.url)
@@ -702,22 +718,27 @@ function ConfirmationDocument({ form }: { form: ConfirmationForm }) {
       {form.evidenceFiles.length > 0 && (
         <div className="mt-8 border-t border-dashed border-gray-300 pt-4">
           <p className="text-xs font-bold text-gray-600">첨부 증빙 ({form.evidenceFiles.length}개)</p>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            {form.evidenceFiles.map((file, index) => (
-              file.kind === "image" && file.url ? (
-                <figure key={`${file.name}-${index}`} className="min-w-0 overflow-hidden rounded border border-gray-200 p-2">
-                  <img src={file.url} alt={`첨부 증빙자료 ${index + 1}: ${file.name}`} className="h-40 w-full object-contain" />
-                  <figcaption className="mt-1 break-all text-[11px] text-gray-500">{getEvidenceFilename(form, file, index)}</figcaption>
-                </figure>
-              ) : file.kind === "pdf" ? (
-                <div key={`${file.name}-${index}`} className="min-w-0 overflow-hidden rounded border border-gray-200 bg-gray-50 p-3">
-                  <PdfPagesPreview url={file.url} label={`첨부 PDF ${index + 1}`} />
-                  <p className="mt-2 break-all text-[11px] text-gray-500">저장 시 이 문서 뒤에 원본 페이지로 병합됩니다.</p>
-                  <p className="border-t border-gray-200 pt-2 text-[11px] text-gray-500">{getEvidenceFilename(form, file, index)}</p>
-                </div>
-              ) : (
-                <p key={`${file.name}-${index}`} className="rounded border border-gray-200 p-3 text-xs text-gray-600">첨부파일: {file.name}</p>
-              )
+          <div className="mt-3 space-y-3">
+            {Array.from({ length: Math.ceil(form.evidenceFiles.length / 2) }, (_, rowIndex) => (
+              <div key={`evidence-row-${rowIndex}`} className="grid grid-cols-2 gap-3" data-pdf-keep-together>
+                {form.evidenceFiles.slice(rowIndex * 2, rowIndex * 2 + 2).map((file, indexInRow) => {
+                  const index = rowIndex * 2 + indexInRow;
+                  return file.kind === "image" && file.url ? (
+                    <figure key={`${file.name}-${index}`} className="min-w-0 overflow-hidden rounded border border-gray-200 p-2">
+                      <img src={file.url} alt={`첨부 증빙자료 ${index + 1}: ${file.name}`} className="h-40 w-full object-contain" />
+                      <figcaption className="mt-1 break-all text-[11px] text-gray-500">{getEvidenceFilename(form, file, index)}</figcaption>
+                    </figure>
+                  ) : file.kind === "pdf" ? (
+                    <div key={`${file.name}-${index}`} className="min-w-0 overflow-hidden rounded border border-gray-200 bg-gray-50 p-3">
+                      <PdfPagesPreview url={file.url} label={`첨부 PDF ${index + 1}`} compact />
+                      <p className="mt-2 break-all text-[11px] text-gray-500">저장 시 이 문서 뒤에 원본 페이지로 병합됩니다.</p>
+                      <p className="border-t border-gray-200 pt-2 text-[11px] text-gray-500">{getEvidenceFilename(form, file, index)}</p>
+                    </div>
+                  ) : (
+                    <p key={`${file.name}-${index}`} className="rounded border border-gray-200 p-3 text-xs text-gray-600">첨부파일: {file.name}</p>
+                  );
+                })}
+              </div>
             ))}
           </div>
         </div>
@@ -739,7 +760,7 @@ function EvidencePreview({ file, index }: { file: EvidenceFile; index: number })
   return <div className="flex h-36 items-center justify-center bg-gray-50 p-3 text-center text-xs text-gray-500">미리보기를 불러올 수 없습니다.</div>;
 }
 
-function PdfPagesPreview({ url, label }: { url: string; label: string }) {
+function PdfPagesPreview({ url, label, compact = false }: { url: string; label: string; compact?: boolean }) {
   const [pageUrls, setPageUrls] = useState<string[]>([]);
   const [totalPageCount, setTotalPageCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -780,12 +801,14 @@ function PdfPagesPreview({ url, label }: { url: string; label: string }) {
     return <div className="flex h-36 items-center justify-center bg-gray-50 p-3 text-center text-xs text-red-500" role="img" aria-label={`${label} 미리보기 실패`}>PDF 페이지를 표시하지 못했습니다.</div>;
   }
 
+  const visiblePageUrls = compact ? pageUrls.slice(0, 1) : pageUrls;
+
   return (
-    <div className="max-h-80 space-y-2 overflow-y-auto bg-gray-100 p-2" aria-label={label}>
-      {pageUrls.map((pageUrl, index) => (
+    <div className={`${compact ? "h-40" : "max-h-80"} space-y-2 overflow-y-auto bg-gray-100 p-2`} aria-label={label}>
+      {visiblePageUrls.map((pageUrl, index) => (
         <img key={`${pageUrl.slice(0, 24)}-${index}`} src={pageUrl} alt={`${label} ${index + 1}페이지`} className="block w-full bg-white object-contain shadow-sm" />
       ))}
-      {totalPageCount > pageUrls.length && <p className="px-1 text-center text-[11px] text-gray-500">총 {totalPageCount}페이지 중 앞 {pageUrls.length}페이지 미리보기</p>}
+      {totalPageCount > visiblePageUrls.length && <p className="px-1 text-center text-[11px] text-gray-500">총 {totalPageCount}페이지 중 앞 {visiblePageUrls.length}페이지 미리보기</p>}
     </div>
   );
 }
