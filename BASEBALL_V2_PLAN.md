@@ -34,14 +34,14 @@
 
 ### A. 엔진 경계와 V2 상태
 
-- [ ] `src/utils/games/baseball/` 모듈 디렉터리 생성
-- [ ] 선수/로스터/9명 타순/수비 포지션 데이터 분리
-- [ ] `BaseRunner` 신원 기반 베이스 상태 도입
-- [ ] 타자/투수 경기 기록과 라인스코어 오류 수치 도입
-- [ ] 투수 투구 수·체력·자신감·구종 목록 도입
-- [ ] `BaseballGameState.version = 2`, revision, currentBatterIndex, play history 도입
-- [ ] `normalizeBaseballGameState()`로 V1 boolean 베이스와 누락 필드 변환
-- [ ] 기존 `baseballEngine.ts`는 호환 re-export 진입점으로 유지
+- [x] `src/utils/games/baseball/` 모듈 디렉터리 생성
+- [x] 선수/로스터/9명 타순/수비 포지션 데이터 분리
+- [x] `BaseRunner` 신원 기반 베이스 상태 도입
+- [x] 타자/투수 경기 기록과 라인스코어 오류 수치 도입
+- [x] 투수 투구 수·체력·자신감·구종 목록 도입
+- [x] `BaseballGameState.version = 2`, revision, currentBatterIndex, play history 도입
+- [x] `normalizeBaseballGameState()`로 V1 boolean 베이스와 누락 필드 변환
+- [x] 기존 `baseballEngine.ts`는 호환 re-export 진입점으로 유지
 
 ### B. 실제 플레이 결정 파이프라인
 
@@ -97,7 +97,7 @@
 - [ ] schemaVersion, matchId, playId, sequence, baseRevision, actorSeat, seed를 가진 이벤트 도입
 - [ ] 발신자 좌석/턴 검증, 중복 이벤트 무시, revision 충돌 거부
 - [ ] 재접속 시 authoritative snapshot으로 복구
-- [ ] 구버전 localStorage/Supabase room_data 정규화
+- [x] 구버전 localStorage/Supabase room_data 정규화
 
 ## 4. 테스트와 완료 게이트
 
@@ -108,7 +108,7 @@
 - [ ] CPU count별 TAKE/스윙과 구종 선택
 - [ ] 동일 seed 결과 일치, 다른 seed variation, 카메라가 물리 결과를 바꾸지 않음
 - [ ] 온라인 authority, sequence, idempotency, revision, reconnect 테스트
-- [ ] V1 저장 상태를 V2로 정규화하는 migration 테스트
+- [x] V1 저장 상태를 V2로 정규화하는 migration 테스트
 - [ ] 직구/슬라이더/커브/체인지업에서 공이 항상 하나만 보이는 시각 검증
 - [ ] 최소 10타석 또는 한 경기 전체 실제 브라우저 플레이
 - [ ] 투구, 타격, 안타, 주자, 득점, 홈런, 공수교대, FINAL 화면 캡처 확인

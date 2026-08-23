@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-import type { BaseballRoom } from "../src/types/baseballRoom";
+import { normalizeBaseballRoom } from "../src/utils/games/baseball/normalizeRoom";
 import { removeBaseballPlayer } from "../src/utils/games/baseballRoomMembership";
 
 type LeaveRequest = {
@@ -57,7 +57,19 @@ async function handleLeave(request: Request) {
   if (error) return new Response(error.message, { status: 400 });
   if (!data) return Response.json({ ok: true, alreadyGone: true });
 
-  const room = data.room_data as BaseballRoom;
+  const normalizedRoom = normalizeBaseballRoom(data.room_data, body.roomId);
+  if (!normalizedRoom.ok) {
+    return Response.json(
+      {
+        ok: false,
+        code: normalizedRoom.code,
+        path: normalizedRoom.path,
+      },
+      { status: normalizedRoom.recoverable ? 409 : 426 },
+    );
+  }
+
+  const room = normalizedRoom.value;
   const player = room.players.find((item) => item.studentId === studentId);
   if (!player || player.sessionId !== body.sessionId) {
     return Response.json({ ok: true, staleSession: true });
