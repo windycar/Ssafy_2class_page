@@ -128,6 +128,34 @@ const dataUrlToBytes = (dataUrl: string) => {
   return bytes;
 };
 
+const PDF_PREVIEW_PAGE_LIMIT = 4;
+
+async function renderPdfPreviewPages(dataUrl: string) {
+  const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const pdf = await getDocument({
+    data: dataUrlToBytes(dataUrl),
+    disableWorker: true,
+    useSystemFonts: true,
+  }).promise;
+  const pageUrls: string[] = [];
+  const previewPageCount = Math.min(pdf.numPages, PDF_PREVIEW_PAGE_LIMIT);
+
+  for (let pageNumber = 1; pageNumber <= previewPageCount; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const viewport = page.getViewport({ scale: 1.35 });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    const context = canvas.getContext("2d");
+    if (!context) throw new Error("PDF 미리보기 캔버스를 만들 수 없습니다.");
+    await page.render({ canvasContext: context, viewport }).promise;
+    pageUrls.push(canvas.toDataURL("image/png"));
+  }
+
+  await pdf.destroy();
+  return { pageUrls, totalPageCount: pdf.numPages };
+}
+
 async function appendCanvasToPdf(pdfDocument: PDFDocument, canvas: HTMLCanvasElement) {
   const pixelsPerPoint = canvas.width / A4_WIDTH;
   const pagePixelHeight = Math.max(1, Math.floor(A4_HEIGHT * pixelsPerPoint));
@@ -180,22 +208,38 @@ const sanitizeHtml2CanvasClone = (clonedDocument: Document) => {
   });
 };
 
+const canvasHasVisibleContent = (canvas: HTMLCanvasElement) => {
+  const context = canvas.getContext("2d");
+  if (!context || canvas.width === 0 || canvas.height === 0) return false;
+
+  const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  const sampleStride = 4 * 32;
+  for (let index = 0; index < pixels.length; index += sampleStride) {
+    const alpha = pixels[index + 3];
+    if (alpha > 0 && (pixels[index] < 245 || pixels[index + 1] < 245 || pixels[index + 2] < 245)) return true;
+  }
+  return false;
+};
+
 const renderAttendanceCanvas = async (html2canvas: Html2Canvas, documentRoot: HTMLElement) => {
   try {
-    return await html2canvas(documentRoot, {
-      backgroundColor: "#ffffff",
-      foreignObjectRendering: true,
-      logging: false,
-      scale: 2,
-      useCORS: true,
-    });
-  } catch (foreignObjectError) {
-    console.warn("출결 서류의 첫 번째 PDF 변환 방식이 실패하여 호환 모드로 다시 시도합니다.", foreignObjectError);
-    return html2canvas(documentRoot, {
+    const canvas = await html2canvas(documentRoot, {
       backgroundColor: "#ffffff",
       foreignObjectRendering: false,
       logging: false,
       onclone: sanitizeHtml2CanvasClone,
+      scale: 2,
+      useCORS: true,
+    });
+
+    if (!canvasHasVisibleContent(canvas)) throw new Error("PDF 캡처 결과가 비어 있습니다.");
+    return canvas;
+  } catch (foreignObjectError) {
+    console.warn("출결 서류를 기본 방식으로 캡처하지 못해 대체 방식으로 다시 시도합니다.", foreignObjectError);
+    return html2canvas(documentRoot, {
+      backgroundColor: "#ffffff",
+      foreignObjectRendering: true,
+      logging: false,
       scale: 2,
       useCORS: true,
     });
@@ -667,11 +711,8 @@ function ConfirmationDocument({ form }: { form: ConfirmationForm }) {
                 </figure>
               ) : file.kind === "pdf" ? (
                 <div key={`${file.name}-${index}`} className="min-w-0 overflow-hidden rounded border border-gray-200 bg-gray-50 p-3">
-                  <div className="flex h-40 flex-col items-center justify-center text-center">
-                    <FileText className="h-9 w-9 text-[#1259AA]" />
-                    <p className="mt-2 text-xs font-bold text-gray-700">첨부 PDF</p>
-                    <p className="mt-1 break-all text-[11px] text-gray-500">저장 시 이 문서 뒤에 원본 페이지로 병합됩니다.</p>
-                  </div>
+                  <PdfPagesPreview url={file.url} label={`첨부 PDF ${index + 1}`} />
+                  <p className="mt-2 break-all text-[11px] text-gray-500">저장 시 이 문서 뒤에 원본 페이지로 병합됩니다.</p>
                   <p className="border-t border-gray-200 pt-2 text-[11px] text-gray-500">{getEvidenceFilename(form, file, index)}</p>
                 </div>
               ) : (
@@ -692,14 +733,61 @@ function EvidencePreview({ file, index }: { file: EvidenceFile; index: number })
   }
 
   if (file.kind === "pdf" && file.url) {
-    return (
-      <object data={file.url} type="application/pdf" aria-label={`선택한 PDF ${index + 1}: ${file.name}`} className="h-36 w-full bg-gray-50">
-        <div className="flex h-full items-center justify-center p-3 text-center text-xs text-gray-500">PDF 미리보기</div>
-      </object>
-    );
+    return <PdfPagesPreview url={file.url} label={`선택한 PDF ${index + 1}: ${file.name}`} />;
   }
 
   return <div className="flex h-36 items-center justify-center bg-gray-50 p-3 text-center text-xs text-gray-500">미리보기를 불러올 수 없습니다.</div>;
+}
+
+function PdfPagesPreview({ url, label }: { url: string; label: string }) {
+  const [pageUrls, setPageUrls] = useState<string[]>([]);
+  const [totalPageCount, setTotalPageCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+    setHasError(false);
+    setPageUrls([]);
+    setTotalPageCount(0);
+
+    void renderPdfPreviewPages(url)
+      .then(({ pageUrls: nextPageUrls, totalPageCount: nextTotalPageCount }) => {
+        if (!isMounted) return;
+        setPageUrls(nextPageUrls);
+        setTotalPageCount(nextTotalPageCount);
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        console.error("PDF 미리보기를 만들지 못했습니다.", error);
+        setHasError(true);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [url]);
+
+  if (isLoading) {
+    return <div className="flex h-36 items-center justify-center bg-gray-50 p-3 text-center text-xs text-gray-500" aria-label={`${label} 불러오는 중`}>PDF 페이지를 불러오는 중...</div>;
+  }
+
+  if (hasError || pageUrls.length === 0) {
+    return <div className="flex h-36 items-center justify-center bg-gray-50 p-3 text-center text-xs text-red-500" role="img" aria-label={`${label} 미리보기 실패`}>PDF 페이지를 표시하지 못했습니다.</div>;
+  }
+
+  return (
+    <div className="max-h-80 space-y-2 overflow-y-auto bg-gray-100 p-2" aria-label={label}>
+      {pageUrls.map((pageUrl, index) => (
+        <img key={`${pageUrl.slice(0, 24)}-${index}`} src={pageUrl} alt={`${label} ${index + 1}페이지`} className="block w-full bg-white object-contain shadow-sm" />
+      ))}
+      {totalPageCount > pageUrls.length && <p className="px-1 text-center text-[11px] text-gray-500">총 {totalPageCount}페이지 중 앞 {pageUrls.length}페이지 미리보기</p>}
+    </div>
+  );
 }
 
 function ChangeDocument({ form }: { form: ChangeForm }) {
