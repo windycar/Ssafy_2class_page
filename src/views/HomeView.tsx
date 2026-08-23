@@ -7,6 +7,7 @@ import galleryQuickMenuArt from "../assets/home/quick-menu/gallery.png";
 import rulesQuickMenuArt from "../assets/home/quick-menu/rules.png";
 import gameQuickMenuArt from "../assets/home/quick-menu/game.png";
 import studyQuickMenuArt from "../assets/home/quick-menu/study.png";
+import attendanceQuickMenuArt from "../assets/home/quick-menu/attendance.png";
 import { ALL_PYTHON_QUESTIONS } from "../data/questionBanks/pythonQuestionBank";
 import { ALL_WEB_QUESTIONS } from "../data/questionBanks/webQuestionBank";
 import { AI_PYTHON_QUESTION_BANK } from "../data/questionBanks/aiPythonQuestionBank";
@@ -101,6 +102,20 @@ const QUICK_MENU = [
     colorText: "text-indigo-700",
     colorBtn: "bg-indigo-600 hover:bg-indigo-700 text-white",
     shadowColor: "shadow-indigo-100",
+  },
+  {
+    title: "출결 서류",
+    description: "출결 사유를 작성하고 서명해서 확인서와 변경요청서를 만들어요.",
+    imageSrc: attendanceQuickMenuArt,
+    path: "/attendance",
+    badge: "확인서 · 변경요청서",
+    buttonLabel: "서류 만들기",
+    colorBg: "bg-sky-50",
+    colorBorder: "border-sky-200",
+    colorIcon: "bg-sky-600",
+    colorText: "text-sky-700",
+    colorBtn: "bg-sky-600 hover:bg-sky-700 text-white",
+    shadowColor: "shadow-sky-100",
   },
 ];
 
