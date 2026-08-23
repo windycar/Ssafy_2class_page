@@ -50,29 +50,46 @@ const getClassNumber = (className?: string) => className?.match(/\d+/)?.[0] ?? "
 const safeFilenamePart = (value: string, fallback: string) =>
   value.trim().replace(/[\\/:*?"<>|]/g, "_").replace(/\s+/g, " ") || fallback;
 
+const getFilenameDate = (value: string) => {
+  const digits = value.replace(/\D/g, "");
+  return digits.length >= 6 ? digits.slice(-6) : digits.padStart(6, "0");
+};
+
 const getFileExtension = (fileName: string, kind: EvidenceFile["kind"]) => {
   const extension = fileName.match(/\.[^./\\]+$/)?.[0]?.toLowerCase();
   return extension || (kind === "pdf" ? ".pdf" : ".jpg");
 };
 
+const getEvidenceType = (file: EvidenceFile) => {
+  const fileNameWithoutExtension = file.name.replace(/\.[^./\\]+$/, "");
+  return safeFilenamePart(fileNameWithoutExtension, "증빙자료");
+};
+
+const getFilenameClassNumber = (value: string) => {
+  const classNumber = Number.parseInt(value, 10);
+  return Number.isInteger(classNumber) && classNumber > 0 ? String(classNumber) : "반";
+};
+
 const getEvidenceFilename = (form: ConfirmationForm, file: EvidenceFile, index: number) => {
-  const date = form.attendanceDate.replaceAll("-", "") || "소명일자";
-  const category = safeFilenamePart(form.category, "사유");
+  const date = form.attendanceDate ? getFilenameDate(form.attendanceDate) : "소명일자";
+  const evidenceType = getEvidenceType(file);
   const name = safeFilenamePart(form.name, "이름");
   const campus = safeFilenamePart(form.campus, "지역");
-  const classNumber = safeFilenamePart(form.classNumber, "반");
+  const classNumber = getFilenameClassNumber(form.classNumber);
   const sequence = index > 0 ? `_${index + 1}` : "";
-  return `${date}_${category}_${name}(${campus}_${classNumber}반)${sequence}${getFileExtension(file.name, file.kind)}`;
+  return `${date}_${evidenceType}_${name}[${campus}_${classNumber}반]${sequence}${getFileExtension(file.name, file.kind)}`;
 };
 
 const getDocumentFilename = (documentType: DocumentType, form: ConfirmationForm | ChangeForm) => {
   const sourceDate = documentType === "confirmation" ? form.attendanceDate : form.originalDate || form.changedDate;
-  const date = sourceDate.replaceAll("-", "") || "소명일자";
+  const date = sourceDate ? getFilenameDate(sourceDate) : "소명일자";
   const name = safeFilenamePart(form.name, "이름");
   const campus = safeFilenamePart(form.campus, "지역");
-  const classNumber = safeFilenamePart(form.classNumber, "반");
-  const documentLabel = documentType === "confirmation" ? "출결확인서" : "출결변경요청서";
-  return `${date}_${documentLabel}_${name}(${campus}_${classNumber}반).pdf`;
+  const classNumber = getFilenameClassNumber(form.classNumber);
+  const documentLabel = documentType === "confirmation"
+    ? ((form as ConfirmationForm).evidenceFiles[0] ? getEvidenceType((form as ConfirmationForm).evidenceFiles[0]) : "출결확인서")
+    : "출결변경요청서";
+  return `${date}_${documentLabel}_${name}[${campus}_${classNumber}반].pdf`;
 };
 
 interface ChangeForm {
