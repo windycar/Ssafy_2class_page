@@ -45,6 +45,36 @@ interface ConfirmationForm {
   evidenceFiles: EvidenceFile[];
 }
 
+const getClassNumber = (className?: string) => className?.match(/\d+/)?.[0] ?? "2";
+
+const safeFilenamePart = (value: string, fallback: string) =>
+  value.trim().replace(/[\\/:*?"<>|]/g, "_").replace(/\s+/g, " ") || fallback;
+
+const getFileExtension = (fileName: string, kind: EvidenceFile["kind"]) => {
+  const extension = fileName.match(/\.[^./\\]+$/)?.[0]?.toLowerCase();
+  return extension || (kind === "pdf" ? ".pdf" : ".jpg");
+};
+
+const getEvidenceFilename = (form: ConfirmationForm, file: EvidenceFile, index: number) => {
+  const date = form.attendanceDate.replaceAll("-", "") || "소명일자";
+  const category = safeFilenamePart(form.category, "사유");
+  const name = safeFilenamePart(form.name, "이름");
+  const campus = safeFilenamePart(form.campus, "지역");
+  const classNumber = safeFilenamePart(form.classNumber, "반");
+  const sequence = index > 0 ? `_${index + 1}` : "";
+  return `${date}_${category}_${name}(${campus}_${classNumber}반)${sequence}${getFileExtension(file.name, file.kind)}`;
+};
+
+const getDocumentFilename = (documentType: DocumentType, form: ConfirmationForm | ChangeForm) => {
+  const sourceDate = documentType === "confirmation" ? form.attendanceDate : form.originalDate || form.changedDate;
+  const date = sourceDate.replaceAll("-", "") || "소명일자";
+  const name = safeFilenamePart(form.name, "이름");
+  const campus = safeFilenamePart(form.campus, "지역");
+  const classNumber = safeFilenamePart(form.classNumber, "반");
+  const documentLabel = documentType === "confirmation" ? "출결확인서" : "출결변경요청서";
+  return `${date}_${documentLabel}_${name}(${campus}_${classNumber}반).pdf`;
+};
+
 interface ChangeForm {
   campus: string;
   classNumber: string;
@@ -241,6 +271,26 @@ export default function AttendanceDocumentView() {
     detail: "",
     signatureUrl: "",
   });
+  const lastAutoFilledNameRef = useRef(currentUser?.name ?? "");
+  const lastAutoFilledClassRef = useRef(getClassNumber(currentUser?.className));
+
+  useEffect(() => {
+    if (!currentUser) return;
+    const nextName = currentUser.name;
+    const nextClassNumber = getClassNumber(currentUser.className);
+    setConfirmation((form) => ({
+      ...form,
+      name: !form.name || form.name === lastAutoFilledNameRef.current ? nextName : form.name,
+      classNumber: !form.classNumber || form.classNumber === lastAutoFilledClassRef.current ? nextClassNumber : form.classNumber,
+    }));
+    setChange((form) => ({
+      ...form,
+      name: !form.name || form.name === lastAutoFilledNameRef.current ? nextName : form.name,
+      classNumber: !form.classNumber || form.classNumber === lastAutoFilledClassRef.current ? nextClassNumber : form.classNumber,
+    }));
+    lastAutoFilledNameRef.current = nextName;
+    lastAutoFilledClassRef.current = nextClassNumber;
+  }, [currentUser]);
 
   const isConfirmationValid = useMemo(
     () => Boolean(
@@ -367,7 +417,8 @@ export default function AttendanceDocumentView() {
       const downloadUrl = URL.createObjectURL(new Blob([pdfBytes], { type: "application/pdf" }));
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `출결서류_${confirmation.name || "신청서"}.pdf`;
+      const filenameForm = documentType === "confirmation" ? confirmation : change;
+      link.download = getDocumentFilename(documentType, filenameForm);
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
 
@@ -449,7 +500,7 @@ export default function AttendanceDocumentView() {
                       <EvidencePreview file={file} index={index} />
                       <div className="flex items-center gap-2 border-t border-gray-100 px-3 py-2">
                         <FileText className="h-3.5 w-3.5 flex-none text-[#1259AA]" />
-                        <span className="min-w-0 flex-1 truncate text-xs text-gray-600">{file.name}</span>
+                        <span className="min-w-0 flex-1 truncate text-xs text-gray-600">{getEvidenceFilename(confirmation, file, index)}</span>
                         <button type="button" onClick={() => removeEvidence(index)} className="flex-none text-xs font-bold text-gray-400 hover:text-red-500">삭제</button>
                       </div>
                     </div>
@@ -550,7 +601,7 @@ function ConfirmationDocument({ form }: { form: ConfirmationForm }) {
               file.kind === "image" && file.url ? (
                 <figure key={`${file.name}-${index}`} className="min-w-0 overflow-hidden rounded border border-gray-200 p-2">
                   <img src={file.url} alt={`첨부 증빙자료 ${index + 1}: ${file.name}`} className="h-40 w-full object-contain" />
-                  <figcaption className="mt-1 text-[11px] text-gray-500">{file.name}</figcaption>
+                  <figcaption className="mt-1 break-all text-[11px] text-gray-500">{getEvidenceFilename(form, file, index)}</figcaption>
                 </figure>
               ) : file.kind === "pdf" ? (
                 <div key={`${file.name}-${index}`} className="min-w-0 overflow-hidden rounded border border-gray-200 bg-gray-50 p-3">
@@ -559,7 +610,7 @@ function ConfirmationDocument({ form }: { form: ConfirmationForm }) {
                     <p className="mt-2 text-xs font-bold text-gray-700">첨부 PDF</p>
                     <p className="mt-1 break-all text-[11px] text-gray-500">저장 시 이 문서 뒤에 원본 페이지로 병합됩니다.</p>
                   </div>
-                  <p className="border-t border-gray-200 pt-2 text-[11px] text-gray-500">{file.name}</p>
+                  <p className="border-t border-gray-200 pt-2 text-[11px] text-gray-500">{getEvidenceFilename(form, file, index)}</p>
                 </div>
               ) : (
                 <p key={`${file.name}-${index}`} className="rounded border border-gray-200 p-3 text-xs text-gray-600">첨부파일: {file.name}</p>
