@@ -42,6 +42,7 @@ interface ConfirmationForm {
   detail: string;
   place: string;
   signatureUrl: string;
+  evidenceType: string;
   evidenceFiles: EvidenceFile[];
 }
 
@@ -60,11 +61,6 @@ const getFileExtension = (fileName: string, kind: EvidenceFile["kind"]) => {
   return extension || (kind === "pdf" ? ".pdf" : ".jpg");
 };
 
-const getEvidenceType = (file: EvidenceFile) => {
-  const fileNameWithoutExtension = file.name.replace(/\.[^./\\]+$/, "");
-  return safeFilenamePart(fileNameWithoutExtension, "증빙자료");
-};
-
 const getFilenameClassNumber = (value: string) => {
   const classNumber = Number.parseInt(value, 10);
   return Number.isInteger(classNumber) && classNumber > 0 ? String(classNumber) : "반";
@@ -72,7 +68,7 @@ const getFilenameClassNumber = (value: string) => {
 
 const getEvidenceFilename = (form: ConfirmationForm, file: EvidenceFile, index: number) => {
   const date = form.attendanceDate ? getFilenameDate(form.attendanceDate) : "소명일자";
-  const evidenceType = getEvidenceType(file);
+  const evidenceType = safeFilenamePart(form.evidenceType, "증빙자료");
   const name = safeFilenamePart(form.name, "이름");
   const campus = safeFilenamePart(form.campus, "지역");
   const classNumber = getFilenameClassNumber(form.classNumber);
@@ -87,7 +83,7 @@ const getDocumentFilename = (documentType: DocumentType, form: ConfirmationForm 
   const campus = safeFilenamePart(form.campus, "지역");
   const classNumber = getFilenameClassNumber(form.classNumber);
   const documentLabel = documentType === "confirmation"
-    ? ((form as ConfirmationForm).evidenceFiles[0] ? getEvidenceType((form as ConfirmationForm).evidenceFiles[0]) : "출결확인서")
+    ? (safeFilenamePart((form as ConfirmationForm).evidenceType, "출결확인서"))
     : "출결변경요청서";
   return `${date}_${documentLabel}_${name}[${campus}_${classNumber}반].pdf`;
 };
@@ -325,6 +321,7 @@ export default function AttendanceDocumentView() {
     detail: "",
     place: "",
     signatureUrl: "",
+    evidenceType: "",
     evidenceFiles: [],
   });
   const [change, setChange] = useState<ChangeForm>({
@@ -545,6 +542,7 @@ export default function AttendanceDocumentView() {
               </div>
               <Field label="사유"><input className={inputClass} maxLength={46} value={confirmation.reason} onChange={(event) => setConfirmation({ ...confirmation, reason: event.target.value })} placeholder="예: SSAFY 채용 면접 참석" /></Field>
               <Field label="세부 내용"><textarea className={`${inputClass} min-h-24 resize-y`} maxLength={140} value={confirmation.detail} onChange={(event) => setConfirmation({ ...confirmation, detail: event.target.value })} placeholder="결석 사유를 구체적으로 작성하세요." /></Field>
+              <Field label="증빙자료 종류 (파일명에 사용)"><input className={inputClass} maxLength={30} value={confirmation.evidenceType} onChange={(event) => setConfirmation({ ...confirmation, evidenceType: event.target.value })} placeholder="예: 진료확인서, 카카오톡" /></Field>
               <div>
                 <p className={labelClass}>서명</p>
                 <SignaturePad value={confirmation.signatureUrl} onChange={(signatureUrl) => setConfirmation((form) => ({ ...form, signatureUrl }))} />
