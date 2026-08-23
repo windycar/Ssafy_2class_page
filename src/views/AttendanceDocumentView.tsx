@@ -23,6 +23,12 @@ import { useAuth } from "../hooks/useAuth";
 
 type DocumentType = "confirmation" | "change";
 
+interface EvidenceFile {
+  name: string;
+  kind: "image" | "pdf";
+  url: string;
+}
+
 interface ConfirmationForm {
   campus: string;
   classNumber: string;
@@ -35,8 +41,7 @@ interface ConfirmationForm {
   detail: string;
   place: string;
   signatureUrl: string;
-  evidenceName: string;
-  evidenceUrl: string;
+  evidenceFiles: EvidenceFile[];
 }
 
 interface ChangeForm {
@@ -186,8 +191,7 @@ export default function AttendanceDocumentView() {
     detail: "",
     place: "",
     signatureUrl: "",
-    evidenceName: "",
-    evidenceUrl: "",
+    evidenceFiles: [],
   });
   const [change, setChange] = useState<ChangeForm>({
     campus: "광주",
@@ -225,18 +229,47 @@ export default function AttendanceDocumentView() {
   };
 
   const handleEvidence = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      event.target.value = "";
-      toast.error("증빙자료는 10MB 이하 파일을 선택하세요.");
+    const files = Array.from(event.target.files ?? []);
+    event.target.value = "";
+    if (files.length === 0) return;
+
+    const imageOrPdfFiles = files.filter((file) =>
+      file.type.startsWith("image/") || file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"),
+    );
+    const oversizedFiles = imageOrPdfFiles.filter((file) => file.size > 10 * 1024 * 1024);
+    const acceptedFiles = imageOrPdfFiles.filter((file) => file.size <= 10 * 1024 * 1024);
+
+    if (oversizedFiles.length > 0) {
+      toast.error(`10MB를 초과한 파일 ${oversizedFiles.length}개는 제외했습니다.`);
+    }
+    if (acceptedFiles.length === 0) {
+      if (imageOrPdfFiles.length === 0) toast.error("사진 또는 PDF 파일만 선택하세요.");
       return;
     }
-    setConfirmation((form) => ({ ...form, evidenceName: file.name, evidenceUrl: "" }));
-    if (!file.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = () => setConfirmation((form) => ({ ...form, evidenceUrl: String(reader.result ?? "") }));
-    reader.readAsDataURL(file);
+
+    const fileReaders = acceptedFiles.map((file) => new Promise<EvidenceFile>((resolve) => {
+      const isImage = file.type.startsWith("image/");
+      if (!isImage) {
+        resolve({ name: file.name, kind: "pdf", url: "" });
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => resolve({ name: file.name, kind: "image", url: String(reader.result ?? "") });
+      reader.onerror = () => resolve({ name: file.name, kind: "image", url: "" });
+      reader.readAsDataURL(file);
+    }));
+
+    void Promise.all(fileReaders).then((newFiles) => {
+      setConfirmation((form) => ({ ...form, evidenceFiles: [...form.evidenceFiles, ...newFiles] }));
+    });
+  };
+
+  const removeEvidence = (indexToRemove: number) => {
+    setConfirmation((form) => ({
+      ...form,
+      evidenceFiles: form.evidenceFiles.filter((_, index) => index !== indexToRemove),
+    }));
   };
 
   const verifyAndPreview = (printAfter = false) => {
@@ -308,10 +341,21 @@ export default function AttendanceDocumentView() {
                 <span>증빙자료 <b className="font-medium text-gray-400">(선택)</b></span>
                 <span className="mt-1.5 flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-blue-200 bg-blue-50/50 px-4 py-4 text-sm text-[#1259AA] hover:bg-blue-50">
                   <ImagePlus className="h-5 w-5" />
-                  <span className="min-w-0 flex-1 truncate font-bold">{confirmation.evidenceName || "이미지 또는 PDF 선택"}</span>
-                  <input className="sr-only" type="file" accept="image/*,.pdf" onChange={handleEvidence} />
+                  <span className="min-w-0 flex-1 truncate font-bold">{confirmation.evidenceFiles.length > 0 ? `${confirmation.evidenceFiles.length}개 파일 선택됨` : "사진 또는 PDF 여러 개 선택"}</span>
+                  <input className="sr-only" type="file" accept="image/*,.pdf,application/pdf" multiple onChange={handleEvidence} />
                 </span>
               </label>
+              {confirmation.evidenceFiles.length > 0 && (
+                <ul className="space-y-2 rounded-xl border border-gray-100 bg-gray-50 p-3" aria-label="선택한 증빙자료 목록">
+                  {confirmation.evidenceFiles.map((file, index) => (
+                    <li key={`${file.name}-${index}`} className="flex items-center gap-2 text-xs text-gray-600">
+                      <FileText className="h-3.5 w-3.5 flex-none text-[#1259AA]" />
+                      <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                      <button type="button" onClick={() => removeEvidence(index)} className="flex-none font-bold text-gray-400 hover:text-red-500">삭제</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           ) : (
             <div className="space-y-5">
@@ -398,7 +442,23 @@ function ConfirmationDocument({ form }: { form: ConfirmationForm }) {
       <p className="mt-10 text-center text-[15px] leading-8">위와 같은 사유로 출결 사실을 확인하며,<br />작성한 내용에 거짓이 없음을 확인합니다.</p>
       <p className="mt-8 text-center text-sm font-bold tracking-wide">{todayLabel()}</p>
       <div className="mt-7 flex items-center justify-end gap-5 text-sm"><span>신청인</span><strong className="min-w-20 text-center text-base">{form.name}</strong>{form.signatureUrl ? <img src={form.signatureUrl} alt="신청인 서명" className="h-14 w-32 object-contain" /> : <span>(서명)</span>}</div>
-      {form.evidenceName && <div className="mt-8 border-t border-dashed border-gray-300 pt-4"><p className="text-xs font-bold text-gray-600">첨부 증빙: {form.evidenceName}</p>{form.evidenceUrl && <img src={form.evidenceUrl} alt="첨부 증빙자료" className="mt-3 max-h-44 max-w-full object-contain" />}</div>}
+      {form.evidenceFiles.length > 0 && (
+        <div className="mt-8 border-t border-dashed border-gray-300 pt-4">
+          <p className="text-xs font-bold text-gray-600">첨부 증빙 ({form.evidenceFiles.length}개)</p>
+          <div className="mt-3 space-y-3">
+            {form.evidenceFiles.map((file, index) => (
+              file.kind === "image" && file.url ? (
+                <figure key={`${file.name}-${index}`}>
+                  <img src={file.url} alt={`첨부 증빙자료 ${index + 1}: ${file.name}`} className="max-h-44 max-w-full object-contain" />
+                  <figcaption className="mt-1 text-[11px] text-gray-500">{file.name}</figcaption>
+                </figure>
+              ) : (
+                <p key={`${file.name}-${index}`} className="text-xs text-gray-600">PDF 첨부: {file.name}</p>
+              )
+            ))}
+          </div>
+        </div>
+      )}
       <p className="mt-10 text-center text-lg font-black tracking-[0.18em]">SSAFY 광주 캠퍼스</p>
     </DocumentShell>
   );
