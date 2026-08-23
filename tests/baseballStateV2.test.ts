@@ -5,10 +5,12 @@ import {
   applyPlateOutcome,
   BASEBALL_GAME_STATE_VERSION,
   createGameState,
+  createRunner,
   getCurrentBatter,
   getCurrentPitcher,
   getNextBatters,
   normalizeBaseballGameState,
+  startPitch,
   type BaseballGameState,
   type PlateOutcome,
 } from "../src/utils/games/baseballEngine.ts";
@@ -192,9 +194,52 @@ test("V2 정규화는 불완전한 중첩 상태와 깨진 불변식을 엄격�
       progress: Number.POSITIVE_INFINITY,
     };
   });
+  assertInvalid((state) => {
+    state.bases.first = createRunner(getCurrentBatter(state), 1);
+  });
+  assertInvalid((state) => {
+    const opponent = getBaseballPlayer(state.teams[1].lineupPlayerIds[0]);
+    if (!opponent) throw new Error("상대 선수를 찾을 수 없습니다.");
+    state.bases.first = createRunner(opponent, 1);
+  });
+  assertInvalid((state) => {
+    const runner = getBaseballPlayer(state.teams[0].lineupPlayerIds[1]);
+    if (!runner) throw new Error("주자를 찾을 수 없습니다.");
+    state.bases.first = { ...createRunner(runner, 1), name: "조작된 이름" };
+  });
   assertInvalid((state) => { state.activePlay = {} as BaseballGameState["activePlay"]; });
   assertInvalid((state) => { state.lastPlay = {} as BaseballGameState["lastPlay"]; });
   assertInvalid((state) => { state.playByPlay = [{} as BaseballGameState["playByPlay"][number]]; });
+});
+
+test("activePlay phase 필수 필드와 해결 결과 연결을 엄격히 검증한다", () => {
+  const state = createGameState("원정", "홈", 8123);
+  const started = startPitch(state, {
+    commandId: "phase-start-1",
+    expectedRevision: state.revision,
+    playId: "phase-play-1",
+    sequence: 1,
+    pitcherId: getCurrentPitcher(state).id,
+    pitchType: "fourSeam",
+    target: { x: 0.5, y: 0.5 },
+    timingQuality: "PERFECT",
+  });
+  assert.equal(started.ok, true);
+  if (!started.ok) return;
+  assert.equal(normalizeBaseballGameState(started.state).ok, true);
+
+  const missingPitch = structuredClone(started.state);
+  missingPitch.activePlay!.pitch = null;
+  assert.deepEqual(normalizeBaseballGameState(missingPitch), {
+    ok: false,
+    code: "INVALID_FIELD",
+    path: "$.activePlay",
+    recoverable: true,
+  });
+
+  const fakeResolved = structuredClone(started.state);
+  fakeResolved.activePlay!.phase = "RESOLVED";
+  assert.equal(normalizeBaseballGameState(fakeResolved).ok, false);
 });
 
 test("선수·로스터·구종 조회는 Object prototype 키를 실제 데이터로 오인하지 않는다", () => {

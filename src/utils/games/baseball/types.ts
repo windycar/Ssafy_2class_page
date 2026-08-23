@@ -434,6 +434,8 @@ export type ActivePlayPhase =
 
 export interface ActivePlayState {
   playId: string;
+  /** Retained so online retries cannot consume the same start command twice. */
+  startCommandId?: string;
   sequence: number;
   seed: number;
   phase: ActivePlayPhase;
@@ -449,6 +451,8 @@ export interface ActivePlayState {
 
 export interface PlayByPlayEntry {
   id: string;
+  /** Start command paired with this resolved batter action. */
+  startCommandId?: string;
   playId: string;
   inning: number;
   half: InningHalf;

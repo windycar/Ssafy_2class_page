@@ -12,6 +12,7 @@ import type {
 } from "./types.ts";
 
 const BASE_DISTANCE_METERS = 27.43;
+const BATTER_START_DELAY_MS = 500;
 
 export type RunningPlayKind =
   | "HOME_RUN"
@@ -134,6 +135,20 @@ function runnerResolution(
   const outRunnerIds = advances
     .filter((advance) => advance.result === "OUT")
     .map((advance) => advance.runnerId);
+  const advancedRunnerIds = advances.map((advance) => advance.runnerId);
+  const nextBaseRunnerIds = [nextBases.first, nextBases.second, nextBases.third]
+    .filter((runner): runner is BaseRunner => runner !== null)
+    .map((runner) => runner.playerId);
+  if (new Set(advancedRunnerIds).size !== advancedRunnerIds.length) {
+    throw new RangeError("Each runner may have only one terminal advance per play.");
+  }
+  if (new Set(nextBaseRunnerIds).size !== nextBaseRunnerIds.length) {
+    throw new RangeError("A runner cannot occupy more than one base.");
+  }
+  const removedRunnerIds = new Set([...scoredRunnerIds, ...outRunnerIds]);
+  if (nextBaseRunnerIds.some((runnerId) => removedRunnerIds.has(runnerId))) {
+    throw new RangeError("Scored or retired runners cannot remain on base.");
+  }
   return {
     advances,
     nextBases,
@@ -154,7 +169,7 @@ function resolveHomeRun(input: ResolveBaseRunningInput): ResolvedRunningPlay {
   for (const [base, runner] of occupied) {
     if (runner) advances.push(makeAdvance(runner, base, 4, "SCORE", false, 120));
   }
-  advances.push(makeAdvance(input.batter, 0, 4, "SCORE", false));
+  advances.push(makeAdvance(input.batter, 0, 4, "SCORE", false, BATTER_START_DELAY_MS));
   return {
     kind: "HOME_RUN",
     defense: defenseResolution(input.defense, "NO_PLAY", 0),
@@ -200,7 +215,14 @@ function advanceHit(input: ResolveBaseRunningInput, requestedBases: 1 | 2 | 3): 
     }
   }
 
-  advances.push(makeAdvance(input.batter, 0, requestedBases, "SAFE", true));
+  advances.push(makeAdvance(
+    input.batter,
+    0,
+    requestedBases,
+    "SAFE",
+    true,
+    BATTER_START_DELAY_MS,
+  ));
   if (requestedBases === 1) next.first = batterRunner(input.batter, 1);
   else if (requestedBases === 2) next.second = batterRunner(input.batter, 2);
   else next.third = batterRunner(input.batter, 3);
@@ -234,7 +256,7 @@ function resolveError(input: ResolveBaseRunningInput): ResolvedRunningPlay {
     next.second = settledRunner(input.bases.first, 2);
   }
   next.first = batterRunner(input.batter, 1);
-  advances.push(makeAdvance(input.batter, 0, 1, "SAFE", true));
+  advances.push(makeAdvance(input.batter, 0, 1, "SAFE", true, BATTER_START_DELAY_MS));
 
   return {
     kind: "ERROR",
@@ -297,7 +319,7 @@ function resolveCaughtBall(input: ResolveBaseRunningInput): ResolvedRunningPlay 
 
 function resolveGroundBall(input: ResolveBaseRunningInput): ResolvedRunningPlay {
   const secureTime = input.defense.secureTimeMs ?? input.defense.ballArrivalTimeMs;
-  const batterArrival = travelTimeMs(input.batter.speed);
+  const batterArrival = BATTER_START_DELAY_MS + travelTimeMs(input.batter.speed);
   const firstRunner = input.bases.first;
   const next = cloneBases(input.bases);
   const advances: RunnerAdvance[] = [];
@@ -315,18 +337,32 @@ function resolveGroundBall(input: ResolveBaseRunningInput): ResolvedRunningPlay 
 
   if (firstRunner && input.outsBeforePlay < 2) {
     const fielder = input.defenders.find((player) => player.id === input.defense.primaryFielderId);
-    const transfer = fielder ? (0.68 - fielder.fielding * 0.003) * 1_000 : 450;
+    const middleInfielder = fielder?.position === "SS" || fielder?.position === "2B";
+    const transfer = fielder
+      ? middleInfielder
+        ? (0.5 - fielder.fielding * 0.0025) * 1_000
+        : (0.68 - fielder.fielding * 0.003) * 1_000
+      : 450;
     const throwSpeed = fielder ? 25 + fielder.arm * 0.17 : 37;
-    const forceAtSecond = secureTime + transfer + 19 / throwSpeed * 1_000;
+    const forceThrowDistance = middleInfielder ? 8 : 19;
+    const forceAtSecond = secureTime + transfer + forceThrowDistance / throwSpeed * 1_000;
     const runnerAtSecond = 90 + travelTimeMs(firstRunner.speed);
 
     if (forceAtSecond < runnerAtSecond) {
       advances.push(makeAdvance(firstRunner, 1, 2, "OUT", true, 90, forceAtSecond));
       next.first = null;
-      const relayFirst = forceAtSecond + 360 + 27.43 / 39 * 1_000;
+      const relayFirst = forceAtSecond + 120 + 23 / throwSpeed * 1_000;
       const turnsTwo = relayFirst < batterArrival && input.outsBeforePlay <= 1;
       if (turnsTwo) {
-        advances.push(makeAdvance(input.batter, 0, 1, "OUT", true, 0, relayFirst));
+        advances.push(makeAdvance(
+          input.batter,
+          0,
+          1,
+          "OUT",
+          true,
+          BATTER_START_DELAY_MS,
+          relayFirst,
+        ));
         advanceForcedRunners(2);
         return {
           kind: "DOUBLE_PLAY",
@@ -340,7 +376,14 @@ function resolveGroundBall(input: ResolveBaseRunningInput): ResolvedRunningPlay 
       }
 
       advanceForcedRunners(1);
-      advances.push(makeAdvance(input.batter, 0, 1, "SAFE", true));
+      advances.push(makeAdvance(
+        input.batter,
+        0,
+        1,
+        "SAFE",
+        true,
+        BATTER_START_DELAY_MS,
+      ));
       next.first = batterRunner(input.batter, 1);
       return {
         kind: "FIELDER_CHOICE",
@@ -356,8 +399,17 @@ function resolveGroundBall(input: ResolveBaseRunningInput): ResolvedRunningPlay 
 
   const throwFirstAt = input.defense.throwToFirstArrivalTimeMs ?? Number.POSITIVE_INFINITY;
   if (throwFirstAt < batterArrival) {
-    advances.push(makeAdvance(input.batter, 0, 1, "OUT", true, 0, throwFirstAt));
-    if (firstRunner) {
+    advances.push(makeAdvance(
+      input.batter,
+      0,
+      1,
+      "OUT",
+      true,
+      BATTER_START_DELAY_MS,
+      throwFirstAt,
+    ));
+    if (firstRunner && input.outsBeforePlay + 1 < 3) {
+      advanceForcedRunners(1);
       advances.push(makeAdvance(firstRunner, 1, 2, "SAFE", true, 90));
       next.first = null;
       next.second = settledRunner(firstRunner, 2);

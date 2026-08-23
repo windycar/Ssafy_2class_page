@@ -278,7 +278,10 @@ function isV2Runner(value: unknown, currentBase: BaseNumber): value is BaseRunne
     && (!isSafeIntegerInRange(value.targetBase, currentBase + 1, 4))) return false;
   if (value.progress !== undefined
     && (value.targetBase === undefined || !isFiniteInRange(value.progress, 0, 1))) return false;
-  return getBaseballPlayer(value.playerId) !== undefined || value.playerId.startsWith("legacy:");
+  const player = getBaseballPlayer(value.playerId);
+  return player
+    ? value.name === player.name && value.speed === player.speed
+    : value.playerId.startsWith("legacy:");
 }
 
 function isBasesState(value: unknown): value is BasesState {
@@ -495,6 +498,7 @@ function isVisualEvent(value: unknown, playId: string) {
 function isActivePlay(value: unknown) {
   if (!isRecord(value)
     || !isNonEmptyString(value.playId)
+    || (value.startCommandId !== undefined && !isNonEmptyString(value.startCommandId))
     || !isNonNegativeSafeInteger(value.sequence)
     || !isSafeIntegerInRange(value.seed, 0, 0xffff_ffff)
     || !ACTIVE_PLAY_PHASES.has(value.phase as string)
@@ -514,10 +518,77 @@ function isActivePlay(value: unknown) {
     || (value.contact as UnknownRecord).pitcherId !== value.pitcherId
   )) return false;
   if (value.battedBall !== null && (value.battedBall as UnknownRecord).batterId !== value.batterId) return false;
+  const pitch = value.pitch as UnknownRecord | null;
+  const contact = value.contact as UnknownRecord | null;
+  const ball = value.battedBall as UnknownRecord | null;
+  const hasNoOutcome = contact === null
+    && ball === null
+    && value.defense === null
+    && value.runners === null;
+  const hasNoPresentation = value.visualEvents.length === 0;
+  let phaseValid = false;
+  switch (value.phase) {
+    case "AWAITING_PITCH":
+      phaseValid = pitch === null && hasNoOutcome && hasNoPresentation;
+      break;
+    case "PITCH_RELEASED":
+    case "AWAITING_BATTER":
+      phaseValid = pitch !== null && hasNoOutcome && hasNoPresentation;
+      break;
+    case "CONTACT":
+      phaseValid = pitch !== null
+        && contact !== null
+        && ball === null
+        && value.defense === null
+        && value.runners === null
+        && hasNoPresentation;
+      break;
+    case "BALL_FLIGHT":
+      phaseValid = pitch !== null
+        && contact !== null
+        && ball !== null
+        && value.defense === null
+        && value.runners === null
+        && hasNoPresentation;
+      break;
+    case "DEFENSE":
+      phaseValid = pitch !== null
+        && contact !== null
+        && ball !== null
+        && value.defense !== null
+        && value.runners === null
+        && hasNoPresentation;
+      break;
+    case "BASE_RUNNING":
+      phaseValid = pitch !== null
+        && contact !== null
+        && ball !== null
+        && value.defense !== null
+        && value.runners !== null
+        && hasNoPresentation;
+      break;
+    case "RESOLVED": {
+      const ballIsFair = ball?.fair === true;
+      const ballIsFoul = ball?.fair === false;
+      const resolvedShapeValid = contact === null
+        ? ball === null && value.defense === null
+        : contact.result === "IN_PLAY"
+          ? ball !== null && (
+            (ballIsFair && value.defense !== null && value.runners !== null)
+            || (ballIsFoul && value.defense === null && value.runners === null)
+          )
+          : ball === null && value.defense === null && value.runners === null;
+      phaseValid = pitch !== null && resolvedShapeValid && !hasNoPresentation;
+      break;
+    }
+  }
+  if (!phaseValid) return false;
+
   const eventIds = value.visualEvents.map((event) => (event as UnknownRecord).id);
   const eventSequences = value.visualEvents.map((event) => (event as UnknownRecord).sequence);
   return new Set(eventIds).size === eventIds.length
-    && new Set(eventSequences).size === eventSequences.length;
+    && new Set(eventSequences).size === eventSequences.length
+    && eventSequences.every((sequence, index) => sequence === index);
 }
 
 function isOfficialPlayResult(value: unknown) {
@@ -543,6 +614,7 @@ function isOfficialPlayResult(value: unknown) {
 function isPlayByPlayEntry(value: unknown) {
   return isRecord(value)
     && isNonEmptyString(value.id)
+    && (value.startCommandId === undefined || isNonEmptyString(value.startCommandId))
     && isNonEmptyString(value.playId)
     && isSafeIntegerInRange(value.inning, 1, 999)
     && (value.half === "top" || value.half === "bottom")
@@ -571,6 +643,20 @@ function normalizeV2State(raw: UnknownRecord): BaseballStateNormalizeResult {
   if (raw.teams[0].id === raw.teams[1].id || raw.teams[0].rosterId === raw.teams[1].rosterId) {
     return failure("INVALID_INVARIANT", "$.teams");
   }
+  const battingTeamState = raw.teams[raw.battingTeam] as BaseballTeamState;
+  const currentBatterId = battingTeamState.lineupPlayerIds[battingTeamState.currentBatterIndex];
+  const baseRunnerIds = [
+    (raw.bases as BasesState).first?.playerId,
+    (raw.bases as BasesState).second?.playerId,
+    (raw.bases as BasesState).third?.playerId,
+  ].filter((playerId): playerId is string => playerId !== undefined);
+  if (baseRunnerIds.includes(currentBatterId)
+    || baseRunnerIds.some(
+      (playerId) => !playerId.startsWith("legacy:")
+        && !battingTeamState.lineupPlayerIds.includes(playerId),
+    )) {
+    return failure("INVALID_INVARIANT", "$.bases");
+  }
   if (raw.status !== "playing" && raw.status !== "finished") return failure("INVALID_FIELD", "$.status");
   if (raw.winner !== null && raw.winner !== 0 && raw.winner !== 1) return failure("INVALID_FIELD", "$.winner");
   if ((raw.status === "playing" && raw.winner !== null) || (raw.status === "finished" && raw.winner === null)) {
@@ -584,6 +670,12 @@ function normalizeV2State(raw: UnknownRecord): BaseballStateNormalizeResult {
   }
   if (raw.activePlay !== null && !isActivePlay(raw.activePlay)) return failure("INVALID_FIELD", "$.activePlay");
   if (raw.lastPlay !== null && !isOfficialPlayResult(raw.lastPlay)) return failure("INVALID_FIELD", "$.lastPlay");
+  if (raw.activePlay !== null && (raw.activePlay as UnknownRecord).phase === "RESOLVED") {
+    if (raw.lastPlay === null
+      || (raw.lastPlay as UnknownRecord).playId !== (raw.activePlay as UnknownRecord).playId) {
+      return failure("INVALID_INVARIANT", "$.lastPlay");
+    }
+  }
   if (!Array.isArray(raw.playByPlay) || !raw.playByPlay.every(isPlayByPlayEntry)) {
     return failure("INVALID_FIELD", "$.playByPlay");
   }

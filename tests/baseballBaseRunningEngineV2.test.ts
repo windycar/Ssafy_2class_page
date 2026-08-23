@@ -138,7 +138,7 @@ test("2루 포스아웃 뒤 1루 송구가 늦으면 야수선택이며 앞선 �
       second: runner("cpu-jung-mingyu", 2),
       third: runner("cpu-han-doyoon", 3),
     },
-    defense: opportunity({ secureTimeMs: 1_050 }),
+    defense: opportunity({ secureTimeMs: 2_600 }),
   }));
   assert.equal(result.kind, "FIELDER_CHOICE");
   assert.equal(result.hitValue, 0);
@@ -155,6 +155,54 @@ test("2아웃에서는 병살을 시도하지 않고 타자 주자 1루 아웃�
   }));
   assert.equal(result.kind, "GROUND_OUT");
   assert.equal(result.runners.outsRecorded, 1);
+});
+
+test("1·2루 땅볼의 1루 아웃은 선행 주자를 보존하고 nextBases 주자 ID를 중복시키지 않는다", () => {
+  const firstRunner = runner("cpu-park-junho", 1, 72);
+  const secondRunner = runner("cpu-jung-mingyu", 2, 72);
+  const result = resolveBaseRunning(input({
+    bases: { first: firstRunner, second: secondRunner, third: null },
+    outsBeforePlay: 0,
+    defense: opportunity({ secureTimeMs: 3_000, throwToFirstArrivalTimeMs: 3_400 }),
+  }));
+
+  assert.equal(result.kind, "GROUND_OUT");
+  assert.deepEqual(result.runners.outRunnerIds, [batter.id]);
+  assert.equal(result.runners.nextBases.first, null);
+  assert.equal(result.runners.nextBases.second?.playerId, firstRunner.playerId);
+  assert.equal(result.runners.nextBases.third?.playerId, secondRunner.playerId);
+
+  const occupiedRunnerIds = [
+    result.runners.nextBases.first?.playerId,
+    result.runners.nextBases.second?.playerId,
+    result.runners.nextBases.third?.playerId,
+  ].filter((playerId): playerId is string => Boolean(playerId));
+  assert.equal(new Set(occupiedRunnerIds).size, occupiedRunnerIds.length);
+});
+
+test("만루 땅볼의 1루 아웃은 3루 주자 득점과 나머지 강제 진루를 모두 보존한다", () => {
+  const firstRunner = runner("cpu-park-junho", 1, 72);
+  const secondRunner = runner("cpu-jung-mingyu", 2, 72);
+  const thirdRunner = runner("cpu-han-doyoon", 3, 72);
+  const result = resolveBaseRunning(input({
+    bases: { first: firstRunner, second: secondRunner, third: thirdRunner },
+    outsBeforePlay: 0,
+    defense: opportunity({ secureTimeMs: 3_000, throwToFirstArrivalTimeMs: 3_400 }),
+  }));
+
+  assert.equal(result.kind, "GROUND_OUT");
+  assert.deepEqual(result.runners.outRunnerIds, [batter.id]);
+  assert.deepEqual(result.runners.scoredRunnerIds, [thirdRunner.playerId]);
+  assert.equal(result.runners.nextBases.first, null);
+  assert.equal(result.runners.nextBases.second?.playerId, firstRunner.playerId);
+  assert.equal(result.runners.nextBases.third?.playerId, secondRunner.playerId);
+
+  const occupiedRunnerIds = [
+    result.runners.nextBases.first?.playerId,
+    result.runners.nextBases.second?.playerId,
+    result.runners.nextBases.third?.playerId,
+  ].filter((playerId): playerId is string => Boolean(playerId));
+  assert.equal(new Set(occupiedRunnerIds).size, occupiedRunnerIds.length);
 });
 
 test("수비가 늦으면 내야안타가 되고 어려운 타구 미처리는 실책으로 기록하지 않는다", () => {

@@ -54,14 +54,14 @@
 - [x] 타구 물리로 GROUND/LINER/FLY/POPUP과 수비 zone 계산
 - [x] 타구 도착 시간과 수비수 도달/포구/송구 시간을 비교해 OUT/HIT/ERROR 결정
 - [x] 신원 기반 주루, force/tag, 병살, 희생플라이, 득점 타이밍 계산
-- [ ] 최종 결과는 물리·수비·주루 해석의 마지막 단계에서만 생성
+- [x] 최종 결과는 물리·수비·주루 해석의 마지막 단계에서만 생성
 - [ ] CPU도 사용자와 동일한 투구·접촉·타구·수비·주루 엔진 사용
 
 ### C. 시각 이벤트와 카메라
 
 - [ ] 논리 상태와 presentation 상태 분리
-- [ ] `CONTACT → BALL_FLIGHT → FIELD_RESULT → RUNNER_ADVANCE → RUN_SCORE → SCOREBOARD_UPDATE → PLAY_RESULT → NEXT_BATTER` 이벤트 큐 구현
-- [ ] 물리 trace에서 카메라를 고르는 `CameraDirector` 구현
+- [x] `CONTACT → BALL_FLIGHT → FIELD_RESULT → RUNNER_ADVANCE → RUN_SCORE → SCOREBOARD_UPDATE → PLAY_RESULT → NEXT_BATTER` 이벤트 큐 구현
+- [x] 물리 trace에서 카메라를 고르는 `CameraDirector` 구현
 - [ ] 타격/투구/접촉/내야/좌·중·우 외야/파울/주루/홈인/더그아웃/홈런/리플레이 카메라 구현
 - [ ] 실제 타구 좌표를 쓰는 `BattedBallLayer` 구현
 - [ ] 수비수 접근·포구·송구와 OUT/SAFE 장면 구현
