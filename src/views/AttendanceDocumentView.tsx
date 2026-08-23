@@ -137,6 +137,58 @@ async function appendCanvasToPdf(pdfDocument: PDFDocument, canvas: HTMLCanvasEle
   }
 }
 
+type Html2Canvas = typeof import("html2canvas").default;
+
+const containsUnsupportedColorFunction = (value: string) =>
+  /\b(?:oklch|oklab|lab|lch|color)\(/i.test(value);
+
+const sanitizeHtml2CanvasClone = (clonedDocument: Document) => {
+  const clonedRoot = clonedDocument.querySelector<HTMLElement>(".attendance-print-root");
+  if (!clonedRoot) return;
+
+  clonedRoot.style.color = "#111827";
+  clonedRoot.style.backgroundColor = "#ffffff";
+  clonedRoot.style.boxShadow = "none";
+
+  clonedRoot.querySelectorAll<HTMLElement>("*").forEach((element) => {
+    const styles = clonedDocument.defaultView?.getComputedStyle(element);
+    if (!styles) return;
+
+    if (containsUnsupportedColorFunction(styles.color)) element.style.color = "#111827";
+    if (containsUnsupportedColorFunction(styles.backgroundColor)) element.style.backgroundColor = "transparent";
+    if (containsUnsupportedColorFunction(styles.borderTopColor)) element.style.borderTopColor = "#e5e7eb";
+    if (containsUnsupportedColorFunction(styles.borderRightColor)) element.style.borderRightColor = "#e5e7eb";
+    if (containsUnsupportedColorFunction(styles.borderBottomColor)) element.style.borderBottomColor = "#e5e7eb";
+    if (containsUnsupportedColorFunction(styles.borderLeftColor)) element.style.borderLeftColor = "#e5e7eb";
+    if (containsUnsupportedColorFunction(styles.outlineColor)) element.style.outlineColor = "#e5e7eb";
+    if (containsUnsupportedColorFunction(styles.boxShadow)) element.style.boxShadow = "none";
+    if (containsUnsupportedColorFunction(styles.textShadow)) element.style.textShadow = "none";
+    if (containsUnsupportedColorFunction(styles.backgroundImage)) element.style.backgroundImage = "none";
+  });
+};
+
+const renderAttendanceCanvas = async (html2canvas: Html2Canvas, documentRoot: HTMLElement) => {
+  try {
+    return await html2canvas(documentRoot, {
+      backgroundColor: "#ffffff",
+      foreignObjectRendering: true,
+      logging: false,
+      scale: 2,
+      useCORS: true,
+    });
+  } catch (foreignObjectError) {
+    console.warn("출결 서류의 첫 번째 PDF 변환 방식이 실패하여 호환 모드로 다시 시도합니다.", foreignObjectError);
+    return html2canvas(documentRoot, {
+      backgroundColor: "#ffffff",
+      foreignObjectRendering: false,
+      logging: false,
+      onclone: sanitizeHtml2CanvasClone,
+      scale: 2,
+      useCORS: true,
+    });
+  }
+};
+
 function SignaturePad({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
@@ -386,12 +438,7 @@ export default function AttendanceDocumentView() {
       const documentRoot = previewRef.current?.querySelector<HTMLElement>(".attendance-print-root");
       if (!documentRoot) throw new Error("출결 서류 미리보기를 찾을 수 없습니다.");
 
-      const canvas = await html2canvas(documentRoot, {
-        backgroundColor: "#ffffff",
-        logging: false,
-        scale: 2,
-        useCORS: true,
-      });
+      const canvas = await renderAttendanceCanvas(html2canvas, documentRoot);
       const pdfDocument = await PDFDocument.create();
       await appendCanvasToPdf(pdfDocument, canvas);
 
@@ -429,7 +476,7 @@ export default function AttendanceDocumentView() {
       }
     } catch (error) {
       console.error("출결 서류 PDF 생성에 실패했습니다.", error);
-      toast.error("PDF를 만들지 못했습니다. 미리보기를 만든 후 다시 시도하세요.");
+      toast.error("PDF 생성 중 오류가 발생했습니다. 잠시 후 다시 시도하세요.");
     } finally {
       setIsPdfSaving(false);
     }
