@@ -33,6 +33,8 @@ export * from "./baseball/cpuBattingAI.ts";
 export * from "./baseball/cameraDirector.ts";
 export * from "./baseball/visualEventQueue.ts";
 export * from "./baseball/playEngine.ts";
+export * from "./baseball/presentation.ts";
+export * from "./baseball/onlineProtocol.ts";
 
 export const SWEET_SPOT = 0.72;
 

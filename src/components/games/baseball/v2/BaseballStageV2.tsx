@@ -1,0 +1,377 @@
+import type {
+  CSSProperties,
+  PointerEvent as ReactPointerEvent,
+  ReactNode,
+} from "react";
+
+import type {
+  BaseballCameraMode,
+  BaseballPitchType,
+  Vec2,
+} from "../../../../utils/games/baseballEngine";
+
+/** Stage-space coordinates expressed as percentages. (0, 0) is the top-left. */
+export interface BaseballPresentationPointV2 {
+  x: number;
+  y: number;
+  scale?: number;
+  opacity?: number;
+  rotationDeg?: number;
+}
+
+export type BaseballTrailPointsV2 = readonly [
+  BaseballPresentationPointV2,
+  BaseballPresentationPointV2,
+  BaseballPresentationPointV2,
+  BaseballPresentationPointV2,
+  BaseballPresentationPointV2,
+  BaseballPresentationPointV2,
+  BaseballPresentationPointV2,
+  BaseballPresentationPointV2,
+  BaseballPresentationPointV2,
+  BaseballPresentationPointV2,
+];
+
+export interface BaseballBallPresentationV2 {
+  body: BaseballPresentationPointV2;
+  trail: BaseballTrailPointsV2;
+  pitchType?: BaseballPitchType;
+  assetSrc?: string;
+  visible?: boolean;
+}
+
+export interface BaseballRunnerPresentationV2 {
+  playerId: string;
+  name: string;
+  point: BaseballPresentationPointV2;
+  assetSrc?: string;
+  baseLabel?: string;
+}
+
+export interface BaseballStageAssetsV2 {
+  backgroundSrc: string;
+  backgroundAlt?: string;
+  ballSrc: string;
+  batterSrc?: string;
+  pitcherSrc?: string;
+  catcherSrc?: string;
+  homePlateSrc?: string;
+  batterSprite?: BaseballCharacterSpriteV2;
+  pitcherSprite?: BaseballCharacterSpriteV2;
+  catcherSprite?: BaseballCharacterSpriteV2;
+  /** Optional ten-frame pitch atlases used by the ten trajectory ghosts. */
+  pitchTrailAtlases?: Partial<Record<BaseballPitchType, string>>;
+}
+
+export interface BaseballCharacterSpriteV2 {
+  src: string;
+  frameCount: number;
+  frameIndex?: number;
+  motion?: "IDLE" | "SWING" | "PITCH";
+  animationKey?: string;
+}
+
+export interface BaseballStageV2Props {
+  assets: BaseballStageAssetsV2;
+  cameraMode: BaseballCameraMode;
+  perspective?: "BATTING" | "PITCHING" | "FIELD";
+  pitchBall?: BaseballBallPresentationV2 | null;
+  battedBall?: BaseballBallPresentationV2 | null;
+  runners?: readonly BaseballRunnerPresentationV2[];
+  showStrikeZone?: boolean;
+  strikeZoneTarget?: Vec2 | null;
+  hud?: ReactNode;
+  overlay?: ReactNode;
+  effects?: ReactNode;
+  aimEnabled?: boolean;
+  onAimChange?: (point: Vec2) => void;
+  className?: string;
+  ariaLabel?: string;
+}
+
+type PointStyle = CSSProperties & {
+  "--bbv2-point-x": string;
+  "--bbv2-point-y": string;
+  "--bbv2-point-scale": number;
+  "--bbv2-point-opacity": number;
+  "--bbv2-point-rotation": string;
+};
+
+type StrikeTargetStyle = CSSProperties & {
+  "--bbv2-zone-x": string;
+  "--bbv2-zone-y": string;
+};
+
+type CharacterSpriteStyle = CSSProperties & {
+  "--bbv2-sprite-count": number;
+  "--bbv2-sprite-index": number;
+};
+
+const EMPTY_RUNNERS: readonly BaseballRunnerPresentationV2[] = [];
+
+function joinClassNames(...names: Array<string | undefined>) {
+  return names.filter(Boolean).join(" ");
+}
+
+function pointStyle(point: BaseballPresentationPointV2): PointStyle {
+  return {
+    "--bbv2-point-x": `${point.x}%`,
+    "--bbv2-point-y": `${point.y}%`,
+    "--bbv2-point-scale": point.scale ?? 1,
+    "--bbv2-point-opacity": point.opacity ?? 1,
+    "--bbv2-point-rotation": `${point.rotationDeg ?? 0}deg`,
+  };
+}
+
+function strikeTargetStyle(point: Vec2): StrikeTargetStyle {
+  return {
+    "--bbv2-zone-x": `${Math.min(1, Math.max(0, point.x)) * 100}%`,
+    "--bbv2-zone-y": `${Math.min(1, Math.max(0, point.y)) * 100}%`,
+  };
+}
+
+function CharacterSpriteV2({
+  sprite,
+  className,
+}: {
+  sprite: BaseballCharacterSpriteV2;
+  className: string;
+}) {
+  const frameCount = Math.max(1, Math.floor(sprite.frameCount));
+  const frameIndex = Math.min(
+    frameCount - 1,
+    Math.max(0, Math.floor(sprite.frameIndex ?? 0)),
+  );
+  const style: CharacterSpriteStyle = {
+    backgroundImage: `url(${JSON.stringify(sprite.src)})`,
+    backgroundSize: `${frameCount * 100}% 100%`,
+    backgroundPosition: frameCount === 1
+      ? "center"
+      : `${(frameIndex / (frameCount - 1)) * 100}% center`,
+    "--bbv2-sprite-count": frameCount,
+    "--bbv2-sprite-index": frameIndex,
+  };
+
+  return (
+    <span
+      className={joinClassNames("bbv2-character", "bbv2-character-sprite", className)}
+      data-motion={sprite.motion ?? "IDLE"}
+      style={style}
+      key={`${sprite.src}:${sprite.animationKey ?? "idle"}`}
+    />
+  );
+}
+
+function CharacterLayerV2({ assets }: { assets: BaseballStageAssetsV2 }) {
+  return (
+    <div className="bbv2-stage__characters" aria-hidden="true">
+      {assets.pitcherSprite ? (
+        <CharacterSpriteV2 sprite={assets.pitcherSprite} className="bbv2-character--pitcher" />
+      ) : assets.pitcherSrc ? (
+        <img className="bbv2-character bbv2-character--pitcher" src={assets.pitcherSrc} alt="" draggable={false} />
+      ) : null}
+      {assets.catcherSprite ? (
+        <CharacterSpriteV2 sprite={assets.catcherSprite} className="bbv2-character--catcher" />
+      ) : assets.catcherSrc ? (
+        <img className="bbv2-character bbv2-character--catcher" src={assets.catcherSrc} alt="" draggable={false} />
+      ) : null}
+      {assets.batterSprite ? (
+        <CharacterSpriteV2 sprite={assets.batterSprite} className="bbv2-character--batter" />
+      ) : assets.batterSrc ? (
+        <img className="bbv2-character bbv2-character--batter" src={assets.batterSrc} alt="" draggable={false} />
+      ) : null}
+    </div>
+  );
+}
+
+function BaseballFlightLayerV2({
+  presentation,
+  fallbackBallSrc,
+  variant,
+  trailAtlasSrc,
+}: {
+  presentation: BaseballBallPresentationV2 | null | undefined;
+  fallbackBallSrc: string;
+  variant: "pitch" | "batted";
+  trailAtlasSrc?: string;
+}) {
+  if (!presentation || presentation.visible === false) return null;
+
+  const ballSrc = presentation.assetSrc ?? fallbackBallSrc;
+  const pitchClass = presentation.pitchType
+    ? `bbv2-ball--${presentation.pitchType}`
+    : undefined;
+
+  return (
+    <div
+      className={joinClassNames(
+        "bbv2-flight-layer",
+        `bbv2-flight-layer--${variant}`,
+      )}
+      aria-hidden="true"
+    >
+      <div className="bbv2-ball-trails">
+        {presentation.trail.map((point, index) => (
+          <span
+            className={joinClassNames("bbv2-ball-trail-point", pitchClass)}
+            style={pointStyle(point)}
+            key={`trail-${index}`}
+          >
+            {trailAtlasSrc ? (
+              <i
+                className="bbv2-ball-trail-atlas-frame"
+                style={{
+                  backgroundImage: `url(${JSON.stringify(trailAtlasSrc)})`,
+                  backgroundPosition: `${(index / 9) * 100}% center`,
+                }}
+              />
+            ) : (
+              <img src={ballSrc} alt="" draggable={false} />
+            )}
+          </span>
+        ))}
+      </div>
+      <span
+        className={joinClassNames("bbv2-ball-body", `bbv2-ball-body--${variant}`, pitchClass)}
+        style={pointStyle(presentation.body)}
+      >
+        <img src={ballSrc} alt="" draggable={false} />
+      </span>
+    </div>
+  );
+}
+
+function RunnerLayerV2({ runners }: { runners: readonly BaseballRunnerPresentationV2[] }) {
+  return (
+    <div className="bbv2-stage__runners" aria-hidden="true">
+      {runners.map((runner) => (
+        <span
+          className="bbv2-runner-sprite"
+          style={pointStyle(runner.point)}
+          data-player-id={runner.playerId}
+          key={runner.playerId}
+        >
+          {runner.assetSrc ? (
+            <img src={runner.assetSrc} alt="" draggable={false} />
+          ) : (
+            <i>{runner.name.slice(0, 1)}</i>
+          )}
+          <em>{runner.baseLabel ?? runner.name}</em>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function HomePlateAndZoneV2({
+  homePlateSrc,
+  showStrikeZone,
+  target,
+  aimEnabled,
+  onAimChange,
+}: {
+  homePlateSrc?: string;
+  showStrikeZone: boolean;
+  target?: Vec2 | null;
+  aimEnabled: boolean;
+  onAimChange?: (point: Vec2) => void;
+}) {
+  const updateAim = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!aimEnabled || !onAimChange) return;
+    const bounds = event.currentTarget.getBoundingClientRect();
+    if (bounds.width <= 0 || bounds.height <= 0) return;
+    onAimChange({
+      x: Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width)),
+      y: Math.min(1, Math.max(0, (event.clientY - bounds.top) / bounds.height)),
+    });
+  };
+
+  return (
+    <div className="bbv2-plate-area" aria-label="홈플레이트와 스트라이크존">
+      {showStrikeZone ? (
+        <div
+          className={joinClassNames("bbv2-strike-zone", aimEnabled ? "is-interactive" : undefined)}
+          aria-label={aimEnabled ? "스트라이크존 조준" : undefined}
+          aria-hidden={aimEnabled ? undefined : true}
+          onPointerDown={(event) => {
+            if (!aimEnabled) return;
+            event.currentTarget.setPointerCapture(event.pointerId);
+            updateAim(event);
+          }}
+          onPointerMove={(event) => {
+            if (!aimEnabled) return;
+            if (event.pointerType === "mouse" || event.buttons > 0) updateAim(event);
+          }}
+        >
+          {Array.from({ length: 9 }, (_, index) => (
+            <span key={`zone-cell-${index}`} />
+          ))}
+          {target ? (
+            <i className="bbv2-strike-zone__target" style={strikeTargetStyle(target)} />
+          ) : null}
+        </div>
+      ) : null}
+      {showStrikeZone ? (
+        homePlateSrc ? (
+          <img className="bbv2-home-plate" src={homePlateSrc} alt="홈플레이트" draggable={false} />
+        ) : (
+          <span className="bbv2-home-plate bbv2-home-plate--css" aria-label="홈플레이트" />
+        )
+      ) : null}
+    </div>
+  );
+}
+
+export function BaseballStageV2({
+  assets,
+  cameraMode,
+  perspective = "BATTING",
+  pitchBall,
+  battedBall,
+  runners = EMPTY_RUNNERS,
+  showStrikeZone = true,
+  strikeZoneTarget,
+  hud,
+  overlay,
+  effects,
+  aimEnabled = false,
+  onAimChange,
+  className,
+  ariaLabel = "야구 경기장",
+}: BaseballStageV2Props) {
+  return (
+    <section
+      className={joinClassNames("bbv2-stage", className)}
+      data-camera-mode={cameraMode}
+      data-perspective={perspective}
+      aria-label={ariaLabel}
+    >
+      <img
+        className="bbv2-stage__background"
+        src={assets.backgroundSrc}
+        alt={assets.backgroundAlt ?? ""}
+        draggable={false}
+      />
+      <div className="bbv2-stage__shade" aria-hidden="true" />
+      <CharacterLayerV2 assets={assets} />
+      <RunnerLayerV2 runners={runners} />
+      <HomePlateAndZoneV2
+        homePlateSrc={assets.homePlateSrc}
+        showStrikeZone={showStrikeZone}
+        target={strikeZoneTarget}
+        aimEnabled={aimEnabled}
+        onAimChange={onAimChange}
+      />
+      <BaseballFlightLayerV2
+        presentation={pitchBall}
+        fallbackBallSrc={assets.ballSrc}
+        variant="pitch"
+        trailAtlasSrc={pitchBall?.pitchType ? assets.pitchTrailAtlases?.[pitchBall.pitchType] : undefined}
+      />
+      <BaseballFlightLayerV2 presentation={battedBall} fallbackBallSrc={assets.ballSrc} variant="batted" />
+      <div className="bbv2-stage__effects" aria-hidden={effects ? undefined : "true"}>{effects}</div>
+      <div className="bbv2-stage__overlay-slot">{overlay}</div>
+      <div className="bbv2-stage__hud-slot">{hud}</div>
+    </section>
+  );
+}

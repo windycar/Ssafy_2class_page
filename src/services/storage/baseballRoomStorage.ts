@@ -1,14 +1,14 @@
-import { supabase } from "../../lib/supabase";
-import type { BaseballRoom } from "../../types/baseballRoom";
+import { supabase } from "../../lib/supabase.ts";
+import type { BaseballRoom } from "../../types/baseballRoom.ts";
 import {
   normalizeBaseballRoom,
   type BaseballRoomNormalizeFailure,
-} from "../../utils/games/baseball/normalizeRoom";
-import { removeBaseballPlayer } from "../../utils/games/baseballRoomMembership";
+} from "../../utils/games/baseball/normalizeRoom.ts";
 
 const LOCAL_KEY = "ssafy-gwangju-2-baseball-rooms";
 const TABLE = "bang_rooms";
 const ID_PATTERN = "baseball-%";
+let localCacheGeneration = 0;
 
 interface BaseballRoomRow {
   id: string;
@@ -79,12 +79,19 @@ function hasFutureVersionCollision(entries: unknown[], roomId: string) {
   });
 }
 
-function cacheRoom(room: BaseballRoom) {
+function cacheRoom(room: BaseballRoom, markMutation = false) {
   const normalized = normalizeBaseballRoom(room, room.id);
-  if (!normalized.ok) return false;
+  if (!normalized.ok) return null;
 
   const entries = readRawLocalEntries();
-  if (hasFutureVersionCollision(entries, room.id)) return false;
+  if (hasFutureVersionCollision(entries, room.id)) return null;
+  const existingEntry = entries.find((entry) => rawRoomId(entry) === room.id);
+  if (existingEntry) {
+    const existing = normalizeBaseballRoom(existingEntry, room.id);
+    if (existing.ok && existing.value.revision > normalized.value.revision) {
+      return existing.value;
+    }
+  }
 
   let replaced = false;
   const nextEntries = entries.flatMap((entry) => {
@@ -93,33 +100,54 @@ function cacheRoom(room: BaseballRoom) {
     replaced = true;
     return [normalized.value];
   });
-  return saveRaw(replaced ? nextEntries : [normalized.value, ...entries]);
-}
-
-async function upsertRemote(room: BaseballRoom) {
-  if (!supabase) return;
-  const { error } = await supabase.from(TABLE).upsert({
-    id: room.id,
-    room_data: room,
-    updated_at: new Date().toISOString(),
-  });
-  if (error) console.warn("야구 게임방을 저장하지 못했습니다.", error.message);
+  if (!saveRaw(replaced ? nextEntries : [normalized.value, ...entries])) return null;
+  if (markMutation) localCacheGeneration += 1;
+  return normalized.value;
 }
 
 function warnInvalidRoom(scope: string, result: BaseballRoomNormalizeFailure) {
   console.warn(`${scope}: ${result.code} ${result.path}`);
 }
 
-function replaceLocalWithRemote(rows: BaseballRoomRow[]) {
+function replaceLocalWithRemote(
+  rows: BaseballRoomRow[],
+  baselineRevisions: ReadonlyMap<string, number>,
+  cacheChangedDuringRequest: boolean,
+) {
   const rooms: BaseballRoom[] = [];
   const remoteEntries: unknown[] = [];
   const remoteIds = new Set<string>();
+  const localEntries = readRawLocalEntries();
+  const localRoomsById = new Map<string, BaseballRoom>();
+  for (const entry of localEntries) {
+    const id = rawRoomId(entry);
+    if (!id) continue;
+    const normalized = normalizeBaseballRoom(entry, id);
+    if (normalized.ok) localRoomsById.set(id, normalized.value);
+  }
+  const deletedDuringRequest = new Set<string>();
+  const changedDuringRequest = new Set<string>();
+  if (cacheChangedDuringRequest) {
+    for (const [id, revision] of baselineRevisions) {
+      const current = localRoomsById.get(id);
+      if (!current) deletedDuringRequest.add(id);
+      else if (current.revision > revision) changedDuringRequest.add(id);
+    }
+    for (const id of localRoomsById.keys()) {
+      if (!baselineRevisions.has(id)) changedDuringRequest.add(id);
+    }
+  }
 
   for (const row of rows) {
+    if (deletedDuringRequest.has(row.id)) continue;
     const normalized = normalizeBaseballRoom(row.room_data, row.id);
     if (normalized.ok) {
-      rooms.push(normalized.value);
-      remoteEntries.push(normalized.value);
+      const localRoom = localRoomsById.get(row.id);
+      const newestRoom = localRoom && localRoom.revision > normalized.value.revision
+        ? localRoom
+        : normalized.value;
+      rooms.push(newestRoom);
+      remoteEntries.push(newestRoom);
       remoteIds.add(row.id);
       continue;
     }
@@ -133,12 +161,18 @@ function replaceLocalWithRemote(rows: BaseballRoomRow[]) {
     }
   }
 
-  // A future local entry must not disappear merely because this client cannot normalize it.
-  for (const entry of readRawLocalEntries()) {
+  // Preserve only entries changed after this request began. Unchanged entries
+  // absent from the server are deletions and must not become permanent ghosts.
+  for (const entry of localEntries) {
     const id = rawRoomId(entry);
     if (!id || remoteIds.has(id)) continue;
     const normalized = normalizeBaseballRoom(entry, id);
-    if (!normalized.ok && normalized.code === "UNSUPPORTED_VERSION") remoteEntries.push(entry);
+    if (normalized.ok && changedDuringRequest.has(id)) {
+      rooms.push(normalized.value);
+      remoteEntries.push(normalized.value);
+    } else if (normalized.code === "UNSUPPORTED_VERSION") {
+      remoteEntries.push(entry);
+    }
   }
 
   saveRaw(remoteEntries);
@@ -157,6 +191,10 @@ export const baseballRoomStorage = {
   async refreshRooms(): Promise<BaseballRoom[]> {
     const localRooms = load().rooms;
     if (!supabase) return localRooms;
+    const generationAtStart = localCacheGeneration;
+    const baselineRevisions = new Map(
+      localRooms.map((room) => [room.id, room.revision] as const),
+    );
 
     const { data, error } = await supabase
       .from(TABLE)
@@ -169,7 +207,11 @@ export const baseballRoomStorage = {
       return localRooms;
     }
 
-    return replaceLocalWithRemote((data ?? []) as BaseballRoomRow[]);
+    return replaceLocalWithRemote(
+      (data ?? []) as BaseballRoomRow[],
+      baselineRevisions,
+      localCacheGeneration !== generationAtStart,
+    );
   },
 
   async refreshRoom(roomId: string): Promise<BaseballRoom | null> {
@@ -202,48 +244,25 @@ export const baseballRoomStorage = {
       warnInvalidRoom(`야구 게임방 ${row.id}을 불러오지 못했습니다`, normalized);
       return localRoom;
     }
-    cacheRoom(normalized.value);
-    return normalized.value;
+    return cacheRoom(normalized.value) ?? localRoom;
   },
 
-  createRoom(room: BaseballRoom) {
+  /** Caches only a canonical room already returned by the server. */
+  cacheCanonicalRoom(room: BaseballRoom) {
     const normalized = normalizeBaseballRoom(room, room.id);
     if (!normalized.ok) {
-      warnInvalidRoom("유효하지 않은 야구 게임방을 만들 수 없습니다", normalized);
-      return room;
-    }
-    if (cacheRoom(normalized.value)) void upsertRemote(normalized.value);
-    return normalized.value;
-  },
-
-  updateRoom(room: BaseballRoom) {
-    const normalized = normalizeBaseballRoom(room, room.id);
-    if (!normalized.ok) {
-      warnInvalidRoom("유효하지 않은 야구 게임방을 저장할 수 없습니다", normalized);
-      return room;
-    }
-    if (cacheRoom(normalized.value)) void upsertRemote(normalized.value);
-    return normalized.value;
-  },
-
-  leaveRoom(room: BaseballRoom, studentId: number): BaseballRoom | null {
-    const updated = removeBaseballPlayer(room, studentId);
-    if (!updated) {
-      this.deleteRoom(room.id);
+      warnInvalidRoom("유효하지 않은 야구 게임방 응답을 저장할 수 없습니다", normalized);
       return null;
     }
-    return this.updateRoom(updated);
+    return cacheRoom(normalized.value, true);
   },
 
   deleteCachedRoom(roomId: string) {
-    saveRaw(readRawLocalEntries().filter((entry) => rawRoomId(entry) !== roomId));
+    const entries = readRawLocalEntries();
+    const nextEntries = entries.filter((entry) => rawRoomId(entry) !== roomId);
+    if (nextEntries.length !== entries.length && saveRaw(nextEntries)) {
+      localCacheGeneration += 1;
+    }
   },
 
-  deleteRoom(roomId: string) {
-    this.deleteCachedRoom(roomId);
-    if (!supabase) return;
-    void supabase.from(TABLE).delete().eq("id", roomId).then(({ error }) => {
-      if (error) console.warn("야구 게임방을 삭제하지 못했습니다.", error.message);
-    });
-  },
 };

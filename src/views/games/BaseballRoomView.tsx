@@ -1,16 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, ChevronLeft, Copy, LogOut, Play, UserPlus, X } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
 import { useAuth } from "../../hooks/useAuth";
-import { useBaseballRoomPresence } from "../../hooks/useBaseballRoomPresence";
+import {
+  isBaseballPresenceFreshForStart,
+  useBaseballRoomPresence,
+} from "../../hooks/useBaseballRoomPresence";
+import {
+  BASEBALL_ROOM_COMMAND_SCHEMA_VERSION,
+  baseballRoomCommandClient,
+  type BaseballRoomCommandKind,
+  type BaseballRoomCommandResult,
+} from "../../services/baseballRoomCommandClient.ts";
 import { baseballRoomStorage } from "../../services/storage/baseballRoomStorage";
-import type { BaseballRoom, BaseballRoomPlayer } from "../../types/baseballRoom";
+import type { BaseballRoom } from "../../types/baseballRoom";
 import type { GameRoomStatus } from "../../types/game";
 import { copyToClipboard } from "../../utils/copyToClipboard";
-import { createId } from "../../utils/createId";
-import { createGameState } from "../../utils/games/baseballEngine";
 import {
   BASEBALL_ROOM_SEATS,
   getBaseballPlayerAtSeat,
@@ -26,6 +33,18 @@ const STATUS_LABEL: Record<GameRoomStatus, string> = {
   cancelled: "취소",
 };
 
+type BaseballRoomMutationKind = Exclude<BaseballRoomCommandKind, "CREATE" | "HEARTBEAT">;
+
+function roomCommandErrorMessage(result: BaseballRoomCommandResult) {
+  if (result.ok) return "";
+  if (result.status === 0) return "네트워크 연결을 확인한 뒤 다시 시도해 주세요.";
+  if (result.status === 401) return "로그인 세션이 만료되었습니다. 다시 로그인해 주세요.";
+  if (result.status === 403) return "이 작업을 수행할 권한이 없습니다.";
+  if (result.code === "ROOM_FULL") return "이미 두 명이 참여한 방입니다.";
+  if (result.code === "ROOM_NOT_FOUND") return "게임방을 찾을 수 없습니다.";
+  return "게임방 상태가 변경되었습니다. 잠시 후 다시 시도해 주세요.";
+}
+
 export default function BaseballRoomView() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
@@ -34,18 +53,73 @@ export default function BaseballRoomView() {
     roomId ? baseballRoomStorage.getRoom(roomId) : null
   ));
   const [isLoading, setIsLoading] = useState(true);
+  const inviteJoinAttemptedRef = useRef<{ roomId: string; attemptedAt: number } | null>(null);
+  const refreshInFlightRef = useRef(false);
 
   const setRoom = useCallback((nextRoom: BaseballRoom) => {
-    setRoomState(nextRoom);
-    baseballRoomStorage.updateRoom(nextRoom);
+    const cachedRoom = baseballRoomStorage.cacheCanonicalRoom(nextRoom) ?? nextRoom;
+    setRoomState((currentRoom) => (
+      currentRoom && currentRoom.revision > cachedRoom.revision
+        ? currentRoom
+        : cachedRoom
+    ));
   }, []);
 
   const refresh = useCallback(async () => {
-    if (!roomId) return;
-    const nextRoom = await baseballRoomStorage.refreshRoom(roomId);
-    setRoomState(nextRoom);
-    setIsLoading(false);
-  }, [roomId]);
+    if (!roomId || refreshInFlightRef.current) return;
+    refreshInFlightRef.current = true;
+    try {
+      const nextRoom = await baseballRoomStorage.refreshRoom(roomId);
+      if (nextRoom) {
+        setRoom(nextRoom);
+        setIsLoading(false);
+        return;
+      }
+
+      // Private invite rooms are intentionally hidden by table RLS. Ask the
+      // authenticated command endpoint to join by id; a revision conflict gives
+      // us the canonical room needed for one safe retry.
+      if (!currentUser) {
+        setRoomState(null);
+        setIsLoading(false);
+        return;
+      }
+      const nowMs = Date.now();
+      const previousAttempt = inviteJoinAttemptedRef.current;
+      if (
+        previousAttempt?.roomId === roomId
+        && nowMs - previousAttempt.attemptedAt < 5_000
+      ) {
+        setRoomState(null);
+        setIsLoading(false);
+        return;
+      }
+      inviteJoinAttemptedRef.current = { roomId, attemptedAt: nowMs };
+      const sessionId = baseballRoomCommandClient.getSessionId();
+      const commandId = baseballRoomCommandClient.createCommandId("JOIN");
+      const sendJoin = (expectedRevision: number) => baseballRoomCommandClient.send({
+        schemaVersion: BASEBALL_ROOM_COMMAND_SCHEMA_VERSION,
+        commandId,
+        kind: "JOIN",
+        roomId,
+        expectedRevision,
+        payload: { sessionId },
+      });
+      let result = await sendJoin(0);
+      if (!result.ok && result.status === 409 && result.room) {
+        setRoom(result.room);
+        const alreadyJoined = result.room.players.some(
+          (player) => player.authId === currentUser.authId,
+        );
+        if (!alreadyJoined) result = await sendJoin(result.room.revision);
+      }
+      if (result.room) setRoom(result.room);
+      if (result.ok && result.deleted) baseballRoomStorage.deleteCachedRoom(roomId);
+      setIsLoading(false);
+    } finally {
+      refreshInFlightRef.current = false;
+    }
+  }, [currentUser, roomId, setRoom]);
 
   useEffect(() => {
     void refresh();
@@ -83,6 +157,8 @@ function BaseballRoomContent({ room, currentUser, setRoom, navigate }: {
   setRoom: (room: BaseballRoom) => void;
   navigate: ReturnType<typeof useNavigate>;
 }) {
+  const [pendingKind, setPendingKind] = useState<BaseballRoomMutationKind | null>(null);
+  const commandInFlightRef = useRef(false);
   const currentUserId = currentUser?.id;
   const me = room.players.find((player) => player.studentId === currentUserId);
   const isJoined = Boolean(me);
@@ -92,65 +168,96 @@ function BaseballRoomContent({ room, currentUser, setRoom, navigate }: {
     && room.status === "recruiting"
     && firstFreeSeat !== null
     && Boolean(currentUser);
-  const allReady = BASEBALL_ROOM_SEATS.every(
-    (seat) => getBaseballPlayerAtSeat(room.players, seat)?.isReady === true,
-  );
+  const presenceCheckedAt = Date.now();
+  const allReady = BASEBALL_ROOM_SEATS.every((seat) => {
+    const player = getBaseballPlayerAtSeat(room.players, seat);
+    return player?.isReady === true
+      && isBaseballPresenceFreshForStart(player, presenceCheckedAt);
+  });
 
   useBaseballRoomPresence(room, currentUserId, setRoom);
 
-  const handleJoin = () => {
-    if (!currentUser || !canJoin || firstFreeSeat === null) return;
-    const now = new Date().toISOString();
-    const player: BaseballRoomPlayer = {
-      seat: firstFreeSeat,
-      studentId: currentUser.id,
-      authId: currentUser.authId,
-      name: currentUser.name,
-      username: currentUser.username,
-      isHost: false,
-      isReady: false,
-      status: "waiting",
-      joinedAt: now,
-    };
-    setRoom({
-      ...room,
-      revision: room.revision + 1,
-      status: "ready",
-      players: [...room.players, player],
-      activityLogs: [{
-        id: createId("baseball-log"),
+  const executeCommand = async (
+    kind: BaseballRoomMutationKind,
+    isReady?: boolean,
+  ): Promise<BaseballRoomCommandResult | null> => {
+    if (commandInFlightRef.current) return null;
+    const sessionId = baseballRoomCommandClient.getSessionId();
+    const commandId = baseballRoomCommandClient.createCommandId(kind);
+    const sendAtRevision = (expectedRevision: number) => {
+      const common = {
+        schemaVersion: BASEBALL_ROOM_COMMAND_SCHEMA_VERSION,
+        commandId,
         roomId: room.id,
-        type: "join",
-        message: `${currentUser.name} 님이 참여했습니다.`,
-        createdAt: now,
-      }, ...room.activityLogs],
-    });
+        expectedRevision,
+      } as const;
+      if (kind === "SET_READY") {
+        return baseballRoomCommandClient.send({
+          ...common,
+          kind,
+          payload: { sessionId, isReady: Boolean(isReady) },
+        });
+      }
+      return baseballRoomCommandClient.send({
+        ...common,
+        kind,
+        payload: { sessionId },
+      });
+    };
+
+    commandInFlightRef.current = true;
+    setPendingKind(kind);
+    try {
+      let result = await sendAtRevision(room.revision);
+      if (result.room) setRoom(result.room);
+      if (!result.ok && result.status === 409 && result.room) {
+        result = await sendAtRevision(result.room.revision);
+        if (result.room) setRoom(result.room);
+      }
+      if (result.ok && result.deleted) baseballRoomStorage.deleteCachedRoom(room.id);
+      return result;
+    } finally {
+      commandInFlightRef.current = false;
+      setPendingKind(null);
+    }
+  };
+
+  const handleJoin = async () => {
+    if (!currentUser || !canJoin || firstFreeSeat === null) return;
+    const result = await executeCommand("JOIN");
+    if (!result) return;
+    if (!result.ok) {
+      toast.error(roomCommandErrorMessage(result));
+      return;
+    }
     toast.success("야구 게임방에 참여했습니다!");
   };
 
-  const handleLeave = () => {
+  const handleLeave = async () => {
     if (!currentUserId) return;
     if (room.status === "playing" && !window.confirm("진행 중인 경기에서 나갈까요?")) return;
-    baseballRoomStorage.leaveRoom(room, currentUserId);
+    const result = await executeCommand("LEAVE");
+    if (!result) return;
+    if (!result.ok) {
+      toast.error(roomCommandErrorMessage(result));
+      return;
+    }
     toast.success("게임방에서 나왔습니다.");
     navigate("/games/baseball/rooms");
   };
 
-  const handleReady = () => {
+  const handleReady = async () => {
     if (!me) return;
-    setRoom({
-      ...room,
-      revision: room.revision + 1,
-      players: room.players.map((player) => (
-        player.studentId === me.studentId
-          ? { ...player, isReady: !player.isReady, status: player.isReady ? "waiting" : "ready" }
-          : player
-      )),
-    });
+    const result = await executeCommand("SET_READY", !me.isReady);
+    if (!result) return;
+    if (!result.ok) {
+      toast.error(roomCommandErrorMessage(result));
+      return;
+    }
     toast.success(me.isReady ? "준비를 취소했습니다." : "준비 완료!");
   };
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (!isHost) return;
     const visitor = getBaseballPlayerAtSeat(room.players, 0);
     const home = getBaseballPlayerAtSeat(room.players, 1);
@@ -159,40 +266,28 @@ function BaseballRoomContent({ room, currentUser, setRoom, navigate }: {
       return;
     }
     if (!allReady) {
-      toast.error("두 명 모두 준비 완료해야 합니다.");
+      toast.error("두 명 모두 접속 중이고 준비 완료해야 합니다.");
       return;
     }
 
-    const now = new Date().toISOString();
-    const gameState = createGameState(visitor.name, home.name);
-    setRoom({
-      ...room,
-      revision: room.revision + 1,
-      status: "playing",
-      startedAt: now,
-      matchId: createId("baseball-match"),
-      gameState,
-      players: room.players.map((player) => ({ ...player, status: "playing" })),
-      activityLogs: [{
-        id: createId("baseball-log"),
-        roomId: room.id,
-        type: "start",
-        message: "야구 경기가 시작되었습니다.",
-        createdAt: now,
-      }, ...room.activityLogs],
-    });
+    const result = await executeCommand("START");
+    if (!result) return;
+    if (!result.ok) {
+      toast.error(roomCommandErrorMessage(result));
+      return;
+    }
     toast.success("야구 경기가 시작되었습니다!");
     navigate(`/games/baseball/rooms/${room.id}/play`);
   };
 
-  const handleCancel = () => {
+  const handleCancel = async () => {
     if (!isHost || !window.confirm("야구 게임방을 취소할까요?")) return;
-    setRoom({
-      ...room,
-      revision: room.revision + 1,
-      status: "cancelled",
-      finishedAt: new Date().toISOString(),
-    });
+    const result = await executeCommand("CANCEL");
+    if (!result) return;
+    if (!result.ok) {
+      toast.error(roomCommandErrorMessage(result));
+      return;
+    }
     toast.success("게임방이 취소되었습니다.");
     navigate("/games/baseball/rooms");
   };
@@ -228,12 +323,12 @@ function BaseballRoomContent({ room, currentUser, setRoom, navigate }: {
               </button>
             )}
             {canJoin && (
-              <button type="button" onClick={handleJoin} className="flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-50">
+              <button type="button" onClick={handleJoin} disabled={pendingKind !== null} className="flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60">
                 <UserPlus className="h-4 w-4" />게임 참여하기
               </button>
             )}
             {isJoined && (
-              <button type="button" onClick={handleLeave} className="flex items-center gap-1.5 rounded-xl border border-white/30 bg-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/30">
+              <button type="button" onClick={handleLeave} disabled={pendingKind !== null} className="flex items-center gap-1.5 rounded-xl border border-white/30 bg-white/20 px-4 py-2 text-sm font-semibold text-white hover:bg-white/30 disabled:cursor-not-allowed disabled:opacity-60">
                 <LogOut className="h-4 w-4" />방 나가기
               </button>
             )}
@@ -272,17 +367,17 @@ function BaseballRoomContent({ room, currentUser, setRoom, navigate }: {
       {(room.status === "recruiting" || room.status === "ready" || room.status === "full") && (
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-white p-4">
           {isJoined && (
-            <button type="button" onClick={handleReady} className={`rounded-xl px-4 py-2.5 text-sm font-bold ${me?.isReady ? "bg-gray-100 text-gray-600" : "bg-emerald-500 text-white hover:bg-emerald-600"}`}>
+            <button type="button" onClick={handleReady} disabled={pendingKind !== null} className={`rounded-xl px-4 py-2.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60 ${me?.isReady ? "bg-gray-100 text-gray-600" : "bg-emerald-500 text-white hover:bg-emerald-600"}`}>
               {me?.isReady ? "준비 취소" : "✅ 준비 완료"}
             </button>
           )}
           {isHost && (
             <>
-              <button type="button" onClick={handleStart} disabled={!allReady} className="flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-40">
+              <button type="button" onClick={handleStart} disabled={!allReady || pendingKind !== null} className="flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-40">
                 <Play className="h-4 w-4" />게임 시작
               </button>
-              {!allReady && <span className="text-xs text-red-500">2명 모두 참여하고 준비 완료해야 시작할 수 있습니다.</span>}
-              <button type="button" onClick={handleCancel} className="ml-auto rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50">게임방 취소</button>
+              {!allReady && <span className="text-xs text-red-500">2명 모두 접속 중이고 준비 완료해야 시작할 수 있습니다.</span>}
+              <button type="button" onClick={handleCancel} disabled={pendingKind !== null} className="ml-auto rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-500 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60">게임방 취소</button>
             </>
           )}
         </div>

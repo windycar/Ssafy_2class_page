@@ -3,6 +3,7 @@ import "../../styles/baseball.css";
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import confetti from "canvas-confetti";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   Bot,
@@ -27,8 +28,14 @@ import {
   BASEBALL_BALL_BODY_SRC,
   BaseballPitchBall,
 } from "../../components/games/baseball/BaseballPitchBall";
+import { BaseballSoloGameV2 } from "../../components/games/baseball/v2/BaseballSoloGameV2";
+import { BaseballOnlineGameV2 } from "../../components/games/baseball/v2/BaseballOnlineGameV2";
 import { useAuth } from "../../hooks/useAuth";
 import { useBaseballMatchChannel } from "../../hooks/useBaseballMatchChannel";
+import {
+  BASEBALL_ROOM_COMMAND_SCHEMA_VERSION,
+  baseballRoomCommandClient,
+} from "../../services/baseballRoomCommandClient.ts";
 import { baseballRoomStorage } from "../../services/storage/baseballRoomStorage";
 import type { BaseballRoom, BaseballRoomPlayer } from "../../types/baseballRoom";
 import {
@@ -277,6 +284,7 @@ export default function BaseballGameView() {
   const gameRef = useRef(game);
   const onlineRoomRef = useRef(onlineRoom);
   const initializedOnlineRoomRef = useRef("");
+  const onlineRefreshInFlightRef = useRef(false);
 
   const actionMode = controlFor(mode, game);
   const selectedPitch = PITCH_TYPES.find((item) => item.id === selectedPitchId) ?? PITCH_TYPES[0];
@@ -305,10 +313,22 @@ export default function BaseballGameView() {
     if (!roomId) return;
     let active = true;
     const refreshRoom = async () => {
-      const nextRoom = await baseballRoomStorage.refreshRoom(roomId);
-      if (active) {
-        setOnlineRoom(nextRoom);
-        setIsOnlineRoomLoading(false);
+      if (onlineRefreshInFlightRef.current) return;
+      onlineRefreshInFlightRef.current = true;
+      try {
+        const nextRoom = await baseballRoomStorage.refreshRoom(roomId);
+        if (active) {
+          setOnlineRoom((currentRoom) => (
+            currentRoom
+            && nextRoom
+            && currentRoom.revision > nextRoom.revision
+              ? currentRoom
+              : nextRoom
+          ));
+          setIsOnlineRoomLoading(false);
+        }
+      } finally {
+        onlineRefreshInFlightRef.current = false;
       }
     };
     void refreshRoom();
@@ -363,7 +383,40 @@ export default function BaseballGameView() {
     };
     onlineRoomRef.current = updated;
     setOnlineRoom(updated);
-    baseballRoomStorage.updateRoom(updated);
+  }, []);
+
+  const leaveOnlineRoom = useCallback(async (activeRoom: BaseballRoom) => {
+    const sessionId = baseballRoomCommandClient.getSessionId();
+    const commandId = baseballRoomCommandClient.createCommandId("LEAVE");
+    const sendAtRevision = (expectedRevision: number) => baseballRoomCommandClient.send({
+      schemaVersion: BASEBALL_ROOM_COMMAND_SCHEMA_VERSION,
+      commandId,
+      kind: "LEAVE",
+      roomId: activeRoom.id,
+      expectedRevision,
+      payload: { sessionId },
+    });
+    let result = await sendAtRevision(activeRoom.revision);
+    if (result.room) {
+      onlineRoomRef.current = result.room;
+      setOnlineRoom(result.room);
+      baseballRoomStorage.cacheCanonicalRoom(result.room);
+    }
+    if (!result.ok && result.status === 409 && result.room) {
+      result = await sendAtRevision(result.room.revision);
+      if (result.room) {
+        onlineRoomRef.current = result.room;
+        setOnlineRoom(result.room);
+        baseballRoomStorage.cacheCanonicalRoom(result.room);
+      }
+    }
+    if (result.ok && result.deleted) baseballRoomStorage.deleteCachedRoom(activeRoom.id);
+    if (!result.ok) {
+      toast.error(result.status === 0
+        ? "네트워크 연결을 확인한 뒤 다시 시도해 주세요."
+        : "게임방에서 나가지 못했습니다. 다시 시도해 주세요.");
+    }
+    return result.ok;
   }, []);
 
   const settleOutcome = useCallback(
@@ -678,7 +731,7 @@ export default function BaseballGameView() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (screen !== "playing") return;
+      if (screen !== "playing" || mode === "solo" || Boolean(roomId)) return;
 
       if (event.code === "Space") {
         if (event.repeat) return;
@@ -713,7 +766,7 @@ export default function BaseballGameView() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [actionMode, advanceAfterPlay, beginHalf, canControl, feedback, halfTransition, handleDefensePitch, handleSwing, screen]);
+  }, [actionMode, advanceAfterPlay, beginHalf, canControl, feedback, halfTransition, handleDefensePitch, handleSwing, mode, roomId, screen]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -810,14 +863,49 @@ export default function BaseballGameView() {
     );
   }
 
+  if (mode === "solo") {
+    return (
+      <div className="baseball-page">
+        <BaseballSoloGameV2
+          playerName={currentUser?.name ?? "1P"}
+          onExit={() => {
+            clearPitchTimers();
+            setPitch(null);
+            setFeedback(null);
+            setHalfTransition(null);
+            setScreen("menu");
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (roomId && onlineRoom && currentUser) {
+    return (
+      <div className="baseball-page">
+        <BaseballOnlineGameV2
+          room={onlineRoom}
+          currentAuthId={currentUser.authId}
+          onExit={() => {
+            clearPitchTimers();
+            void leaveOnlineRoom(onlineRoomRef.current ?? onlineRoom).then((left) => {
+              if (left) navigate("/games/baseball/rooms");
+            });
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="baseball-page">
       <div className="baseball-game-heading">
         <button type="button" className="baseball-back-link" onClick={() => {
           clearPitchTimers();
           if (isOnlineMatch && onlineRoomRef.current && currentUser) {
-            baseballRoomStorage.leaveRoom(onlineRoomRef.current, currentUser.id);
-            navigate("/games/baseball/rooms");
+            void leaveOnlineRoom(onlineRoomRef.current).then((left) => {
+              if (left) navigate("/games/baseball/rooms");
+            });
             return;
           }
           setScreen("menu");
@@ -975,8 +1063,9 @@ export default function BaseballGameView() {
                 }}><RotateCcw aria-hidden="true" /> {mode === "solo" ? "다시 경기" : "게임방으로"}</button>
                 <button type="button" onClick={() => {
                   if (mode === "versus" && onlineRoomRef.current && currentUser) {
-                    baseballRoomStorage.leaveRoom(onlineRoomRef.current, currentUser.id);
-                    navigate("/games/baseball/rooms");
+                    void leaveOnlineRoom(onlineRoomRef.current).then((left) => {
+                      if (left) navigate("/games/baseball/rooms");
+                    });
                     return;
                   }
                   setOnlineMatchId("");

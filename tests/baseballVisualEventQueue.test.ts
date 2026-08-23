@@ -10,13 +10,79 @@ import {
   buildPlayVisualEvents,
   VISUAL_EVENT_SKIPPABLE_POLICY,
 } from "../src/utils/games/baseball/visualEventQueue.ts";
+import { createGameState } from "../src/utils/games/baseball/gameState.ts";
+import { createSoloVisualPlaybackPlan } from "../src/utils/games/baseball/soloPresentation.ts";
 import type {
   BattedBall,
   ContactResolution,
   DefenseResolution,
   OfficialPlayResult,
   RunnerResolution,
+  VisualEvent,
 } from "../src/utils/games/baseball/types.ts";
+
+function makeVisualEvent(
+  id: string,
+  kind: VisualEvent["kind"],
+): VisualEvent {
+  return {
+    id,
+    playId: "third-out-play",
+    sequence: kind === "SCOREBOARD_UPDATE" ? 0 : 1,
+    kind,
+    camera: "DUGOUT",
+    durationMs: 700,
+    skippable: false,
+    payload: {},
+  };
+}
+
+test("3아웃 솔로 재생은 기존 공격 상태 O=3 판정 뒤 다음 half 스코어보드를 공개한다", () => {
+  const before = createGameState("CPU", "1P", 701);
+  before.inning = 3;
+  before.half = "top";
+  before.battingTeam = 0;
+  before.count = { balls: 2, strikes: 1, outs: 2 };
+  before.bases.first = {
+    playerId: "cpu-park-junho",
+    name: "박준호",
+    speed: 81,
+    currentBase: 1,
+  };
+  const after = structuredClone(before);
+  after.revision += 1;
+  after.half = "bottom";
+  after.battingTeam = 1;
+  after.count = { balls: 0, strikes: 0, outs: 0 };
+  after.bases = { first: null, second: null, third: null };
+  const beforeSnapshot = structuredClone(before);
+  const afterSnapshot = structuredClone(after);
+
+  const scoreboard = makeVisualEvent("scoreboard", "SCOREBOARD_UPDATE");
+  const playResult = makeVisualEvent("play-result", "PLAY_RESULT");
+  const plan = createSoloVisualPlaybackPlan({
+    events: [scoreboard, playResult],
+    displayBeforeResult: before,
+    authoritativeAfterResult: after,
+    showThirdOutSnapshot: true,
+  });
+
+  assert.deepEqual(plan.events.map((event) => event.kind), ["PLAY_RESULT", "SCOREBOARD_UPDATE"]);
+  const resultDisplay = plan.displaySnapshotByEventId.get(playResult.id);
+  assert.ok(resultDisplay);
+  assert.equal(resultDisplay.inning, 3);
+  assert.equal(resultDisplay.half, "top");
+  assert.equal(resultDisplay.battingTeam, 0);
+  assert.deepEqual(resultDisplay.count, { balls: 0, strikes: 0, outs: 3 });
+  assert.equal(resultDisplay.bases.first?.playerId, "cpu-park-junho");
+
+  const scoreboardDisplay = plan.displaySnapshotByEventId.get(scoreboard.id);
+  assert.deepEqual(scoreboardDisplay, after);
+  assert.equal(scoreboardDisplay?.half, "bottom");
+  assert.equal(scoreboardDisplay?.count.outs, 0);
+  assert.deepEqual(before, beforeSnapshot);
+  assert.deepEqual(after, afterSnapshot);
+});
 
 function makeOfficial(
   overrides: Partial<OfficialPlayResult> = {},

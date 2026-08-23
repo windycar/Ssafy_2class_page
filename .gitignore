@@ -3,4 +3,6 @@ dist/
 .env
 .env.local
 .vercel/
+.pnpm-store/
+tmp/imagegen/
 랜덤 팀 편성 웹페이지/

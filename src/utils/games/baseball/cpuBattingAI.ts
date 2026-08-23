@@ -187,7 +187,7 @@ function swingProbability(input: ChooseCpuBatterActionInput, difficulty: number)
   let probability: number;
   if (inZone) {
     const edgePenalty = edgeDistance < 0.075 ? (0.075 - edgeDistance) * 1.55 : 0;
-    probability = 0.75 + centeredness * 0.2 - edgePenalty;
+    probability = 0.68 + centeredness * 0.16 - edgePenalty;
   } else if (nearZone) {
     const closeness = 1 - outsideDistance / 0.105;
     probability = 0.13 + closeness * 0.31;
@@ -205,6 +205,13 @@ function swingProbability(input: ChooseCpuBatterActionInput, difficulty: number)
   const hasTwoStrikes = count.strikes === 2;
   const isHittersCount = count.balls >= 2 && count.balls > count.strikes;
   const middleOffer = inZone && centeredness >= 0.48;
+
+  if (count.balls === 0 && count.strikes < 2) {
+    // Work the count early instead of turning every well-executed strike into
+    // a one-pitch at-bat. Once behind with two strikes the protection rules
+    // below still take precedence.
+    probability -= count.strikes === 0 ? 0.4 : 0.34;
+  }
 
   if (isThreeAndOh) {
     // On 3-0 the CPU has a strict green-light zone, instead of treating every
@@ -305,15 +312,17 @@ function createSwing(
   difficulty: number,
   actionSeed: number,
 ): BatterAction {
-  const { pitch, batter } = input;
+  const { pitch, batter, count } = input;
   const battingSkill = clamp((batter.contact * 0.62 + batter.eye * 0.38) / 100, 0, 1);
   const recognition = clamp(batter.eye / 100 * 0.78 + (1 - difficulty) * 0.22, 0, 1);
+  const twoStrikeSpoilFactor = count.strikes === 2 ? 1.25 : 1;
 
   const aimAngle = randomFloatAt(deriveSeed(actionSeed, "aim-angle")) * TAU;
   const aimRadiusRoll = randomFloatAt(deriveSeed(actionSeed, "aim-radius"));
-  const aimErrorScale = (0.022 + difficulty * 0.105)
+  const aimErrorScale = (0.038 + difficulty * 0.16)
     * (1.22 - battingSkill * 0.82)
-    * (0.32 + Math.sqrt(aimRadiusRoll) * 0.9);
+    * (0.32 + Math.sqrt(aimRadiusRoll) * 0.9)
+    * twoStrikeSpoilFactor;
   const movementReadPenalty = pitch.movement / 100 * (1 - recognition) * 0.025;
   const aimError = aimErrorScale + movementReadPenalty;
   const aim = {
@@ -325,9 +334,10 @@ function createSwing(
   const timingDirection = randomFloatAt(deriveSeed(actionSeed, "timing-direction")) < 0.5
     ? -1
     : 1;
-  const timingErrorScale = (0.026 + difficulty * 0.13)
+  const timingErrorScale = (0.038 + difficulty * 0.18)
     * (1.18 - battingSkill * 0.76)
-    * (0.28 + Math.sqrt(timingRoll) * 0.94);
+    * (0.28 + Math.sqrt(timingRoll) * 0.94)
+    * twoStrikeSpoilFactor;
   const typeBias = OFFSPEED_TIMING_BIAS[pitch.pitchType]
     * (1 - recognition)
     * (0.7 + difficulty * 0.3);

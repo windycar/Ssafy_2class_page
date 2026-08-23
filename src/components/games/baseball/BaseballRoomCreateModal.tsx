@@ -9,17 +9,24 @@ interface BaseballRoomCreateData {
 
 interface Props {
   hostName: string;
+  isSubmitting?: boolean;
   onClose: () => void;
-  onCreate: (data: BaseballRoomCreateData) => void;
+  onCreate: (data: BaseballRoomCreateData) => void | Promise<void>;
 }
 
-export default function BaseballRoomCreateModal({ hostName, onClose, onCreate }: Props) {
+export default function BaseballRoomCreateModal({
+  hostName,
+  isSubmitting = false,
+  onClose,
+  onCreate,
+}: Props) {
   const [title, setTitle] = useState("광주 2반 야구 한 판");
   const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(true);
   const [error, setError] = useState("");
 
   const handleSubmit = () => {
+    if (isSubmitting) return;
     if (!title.trim()) {
       setError("게임방 이름을 입력해 주세요.");
       return;
@@ -32,7 +39,7 @@ export default function BaseballRoomCreateModal({ hostName, onClose, onCreate }:
       <div className="my-auto w-full max-w-md rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2 className="flex items-center gap-2 font-extrabold text-gray-800">⚾ 새 야구 게임방 만들기</h2>
-          <button type="button" onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="h-5 w-5" /></button>
+          <button type="button" onClick={onClose} disabled={isSubmitting} className="text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="space-y-4 p-5">
@@ -66,9 +73,9 @@ export default function BaseballRoomCreateModal({ hostName, onClose, onCreate }:
         </div>
 
         <div className="flex gap-2 border-t border-border px-5 py-4">
-          <button type="button" onClick={onClose} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50">취소</button>
-          <button type="button" onClick={handleSubmit} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-700 py-2.5 text-sm font-bold text-white hover:bg-blue-800">
-            <Check className="h-4 w-4" />게임방 만들기
+          <button type="button" onClick={onClose} disabled={isSubmitting} className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">취소</button>
+          <button type="button" onClick={handleSubmit} disabled={isSubmitting} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-blue-700 py-2.5 text-sm font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60">
+            <Check className="h-4 w-4" />{isSubmitting ? "만드는 중..." : "게임방 만들기"}
           </button>
         </div>
       </div>

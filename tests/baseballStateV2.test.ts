@@ -258,4 +258,15 @@ test("두 로스터와 7구종 정의가 완전하다", () => {
   assert.equal(OPPONENT_PLAYER_COUNT, 10);
   assert.equal(BASEBALL_PITCH_TYPES.length, 7);
   assert.equal(new Set(BASEBALL_PITCH_TYPES).size, 7);
+
+  const state = createGameState("CPU", "KIA", 20260823);
+  for (const team of state.teams) {
+    const pitcher = getBaseballPlayer(team.pitcher.playerId);
+    assert.ok(pitcher?.pitching);
+    assert.deepEqual(
+      new Set(pitcher.pitching.pitches.map((pitch) => pitch.type)),
+      new Set(BASEBALL_PITCH_TYPES),
+      `${pitcher.name} 투수는 7구종을 모두 선택할 수 있어야 한다`,
+    );
+  }
 });

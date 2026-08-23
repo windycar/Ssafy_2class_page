@@ -220,7 +220,10 @@ function fieldingTarget(ball: BattedBall): FieldCoordinate {
   const radians = ball.horizontalAngle * Math.PI / 180;
   let fieldingDistance = ball.distance;
   if (ball.type === "GROUND") {
-    fieldingDistance = Math.min(ball.distance * 0.63, 43);
+    // A ground ball is normally intercepted around the infielders' depth. The
+    // old 63% target pulled every defender toward an artificial point in front
+    // of the ball and made even routine grounders effectively unreachable.
+    fieldingDistance = clamp(ball.distance * 0.84, 15, 43);
   } else if (
     ball.zone === "3B"
     || ball.zone === "SS"
@@ -481,9 +484,23 @@ export function resolveDefenseOpportunity(input: {
       : input.ball.type === "LINER"
         ? 95
         : 25;
+  const interceptAllowanceMs = input.ball.type === "GROUND"
+    ? 420
+    : input.ball.type === "LINER"
+      ? 260
+      : input.ball.type === "FLY"
+        ? 100
+        : 0;
   const foulDifficulty = input.ball.fair ? 0 : 130;
   const reachScore = sigmoid(
-    (marginMs + skill * 240 - velocityDifficulty - typeDifficulty - foulDifficulty) / 270,
+    (
+      marginMs
+      + interceptAllowanceMs
+      + skill * 240
+      - velocityDifficulty
+      - typeDifficulty
+      - foulDifficulty
+    ) / 270,
   );
   const rawFieldingProbability = clamp(
     reachScore * (0.6 + skill * 0.4),

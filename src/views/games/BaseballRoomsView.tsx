@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ChevronLeft, Plus, Users } from "lucide-react";
 import { Link, useLocation } from "react-router";
 import { toast } from "sonner";
@@ -6,12 +6,7 @@ import { toast } from "sonner";
 import BaseballRoomCreateModal from "../../components/games/baseball/BaseballRoomCreateModal";
 import { useAuth } from "../../hooks/useAuth";
 import { useBaseballRooms } from "../../hooks/useBaseballRooms";
-import {
-  BASEBALL_ROOM_SCHEMA_VERSION,
-  type BaseballRoom,
-} from "../../types/baseballRoom";
 import type { GameRoomStatus } from "../../types/game";
-import { createId } from "../../utils/createId";
 
 const STATUS_LABEL: Record<GameRoomStatus, string> = {
   recruiting: "모집 중",
@@ -45,6 +40,8 @@ export default function BaseballRoomsView() {
   const location = useLocation();
   const [tab, setTab] = useState<string>("recruiting");
   const [showCreate, setShowCreate] = useState(Boolean((location.state as { openCreate?: boolean })?.openCreate));
+  const [isCreating, setIsCreating] = useState(false);
+  const createInFlightRef = useRef(false);
 
   const visibleRooms = rooms.filter((room) => (
     room.isPublic || room.players.some((player) => player.studentId === currentUser?.id)
@@ -54,43 +51,24 @@ export default function BaseballRoomsView() {
     return room.status === tab;
   });
 
-  const handleCreate = (data: { title: string; description: string; isPublic: boolean }) => {
-    if (!currentUser) return;
-    const now = new Date().toISOString();
-    const roomId = createId("baseball");
-    const room: BaseballRoom = {
-      schemaVersion: BASEBALL_ROOM_SCHEMA_VERSION,
-      revision: 0,
-      id: roomId,
-      title: data.title,
-      description: data.description,
-      hostStudentId: currentUser.id,
-      maxPlayers: 2,
-      isPublic: data.isPublic,
-      status: "recruiting",
-      players: [{
-        seat: 0,
-        studentId: currentUser.id,
-        authId: currentUser.authId,
-        name: currentUser.name,
-        username: currentUser.username,
-        isHost: true,
-        isReady: false,
-        status: "waiting",
-        joinedAt: now,
-      }],
-      activityLogs: [{
-        id: createId("baseball-log"),
-        roomId,
-        type: "create",
-        message: `${currentUser.name} 님이 야구 게임방을 만들었습니다.`,
-        createdAt: now,
-      }],
-      createdAt: now,
-    };
-    createRoom(room);
-    setShowCreate(false);
-    toast.success("야구 게임방이 만들어졌습니다!");
+  const handleCreate = async (data: { title: string; description: string; isPublic: boolean }) => {
+    if (!currentUser || createInFlightRef.current) return;
+    createInFlightRef.current = true;
+    setIsCreating(true);
+    try {
+      const result = await createRoom(data);
+      if (!result.ok) {
+        toast.error(result.status === 0
+          ? "네트워크 연결을 확인한 뒤 다시 시도해 주세요."
+          : "야구 게임방을 만들지 못했습니다. 다시 시도해 주세요.");
+        return;
+      }
+      setShowCreate(false);
+      toast.success("야구 게임방이 만들어졌습니다!");
+    } finally {
+      createInFlightRef.current = false;
+      setIsCreating(false);
+    }
   };
 
   const roomsForTab = tab === "mine"
@@ -168,7 +146,12 @@ export default function BaseballRoomsView() {
       )}
 
       {showCreate && currentUser && (
-        <BaseballRoomCreateModal hostName={currentUser.name} onClose={() => setShowCreate(false)} onCreate={handleCreate} />
+        <BaseballRoomCreateModal
+          hostName={currentUser.name}
+          isSubmitting={isCreating}
+          onClose={() => setShowCreate(false)}
+          onCreate={handleCreate}
+        />
       )}
     </div>
   );

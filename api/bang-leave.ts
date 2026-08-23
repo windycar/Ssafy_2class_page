@@ -33,7 +33,13 @@ async function handleLeave(request: Request) {
   }
 
   const studentId = body.studentId;
-  if (!body.roomId || typeof studentId !== "number" || !Number.isInteger(studentId) || !body.sessionId) {
+  if (
+    !body.roomId
+    || !body.roomId.startsWith("bang-")
+    || typeof studentId !== "number"
+    || !Number.isInteger(studentId)
+    || !body.sessionId
+  ) {
     return new Response("Invalid leave request", { status: 400 });
   }
 

@@ -11,8 +11,18 @@ import {
   resolveBatterAction,
 } from "../src/utils/games/baseball/battingEngine.ts";
 import { chooseCpuBatterAction } from "../src/utils/games/baseball/cpuBattingAI.ts";
+import {
+  createGameState,
+  getCurrentBatter,
+  getCurrentPitcher,
+} from "../src/utils/games/baseball/gameState.ts";
+import {
+  executeBatterAction,
+  startPitch,
+} from "../src/utils/games/baseball/playEngine.ts";
 import type {
   BaseballCount,
+  BaseballPitchType,
   BaseballPlayer,
   ResolvedPitch,
   Vec2,
@@ -21,6 +31,15 @@ import type {
 const BATTER = KIA_THEME_BATTERS[2];
 const PITCHER = OPPONENT_PITCHERS[0];
 const NEUTRAL_COUNT: BaseballCount = { balls: 1, strikes: 1, outs: 0 };
+const PERFECT_PITCH_SEQUENCE: readonly BaseballPitchType[] = [
+  "fourSeam",
+  "twoSeam",
+  "slider",
+  "curve",
+  "changeup",
+  "fork",
+  "cutter",
+];
 
 function pitchAt(
   actual: Vec2,
@@ -76,6 +95,95 @@ function countSwings(options: Parameters<typeof choose>[0], samples = 256) {
     if (choose({ ...options, seed }).kind === "SWING") swings += 1;
   }
   return swings;
+}
+
+function simulatePerfectCenterHalfInnings(seedCount = 100) {
+  const fielding = {
+    GROUND: { total: 0, retired: 0 },
+    FLY: { total: 0, retired: 0 },
+    LINER: { total: 0, retired: 0 },
+  };
+  let totalRuns = 0;
+  let totalPitches = 0;
+  let cappedInnings = 0;
+  let maximumPitches = 0;
+
+  for (let seed = 1; seed <= seedCount; seed += 1) {
+    let state = createGameState("CPU", "KIA", seed);
+    let pitches = 0;
+
+    while (state.half === "top" && state.battingTeam === 0 && pitches < 80) {
+      pitches += 1;
+      const sequence = pitches;
+      const batter = getCurrentBatter(state);
+      const pitcher = getCurrentPitcher(state);
+      const count = { ...state.count };
+      const playId = `balance-play-${seed}-${sequence}`;
+      const started = startPitch(state, {
+        commandId: `balance-start-${seed}-${sequence}`,
+        expectedRevision: state.revision,
+        playId,
+        sequence,
+        pitcherId: pitcher.id,
+        pitchType: PERFECT_PITCH_SEQUENCE[(sequence - 1) % PERFECT_PITCH_SEQUENCE.length],
+        target: { x: 0.5, y: 0.5 },
+        timingQuality: "PERFECT",
+      });
+      assert.equal(started.ok, true, "PERFECT 중앙 투구는 항상 유효해야 한다");
+      if (!started.ok) throw new Error(started.code);
+
+      const action = chooseCpuBatterAction({
+        seed: started.state.seed,
+        sequence,
+        pitch: started.state.activePlay!.pitch!,
+        batter,
+        pitcher,
+        count,
+      });
+      const resolved = executeBatterAction(started.state, {
+        commandId: `balance-action-${seed}-${sequence}`,
+        expectedRevision: started.state.revision,
+        playId,
+        batterId: batter.id,
+        occurredAt: "2026-08-23T00:00:00.000Z",
+        action,
+      });
+      assert.equal(resolved.ok, true, "CPU 행동은 공용 판정 엔진에서 처리되어야 한다");
+      if (!resolved.ok) throw new Error(resolved.code);
+
+      state = resolved.state;
+      const activePlay = state.activePlay;
+      const ball = activePlay?.battedBall;
+      const defense = activePlay?.defense;
+      if (
+        ball?.fair
+        && defense
+        && (ball.type === "GROUND" || ball.type === "FLY" || ball.type === "LINER")
+      ) {
+        fielding[ball.type].total += 1;
+        if (
+          defense.result === "CATCH"
+          || defense.result === "GROUND_OUT"
+          || defense.result === "FORCE_OUT"
+        ) {
+          fielding[ball.type].retired += 1;
+        }
+      }
+    }
+
+    if (state.half === "top" && state.battingTeam === 0) cappedInnings += 1;
+    totalRuns += state.teams[0].runs;
+    totalPitches += pitches;
+    maximumPitches = Math.max(maximumPitches, pitches);
+  }
+
+  return {
+    averageRuns: totalRuns / seedCount,
+    averagePitches: totalPitches / seedCount,
+    cappedInnings,
+    maximumPitches,
+    fielding,
+  };
 }
 
 test("동일 입력은 동일 행동을 만들고 전달받은 객체를 변경하지 않는다", () => {
@@ -260,6 +368,43 @@ test("CPU 행동은 인간 입력과 같은 resolveBatterAction 경로에서 같
     action: JSON.parse(JSON.stringify(action)),
   });
   assert.deepEqual(cpuResolution, humanResolution);
+});
+
+test("100개 seed의 PERFECT 중앙 7구종 이닝은 캐주얼 야구 범위로 수렴한다", () => {
+  const simulation = simulatePerfectCenterHalfInnings();
+  const rate = (type: keyof typeof simulation.fielding) => {
+    const sample = simulation.fielding[type];
+    assert.ok(sample.total > 0, `${type} 타구 표본이 있어야 한다`);
+    return sample.retired / sample.total;
+  };
+  const groundOutRate = rate("GROUND");
+  const flyOutRate = rate("FLY");
+  const lineOutRate = rate("LINER");
+  const metrics = JSON.stringify({
+    averageRuns: simulation.averageRuns,
+    averagePitches: simulation.averagePitches,
+    maximumPitches: simulation.maximumPitches,
+    groundOutRate,
+    flyOutRate,
+    lineOutRate,
+  });
+
+  assert.equal(simulation.cappedInnings, 0, `80구 안에 끝나지 않은 이닝이 있다: ${metrics}`);
+  assert.ok(
+    simulation.averagePitches >= 12 && simulation.averagePitches <= 25,
+    `평균 이닝 투구 수가 범위를 벗어났다: ${metrics}`,
+  );
+  assert.ok(
+    simulation.averageRuns >= 0.3 && simulation.averageRuns <= 2.5,
+    `평균 실점이 범위를 벗어났다: ${metrics}`,
+  );
+  assert.ok(groundOutRate >= 0.55, `땅볼 아웃률이 너무 낮다: ${metrics}`);
+  assert.ok(flyOutRate >= 0.55, `뜬공 아웃률이 너무 낮다: ${metrics}`);
+  assert.ok(lineOutRate >= 0.15, `라인드라이브 아웃률이 너무 낮다: ${metrics}`);
+  assert.ok(
+    lineOutRate < groundOutRate && lineOutRate < flyOutRate,
+    `라인드라이브는 땅볼과 뜬공보다 어려워야 한다: ${metrics}`,
+  );
 });
 
 test("잘못된 sequence, count, 선수, 투구 필드를 거부한다", () => {
