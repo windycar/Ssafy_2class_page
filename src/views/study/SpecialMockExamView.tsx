@@ -420,7 +420,7 @@ export default function SpecialMockExamView() {
         <InfoCard
           icon={<FileCheck2 className="h-5 w-5" />}
           title={`실전형 ${SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND}문제`}
-          description="객관식 26문제, 단답형 4문제, 서술형 2문제로 구성됩니다."
+          description="핵심 개념을 확인하는 객관식 32문제로 구성됩니다."
         />
         <InfoCard
           icon={<RotateCcw className="h-5 w-5" />}

@@ -15,11 +15,11 @@ export const SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT =
   SPECIAL_MOCK_EXAM_ROUNDS.length * SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND;
 
 export const SPECIAL_MOCK_EXAM_BANK_VERSIONS = {
-  1: "v2",
-  2: "v2",
-  3: "v2",
-  4: "v2",
-  5: "v2",
+  1: "v3",
+  2: "v3",
+  3: "v3",
+  4: "v3",
+  5: "v3",
 } as const satisfies Record<SpecialMockExamRound, string>;
 
 export function getSpecialMockExamAttemptIdPrefix(round: SpecialMockExamRound) {

@@ -199,7 +199,7 @@ test("과목평가 2회차에는 서로 충돌하지 않는 32문제짜리 모�
   assert.equal(allIds.length, SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT);
   assert.equal(new Set(allIds).size, 160);
   assert.equal(SPECIAL_MOCK_EXAM_META[3].label, "모의고사 3회차");
-  assert.equal(SPECIAL_MOCK_EXAM_BANKS[3][0].sourceId, "k3-mc-001");
+  assert.equal(SPECIAL_MOCK_EXAM_BANKS[3][0].sourceId, "easy-r3-mc-001");
   assert.match(SPECIAL_MOCK_EXAM_BANKS[3][0].prompt, /CLIP/);
 });
 
@@ -222,10 +222,7 @@ test("모든 문제에는 다시 보기에서 표시할 정답과 해설이 있�
 test("풀이 기록 다시 보기는 최신 답안과 미답변을 포함해 32문제를 복원한다", () => {
   const questions = SPECIAL_MOCK_EXAM_BANKS[1];
   const questionId = questions[0].id;
-  const textQuestion = questions.find(
-    ({ questionType }) => questionType !== "multiple-choice",
-  );
-  assert.ok(textQuestion);
+  const secondQuestion = questions[1];
   const attempts = [
     attempt("old", 1, questionId, false, "2026-08-19T00:00:00.000Z"),
     {
@@ -234,15 +231,13 @@ test("풀이 기록 다시 보기는 최신 답안과 미답변을 포함해 32�
     },
     {
       ...attempt(
-        "text",
+        "second",
         1,
-        textQuestion.id,
+        secondQuestion.id,
         true,
         "2026-08-19T00:02:00.000Z",
       ),
-      questionType: textQuestion.questionType,
-      selectedAnswer: null,
-      responseText: "저장된 서술형 답안",
+      selectedAnswer: 1,
     },
   ];
 
@@ -250,36 +245,31 @@ test("풀이 기록 다시 보기는 최신 답안과 미답변을 포함해 32�
 
   assert.equal(Object.keys(restored).length, 32);
   assert.deepEqual(restored[questionId], { response: 2, correct: true });
-  assert.deepEqual(restored[textQuestion.id], {
-    response: "저장된 서술형 답안",
+  assert.deepEqual(restored[secondQuestion.id], {
+    response: 1,
     correct: true,
   });
-  assert.deepEqual(restored[questions[1].id], {
+  assert.deepEqual(restored[questions[2].id], {
     response: null,
     correct: false,
   });
 });
 
-test("문제은행의 문항 유형과 서술형 채점 정보가 유지된다", () => {
+test("쉬운 버전 문제은행은 32개의 객관식 문항으로 구성된다", () => {
   const questions = Object.values(SPECIAL_MOCK_EXAM_BANKS).flat();
   assert.equal(
     questions.filter(({ questionType }) => questionType === "multiple-choice")
       .length,
-    130,
+    160,
   );
   assert.equal(
-    questions.filter(({ questionType }) => questionType === "short-answer")
+    questions.filter(({ questionType }) => questionType !== "multiple-choice")
       .length,
-    20,
+    0,
   );
-  const essayQuestions = questions.filter(
-    ({ questionType }) => questionType === "essay",
-  );
-  assert.equal(essayQuestions.length, 10);
-  essayQuestions.forEach((question) => {
-    assert.ok(question.modelAnswer?.trim(), `${question.id}: 모범 답안 누락`);
-    assert.ok(question.rubricKeywords?.length, `${question.id}: 채점 키워드 누락`);
-    assert.ok(question.minLength, `${question.id}: 최소 답변 길이 누락`);
+  questions.forEach((question) => {
+    assert.equal(typeof question.answer, "number", `${question.id}: 정답 누락`);
+    assert.equal(question.options.length, 4, `${question.id}: 보기 수 오류`);
   });
 });
 
