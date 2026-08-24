@@ -16,6 +16,26 @@ export interface SoloVisualPlaybackPlan {
   displaySnapshotByEventId: ReadonlyMap<string, BaseballGameState>;
 }
 
+/**
+ * Resolves the cumulative HUD snapshot for a visual event without mutating UI
+ * state. Sparse reveal points are intentional: before the first reveal the
+ * pre-play game is shown, and every later event keeps the most recent reveal.
+ * This lets Solo and Online share the same score/count timing.
+ */
+export function resolveBaseballVisualPlaybackDisplayGame(
+  plan: SoloVisualPlaybackPlan,
+  displayBeforeResult: BaseballGameState,
+  currentEventId: string | null,
+) {
+  if (!currentEventId) return displayBeforeResult;
+  let displayGame = displayBeforeResult;
+  for (const event of plan.events) {
+    displayGame = plan.displaySnapshotByEventId.get(event.id) ?? displayGame;
+    if (event.id === currentEventId) return displayGame;
+  }
+  return displayBeforeResult;
+}
+
 function putScoreboardAfterPlayResult(events: readonly VisualEvent[]) {
   const ordered = [...events];
   const scoreboardIndex = ordered.findIndex((event) => event.kind === "SCOREBOARD_UPDATE");

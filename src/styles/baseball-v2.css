@@ -32,7 +32,7 @@
   outline-offset: 3px;
 }
 
-/* Stage layer contract: background 0, shade 5, characters 10, runners 18,
+/* Stage layer contract: background 0, shade 5, characters 10, fielders 16, runners 18,
    plate/interaction 20, trails 28, ball 30, effects 40, overlays 90, HUD 100. */
 .bbv2-stage {
   position: relative;
@@ -203,7 +203,15 @@
   pointer-events: none;
 }
 
+.bbv2-stage__fielders {
+  position: absolute;
+  z-index: 16;
+  inset: 0;
+  pointer-events: none;
+}
+
 .bbv2-runner-sprite,
+.bbv2-fielder-sprite,
 .bbv2-ball-body,
 .bbv2-ball-trail-point {
   position: absolute;
@@ -215,6 +223,7 @@
 }
 
 .bbv2-runner-sprite {
+  --bbv2-facing-scale: 1;
   display: grid;
   width: clamp(32px, 4.2vw, 58px);
   place-items: center;
@@ -222,10 +231,110 @@
   filter: drop-shadow(0 8px 6px rgb(0 0 0 / 38%));
 }
 
+.bbv2-fielder-sprite {
+  --bbv2-facing-scale: 1;
+  display: grid;
+  width: clamp(66px, 8.8vw, 132px);
+  place-items: center;
+  aspect-ratio: 0.82;
+  filter: drop-shadow(0 10px 8px rgb(0 0 0 / 42%));
+}
+
+.bbv2-fielder-sprite__body {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  transform-origin: center bottom;
+}
+
+.bbv2-fielder-sprite__body img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform: scaleX(var(--bbv2-facing-scale));
+}
+
+.bbv2-runner-sprite[data-facing="LEFT"],
+.bbv2-fielder-sprite[data-facing="LEFT"] {
+  --bbv2-facing-scale: -1;
+}
+
+.bbv2-fielder-sprite__body i {
+  display: grid;
+  width: 58%;
+  place-items: center;
+  aspect-ratio: 1;
+  border: 3px solid white;
+  border-radius: 50%;
+  color: white;
+  background: #b91c1c;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 1000;
+}
+
+.bbv2-fielder-sprite > em {
+  position: absolute;
+  top: calc(100% - 0.12rem);
+  left: 50%;
+  display: grid;
+  min-width: max-content;
+  padding: 0.2rem 0.38rem;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 0.42rem;
+  color: white;
+  background: rgb(3 20 38 / 88%);
+  font-style: normal;
+  line-height: 1.15;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.bbv2-fielder-sprite > em strong {
+  font-size: 0.5rem;
+  font-weight: 1000;
+}
+
+.bbv2-fielder-sprite > em small {
+  color: var(--bbv2-yellow);
+  font-size: 0.42rem;
+  font-weight: 900;
+}
+
+.bbv2-fielder-sprite[data-phase="APPROACH"] .bbv2-fielder-sprite__body {
+  animation: bbv2-fielder-approach 360ms ease-in-out infinite;
+}
+
+.bbv2-fielder-sprite[data-phase="SECURE"] .bbv2-fielder-sprite__body {
+  animation: bbv2-fielder-secure 330ms cubic-bezier(0.18, 0.85, 0.32, 1.2) both;
+}
+
+.bbv2-fielder-sprite[data-phase="THROW"] .bbv2-fielder-sprite__body {
+  animation: bbv2-fielder-throw 440ms cubic-bezier(0.3, 0.72, 0.22, 1) both;
+}
+
+.bbv2-fielder-sprite[data-phase="MISS"] .bbv2-fielder-sprite__body {
+  animation: bbv2-fielder-miss 520ms ease-out both;
+}
+
 .bbv2-runner-sprite img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+  transform: scaleX(var(--bbv2-facing-scale));
+}
+
+.bbv2-runner-sprite[data-status="RUNNING"] img {
+  animation: bbv2-runner-stride 360ms ease-in-out infinite;
+}
+
+.bbv2-runner-sprite[data-status="SCORE"] img {
+  animation: bbv2-runner-score 520ms cubic-bezier(0.18, 0.86, 0.3, 1.15) both;
+}
+
+.bbv2-runner-sprite[data-status="OUT"] img {
+  filter: saturate(0.4) brightness(0.8);
 }
 
 .bbv2-runner-sprite i {
@@ -395,6 +504,15 @@
   width: clamp(34px, 4.8vw, 68px);
 }
 
+.bbv2-ball-body--throw {
+  width: clamp(24px, 3.2vw, 46px);
+  filter: drop-shadow(0 4px 5px rgb(0 0 0 / 52%));
+}
+
+.bbv2-flight-layer--throw .bbv2-ball-trail-point {
+  width: clamp(13px, 2vw, 28px);
+}
+
 .bbv2-ball--fourSeam { --bbv2-pitch-tone: rgb(248 113 113 / 26%); }
 .bbv2-ball--twoSeam { --bbv2-pitch-tone: rgb(251 146 60 / 26%); }
 .bbv2-ball--slider { --bbv2-pitch-tone: rgb(167 139 250 / 26%); }
@@ -467,6 +585,74 @@
 
 .bbv2-stage__overlay-slot > * {
   pointer-events: auto;
+}
+
+.bbv2-play-callout {
+  position: absolute;
+  top: 122px;
+  left: 14px;
+  display: grid;
+  width: min(290px, calc(100% - 28px));
+  padding: 0.66rem 0.76rem;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-left: 5px solid var(--bbv2-yellow);
+  border-radius: 0.78rem;
+  color: white;
+  background: rgb(3 20 38 / 88%);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 35%);
+  text-align: left;
+  backdrop-filter: blur(10px);
+  animation: bbv2-callout-enter 220ms ease-out both;
+}
+
+.bbv2-play-callout.is-out,
+.bbv2-play-callout.is-strike { border-left-color: #cbd5e1; }
+.bbv2-play-callout.is-hit { border-left-color: #60a5fa; }
+.bbv2-play-callout.is-score { border-left-color: #4ade80; }
+.bbv2-play-callout.is-home-run { border-left-color: #facc15; background: rgb(120 53 15 / 91%); }
+
+.bbv2-play-callout > small {
+  color: var(--bbv2-yellow);
+  font-size: 0.44rem;
+  font-weight: 1000;
+  letter-spacing: 0.13em;
+}
+
+.bbv2-play-callout > strong {
+  margin-top: 0.1rem;
+  font-size: 0.84rem;
+  font-weight: 1000;
+}
+
+.bbv2-play-callout > span {
+  margin-top: 0.12rem;
+  color: rgb(226 232 240 / 76%);
+  font-size: 0.55rem;
+  font-weight: 750;
+}
+
+.bbv2-play-callout > button {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.32rem;
+  margin-top: 0.42rem;
+  padding: 0.34rem 0.48rem;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 0.46rem;
+  color: white;
+  background: rgb(255 255 255 / 10%);
+  cursor: pointer;
+  font-size: 0.5rem;
+  font-weight: 900;
+}
+
+.bbv2-play-callout kbd {
+  padding: 0.08rem 0.22rem;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 0.2rem;
+  font: inherit;
+  font-size: 0.4rem;
 }
 
 .bbv2-stage__hud-slot {
@@ -1412,6 +1598,45 @@
   to { background-position: 100% center; }
 }
 
+@keyframes bbv2-fielder-approach {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-5px) rotate(2deg); }
+}
+
+@keyframes bbv2-fielder-secure {
+  0% { transform: translateY(0) scale(1); }
+  48% { transform: translateY(4px) scale(0.9, 1.08); }
+  100% { transform: translateY(0) scale(1.04); }
+}
+
+@keyframes bbv2-fielder-throw {
+  0% { transform: rotate(-7deg) translateX(-2px); }
+  55% { transform: rotate(8deg) translateX(3px) scale(1.04); }
+  100% { transform: rotate(-2deg) translateX(0); }
+}
+
+@keyframes bbv2-fielder-miss {
+  0% { transform: translateX(0) rotate(0); }
+  45% { transform: translateX(7px) rotate(7deg) scale(0.94); }
+  100% { transform: translateX(3px) rotate(3deg); }
+}
+
+@keyframes bbv2-runner-stride {
+  0%, 100% { transform: translateY(0) rotate(-1deg) scaleX(var(--bbv2-facing-scale)); }
+  50% { transform: translateY(-4px) rotate(2deg) scaleX(var(--bbv2-facing-scale)); }
+}
+
+@keyframes bbv2-runner-score {
+  0% { transform: translateY(0) scale(0.94) scaleX(var(--bbv2-facing-scale)); }
+  55% { transform: translateY(-10px) scale(1.08) scaleX(var(--bbv2-facing-scale)); }
+  100% { transform: translateY(0) scale(1) scaleX(var(--bbv2-facing-scale)); }
+}
+
+@keyframes bbv2-callout-enter {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 @media (max-width: 1120px) {
   .bbv2-hud {
     grid-template-columns: minmax(260px, 1.1fr) minmax(270px, 1fr) minmax(280px, 1fr);
@@ -1472,6 +1697,10 @@
   .bbv2-hud {
     grid-template-columns: 1fr;
     min-height: 160px;
+  }
+
+  .bbv2-play-callout {
+    top: 174px;
   }
 
   .bbv2-hud__situation {
@@ -1554,6 +1783,9 @@
 @media (prefers-reduced-motion: reduce) {
   .bbv2-stage__background,
   .bbv2-character-sprite,
+  .bbv2-fielder-sprite__body,
+  .bbv2-runner-sprite img,
+  .bbv2-play-callout,
   .bbv2-selector-button,
   .bbv2-primary-action,
   .bbv2-overlay__content,

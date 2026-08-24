@@ -9,15 +9,19 @@ import type {
   BaseballPitchType,
   Vec2,
 } from "../../../../utils/games/baseballEngine";
+import type {
+  BaseballDefenseThrowPresentationV2,
+  BaseballFielderPresentationV2,
+  BaseballPresentationPointV2,
+  BaseballRunnerPresentationV2,
+} from "./BaseballPlayPresentationV2.ts";
 
-/** Stage-space coordinates expressed as percentages. (0, 0) is the top-left. */
-export interface BaseballPresentationPointV2 {
-  x: number;
-  y: number;
-  scale?: number;
-  opacity?: number;
-  rotationDeg?: number;
-}
+export type {
+  BaseballFielderPhaseV2,
+  BaseballFielderPresentationV2,
+  BaseballPresentationPointV2,
+  BaseballRunnerPresentationV2,
+} from "./BaseballPlayPresentationV2.ts";
 
 export type BaseballTrailPointsV2 = readonly [
   BaseballPresentationPointV2,
@@ -37,14 +41,6 @@ export interface BaseballBallPresentationV2 {
   trail: BaseballTrailPointsV2;
   pitchType?: BaseballPitchType;
   visible?: boolean;
-}
-
-export interface BaseballRunnerPresentationV2 {
-  playerId: string;
-  name: string;
-  point: BaseballPresentationPointV2;
-  assetSrc?: string;
-  baseLabel?: string;
 }
 
 export interface BaseballStageAssetsV2 {
@@ -74,6 +70,8 @@ export interface BaseballStageV2Props {
   perspective?: "BATTING" | "PITCHING" | "FIELD";
   pitchBall?: BaseballBallPresentationV2 | null;
   battedBall?: BaseballBallPresentationV2 | null;
+  defenseThrow?: BaseballDefenseThrowPresentationV2 | null;
+  fielders?: readonly BaseballFielderPresentationV2[];
   runners?: readonly BaseballRunnerPresentationV2[];
   showStrikeZone?: boolean;
   strikeZoneTarget?: Vec2 | null;
@@ -105,6 +103,7 @@ type CharacterSpriteStyle = CSSProperties & {
 };
 
 const EMPTY_RUNNERS: readonly BaseballRunnerPresentationV2[] = [];
+const EMPTY_FIELDERS: readonly BaseballFielderPresentationV2[] = [];
 export const BASEBALL_TRAIL_SAMPLE_COUNT = 10;
 
 function joinClassNames(...names: Array<string | undefined>) {
@@ -187,15 +186,17 @@ function BaseballFlightLayerV2({
   ballSrc,
   variant,
 }: {
-  presentation: BaseballBallPresentationV2 | null | undefined;
+  presentation: BaseballBallPresentationV2 | BaseballDefenseThrowPresentationV2 | null | undefined;
   ballSrc: string;
-  variant: "pitch" | "batted";
+  variant: "pitch" | "batted" | "throw";
 }) {
-  if (!presentation || presentation.visible === false) return null;
+  if (!presentation || ("visible" in presentation && presentation.visible === false)) return null;
 
-  const pitchClass = presentation.pitchType
-    ? `bbv2-ball--${presentation.pitchType}`
+  const pitchType = "pitchType" in presentation ? presentation.pitchType : undefined;
+  const pitchClass = pitchType
+    ? `bbv2-ball--${pitchType}`
     : undefined;
+  const throwTargetBase = "targetBase" in presentation ? presentation.targetBase : undefined;
 
   return (
     <div
@@ -203,6 +204,7 @@ function BaseballFlightLayerV2({
         "bbv2-flight-layer",
         `bbv2-flight-layer--${variant}`,
       )}
+      data-throw-target-base={throwTargetBase}
       aria-hidden="true"
     >
       <div className="bbv2-ball-trails" data-trail-samples={BASEBALL_TRAIL_SAMPLE_COUNT}>
@@ -234,6 +236,8 @@ function RunnerLayerV2({ runners }: { runners: readonly BaseballRunnerPresentati
           className="bbv2-runner-sprite"
           style={pointStyle(runner.point)}
           data-player-id={runner.playerId}
+          data-status={runner.status ?? "WAITING"}
+          data-facing={runner.facing ?? "RIGHT"}
           key={runner.playerId}
         >
           {runner.assetSrc ? (
@@ -242,6 +246,39 @@ function RunnerLayerV2({ runners }: { runners: readonly BaseballRunnerPresentati
             <i>{runner.name.slice(0, 1)}</i>
           )}
           <em>{runner.baseLabel ?? runner.name}</em>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function FielderLayerV2({
+  fielders,
+}: {
+  fielders: readonly BaseballFielderPresentationV2[];
+}) {
+  return (
+    <div className="bbv2-stage__fielders" aria-hidden="true">
+      {fielders.map((fielder) => (
+        <span
+          className="bbv2-fielder-sprite"
+          style={pointStyle(fielder.point)}
+          data-phase={fielder.phase}
+          data-player-id={fielder.playerId}
+          data-facing={fielder.facing ?? "RIGHT"}
+          key={fielder.playerId}
+        >
+          <span className="bbv2-fielder-sprite__body">
+            {fielder.assetSrc ? (
+              <img src={fielder.assetSrc} alt="" draggable={false} />
+            ) : (
+              <i>{fielder.positionLabel}</i>
+            )}
+          </span>
+          <em>
+            <strong>{fielder.name}</strong>
+            <small>{fielder.resultLabel}</small>
+          </em>
         </span>
       ))}
     </div>
@@ -313,6 +350,8 @@ export function BaseballStageV2({
   perspective = "BATTING",
   pitchBall,
   battedBall,
+  defenseThrow,
+  fielders = EMPTY_FIELDERS,
   runners = EMPTY_RUNNERS,
   showStrikeZone = true,
   strikeZoneTarget,
@@ -324,11 +363,13 @@ export function BaseballStageV2({
   className,
   ariaLabel = "야구 경기장",
 }: BaseballStageV2Props) {
-  const activeFlight = battedBall && battedBall.visible !== false
-    ? { presentation: battedBall, variant: "batted" as const }
-    : pitchBall && pitchBall.visible !== false
-      ? { presentation: pitchBall, variant: "pitch" as const }
-      : null;
+  const activeFlight = defenseThrow
+    ? { presentation: defenseThrow, variant: "throw" as const }
+    : battedBall && battedBall.visible !== false
+      ? { presentation: battedBall, variant: "batted" as const }
+      : pitchBall && pitchBall.visible !== false
+        ? { presentation: pitchBall, variant: "pitch" as const }
+        : null;
 
   return (
     <section
@@ -345,6 +386,7 @@ export function BaseballStageV2({
       />
       <div className="bbv2-stage__shade" aria-hidden="true" />
       <CharacterLayerV2 assets={assets} />
+      <FielderLayerV2 fielders={fielders} />
       <RunnerLayerV2 runners={runners} />
       <HomePlateAndZoneV2
         homePlateSrc={assets.homePlateSrc}

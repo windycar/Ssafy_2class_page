@@ -16,14 +16,14 @@ const SOURCES = {
   batter: "baseball-batting-field-v4.png",
   pitcher: "baseball-camera-pitcher-empty.png",
   infieldWide: "baseball-camera-infield-wide-v3.png",
-  leftField: "baseball-camera-left-field-v4.png",
-  leftCenter: "baseball-camera-left-center-v4.png",
-  centerField: "baseball-camera-center-field-v4.png",
-  rightCenter: "baseball-camera-right-center-v4.png",
-  rightField: "baseball-camera-right-field-v4.png",
+  leftField: "baseball-camera-left-field-v5.png",
+  leftCenter: "baseball-camera-left-center-v5.png",
+  centerField: "baseball-camera-center-field-v5.png",
+  rightCenter: "baseball-camera-right-center-v5.png",
+  rightField: "baseball-camera-right-field-v5.png",
   firstBaseLine: "baseball-camera-first-base-line-v4.png",
   thirdBaseLine: "baseball-camera-third-base-line-v4.png",
-  runScored: "baseball-camera-run-scored-v3.png",
+  runScored: "baseball-camera-run-scored-v4.png",
   homeRun: "baseball-camera-home-run.png",
 } as const satisfies BaseballCameraBackgroundSources;
 
@@ -96,14 +96,14 @@ test("Solo와 Online은 공통 카메라 resolver와 clean-v3 공을 사용한�
     "utf8",
   );
   assert.match(assetsSource, /baseball-ball-clean-v3\.png/);
-  assert.match(assetsSource, /baseball-camera-run-scored-v3\.png/);
-  assert.match(assetsSource, /baseball-camera-left-center-v4\.png/);
-  assert.match(assetsSource, /baseball-camera-right-center-v4\.png/);
+  assert.match(assetsSource, /baseball-camera-run-scored-v4\.png/);
+  assert.match(assetsSource, /baseball-camera-left-center-v5\.png/);
+  assert.match(assetsSource, /baseball-camera-right-center-v5\.png/);
   assert.match(assetsSource, /baseball-camera-first-base-line-v4\.png/);
   assert.match(assetsSource, /baseball-camera-third-base-line-v4\.png/);
   assert.match(assetsSource, /baseball-batting-field-v4\.png/);
-  assert.equal((assetsSource.match(/dynamicBallOnly: true/g) ?? []).length, 8);
-  assert.doesNotMatch(assetsSource, /baseball-camera-(?:left-field|left-center|center-field|right-center|right-field)-v3\.png/);
+  assert.equal((assetsSource.match(/dynamicBallOnly: true/g) ?? []).length, 9);
+  assert.doesNotMatch(assetsSource, /baseball-camera-(?:left-field|left-center|center-field|right-center|right-field)-v[34]\.png/);
   assert.doesNotMatch(assetsSource, /baseball-batting-field\.png/);
   assert.match(assetsSource, /baseball-camera-scoreboard-wide-v3\.png/);
   assert.match(assetsSource, /id: "run-scored-camera"/);

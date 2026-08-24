@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
   createPitchVisualFrame,
+  compressedRunnerElapsedMs,
   DEFAULT_PITCH_STAGE_PROJECTION,
   DEFAULT_RUNNER_DIAMOND_LAYOUT,
   FIRST_BASE_LINE_RUNNER_LAYOUT,
@@ -12,7 +13,10 @@ import {
   projectPitchFlightSample,
   projectRunnerAdvance,
   projectRunnerAdvanceToCamera,
+  runnerAdvanceTerminalTimeMs,
   runnerDiamondLayoutForCamera,
+  runnerResolutionTimelineEndMs,
+  RUN_SCORED_RUNNER_LAYOUT,
   THIRD_BASE_LINE_RUNNER_LAYOUT,
 } from "../src/utils/games/baseball/presentation.ts";
 import { samplePitchFlight } from "../src/utils/games/baseball/pitchEngine.ts";
@@ -21,6 +25,7 @@ import type {
   BattedBall,
   PitchFlightState,
   RunnerAdvance,
+  RunnerResolution,
 } from "../src/utils/games/baseball/types.ts";
 
 test("렌더링된 스트라이크존 사각형을 스테이지 기준 투구 좌표로 환산한다", () => {
@@ -238,6 +243,64 @@ test("1·3루 라인 카메라는 실제 배경의 베이스 중심에 주자 �
     projectRunnerAdvanceToCamera(firstBaseAdvance, 500, "FIRST_BASE_LINE"),
     projectRunnerAdvanceToCamera(firstBaseAdvance, 500, "FIRST_BASE_LINE"),
   );
+});
+
+test("클램프된 이벤트 길이와 무관하게 100% 재생은 SAFE·SCORE 도착과 OUT 순간을 보장한다", () => {
+  const safe = advance({
+    runnerId: "safe-runner",
+    arrivedAtMs: 4_500,
+  });
+  const scored = advance({
+    runnerId: "scored-runner",
+    fromBase: 3,
+    toBase: 4,
+    result: "SCORE",
+    startedAtMs: 120,
+    arrivedAtMs: 3_900,
+  });
+  const retired = advance({
+    runnerId: "out-runner",
+    result: "OUT",
+    arrivedAtMs: 5_200,
+    outAtMs: 2_600,
+  });
+  const resolution: RunnerResolution = {
+    advances: [safe, scored, retired],
+    nextBases: { first: null, second: null, third: null },
+    scoredRunnerIds: [scored.runnerId],
+    outRunnerIds: [retired.runnerId],
+    runsScored: 1,
+    outsRecorded: 1,
+  };
+
+  assert.equal(runnerAdvanceTerminalTimeMs(safe), 4_500);
+  assert.equal(runnerAdvanceTerminalTimeMs(retired), 2_600);
+  assert.equal(runnerResolutionTimelineEndMs(resolution), 4_500);
+  assert.equal(compressedRunnerElapsedMs(resolution, 0.5), 2_250);
+  assert.equal(compressedRunnerElapsedMs(resolution, 1), 4_500);
+
+  const elapsedAtEnd = compressedRunnerElapsedMs(resolution, 1);
+  assert.equal(projectRunnerAdvance(safe, elapsedAtEnd).status, "SAFE");
+  assert.deepEqual(projectRunnerAdvance(safe, elapsedAtEnd).position, DEFAULT_RUNNER_DIAMOND_LAYOUT.first);
+  assert.equal(projectRunnerAdvance(scored, elapsedAtEnd).status, "SCORE");
+  assert.deepEqual(projectRunnerAdvance(scored, elapsedAtEnd).position, DEFAULT_RUNNER_DIAMOND_LAYOUT.home);
+  const outAtEnd = projectRunnerAdvance(retired, elapsedAtEnd);
+  assert.equal(outAtEnd.status, "OUT");
+  assert.deepEqual(outAtEnd.position, projectRunnerAdvance(retired, retired.outAtMs!).position);
+});
+
+test("득점 카메라의 주자 종착점은 clean v4 홈플레이트 중심이다", () => {
+  const scored = advance({
+    fromBase: 3,
+    toBase: 4,
+    result: "SCORE",
+    startedAtMs: 0,
+    arrivedAtMs: 1_650,
+  });
+  const sample = projectRunnerAdvanceToCamera(scored, scored.arrivedAtMs, "RUN_SCORED");
+  assert.deepEqual(runnerDiamondLayoutForCamera("RUN_SCORED"), RUN_SCORED_RUNNER_LAYOUT);
+  assert.deepEqual(sample.position, { xPercent: 50, yPercent: 80 });
+  assert.equal(sample.status, "SCORE");
 });
 
 test("잘못된 경계·시간·배치 입력은 즉시 거부한다", () => {

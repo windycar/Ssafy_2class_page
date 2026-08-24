@@ -94,6 +94,20 @@ export interface BaseballVisualPlaybackController {
   cancel: () => void;
 }
 
+export interface BaseballVisualFrameScheduler {
+  requestFrame: (callback: FrameRequestCallback) => number;
+  cancelFrame: (handle: number) => void;
+  now: () => number;
+}
+
+export interface BaseballVisualEventFrameLoopOptions {
+  playId: string;
+  event: VisualEvent;
+  initialProgress: number;
+  dispatch: (action: BaseballVisualPlaybackAction) => void;
+  scheduler?: BaseballVisualFrameScheduler;
+}
+
 const EMPTY_EVENTS: readonly VisualEvent[] = [];
 
 function clampProgress(progress: number) {
@@ -289,6 +303,65 @@ function monotonicNow() {
   return typeof performance === "undefined" ? Date.now() : performance.now();
 }
 
+export function baseballVisualEventTerminalHoldMs(event: VisualEvent) {
+  if (event.kind === "RUN_SCORE") return 420;
+  if (event.kind === "FIELD_RESULT" || event.kind === "RUNNER_ADVANCE") return 120;
+  return 0;
+}
+
+/**
+ * Drives one event without advancing it in the same frame as its terminal
+ * TICK. This guarantees the browser can paint progress=1; scoring holds that
+ * frame briefly so the runner touching home and the score motion are visible.
+ */
+export function startBaseballVisualEventFrameLoop({
+  playId,
+  event,
+  initialProgress,
+  dispatch,
+  scheduler = {
+    requestFrame: (callback) => requestAnimationFrame(callback),
+    cancelFrame: (handle) => cancelAnimationFrame(handle),
+    now: monotonicNow,
+  },
+}: BaseballVisualEventFrameLoopOptions) {
+  const durationMs = Math.max(1, event.durationMs);
+  const startedAt = scheduler.now() - clampProgress(initialProgress) * durationMs;
+  const terminalHoldMs = baseballVisualEventTerminalHoldMs(event);
+  let cancelled = false;
+  let frameHandle: number | null = null;
+
+  const schedule = (callback: FrameRequestCallback) => {
+    frameHandle = scheduler.requestFrame(callback);
+  };
+  const advanceAfterTerminalFrame = (completedAt: number) => (now: number) => {
+    if (cancelled) return;
+    if (now - completedAt < terminalHoldMs) {
+      schedule(advanceAfterTerminalFrame(completedAt));
+      return;
+    }
+    frameHandle = null;
+    dispatch({ type: "ADVANCE", playId, eventId: event.id });
+  };
+  const animate = (now: number) => {
+    if (cancelled) return;
+    const progress = clampProgress((now - startedAt) / durationMs);
+    dispatch({ type: "TICK", playId, eventId: event.id, progress });
+    if (progress >= 1) {
+      schedule(advanceAfterTerminalFrame(now));
+      return;
+    }
+    schedule(animate);
+  };
+
+  schedule(animate);
+  return () => {
+    cancelled = true;
+    if (frameHandle !== null) scheduler.cancelFrame(frameHandle);
+    frameHandle = null;
+  };
+}
+
 export function useBaseballVisualPlayback(
   options: UseBaseballVisualPlaybackOptions = {},
 ): BaseballVisualPlaybackController {
@@ -296,7 +369,7 @@ export function useBaseballVisualPlayback(
     createInitialBaseballVisualPlaybackState,
   );
   const stateRef = useRef(state);
-  const frameRef = useRef<number | null>(null);
+  const cancelFrameLoopRef = useRef<(() => void) | null>(null);
   const mountedRef = useRef(true);
   const eventStartRef = useRef(options.onEventStart);
   const completeRef = useRef(options.onComplete);
@@ -327,8 +400,8 @@ export function useBaseballVisualPlayback(
   const start = useCallback((request: BaseballVisualPlaybackStartRequest) => {
     if (stateRef.current.startedPlayIds.has(request.playId.trim())) return false;
     const previous = stateRef.current;
-    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
-    frameRef.current = null;
+    cancelFrameLoopRef.current?.();
+    cancelFrameLoopRef.current = null;
     const transition = applyAction(createBaseballVisualPlaybackStartAction(request));
     return transition.state !== previous;
   }, [applyAction]);
@@ -346,8 +419,8 @@ export function useBaseballVisualPlayback(
   }, [applyAction]);
 
   const cancel = useCallback(() => {
-    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
-    frameRef.current = null;
+    cancelFrameLoopRef.current?.();
+    cancelFrameLoopRef.current = null;
     applyAction({ type: "CANCEL" });
   }, [applyAction]);
 
@@ -356,27 +429,16 @@ export function useBaseballVisualPlayback(
   useEffect(() => {
     if (!state.active || !state.playId || !activeEvent) return;
     const playId = state.playId;
-    const eventId = activeEvent.id;
-    const durationMs = Math.max(1, activeEvent.durationMs);
-    const startedAt = monotonicNow() - stateRef.current.eventProgress * durationMs;
-    let cancelled = false;
-
-    const animate = (now: number) => {
-      if (cancelled) return;
-      const progress = clampProgress((now - startedAt) / durationMs);
-      applyAction({ type: "TICK", playId, eventId, progress });
-      if (progress >= 1) {
-        applyAction({ type: "ADVANCE", playId, eventId });
-        return;
-      }
-      frameRef.current = requestAnimationFrame(animate);
-    };
-
-    frameRef.current = requestAnimationFrame(animate);
+    const cancelLoop = startBaseballVisualEventFrameLoop({
+      playId,
+      event: activeEvent,
+      initialProgress: stateRef.current.eventProgress,
+      dispatch: applyAction,
+    });
+    cancelFrameLoopRef.current = cancelLoop;
     return () => {
-      cancelled = true;
-      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
+      cancelLoop();
+      if (cancelFrameLoopRef.current === cancelLoop) cancelFrameLoopRef.current = null;
     };
   }, [activeEvent, applyAction, state.active, state.eventIndex, state.playId]);
 
@@ -384,8 +446,8 @@ export function useBaseballVisualPlayback(
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
-      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
+      cancelFrameLoopRef.current?.();
+      cancelFrameLoopRef.current = null;
     };
   }, []);
 

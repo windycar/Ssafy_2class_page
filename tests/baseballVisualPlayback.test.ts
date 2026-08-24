@@ -4,9 +4,12 @@ import test from "node:test";
 
 import {
   baseballVisualPlaybackReducer,
+  baseballVisualEventTerminalHoldMs,
   createBaseballVisualPlaybackStartAction,
   createInitialBaseballVisualPlaybackState,
+  startBaseballVisualEventFrameLoop,
   transitionBaseballVisualPlayback,
+  type BaseballVisualFrameScheduler,
   type BaseballVisualPlaybackAction,
   type BaseballVisualPlaybackState,
 } from "../src/hooks/useBaseballVisualPlayback.ts";
@@ -41,6 +44,37 @@ function run(
   action: BaseballVisualPlaybackAction,
 ) {
   return transitionBaseballVisualPlayback(state, action);
+}
+
+function createFakeFrameScheduler() {
+  let currentTime = 0;
+  let nextHandle = 1;
+  const callbacks = new Map<number, FrameRequestCallback>();
+  const scheduler: BaseballVisualFrameScheduler = {
+    requestFrame(callback) {
+      const handle = nextHandle++;
+      callbacks.set(handle, callback);
+      return handle;
+    },
+    cancelFrame(handle) {
+      callbacks.delete(handle);
+    },
+    now() {
+      return currentTime;
+    },
+  };
+  return {
+    scheduler,
+    step(milliseconds: number) {
+      currentTime += milliseconds;
+      const ready = [...callbacks.values()];
+      callbacks.clear();
+      for (const callback of ready) callback(currentTime);
+    },
+    pending() {
+      return callbacks.size;
+    },
+  };
 }
 
 test("START는 큐와 sourceGame을 복제하고 첫 이벤트 시작 효과를 한 번만 만든다", () => {
@@ -211,6 +245,64 @@ test("빈 큐도 즉시 완료를 한 번만 알리고 reducer는 transition 상
 
   const duplicate = run(transition.state, action);
   assert.deepEqual(duplicate.effects, []);
+});
+
+test("RAF 루프는 progress=1을 먼저 그린 다음 프레임에서만 다음 이벤트로 넘어간다", () => {
+  const event = { ...visualEvent("play-frame", 0, "BALL_FLIGHT", true), durationMs: 100 };
+  const frames = createFakeFrameScheduler();
+  const actions: BaseballVisualPlaybackAction[] = [];
+  const cancel = startBaseballVisualEventFrameLoop({
+    playId: event.playId,
+    event,
+    initialProgress: 0,
+    dispatch: (action) => actions.push(action),
+    scheduler: frames.scheduler,
+  });
+
+  frames.step(100);
+  assert.deepEqual(actions.map((action) => action.type), ["TICK"]);
+  assert.equal(actions[0].type === "TICK" && actions[0].progress, 1);
+  assert.equal(frames.pending(), 1);
+
+  frames.step(16);
+  assert.deepEqual(actions.map((action) => action.type), ["TICK", "ADVANCE"]);
+  assert.equal(frames.pending(), 0);
+  cancel();
+});
+
+test("득점 마지막 프레임은 홈 도착 모션이 보이도록 420ms 유지되고 취소 후 stale action이 없다", () => {
+  const event = { ...visualEvent("play-score", 0, "RUN_SCORE", false), durationMs: 100 };
+  assert.equal(baseballVisualEventTerminalHoldMs(event), 420);
+  const frames = createFakeFrameScheduler();
+  const actions: BaseballVisualPlaybackAction[] = [];
+  const cancel = startBaseballVisualEventFrameLoop({
+    playId: event.playId,
+    event,
+    initialProgress: 0,
+    dispatch: (action) => actions.push(action),
+    scheduler: frames.scheduler,
+  });
+
+  frames.step(100);
+  frames.step(400);
+  assert.deepEqual(actions.map((action) => action.type), ["TICK"]);
+  frames.step(20);
+  assert.deepEqual(actions.map((action) => action.type), ["TICK", "ADVANCE"]);
+
+  const cancelledFrames = createFakeFrameScheduler();
+  const cancelledActions: BaseballVisualPlaybackAction[] = [];
+  const cancelBeforeFrame = startBaseballVisualEventFrameLoop({
+    playId: event.playId,
+    event,
+    initialProgress: 0,
+    dispatch: (action) => cancelledActions.push(action),
+    scheduler: cancelledFrames.scheduler,
+  });
+  cancelBeforeFrame();
+  cancelledFrames.step(1_000);
+  assert.deepEqual(cancelledActions, []);
+  assert.equal(cancelledFrames.pending(), 0);
+  cancel();
 });
 
 test("Solo controller는 공통 playback hook을 쓰고 자체 visual RAF 상태를 보유하지 않는다", () => {

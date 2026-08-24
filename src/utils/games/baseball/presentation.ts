@@ -9,6 +9,7 @@ import type {
   BattedBallZone,
   PitchFlightState,
   RunnerAdvance,
+  RunnerResolution,
   Vec2,
 } from "./types.ts";
 
@@ -369,11 +370,20 @@ export const THIRD_BASE_LINE_RUNNER_LAYOUT: Readonly<RunnerDiamondLayout> = {
   third: { xPercent: 42, yPercent: 77 },
 };
 
+/** Home-plate anchor measured from the clean run-scored v4 scene. */
+export const RUN_SCORED_RUNNER_LAYOUT: Readonly<RunnerDiamondLayout> = {
+  home: { xPercent: 50, yPercent: 80 },
+  first: { xPercent: 5, yPercent: 70 },
+  second: { xPercent: 50, yPercent: 46 },
+  third: { xPercent: 95, yPercent: 70 },
+};
+
 const RUNNER_DIAMOND_LAYOUT_BY_CAMERA: Readonly<
   Partial<Record<BaseballCameraMode, Readonly<RunnerDiamondLayout>>>
 > = {
   FIRST_BASE_LINE: FIRST_BASE_LINE_RUNNER_LAYOUT,
   THIRD_BASE_LINE: THIRD_BASE_LINE_RUNNER_LAYOUT,
+  RUN_SCORED: RUN_SCORED_RUNNER_LAYOUT,
 };
 
 /** Returns the calibrated diamond projection for a presentation camera. */
@@ -512,4 +522,41 @@ export function projectRunnerAdvanceToCamera(
     ),
     camera,
   };
+}
+
+/**
+ * Returns the authoritative instant at which an advance must stop. SAFE/SCORE
+ * end at the recorded arrival; an OUT freezes at the recorded tag/force time.
+ */
+export function runnerAdvanceTerminalTimeMs(advance: RunnerAdvance) {
+  assertFinite(advance.arrivedAtMs, "advance.arrivedAtMs");
+  if (advance.result !== "OUT") return advance.arrivedAtMs;
+  if (advance.outAtMs === undefined) {
+    throw new RangeError("OUT advances require outAtMs.");
+  }
+  assertFinite(advance.outAtMs, "advance.outAtMs");
+  return advance.outAtMs;
+}
+
+/** Latest authoritative terminal instant among runners that actually moved. */
+export function runnerResolutionTimelineEndMs(resolution: RunnerResolution) {
+  return resolution.advances.reduce((latest, advance) => (
+    advance.result === "HOLD"
+      ? latest
+      : Math.max(latest, runnerAdvanceTerminalTimeMs(advance))
+  ), 0);
+}
+
+/**
+ * Maps normalized UI playback into the complete authoritative runner timeline.
+ * Visual-event durations may be clamped for pacing, so using durationMs directly
+ * can strand a safe runner short of the bag. This mapping guarantees that 1.0
+ * reaches every terminal ruling while retaining each runner's start delay.
+ */
+export function compressedRunnerElapsedMs(
+  resolution: RunnerResolution,
+  playbackProgress: number,
+) {
+  assertFinite(playbackProgress, "playbackProgress");
+  return runnerResolutionTimelineEndMs(resolution) * clamp(playbackProgress, 0, 1);
 }

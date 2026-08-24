@@ -11,16 +11,20 @@ import {
 
 import baseballArenaFacing from "../../../../assets/games/baseball-arena-facing.png";
 import baseballArenaSwingFacing from "../../../../assets/games/baseball-arena-swing-facing.png";
-import baseballBatterActionsBlue from "../../../../assets/games/baseball-batter-actions-blue.png";
 import baseballPitcherActionsRed from "../../../../assets/games/baseball-pitcher-actions-red.png";
 import {
   BASEBALL_V2_BALL_SOURCE,
+  BASEBALL_V2_BATTER_ACTION_SOURCES,
   BASEBALL_V2_CAMERA_BACKGROUND_SOURCES,
+  BASEBALL_V2_FIELDER_SOURCES,
+  BASEBALL_V2_RUNNER_SOURCES,
   BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE,
 } from "../../../../config/baseballV2Assets.ts";
 import { useBaseballOnlineController } from "../../../../hooks/useBaseballOnlineController.ts";
+import { useBaseballVisualPlayback } from "../../../../hooks/useBaseballVisualPlayback.ts";
 import type { BaseballRoom } from "../../../../types/baseballRoom.ts";
 import { resolveBaseballCameraBackground } from "../../../../utils/games/baseball/cameraBackground.ts";
+import { cloneGameState } from "../../../../utils/games/baseball/gameState.ts";
 import {
   createPitchVisualFrame,
   DEFAULT_PITCH_STAGE_PROJECTION,
@@ -29,10 +33,14 @@ import {
   type PitchSpriteSample,
   type PitchStageProjection,
 } from "../../../../utils/games/baseball/presentation.ts";
+import {
+  createSoloVisualPlaybackPlan,
+  resolveBaseballVisualPlaybackDisplayGame,
+  type SoloVisualPlaybackPlan,
+} from "../../../../utils/games/baseball/soloPresentation.ts";
 import type {
   BaseballCameraMode,
   BaseballGameState,
-  BaseballPlayResultCode,
   PitchQuality,
   PitchFlightState,
 } from "../../../../utils/games/baseball/types.ts";
@@ -47,12 +55,18 @@ import {
   BaseballOnlineWaitingOverlayV2,
 } from "./BaseballOverlaysV2.tsx";
 import {
+  BASEBALL_RESULT_LABELS_V2,
+  createBaseballDefenseThrowPresentationV2,
+  createBaseballFielderPresentationsV2,
+  createBaseballRunnerPresentationsV2,
+} from "./BaseballPlayPresentationV2.ts";
+import {
   BaseballStageV2,
   type BaseballBallPresentationV2,
   type BaseballPresentationPointV2,
-  type BaseballRunnerPresentationV2,
   type BaseballTrailPointsV2,
 } from "./BaseballStageV2.tsx";
+import { BaseballVisualEventOverlayV2 } from "./BaseballVisualEventPresentationV2.tsx";
 import "../../../../styles/baseball-v2.css";
 
 const AIM_KEY_STEP = 0.035;
@@ -68,40 +82,6 @@ const PITCH_NAMES = {
   fork: "포크",
   cutter: "커터",
 } as const;
-
-const RESULT_LABELS: Readonly<Record<BaseballPlayResultCode, string>> = {
-  BALL: "볼",
-  CALLED_STRIKE: "스트라이크",
-  SWINGING_STRIKE: "헛스윙 스트라이크",
-  FOUL: "파울",
-  WALK: "볼넷",
-  STRIKEOUT_LOOKING: "루킹 삼진",
-  STRIKEOUT_SWINGING: "헛스윙 삼진",
-  GROUND_OUT_1B: "1루수 땅볼 아웃",
-  GROUND_OUT_2B: "2루수 땅볼 아웃",
-  GROUND_OUT_SS: "유격수 땅볼 아웃",
-  GROUND_OUT_3B: "3루수 땅볼 아웃",
-  FLY_OUT_LF: "좌익수 플라이 아웃",
-  FLY_OUT_CF: "중견수 플라이 아웃",
-  FLY_OUT_RF: "우익수 플라이 아웃",
-  LINE_OUT: "직선타 아웃",
-  POP_OUT: "뜬공 아웃",
-  SINGLE_LEFT: "좌전 안타",
-  SINGLE_CENTER: "중전 안타",
-  SINGLE_RIGHT: "우전 안타",
-  INFIELD_SINGLE: "내야 안타",
-  DOUBLE_LEFT: "좌중간 2루타",
-  DOUBLE_CENTER: "중앙 2루타",
-  DOUBLE_RIGHT: "우중간 2루타",
-  TRIPLE: "3루타",
-  HOME_RUN_LEFT: "좌월 홈런!",
-  HOME_RUN_CENTER: "중월 홈런!",
-  HOME_RUN_RIGHT: "우월 홈런!",
-  DOUBLE_PLAY: "병살타",
-  FIELDER_CHOICE: "야수 선택",
-  SAC_FLY: "희생 플라이",
-  ERROR: "수비 실책",
-};
 
 const shellStyle: CSSProperties = {
   boxSizing: "border-box",
@@ -148,6 +128,12 @@ export interface BaseballOnlineGameV2Props {
   currentAuthId: string;
   onExit: () => void;
   className?: string;
+}
+
+interface OnlineVisualPlaybackPlan {
+  playId: string;
+  displayBeforeResult: BaseballGameState;
+  plan: SoloVisualPlaybackPlan;
 }
 
 function clamp(value: number, minimum: number, maximum: number) {
@@ -266,20 +252,6 @@ function createBattedPresentation(
   };
 }
 
-function staticRunners(game: BaseballGameState): BaseballRunnerPresentationV2[] {
-  const bases = [
-    { runner: game.bases.first, x: 73, y: 65, label: "1루" },
-    { runner: game.bases.second, x: 50, y: 42, label: "2루" },
-    { runner: game.bases.third, x: 27, y: 65, label: "3루" },
-  ];
-  return bases.flatMap(({ runner, x, y, label }) => runner ? [{
-    playerId: runner.playerId,
-    name: runner.name,
-    point: { x, y, scale: 0.84, opacity: 1 },
-    baseLabel: label,
-  }] : []);
-}
-
 function noticeLabel(status: ReturnType<typeof useBaseballOnlineController>["noticeStatus"]) {
   switch (status) {
     case "SUBSCRIBED": return "실시간 연결됨";
@@ -324,7 +296,6 @@ export function BaseballOnlineGameV2({
     currentAuthId,
   });
   const [pitchProgress, setPitchProgress] = useState(0);
-  const [battedProgress, setBattedProgress] = useState(0);
   const [pitchPulseProgress, setPitchPulseProgress] = useState(0);
   const [pitchProjection, setPitchProjection] = useState<PitchStageProjection>({
     ...DEFAULT_PITCH_STAGE_PROJECTION,
@@ -332,6 +303,9 @@ export function BaseballOnlineGameV2({
   const stageShellRef = useRef<HTMLDivElement>(null);
   const pitchProgressRef = useRef(0);
   const pitchPulseProgressRef = useRef(0);
+  const preResolutionGameByPlayIdRef = useRef(new Map<string, BaseballGameState>());
+  const handledResolvedPlayIdsRef = useRef(new Set<string>());
+  const onlineVisualPlaybackPlanRef = useRef<OnlineVisualPlaybackPlan | null>(null);
 
   const {
     room,
@@ -363,14 +337,113 @@ export function BaseballOnlineGameV2({
   } = controller;
 
   const activePlay = game?.activePlay ?? null;
-  const activePitch = activePlay?.pitch ?? null;
+  const playback = useBaseballVisualPlayback();
+  const resolvedPlay = activePlay?.phase === "RESOLVED" ? activePlay : null;
+
+  useEffect(() => {
+    if (!game || !activePlay || activePlay.phase === "RESOLVED") return;
+    const snapshots = preResolutionGameByPlayIdRef.current;
+    snapshots.set(activePlay.playId, cloneGameState(game));
+    while (snapshots.size > 4) {
+      const oldestPlayId = snapshots.keys().next().value;
+      if (typeof oldestPlayId !== "string") break;
+      snapshots.delete(oldestPlayId);
+    }
+  }, [activePlay, game]);
+
+  const resolvedPlaybackPlan = useMemo<OnlineVisualPlaybackPlan | null>(() => {
+    if (!game || !resolvedPlay) return null;
+    const displayBeforeResult = preResolutionGameByPlayIdRef.current.get(resolvedPlay.playId)
+      ?? cloneGameState(game);
+    const official = game.lastPlay;
+    const showThirdOutSnapshot = official !== null
+      && official.outsRecorded > 0
+      && displayBeforeResult.count.outs + official.outsRecorded >= 3;
+    return {
+      playId: resolvedPlay.playId,
+      displayBeforeResult,
+      plan: createSoloVisualPlaybackPlan({
+        events: resolvedPlay.visualEvents,
+        displayBeforeResult,
+        authoritativeAfterResult: game,
+        showThirdOutSnapshot,
+      }),
+    };
+  }, [game, resolvedPlay]);
+  const onlinePlaybackReady = !recovering
+    && allPlayersConnected
+    && !presenceRecoveryPending;
+  const resolvedPlaybackPending = Boolean(
+    onlinePlaybackReady
+    && resolvedPlay
+    && !handledResolvedPlayIdsRef.current.has(resolvedPlay.playId),
+  );
+  const playbackBlocking = playback.active || resolvedPlaybackPending;
+  const activeOnlinePlaybackPlan = playback.active
+    && onlineVisualPlaybackPlanRef.current?.playId === playback.playId
+    ? onlineVisualPlaybackPlanRef.current
+    : resolvedPlaybackPlan;
+  const presentedVisualEvent = playback.currentEvent
+    ?? (resolvedPlaybackPending ? resolvedPlaybackPlan?.plan.events[0] ?? null : null);
+  const presentedVisualEventProgress = playback.currentEvent
+    ? playback.currentEventProgress
+    : 0;
+  const authoritativePresentationGame = playback.active && playback.sourceGame
+    ? playback.sourceGame
+    : game;
+  const presentationGame = playbackBlocking && presentedVisualEvent && activeOnlinePlaybackPlan
+    ? resolveBaseballVisualPlaybackDisplayGame(
+        activeOnlinePlaybackPlan.plan,
+        activeOnlinePlaybackPlan.displayBeforeResult,
+        presentedVisualEvent.id,
+      )
+    : game;
+  const presentationPlay = authoritativePresentationGame?.activePlay ?? null;
+  const activePitch = presentationPlay?.pitch ?? null;
+  const canPitchNow = canPitch && !playbackBlocking;
+  const canBatNow = canBat && !playbackBlocking;
+
+  useEffect(() => {
+    if (room?.status === "cancelled") {
+      onlineVisualPlaybackPlanRef.current = null;
+      playback.cancel();
+      return;
+    }
+    if (
+      playback.active
+      && (!resolvedPlay || playback.playId !== resolvedPlay.playId)
+    ) {
+      onlineVisualPlaybackPlanRef.current = null;
+      playback.cancel();
+      return;
+    }
+    if (!onlinePlaybackReady || !game || !resolvedPlay || !resolvedPlaybackPlan) return;
+    if (handledResolvedPlayIdsRef.current.has(resolvedPlay.playId)) return;
+    onlineVisualPlaybackPlanRef.current = resolvedPlaybackPlan;
+    playback.start({
+      playId: resolvedPlay.playId,
+      events: resolvedPlaybackPlan.plan.events,
+      sourceGame: game,
+    });
+    handledResolvedPlayIdsRef.current.add(resolvedPlay.playId);
+  }, [
+    game,
+    onlinePlaybackReady,
+    playback.active,
+    playback.cancel,
+    playback.playId,
+    playback.start,
+    resolvedPlay,
+    resolvedPlaybackPlan,
+    room?.status,
+  ]);
 
   useEffect(() => {
     pitchProgressRef.current = pitchProgress;
   }, [pitchProgress]);
 
   useEffect(() => {
-    if (!activePitch || activePlay?.phase !== "AWAITING_BATTER") {
+    if (!activePitch || presentationPlay?.phase !== "AWAITING_BATTER") {
       setPitchProgress(activePitch ? 1 : 0);
       pitchProgressRef.current = activePitch ? 1 : 0;
       return;
@@ -395,35 +468,10 @@ export function BaseballOnlineGameV2({
     pitchProgressRef.current = 0;
     animationFrame = window.requestAnimationFrame(animate);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [activePitch, activePlay?.phase, activePlay?.playId]);
+  }, [activePitch, presentationPlay?.phase, presentationPlay?.playId]);
 
   useEffect(() => {
-    const ball = activePlay?.battedBall;
-    if (!ball || activePlay?.phase !== "RESOLVED") {
-      setBattedProgress(0);
-      return;
-    }
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setBattedProgress(1);
-      return;
-    }
-
-    let animationFrame = 0;
-    let startedAt: number | null = null;
-    const duration = clamp(ball.hangTime, 420, 1_500);
-    const animate = (timestamp: number) => {
-      startedAt ??= timestamp;
-      const next = clamp((timestamp - startedAt) / duration, 0, 1);
-      setBattedProgress(next);
-      if (next < 1) animationFrame = window.requestAnimationFrame(animate);
-    };
-    setBattedProgress(0);
-    animationFrame = window.requestAnimationFrame(animate);
-    return () => window.cancelAnimationFrame(animationFrame);
-  }, [activePlay?.battedBall, activePlay?.phase, activePlay?.playId]);
-
-  useEffect(() => {
-    if (!canPitch) {
+    if (!canPitchNow) {
       pitchPulseProgressRef.current = 0;
       setPitchPulseProgress(0);
       return;
@@ -439,17 +487,43 @@ export function BaseballOnlineGameV2({
     };
     animationFrame = window.requestAnimationFrame(animate);
     return () => window.cancelAnimationFrame(animationFrame);
-  }, [canPitch]);
+  }, [canPitchNow]);
 
   const handlePrimaryAction = useCallback(() => {
-    if (canPitch) {
+    if (playbackBlocking) {
+      if (playback.active && playback.currentEvent?.skippable) playback.skip();
+      return;
+    }
+    if (canPitchNow) {
       void submitPitch(pitchQualityForPulse(pitchPulseProgressRef.current));
       return;
     }
-    if (canBat) void submitSwing(pitchProgressRef.current);
-  }, [canBat, canPitch, submitPitch, submitSwing]);
+    if (canBatNow) void submitSwing(pitchProgressRef.current);
+  }, [
+    canBatNow,
+    canPitchNow,
+    playback.active,
+    playback.currentEvent,
+    playback.skip,
+    playbackBlocking,
+    submitPitch,
+    submitSwing,
+  ]);
 
-  const canAim = canPitch || canBat;
+  const canAim = canPitchNow || canBatNow;
+  const handleAimChange = useCallback((point: Parameters<typeof setAim>[0]) => {
+    if (canAim) setAim(point);
+  }, [canAim, setAim]);
+  const handleSelectPitch = useCallback((pitch: typeof selectedPitchType) => {
+    if (canPitchNow) setSelectedPitchType(pitch);
+  }, [canPitchNow, setSelectedPitchType]);
+  const handleSelectSwing = useCallback((swing: typeof swingType) => {
+    if (canBatNow) setSwingType(swing);
+  }, [canBatNow, setSwingType]);
+  const handleTake = useCallback(() => {
+    if (canBatNow) void submitTake();
+  }, [canBatNow, submitTake]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -463,7 +537,12 @@ export function BaseballOnlineGameV2({
       ) return;
 
       if (event.code === "Space" || event.key === " ") {
-        if (!canPitch && !canBat) return;
+        if (playbackBlocking) {
+          event.preventDefault();
+          handlePrimaryAction();
+          return;
+        }
+        if (!canPitchNow && !canBatNow) return;
         event.preventDefault();
         handlePrimaryAction();
         return;
@@ -479,19 +558,24 @@ export function BaseballOnlineGameV2({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canAim, canBat, canPitch, handlePrimaryAction, setAim]);
+  }, [canAim, canBatNow, canPitchNow, handlePrimaryAction, playbackBlocking, setAim]);
 
-  const localIsBatting = game !== null && actorSeat === game.battingTeam;
-  const localIsPitching = game !== null && actorSeat !== null && actorSeat !== game.battingTeam;
-  const battedCamera = activePlay?.visualEvents.find((event) => event.kind === "BALL_FLIGHT")?.camera;
-  const cameraMode: BaseballCameraMode = activePlay?.battedBall && activePlay.phase === "RESOLVED"
-    ? battedCamera ?? "INFIELD"
-    : localIsBatting
-      ? "BATTER"
-      : "PITCHER";
-  const perspective: "BATTING" | "PITCHING" | "FIELD" = activePlay?.battedBall
-    && activePlay.phase === "RESOLVED"
-    ? "FIELD"
+  const localIsBatting = presentationGame !== null && actorSeat === presentationGame.battingTeam;
+  const localIsPitching = presentationGame !== null
+    && actorSeat !== null
+    && actorSeat !== presentationGame.battingTeam;
+  const cameraMode: BaseballCameraMode = presentedVisualEvent?.camera
+    ?? (presentationPlay?.battedBall && presentationPlay.phase === "RESOLVED"
+      ? presentationPlay.visualEvents.find((event) => event.kind === "BALL_FLIGHT")?.camera ?? "INFIELD"
+      : localIsBatting
+        ? "BATTER"
+        : "PITCHER");
+  const perspective: "BATTING" | "PITCHING" | "FIELD" = presentedVisualEvent
+    ? presentedVisualEvent.camera === "BATTER" || presentedVisualEvent.camera === "CONTACT"
+      ? "BATTING"
+      : presentedVisualEvent.camera === "PITCHER"
+        ? "PITCHING"
+        : "FIELD"
     : localIsBatting
       ? "BATTING"
       : "PITCHING";
@@ -500,7 +584,9 @@ export function BaseballOnlineGameV2({
     perspective,
     BASEBALL_V2_CAMERA_BACKGROUND_SOURCES,
   );
-  const showStrikeZone = Boolean(game) && perspective !== "FIELD";
+  const showStrikeZone = Boolean(presentationGame)
+    && !playbackBlocking
+    && perspective !== "FIELD";
 
   useLayoutEffect(() => {
     if (!showStrikeZone) return;
@@ -539,7 +625,7 @@ export function BaseballOnlineGameV2({
   }, [perspective, showStrikeZone]);
 
   const pitchBall = useMemo(() => (
-    activePitch && activePlay?.phase === "AWAITING_BATTER"
+    activePitch && presentationPlay?.phase === "AWAITING_BATTER"
       ? createPitchPresentation(
           activePitch.trajectory,
           pitchProgress,
@@ -547,16 +633,89 @@ export function BaseballOnlineGameV2({
           pitchProjection,
         )
       : null
-  ), [activePitch, activePlay?.phase, localIsPitching, pitchProgress, pitchProjection]);
+  ), [activePitch, localIsPitching, pitchProgress, pitchProjection, presentationPlay?.phase]);
   const battedBall = useMemo(() => (
-    game && activePlay?.battedBall && activePlay.phase === "RESOLVED"
-      ? createBattedPresentation(game, battedProgress, cameraMode)
+    authoritativePresentationGame
+    && presentationPlay?.battedBall
+    && presentedVisualEvent?.kind === "BALL_FLIGHT"
+      ? createBattedPresentation(
+          authoritativePresentationGame,
+          presentedVisualEventProgress,
+          cameraMode,
+        )
       : null
-  ), [activePlay?.battedBall, activePlay?.phase, battedProgress, cameraMode, game]);
-  const runners = useMemo(() => game ? staticRunners(game) : [], [game]);
+  ), [
+    cameraMode,
+    authoritativePresentationGame,
+    presentationPlay?.battedBall,
+    presentedVisualEvent?.kind,
+    presentedVisualEventProgress,
+  ]);
+  const lastPlayEntry = authoritativePresentationGame?.playByPlay[
+    authoritativePresentationGame.playByPlay.length - 1
+  ];
+  const visualBattingTeam = presentedVisualEvent
+    ? lastPlayEntry?.battingTeam ?? authoritativePresentationGame?.battingTeam ?? 0
+    : presentationGame?.battingTeam ?? 0;
+  const visualFieldingTeam = visualBattingTeam === 0 ? 1 : 0;
+  const runners = useMemo(
+    () => authoritativePresentationGame && presentationGame ? createBaseballRunnerPresentationsV2({
+      authoritativeGame: authoritativePresentationGame,
+      presentationGame,
+      event: presentedVisualEvent,
+      eventProgress: presentedVisualEventProgress,
+      cameraMode,
+      runnerAssetSrc: BASEBALL_V2_RUNNER_SOURCES[visualBattingTeam],
+    }) : [],
+    [
+      cameraMode,
+      authoritativePresentationGame,
+      presentationGame,
+      presentedVisualEvent,
+      presentedVisualEventProgress,
+      visualBattingTeam,
+    ],
+  );
+  const fielders = useMemo(
+    () => authoritativePresentationGame ? createBaseballFielderPresentationsV2({
+      game: authoritativePresentationGame,
+      event: presentedVisualEvent,
+      eventProgress: presentedVisualEventProgress,
+      fielderAssetSrc: BASEBALL_V2_FIELDER_SOURCES[visualFieldingTeam],
+    }) : [],
+    [
+      authoritativePresentationGame,
+      presentedVisualEvent,
+      presentedVisualEventProgress,
+      visualFieldingTeam,
+    ],
+  );
+  const defenseThrow = useMemo(
+    () => authoritativePresentationGame ? createBaseballDefenseThrowPresentationV2({
+      game: authoritativePresentationGame,
+      event: presentedVisualEvent,
+      eventProgress: presentedVisualEventProgress,
+    }) : null,
+    [
+      authoritativePresentationGame,
+      presentedVisualEvent,
+      presentedVisualEventProgress,
+    ],
+  );
 
   let overlay: ReactNode = null;
-  if (!room || !game) {
+  if (room && game && room.status === "cancelled") {
+    overlay = (
+      <BaseballFinalOverlayV2
+        game={game}
+        title="경기 취소"
+        summary="참가자가 방을 나가 온라인 경기가 종료되었습니다."
+        backgroundSrc={baseballArenaSwingFacing}
+        cancelled
+        onExit={onExit}
+      />
+    );
+  } else if (!room || !game) {
     overlay = (
       <BaseballOnlineWaitingOverlayV2
         title="경기 상태를 복구하는 중"
@@ -588,17 +747,19 @@ export function BaseballOnlineGameV2({
         onCancel={onExit}
       />
     );
-  } else if (room.status === "cancelled") {
-    overlay = (
-      <BaseballFinalOverlayV2
-        game={game}
-        title="경기 취소"
-        summary="참가자가 방을 나가 온라인 경기가 종료되었습니다."
-        backgroundSrc={baseballArenaSwingFacing}
-        cancelled
-        onExit={onExit}
+  } else if (playbackBlocking) {
+    overlay = playback.active
+      && presentedVisualEvent
+      && presentationGame
+      && authoritativePresentationGame ? (
+      <BaseballVisualEventOverlayV2
+        event={presentedVisualEvent}
+        official={authoritativePresentationGame.lastPlay}
+        game={presentationGame}
+        onSkip={playback.skip}
+        homeRunImageSrc={baseballArenaSwingFacing}
       />
-    );
+    ) : null;
   } else if (role === "FINAL") {
     overlay = (
       <BaseballFinalOverlayV2
@@ -607,7 +768,7 @@ export function BaseballOnlineGameV2({
         onExit={onExit}
       />
     );
-  } else if (!allPlayersConnected || presenceRecoveryPending) {
+  } else if (!playbackBlocking && (!allPlayersConnected || presenceRecoveryPending)) {
     overlay = (
       <BaseballOnlineWaitingOverlayV2
         title={opponentConnected ? "경기 상태 동기화 중" : "상대 재접속 대기 중"}
@@ -627,38 +788,56 @@ export function BaseballOnlineGameV2({
     );
   }
 
-  const mode: BaseballControlModeV2 = role === "PITCHING"
-    ? "PITCHING"
-    : role === "BATTING"
-      ? "BATTING"
-      : role === "FINAL"
-        ? "BETWEEN"
-        : "SPECTATING";
-  const phase: BaseballControlPhaseV2 = role === "FINAL"
-    ? "FINAL"
-    : busy
-      ? role === "PITCHING" ? "PITCH_WINDUP" : "EVENT_PLAYBACK"
-      : role === "PITCHING"
-        ? "READY"
-        : role === "BATTING"
-          ? "AIMING"
-          : "ONLINE_WAITING";
-  const primaryLabel = role === "PITCHING"
-    ? "투구"
-    : role === "BATTING"
-      ? "스윙!"
-      : role === "FINAL"
-        ? "경기 종료"
-        : "상대 입력 대기";
+  const eventCanSkip = playback.active && Boolean(playback.currentEvent?.skippable);
+  const mode: BaseballControlModeV2 = playbackBlocking
+    ? "BETWEEN"
+    : role === "PITCHING"
+      ? "PITCHING"
+      : role === "BATTING"
+        ? "BATTING"
+        : role === "FINAL"
+          ? "BETWEEN"
+          : "SPECTATING";
+  const phase: BaseballControlPhaseV2 = playbackBlocking
+    ? eventCanSkip
+      ? "BETWEEN_PLAYS"
+      : "EVENT_PLAYBACK"
+    : role === "FINAL"
+      ? "FINAL"
+      : busy
+        ? role === "PITCHING" ? "PITCH_WINDUP" : "EVENT_PLAYBACK"
+        : role === "PITCHING"
+          ? "READY"
+          : role === "BATTING"
+            ? "AIMING"
+            : "ONLINE_WAITING";
+  const primaryLabel = playbackBlocking
+    ? eventCanSkip
+      ? "장면 건너뛰기"
+      : "판정 재생 중"
+    : role === "PITCHING"
+      ? "투구"
+      : role === "BATTING"
+        ? "스윙!"
+        : role === "FINAL"
+          ? "경기 종료"
+          : "상대 입력 대기";
   const pitchTimingQuality = pitchQualityForPulse(pitchPulseProgress);
-  const instruction = role === "PITCHING"
-    ? `구종과 코스를 정하고 타이밍 ${pitchTimingQuality}에 Space로 투구합니다.`
-    : role === "BATTING"
-      ? "공 궤적을 보고 조준한 뒤 Space로 스윙합니다."
-      : "상대 플레이가 확정되면 서버 상태를 다시 불러옵니다.";
-  const lastResult = game?.lastPlay ? RESULT_LABELS[game.lastPlay.code] : null;
-  const activePlayKey = activePlay?.playId ?? `revision-${game?.revision ?? 0}`;
-  const pitchMeter = canPitch ? (
+  const instruction = playbackBlocking
+    ? presentedVisualEvent
+      ? `${presentedVisualEvent.kind.replaceAll("_", " ")} · 서버 판정 장면 재생 중`
+      : "서버 판정 장면을 준비하고 있습니다."
+    : role === "PITCHING"
+      ? `구종과 코스를 정하고 타이밍 ${pitchTimingQuality}에 Space로 투구합니다.`
+      : role === "BATTING"
+        ? "공 궤적을 보고 조준한 뒤 Space로 스윙합니다."
+        : "상대 플레이가 확정되면 서버 상태를 다시 불러옵니다.";
+  const lastResult = presentationGame?.lastPlay
+    ? BASEBALL_RESULT_LABELS_V2[presentationGame.lastPlay.code]
+    : null;
+  const activePlayKey = presentationPlay?.playId
+    ?? `revision-${presentationGame?.revision ?? 0}`;
+  const pitchMeter = canPitchNow ? (
     <div
       style={{
         position: "absolute",
@@ -693,7 +872,7 @@ export function BaseballOnlineGameV2({
       </div>
     </div>
   ) : null;
-  const pitchReadout = activePitch && activePlay?.phase === "AWAITING_BATTER" ? (
+  const pitchReadout = activePitch && presentationPlay?.phase === "AWAITING_BATTER" ? (
     <div
       className={`bbv2-pitch-readout bbv2-pitch-readout--${activePitch.pitchType}`}
       aria-live="polite"
@@ -748,10 +927,10 @@ export function BaseballOnlineGameV2({
               : "타구 추적 야구장",
           ballSrc: BASEBALL_V2_BALL_SOURCE,
           batterSprite: perspective === "FIELD" ? undefined : {
-            src: baseballBatterActionsBlue,
+            src: BASEBALL_V2_BATTER_ACTION_SOURCES[visualBattingTeam],
             frameCount: 4,
             frameIndex: 0,
-            motion: localIsBatting && (busy || activePlay?.phase === "RESOLVED")
+            motion: localIsBatting && (busy || presentationPlay?.phase === "RESOLVED")
               ? "SWING"
               : "IDLE",
             animationKey: activePlayKey,
@@ -770,12 +949,14 @@ export function BaseballOnlineGameV2({
         perspective={perspective}
         pitchBall={battedBall ? null : pitchBall}
         battedBall={pitchBall ? null : battedBall}
+        defenseThrow={defenseThrow}
+        fielders={fielders}
         runners={runners}
         showStrikeZone={showStrikeZone}
         strikeZoneTarget={canAim ? aim : null}
         aimEnabled={canAim}
-        onAimChange={setAim}
-        hud={game ? <BaseballHudV2 game={game} /> : null}
+        onAimChange={canAim ? handleAimChange : undefined}
+        hud={presentationGame ? <BaseballHudV2 game={presentationGame} /> : null}
         overlay={overlay}
         effects={stageEffects}
         ariaLabel={game
@@ -792,21 +973,23 @@ export function BaseballOnlineGameV2({
         availablePitches={availablePitches}
         primaryActionLabel={primaryLabel}
         instruction={instruction}
-        disabled={role === "FINAL" || role === "SPECTATING"}
-        primaryActionEnabled={canPitch || canBat}
+        disabled={role === "SPECTATING"
+          || (role === "FINAL" && !eventCanSkip)
+          || (playbackBlocking && !eventCanSkip)}
+        primaryActionEnabled={eventCanSkip || canPitchNow || canBatNow}
         primaryActionBusy={busy}
-        onSelectPitch={setSelectedPitchType}
-        onSelectSwing={setSwingType}
+        onSelectPitch={handleSelectPitch}
+        onSelectSwing={handleSelectSwing}
         onPrimaryAction={handlePrimaryAction}
       />
 
-      {canBat ? (
+      {canBatNow ? (
         <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "8px" }}>
           <button
             type="button"
             style={exitButtonStyle}
             disabled={busy}
-            onClick={() => void submitTake()}
+            onClick={handleTake}
           >
             지켜보기 · TAKE
           </button>

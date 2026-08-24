@@ -12,7 +12,10 @@ import {
   VISUAL_EVENT_SKIPPABLE_POLICY,
 } from "../src/utils/games/baseball/visualEventQueue.ts";
 import { createGameState } from "../src/utils/games/baseball/gameState.ts";
-import { createSoloVisualPlaybackPlan } from "../src/utils/games/baseball/soloPresentation.ts";
+import {
+  createSoloVisualPlaybackPlan,
+  resolveBaseballVisualPlaybackDisplayGame,
+} from "../src/utils/games/baseball/soloPresentation.ts";
 import type {
   BattedBall,
   ContactResolution,
@@ -500,6 +503,28 @@ test("타구·결과 카메라는 구역, 땅볼, 파울, 홈런, 득점을 우�
     cameraForOfficialResult(makeOfficial({ code: "SINGLE_CENTER", runsScored: 1 })),
     "RUN_SCORED",
   );
+});
+
+test("공통 재생 HUD는 SCOREBOARD_UPDATE 전 점수를 유지하고 이후 이벤트에도 새 점수를 누적한다", () => {
+  const before = createGameState("CPU", "1P", 702);
+  const after = structuredClone(before);
+  after.teams[1].runs = 1;
+  const contact = makeVisualEvent("contact-score", "CONTACT");
+  const runScore = makeVisualEvent("run-score", "RUN_SCORE");
+  const scoreboard = makeVisualEvent("scoreboard-score", "SCOREBOARD_UPDATE");
+  const playResult = makeVisualEvent("play-result-score", "PLAY_RESULT");
+  const plan = createSoloVisualPlaybackPlan({
+    events: [contact, runScore, scoreboard, playResult],
+    displayBeforeResult: before,
+    authoritativeAfterResult: after,
+    showThirdOutSnapshot: false,
+  });
+
+  assert.equal(resolveBaseballVisualPlaybackDisplayGame(plan, before, contact.id).teams[1].runs, 0);
+  assert.equal(resolveBaseballVisualPlaybackDisplayGame(plan, before, runScore.id).teams[1].runs, 0);
+  assert.equal(resolveBaseballVisualPlaybackDisplayGame(plan, before, scoreboard.id).teams[1].runs, 1);
+  assert.equal(resolveBaseballVisualPlaybackDisplayGame(plan, before, playResult.id).teams[1].runs, 1);
+  assert.equal(resolveBaseballVisualPlaybackDisplayGame(plan, before, "unknown-event").teams[1].runs, 0);
 });
 
 test("주루 카메라는 OUT 경합을 우선하고 1·3루 목적지를 전용 라인 장면으로 고른다", () => {

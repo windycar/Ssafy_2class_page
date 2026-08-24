@@ -406,7 +406,7 @@ export function useBaseballOnlineController({
   const [selectedPitchType, setSelectedPitchType] = useState<BaseballPitchType>("fourSeam");
   const [swingType, setSwingType] = useState<SwingType>("NORMAL");
   const [busy, setBusy] = useState(false);
-  const [recovering, setRecovering] = useState(false);
+  const [recovering, setRecovering] = useState(() => enabled && Boolean(room?.id));
   const [presenceRecoveryPending, setPresenceRecoveryPending] = useState(true);
   const [error, setError] = useState<BaseballOnlineControllerError | null>(() => (
     room ? null : { status: 0, code: "INVALID_CANONICAL_ROOM" }

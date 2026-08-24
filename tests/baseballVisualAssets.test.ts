@@ -109,6 +109,9 @@ test("스테이지는 동일한 공 이미지로 본체 1개와 이전 위치 �
   assert.doesNotMatch(ballPresentationContract, /assetSrc/);
   assert.doesNotMatch(stageSource, /trailAtlasSrc|pitchTrailAtlases/);
   assert.doesNotMatch(styleSource, /ball-trail-atlas|background-size:\s*1000%/);
+  assert.match(stageSource, /data-facing=\{runner\.facing \?\? "RIGHT"\}/);
+  assert.match(stageSource, /data-facing=\{fielder\.facing \?\? "RIGHT"\}/);
+  assert.match(styleSource, /--bbv2-facing-scale:\s*-1/);
 
   const blurValues = [...trailStyleSource.matchAll(/blur\(([\d.]+)px\)/g)]
     .map((match) => Number(match[1]));
@@ -133,15 +136,85 @@ test("야구 화면은 경기장·카메라·캐릭터·공을 포함한 실제 
   const required = [
     "baseball-ball-clean-v3.png",
     "baseball-batter-actions-blue.png",
+    "baseball-batter-actions-red-v2.png",
     "baseball-pitcher-actions-red.png",
-    "baseball-fielder-actions-red.png",
+    "baseball-runner-blue-chibi-v3.png",
+    "baseball-runner-red-chibi-v3.png",
+    "baseball-fielder-blue-chibi-v3.png",
+    "baseball-fielder-red-chibi-v4.png",
     "baseball-catcher-actions-red.png",
     "baseball-camera-pitcher-empty.png",
     "baseball-camera-infield.png",
     "baseball-camera-home-run.png",
+    "baseball-camera-run-scored-v4.png",
+    "baseball-camera-left-field-v5.png",
+    "baseball-camera-left-center-v5.png",
+    "baseball-camera-center-field-v5.png",
+    "baseball-camera-right-center-v5.png",
+    "baseball-camera-right-field-v5.png",
   ];
   for (const name of required) {
     assert.ok(names.includes(name), `${name} 누락`);
     assert.ok(statSync(new URL(name, ASSET_DIRECTORY)).size >= 100_000);
+  }
+});
+
+test("동적 주자·수비수는 투명 RGBA이고 clean-v5 외야 배경은 런타임 manifest에만 연결된다", () => {
+  for (const name of [
+    "baseball-runner-blue-chibi-v3.png",
+    "baseball-runner-red-chibi-v3.png",
+    "baseball-fielder-blue-chibi-v3.png",
+    "baseball-fielder-red-chibi-v4.png",
+  ]) {
+    const sprite = pngDimensions(name);
+    assert.ok(sprite.width >= 1_000, `${name} 해상도가 너무 작음`);
+    assert.ok(sprite.height >= 1_000, `${name} 해상도가 너무 작음`);
+    assert.equal(sprite.colorType, 6, `${name}은 alpha가 있는 RGBA PNG여야 한다`);
+  }
+
+  const redBatter = pngDimensions("baseball-batter-actions-red-v2.png");
+  assert.equal(redBatter.width, 1_672);
+  assert.equal(redBatter.height, 941);
+  assert.equal(redBatter.colorType, 6);
+  assert.ok(redBatter.size >= 1_000_000);
+
+  const assetsSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "config/baseballV2Assets.ts"),
+    "utf8",
+  );
+  for (const name of [
+    "baseball-camera-left-field-v5.png",
+    "baseball-camera-left-center-v5.png",
+    "baseball-camera-center-field-v5.png",
+    "baseball-camera-right-center-v5.png",
+    "baseball-camera-right-field-v5.png",
+    "baseball-camera-run-scored-v4.png",
+    "baseball-runner-blue-chibi-v3.png",
+    "baseball-runner-red-chibi-v3.png",
+    "baseball-fielder-blue-chibi-v3.png",
+    "baseball-fielder-red-chibi-v4.png",
+    "baseball-batter-actions-red-v2.png",
+  ]) {
+    assert.match(assetsSource, new RegExp(name.replaceAll(".", "\\.")), `${name} manifest 연결 누락`);
+    assert.ok(statSync(new URL(name, ASSET_DIRECTORY)).size >= 100_000);
+  }
+  assert.doesNotMatch(
+    assetsSource,
+    /baseball-camera-(?:left-field|left-center|center-field|right-center|right-field)-v4\.png/,
+  );
+  assert.doesNotMatch(assetsSource, /baseball-camera-run-scored-v3\.png/);
+
+  for (const component of ["BaseballSoloGameV2.tsx", "BaseballOnlineGameV2.tsx"]) {
+    const source = readFileSync(
+      path.join(SOURCE_DIRECTORY, "components/games/baseball/v2", component),
+      "utf8",
+    );
+    assert.match(source, /BASEBALL_V2_RUNNER_SOURCES\[visualBattingTeam\]/);
+    assert.match(source, /BASEBALL_V2_FIELDER_SOURCES\[visualFieldingTeam\]/);
+    assert.match(source, /BASEBALL_V2_BATTER_ACTION_SOURCES\[visualBattingTeam\]/);
+    assert.match(source, /createBaseballRunnerPresentationsV2\(/);
+    assert.match(source, /createBaseballFielderPresentationsV2\(/);
+    assert.match(source, /fielders=\{fielders\}/);
+    assert.doesNotMatch(source, /baseball-fielder-actions-red\.png/);
   }
 });

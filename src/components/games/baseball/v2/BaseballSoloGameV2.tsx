@@ -11,12 +11,13 @@ import confetti from "canvas-confetti";
 
 import baseballArenaFacing from "../../../../assets/games/baseball-arena-facing.png";
 import baseballArenaSwingFacing from "../../../../assets/games/baseball-arena-swing-facing.png";
-import baseballBatterActionsBlue from "../../../../assets/games/baseball-batter-actions-blue.png";
-import baseballFielderActionsRed from "../../../../assets/games/baseball-fielder-actions-red.png";
 import baseballPitcherActionsRed from "../../../../assets/games/baseball-pitcher-actions-red.png";
 import {
   BASEBALL_V2_BALL_SOURCE,
+  BASEBALL_V2_BATTER_ACTION_SOURCES,
   BASEBALL_V2_CAMERA_BACKGROUND_SOURCES,
+  BASEBALL_V2_FIELDER_SOURCES,
+  BASEBALL_V2_RUNNER_SOURCES,
   BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE,
 } from "../../../../config/baseballV2Assets.ts";
 import { useBaseballSoloController } from "../../../../hooks/useBaseballSoloController.ts";
@@ -30,7 +31,6 @@ import {
   DEFAULT_PITCH_STAGE_PROJECTION,
   derivePitchStageProjection,
   projectBattedBallToCamera,
-  projectRunnerAdvance,
   type PitchSpriteSample,
   type PitchStageProjection,
 } from "../../../../utils/games/baseball/presentation.ts";
@@ -38,10 +38,7 @@ import type {
   BaseballCameraMode,
   BattedBall,
   BaseballGameState,
-  BaseballPlayResultCode,
-  OfficialPlayResult,
   PitchFlightState,
-  VisualEvent,
 } from "../../../../utils/games/baseball/types.ts";
 import {
   BaseballControlsV2,
@@ -50,19 +47,23 @@ import {
 } from "./BaseballControlsV2.tsx";
 import { BaseballHudV2 } from "./BaseballHudV2.tsx";
 import {
-  BaseballEventOverlayV2,
   BaseballFinalOverlayV2,
   BaseballHalfInningOverlayV2,
   BaseballIntroOverlayV2,
-  type BaseballEventToneV2,
 } from "./BaseballOverlaysV2.tsx";
+import {
+  createBaseballDefenseThrowPresentationV2,
+  createBaseballFielderPresentationsV2,
+  createBaseballRunnerPresentationsV2,
+  isBaseballHomeRunResultV2,
+} from "./BaseballPlayPresentationV2.ts";
 import {
   BaseballStageV2,
   type BaseballBallPresentationV2,
   type BaseballPresentationPointV2,
-  type BaseballRunnerPresentationV2,
   type BaseballTrailPointsV2,
 } from "./BaseballStageV2.tsx";
+import { BaseballVisualEventOverlayV2 } from "./BaseballVisualEventPresentationV2.tsx";
 import "../../../../styles/baseball-v2.css";
 
 const USER_TEAM_INDEX = 1;
@@ -78,75 +79,6 @@ const PITCH_NAMES = {
   fork: "포크",
   cutter: "커터",
 } as const;
-
-const HOME_RUN_CODES = new Set<BaseballPlayResultCode>([
-  "HOME_RUN_LEFT",
-  "HOME_RUN_CENTER",
-  "HOME_RUN_RIGHT",
-]);
-
-const HIT_CODES = new Set<BaseballPlayResultCode>([
-  "SINGLE_LEFT",
-  "SINGLE_CENTER",
-  "SINGLE_RIGHT",
-  "INFIELD_SINGLE",
-  "DOUBLE_LEFT",
-  "DOUBLE_CENTER",
-  "DOUBLE_RIGHT",
-  "TRIPLE",
-  ...HOME_RUN_CODES,
-]);
-
-const OUT_CODES = new Set<BaseballPlayResultCode>([
-  "STRIKEOUT_LOOKING",
-  "STRIKEOUT_SWINGING",
-  "GROUND_OUT_1B",
-  "GROUND_OUT_2B",
-  "GROUND_OUT_SS",
-  "GROUND_OUT_3B",
-  "FLY_OUT_LF",
-  "FLY_OUT_CF",
-  "FLY_OUT_RF",
-  "LINE_OUT",
-  "POP_OUT",
-  "DOUBLE_PLAY",
-  "FIELDER_CHOICE",
-  "SAC_FLY",
-]);
-
-const RESULT_LABELS: Readonly<Record<BaseballPlayResultCode, string>> = {
-  BALL: "볼",
-  CALLED_STRIKE: "스트라이크",
-  SWINGING_STRIKE: "헛스윙 스트라이크",
-  FOUL: "파울",
-  WALK: "볼넷",
-  STRIKEOUT_LOOKING: "루킹 삼진",
-  STRIKEOUT_SWINGING: "헛스윙 삼진",
-  GROUND_OUT_1B: "1루수 땅볼 아웃",
-  GROUND_OUT_2B: "2루수 땅볼 아웃",
-  GROUND_OUT_SS: "유격수 땅볼 아웃",
-  GROUND_OUT_3B: "3루수 땅볼 아웃",
-  FLY_OUT_LF: "좌익수 플라이 아웃",
-  FLY_OUT_CF: "중견수 플라이 아웃",
-  FLY_OUT_RF: "우익수 플라이 아웃",
-  LINE_OUT: "직선타 아웃",
-  POP_OUT: "뜬공 아웃",
-  SINGLE_LEFT: "좌전 안타",
-  SINGLE_CENTER: "중전 안타",
-  SINGLE_RIGHT: "우전 안타",
-  INFIELD_SINGLE: "내야 안타",
-  DOUBLE_LEFT: "좌중간 2루타",
-  DOUBLE_CENTER: "중앙 2루타",
-  DOUBLE_RIGHT: "우중간 2루타",
-  TRIPLE: "3루타",
-  HOME_RUN_LEFT: "좌월 홈런!",
-  HOME_RUN_CENTER: "중월 홈런!",
-  HOME_RUN_RIGHT: "우월 홈런!",
-  DOUBLE_PLAY: "병살타",
-  FIELDER_CHOICE: "야수 선택",
-  SAC_FLY: "희생 플라이",
-  ERROR: "수비 실책",
-};
 
 const shellStyle: CSSProperties = {
   boxSizing: "border-box",
@@ -178,12 +110,6 @@ export interface BaseballSoloGameV2Props {
   playerName?: string;
   seed?: number;
   className?: string;
-}
-
-interface EventCopy {
-  title: string;
-  detail: string;
-  tone: BaseballEventToneV2;
 }
 
 function clamp(value: number, minimum: number, maximum: number) {
@@ -295,53 +221,6 @@ function createBattedPresentation(
   };
 }
 
-function resultTone(official: OfficialPlayResult | null): BaseballEventToneV2 {
-  if (!official) return "neutral";
-  if (HOME_RUN_CODES.has(official.code)) return "home-run";
-  if (official.runsScored > 0) return "score";
-  if (HIT_CODES.has(official.code) || official.code === "ERROR") return "hit";
-  if (OUT_CODES.has(official.code)) return "out";
-  if (["CALLED_STRIKE", "SWINGING_STRIKE", "FOUL"].includes(official.code)) return "strike";
-  return "neutral";
-}
-
-function eventCopy(
-  event: VisualEvent,
-  official: OfficialPlayResult | null,
-  game: BaseballGameState,
-): EventCopy {
-  const resultLabel = official ? RESULT_LABELS[official.code] : "플레이 진행";
-  const lastLog = game.playByPlay[game.playByPlay.length - 1]?.message ?? resultLabel;
-  const tone = resultTone(official);
-
-  switch (event.kind) {
-    case "CONTACT":
-      return { title: "타격!", detail: "배트와 공이 만났습니다.", tone };
-    case "BALL_FLIGHT":
-      return { title: "타구 추적", detail: "실제 타구 궤적을 추적하고 있습니다.", tone };
-    case "FIELD_RESULT":
-      return { title: resultLabel, detail: "수비 판정이 확정됐습니다.", tone };
-    case "RUNNER_ADVANCE":
-      return { title: "주자 진루", detail: "주자와 송구의 도착 시간을 계산합니다.", tone };
-    case "RUN_SCORE":
-      return {
-        title: `${official?.runsScored ?? 0}점 득점!`,
-        detail: "주자가 홈플레이트를 밟았습니다.",
-        tone: HOME_RUN_CODES.has(official?.code ?? "BALL") ? "home-run" : "score",
-      };
-    case "SCOREBOARD_UPDATE":
-      return {
-        title: `${game.teams[0].runs} : ${game.teams[1].runs}`,
-        detail: "공식 점수와 아웃 카운트를 반영했습니다.",
-        tone,
-      };
-    case "PLAY_RESULT":
-      return { title: resultLabel, detail: lastLog, tone };
-    case "NEXT_BATTER":
-      return { title: "다음 타자", detail: "다음 투타 대결을 준비합니다.", tone: "neutral" };
-  }
-}
-
 function controlPhase(presentation: ReturnType<typeof useBaseballSoloController>["presentation"]): BaseballControlPhaseV2 {
   switch (presentation) {
     case "READY_FOR_PITCH": return "READY";
@@ -357,105 +236,6 @@ function controlPhase(presentation: ReturnType<typeof useBaseballSoloController>
 
 function scoreLabel(game: BaseballGameState) {
   return `${game.teams[0].shortName} ${game.teams[0].runs} : ${game.teams[1].runs} ${game.teams[1].shortName}`;
-}
-
-function staticRunnerPresentations(game: BaseballGameState): BaseballRunnerPresentationV2[] {
-  const bases = [
-    { runner: game.bases.first, x: 73, y: 65, label: "1루" },
-    { runner: game.bases.second, x: 50, y: 42, label: "2루" },
-    { runner: game.bases.third, x: 27, y: 65, label: "3루" },
-  ];
-  return bases.flatMap(({ runner, x, y, label }) => runner ? [{
-    playerId: runner.playerId,
-    name: runner.name,
-    point: { x, y, scale: 0.84, opacity: 1 },
-    baseLabel: label,
-  }] : []);
-}
-
-function runnerPresentations(
-  authoritativeGame: BaseballGameState,
-  presentationGame: BaseballGameState,
-  event: VisualEvent | null,
-  eventProgress: number,
-): BaseballRunnerPresentationV2[] {
-  const resolution = authoritativeGame.activePlay?.runners;
-  if (
-    !event
-    || !resolution
-    || (event.kind !== "RUNNER_ADVANCE" && event.kind !== "RUN_SCORE")
-  ) {
-    return staticRunnerPresentations(presentationGame);
-  }
-
-  const elapsedMs = event.kind === "RUN_SCORE"
-    ? Number.MAX_SAFE_INTEGER
-    : event.durationMs * clamp(eventProgress, 0, 1);
-  return resolution.advances
-    .filter((advance) => advance.result !== "HOLD")
-    .map((advance) => {
-      const sample = projectRunnerAdvance(advance, elapsedMs);
-      const destination = sample.toBase === 4 ? "홈" : `${sample.toBase}루`;
-      const label = sample.status === "OUT"
-        ? "아웃"
-        : sample.status === "SCORE"
-          ? "득점"
-          : sample.status === "SAFE"
-            ? destination
-            : `${sample.fromBase === 0 ? "타석" : `${sample.fromBase}루`} → ${destination}`;
-      return {
-        playerId: sample.runnerId,
-        name: advance.runnerName,
-        point: {
-          x: sample.position.xPercent,
-          y: sample.position.yPercent,
-          scale: 0.9,
-          opacity: sample.status === "OUT" ? 0.5 : 1,
-        },
-        baseLabel: label,
-      };
-    });
-}
-
-function overlayForEvent(
-  event: VisualEvent,
-  official: OfficialPlayResult | null,
-  game: BaseballGameState,
-  onSkip: () => void,
-) {
-  if (
-    event.kind === "CONTACT"
-    || event.kind === "BALL_FLIGHT"
-    || event.kind === "RUNNER_ADVANCE"
-  ) return null;
-  const copy = eventCopy(event, official, game);
-  const homeRun = official ? HOME_RUN_CODES.has(official.code) : false;
-  return (
-    <BaseballEventOverlayV2
-      resultCode={event.kind === "PLAY_RESULT" ? official?.code : undefined}
-      kicker={event.kind.replaceAll("_", " ")}
-      title={copy.title}
-      detail={copy.detail}
-      tone={copy.tone}
-      imageSrc={
-        homeRun && event.kind === "PLAY_RESULT"
-          ? baseballArenaSwingFacing
-          : event.kind === "FIELD_RESULT"
-            ? baseballFielderActionsRed
-            : undefined
-      }
-      imageAlt={
-        homeRun && event.kind === "PLAY_RESULT"
-          ? "홈런 스윙 장면"
-          : event.kind === "FIELD_RESULT"
-            ? "내야 수비 동작"
-            : undefined
-      }
-      primaryLabel={event.skippable ? "장면 건너뛰기" : undefined}
-      primaryEnabled={event.skippable}
-      onPrimaryAction={event.skippable ? onSkip : undefined}
-    />
-  );
 }
 
 function isFieldCamera(camera: BaseballCameraMode) {
@@ -617,7 +397,7 @@ export function BaseballSoloGameV2({
       !currentVisualEventKey
       || currentVisualEvent?.kind !== "RUN_SCORE"
       || !officialResult
-      || !HOME_RUN_CODES.has(officialResult.code)
+      || !isBaseballHomeRunResultV2(officialResult.code)
       || celebratedHomeRunsRef.current.has(officialResult.playId)
     ) {
       return;
@@ -652,10 +432,36 @@ export function BaseballSoloGameV2({
       : null;
   }, [cameraMode, currentVisualEvent, currentVisualEventProgress, game.activePlay?.battedBall]);
 
-  const runners = useMemo(
-    () => runnerPresentations(game, displayGame, currentVisualEvent, currentVisualEventProgress),
-    [currentVisualEvent, currentVisualEventProgress, displayGame, game],
-  );
+  const visualBattingTeam = currentVisualEvent
+    ? lastPlayEntry?.battingTeam ?? displayGame.battingTeam
+    : displayGame.battingTeam;
+  const visualFieldingTeam = visualBattingTeam === 0 ? 1 : 0;
+  const runners = useMemo(() => createBaseballRunnerPresentationsV2({
+    authoritativeGame: game,
+    presentationGame: displayGame,
+    event: currentVisualEvent,
+    eventProgress: currentVisualEventProgress,
+    cameraMode,
+    runnerAssetSrc: BASEBALL_V2_RUNNER_SOURCES[visualBattingTeam],
+  }), [
+    cameraMode,
+    currentVisualEvent,
+    currentVisualEventProgress,
+    displayGame,
+    game,
+    visualBattingTeam,
+  ]);
+  const fielders = useMemo(() => createBaseballFielderPresentationsV2({
+    game,
+    event: currentVisualEvent,
+    eventProgress: currentVisualEventProgress,
+    fielderAssetSrc: BASEBALL_V2_FIELDER_SOURCES[visualFieldingTeam],
+  }), [currentVisualEvent, currentVisualEventProgress, game, visualFieldingTeam]);
+  const defenseThrow = useMemo(() => createBaseballDefenseThrowPresentationV2({
+    game,
+    event: currentVisualEvent,
+    eventProgress: currentVisualEventProgress,
+  }), [currentVisualEvent, currentVisualEventProgress, game]);
 
   const strikeZoneTarget = presentation === "READY_FOR_PITCH"
     || (userBatting && (presentation === "PITCH_WINDUP" || presentation === "PITCH_FLIGHT"))
@@ -692,7 +498,15 @@ export function BaseballSoloGameV2({
       />
     );
   } else if (presentation === "EVENT_PLAYBACK" && currentVisualEvent) {
-    overlay = overlayForEvent(currentVisualEvent, officialResult, displayGame, skip);
+    overlay = (
+      <BaseballVisualEventOverlayV2
+        event={currentVisualEvent}
+        official={officialResult}
+        game={displayGame}
+        onSkip={skip}
+        homeRunImageSrc={baseballArenaSwingFacing}
+      />
+    );
   } else if (presentation === "HALF_INNING") {
     overlay = (
       <BaseballHalfInningOverlayV2
@@ -828,7 +642,7 @@ export function BaseballSoloGameV2({
             backgroundAlt: perspective === "BATTING" ? "타자 시점 야구장" : perspective === "PITCHING" ? "투수 시점 야구장" : "수비 시점 야구장",
             ballSrc: BASEBALL_V2_BALL_SOURCE,
             batterSprite: perspective === "FIELD" ? undefined : {
-              src: baseballBatterActionsBlue,
+              src: BASEBALL_V2_BATTER_ACTION_SOURCES[visualBattingTeam],
               frameCount: 4,
               frameIndex: 0,
               motion: batterIsSwinging ? "SWING" : "IDLE",
@@ -846,6 +660,8 @@ export function BaseballSoloGameV2({
           perspective={perspective}
           pitchBall={battedBall ? null : pitchBall}
           battedBall={pitchBall ? null : battedBall}
+          defenseThrow={defenseThrow}
+          fielders={fielders}
           runners={runners}
           showStrikeZone={showStrikeZone}
           strikeZoneTarget={strikeZoneTarget}
