@@ -7,9 +7,9 @@ import type {
 
 const ZONE_CAMERA: Readonly<Record<BattedBallZone, BaseballCameraMode>> = {
   LF: "LEFT_FIELD",
-  LCF: "LEFT_FIELD",
+  LCF: "LEFT_CENTER",
   CF: "CENTER_FIELD",
-  RCF: "RIGHT_FIELD",
+  RCF: "RIGHT_CENTER",
   RF: "RIGHT_FIELD",
   "3B": "INFIELD",
   SS: "INFIELD",

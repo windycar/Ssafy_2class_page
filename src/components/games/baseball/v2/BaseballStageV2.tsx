@@ -36,7 +36,6 @@ export interface BaseballBallPresentationV2 {
   body: BaseballPresentationPointV2;
   trail: BaseballTrailPointsV2;
   pitchType?: BaseballPitchType;
-  assetSrc?: string;
   visible?: boolean;
 }
 
@@ -59,8 +58,6 @@ export interface BaseballStageAssetsV2 {
   batterSprite?: BaseballCharacterSpriteV2;
   pitcherSprite?: BaseballCharacterSpriteV2;
   catcherSprite?: BaseballCharacterSpriteV2;
-  /** Optional ten-frame pitch atlases used by the ten trajectory ghosts. */
-  pitchTrailAtlases?: Partial<Record<BaseballPitchType, string>>;
 }
 
 export interface BaseballCharacterSpriteV2 {
@@ -108,6 +105,7 @@ type CharacterSpriteStyle = CSSProperties & {
 };
 
 const EMPTY_RUNNERS: readonly BaseballRunnerPresentationV2[] = [];
+export const BASEBALL_TRAIL_SAMPLE_COUNT = 10;
 
 function joinClassNames(...names: Array<string | undefined>) {
   return names.filter(Boolean).join(" ");
@@ -186,18 +184,15 @@ function CharacterLayerV2({ assets }: { assets: BaseballStageAssetsV2 }) {
 
 function BaseballFlightLayerV2({
   presentation,
-  fallbackBallSrc,
+  ballSrc,
   variant,
-  trailAtlasSrc,
 }: {
   presentation: BaseballBallPresentationV2 | null | undefined;
-  fallbackBallSrc: string;
+  ballSrc: string;
   variant: "pitch" | "batted";
-  trailAtlasSrc?: string;
 }) {
   if (!presentation || presentation.visible === false) return null;
 
-  const ballSrc = presentation.assetSrc ?? fallbackBallSrc;
   const pitchClass = presentation.pitchType
     ? `bbv2-ball--${presentation.pitchType}`
     : undefined;
@@ -210,24 +205,14 @@ function BaseballFlightLayerV2({
       )}
       aria-hidden="true"
     >
-      <div className="bbv2-ball-trails">
+      <div className="bbv2-ball-trails" data-trail-samples={BASEBALL_TRAIL_SAMPLE_COUNT}>
         {presentation.trail.map((point, index) => (
           <span
             className={joinClassNames("bbv2-ball-trail-point", pitchClass)}
             style={pointStyle(point)}
             key={`trail-${index}`}
           >
-            {trailAtlasSrc ? (
-              <i
-                className="bbv2-ball-trail-atlas-frame"
-                style={{
-                  backgroundImage: `url(${JSON.stringify(trailAtlasSrc)})`,
-                  backgroundPosition: `${(index / 9) * 100}% center`,
-                }}
-              />
-            ) : (
-              <img src={ballSrc} alt="" draggable={false} />
-            )}
+            <img src={ballSrc} alt="" draggable={false} />
           </span>
         ))}
       </div>
@@ -339,6 +324,12 @@ export function BaseballStageV2({
   className,
   ariaLabel = "야구 경기장",
 }: BaseballStageV2Props) {
+  const activeFlight = battedBall && battedBall.visible !== false
+    ? { presentation: battedBall, variant: "batted" as const }
+    : pitchBall && pitchBall.visible !== false
+      ? { presentation: pitchBall, variant: "pitch" as const }
+      : null;
+
   return (
     <section
       className={joinClassNames("bbv2-stage", className)}
@@ -362,13 +353,13 @@ export function BaseballStageV2({
         aimEnabled={aimEnabled}
         onAimChange={onAimChange}
       />
-      <BaseballFlightLayerV2
-        presentation={pitchBall}
-        fallbackBallSrc={assets.ballSrc}
-        variant="pitch"
-        trailAtlasSrc={pitchBall?.pitchType ? assets.pitchTrailAtlases?.[pitchBall.pitchType] : undefined}
-      />
-      <BaseballFlightLayerV2 presentation={battedBall} fallbackBallSrc={assets.ballSrc} variant="batted" />
+      {activeFlight ? (
+        <BaseballFlightLayerV2
+          presentation={activeFlight.presentation}
+          ballSrc={assets.ballSrc}
+          variant={activeFlight.variant}
+        />
+      ) : null}
       <div className="bbv2-stage__effects" aria-hidden={effects ? undefined : "true"}>{effects}</div>
       <div className="bbv2-stage__overlay-slot">{overlay}</div>
       <div className="bbv2-stage__hud-slot">{hud}</div>

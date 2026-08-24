@@ -149,8 +149,8 @@ test("타구는 수평·발사 각도와 비거리·체공 시간을 쓰고 카�
 
 test("모든 카메라의 타구 좌표는 유한하고 스테이지 범위를 벗어나지 않는다", () => {
   const cameras: BaseballCameraMode[] = [
-    "BATTER", "PITCHER", "CONTACT", "INFIELD", "LEFT_FIELD", "CENTER_FIELD",
-    "RIGHT_FIELD", "FOUL", "BASE_RUNNING", "HOME_RUN", "RUN_SCORED", "DUGOUT", "REPLAY",
+    "BATTER", "PITCHER", "CONTACT", "INFIELD", "LEFT_FIELD", "LEFT_CENTER", "CENTER_FIELD",
+    "RIGHT_CENTER", "RIGHT_FIELD", "FOUL", "BASE_RUNNING", "HOME_RUN", "RUN_SCORED", "DUGOUT", "REPLAY",
   ];
   for (const camera of cameras) {
     for (const progress of [-1, 0, 0.5, 1, 2]) {

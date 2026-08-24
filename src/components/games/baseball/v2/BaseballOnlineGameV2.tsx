@@ -11,19 +11,16 @@ import {
 
 import baseballArenaFacing from "../../../../assets/games/baseball-arena-facing.png";
 import baseballArenaSwingFacing from "../../../../assets/games/baseball-arena-swing-facing.png";
-import baseballBallBody from "../../../../assets/games/baseball-ball-body-v2.png";
 import baseballBatterActionsBlue from "../../../../assets/games/baseball-batter-actions-blue.png";
-import baseballBattingField from "../../../../assets/games/baseball-batting-field.png";
-import baseballCameraHomeRun from "../../../../assets/games/baseball-camera-home-run.png";
-import baseballCameraInfield from "../../../../assets/games/baseball-camera-infield.png";
-import baseballCameraPitcherEmpty from "../../../../assets/games/baseball-camera-pitcher-empty.png";
 import baseballPitcherActionsRed from "../../../../assets/games/baseball-pitcher-actions-red.png";
-import baseballPitchChangeup10 from "../../../../assets/games/baseball-pitch-changeup-10.png";
-import baseballPitchCurve10 from "../../../../assets/games/baseball-pitch-curve-10.png";
-import baseballPitchFastball10 from "../../../../assets/games/baseball-pitch-fastball-10.png";
-import baseballPitchSlider10 from "../../../../assets/games/baseball-pitch-slider-10.png";
+import {
+  BASEBALL_V2_BALL_SOURCE,
+  BASEBALL_V2_CAMERA_BACKGROUND_SOURCES,
+  BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE,
+} from "../../../../config/baseballV2Assets.ts";
 import { useBaseballOnlineController } from "../../../../hooks/useBaseballOnlineController.ts";
 import type { BaseballRoom } from "../../../../types/baseballRoom.ts";
+import { resolveBaseballCameraBackground } from "../../../../utils/games/baseball/cameraBackground.ts";
 import {
   createPitchVisualFrame,
   DEFAULT_PITCH_STAGE_PROJECTION,
@@ -283,24 +280,6 @@ function staticRunners(game: BaseballGameState): BaseballRunnerPresentationV2[] 
   }] : []);
 }
 
-function cameraBackground(
-  camera: BaseballCameraMode,
-  perspective: "BATTING" | "PITCHING" | "FIELD",
-) {
-  if (camera === "HOME_RUN") return baseballCameraHomeRun;
-  if ([
-    "INFIELD",
-    "LEFT_FIELD",
-    "CENTER_FIELD",
-    "RIGHT_FIELD",
-    "BASE_RUNNING",
-    "RUN_SCORED",
-  ].includes(camera)) return baseballCameraInfield;
-  if (perspective === "BATTING") return baseballBattingField;
-  if (perspective === "PITCHING") return baseballCameraPitcherEmpty;
-  return baseballCameraInfield;
-}
-
 function noticeLabel(status: ReturnType<typeof useBaseballOnlineController>["noticeStatus"]) {
   switch (status) {
     case "SUBSCRIBED": return "실시간 연결됨";
@@ -516,7 +495,11 @@ export function BaseballOnlineGameV2({
     : localIsBatting
       ? "BATTING"
       : "PITCHING";
-  const backgroundSrc = cameraBackground(cameraMode, perspective);
+  const backgroundSrc = resolveBaseballCameraBackground(
+    cameraMode,
+    perspective,
+    BASEBALL_V2_CAMERA_BACKGROUND_SOURCES,
+  );
   const showStrikeZone = Boolean(game) && perspective !== "FIELD";
 
   useLayoutEffect(() => {
@@ -612,6 +595,7 @@ export function BaseballOnlineGameV2({
         title="경기 취소"
         summary="참가자가 방을 나가 온라인 경기가 종료되었습니다."
         backgroundSrc={baseballArenaSwingFacing}
+        cancelled
         onExit={onExit}
       />
     );
@@ -619,7 +603,7 @@ export function BaseballOnlineGameV2({
     overlay = (
       <BaseballFinalOverlayV2
         game={game}
-        backgroundSrc={baseballArenaSwingFacing}
+        backgroundSrc={BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE}
         onExit={onExit}
       />
     );
@@ -762,7 +746,7 @@ export function BaseballOnlineGameV2({
             : perspective === "PITCHING"
               ? "투수 시점 야구장"
               : "타구 추적 야구장",
-          ballSrc: baseballBallBody,
+          ballSrc: BASEBALL_V2_BALL_SOURCE,
           batterSprite: perspective === "FIELD" ? undefined : {
             src: baseballBatterActionsBlue,
             frameCount: 4,
@@ -781,15 +765,6 @@ export function BaseballOnlineGameV2({
               : "IDLE",
             animationKey: activePlayKey,
           } : undefined,
-          pitchTrailAtlases: {
-            fourSeam: baseballPitchFastball10,
-            twoSeam: baseballPitchFastball10,
-            slider: baseballPitchSlider10,
-            curve: baseballPitchCurve10,
-            changeup: baseballPitchChangeup10,
-            fork: baseballPitchCurve10,
-            cutter: baseballPitchSlider10,
-          },
         }}
         cameraMode={cameraMode}
         perspective={perspective}

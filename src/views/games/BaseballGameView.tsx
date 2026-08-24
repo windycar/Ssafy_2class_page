@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
 import baseballArena from "../../assets/games/baseball-arena-facing.png";
+import { GameAssetPreloader } from "../../components/games/baseball/v2/GameAssetPreloader";
 import { BaseballOnlineGameV2 } from "../../components/games/baseball/v2/BaseballOnlineGameV2";
 import { BaseballSoloGameV2 } from "../../components/games/baseball/v2/BaseballSoloGameV2";
 import { useAuth } from "../../hooks/useAuth";
@@ -158,12 +159,14 @@ export default function BaseballGameView() {
   if (!roomId) {
     if (showSolo) {
       return (
-        <div className="baseball-page">
-          <BaseballSoloGameV2
-            playerName={currentUser?.name ?? "1P"}
-            onExit={() => setShowSolo(false)}
-          />
-        </div>
+        <GameAssetPreloader>
+          <div className="baseball-page">
+            <BaseballSoloGameV2
+              playerName={currentUser?.name ?? "1P"}
+              onExit={() => setShowSolo(false)}
+            />
+          </div>
+        </GameAssetPreloader>
       );
     }
     return <BaseballModeMenu onStartSolo={() => setShowSolo(true)} />;
@@ -194,12 +197,14 @@ export default function BaseballGameView() {
   }
 
   return (
-    <div className="baseball-page">
-      <BaseballOnlineGameV2
-        room={onlineRoom}
-        currentAuthId={currentUser.authId}
-        onExit={exitOnlineGame}
-      />
-    </div>
+    <GameAssetPreloader>
+      <div className="baseball-page">
+        <BaseballOnlineGameV2
+          room={onlineRoom}
+          currentAuthId={currentUser.authId}
+          onExit={exitOnlineGame}
+        />
+      </div>
+    </GameAssetPreloader>
   );
 }

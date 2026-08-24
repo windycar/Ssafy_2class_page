@@ -343,11 +343,12 @@
 }
 
 .bbv2-ball-trail-point {
+  --bbv2-pitch-tone: rgb(255 255 255 / 16%);
+
   z-index: 28;
   display: block;
   width: clamp(20px, 3.2vw, 50px);
   aspect-ratio: 1;
-  filter: blur(1px);
 }
 
 .bbv2-ball-trail-point img {
@@ -356,30 +357,24 @@
   height: 100%;
   object-fit: contain;
   opacity: 1;
-  transform: rotate(var(--bbv2-point-rotation));
-}
-
-.bbv2-ball-trail-atlas-frame {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background-repeat: no-repeat;
-  background-size: 1000% 100%;
+  filter: drop-shadow(0 0 3px var(--bbv2-pitch-tone));
   transform: rotate(var(--bbv2-point-rotation));
 }
 
 .bbv2-ball-trail-point:nth-child(1),
-.bbv2-ball-trail-point:nth-child(2) { filter: blur(0.55px); }
+.bbv2-ball-trail-point:nth-child(2) { filter: blur(0.25px); }
 .bbv2-ball-trail-point:nth-child(3),
-.bbv2-ball-trail-point:nth-child(4) { filter: blur(1px); }
+.bbv2-ball-trail-point:nth-child(4) { filter: blur(0.45px); }
 .bbv2-ball-trail-point:nth-child(5),
-.bbv2-ball-trail-point:nth-child(6) { filter: blur(1.5px); }
+.bbv2-ball-trail-point:nth-child(6) { filter: blur(0.65px); }
 .bbv2-ball-trail-point:nth-child(7),
-.bbv2-ball-trail-point:nth-child(8) { filter: blur(1.9px); }
+.bbv2-ball-trail-point:nth-child(8) { filter: blur(0.9px); }
 .bbv2-ball-trail-point:nth-child(9),
-.bbv2-ball-trail-point:nth-child(10) { filter: blur(2.4px); }
+.bbv2-ball-trail-point:nth-child(10) { filter: blur(1.15px); }
 
 .bbv2-ball-body {
+  --bbv2-pitch-tone: rgb(255 255 255 / 18%);
+
   z-index: 30;
   display: block;
   width: clamp(42px, 5.6vw, 82px);
@@ -392,7 +387,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 0 8px rgb(255 255 255 / 48%));
+  filter: drop-shadow(0 0 4px var(--bbv2-pitch-tone));
   transform: rotate(var(--bbv2-point-rotation));
 }
 
@@ -400,13 +395,13 @@
   width: clamp(34px, 4.8vw, 68px);
 }
 
-.bbv2-ball--fourSeam img { filter: drop-shadow(0 0 8px rgb(248 113 113 / 88%)); }
-.bbv2-ball--twoSeam img { filter: drop-shadow(0 0 8px rgb(251 146 60 / 88%)); }
-.bbv2-ball--slider img { filter: drop-shadow(0 0 8px rgb(167 139 250 / 88%)); }
-.bbv2-ball--curve img { filter: drop-shadow(0 0 8px rgb(96 165 250 / 88%)); }
-.bbv2-ball--changeup img { filter: drop-shadow(0 0 8px rgb(52 211 153 / 88%)); }
-.bbv2-ball--fork img { filter: drop-shadow(0 0 8px rgb(34 211 238 / 88%)); }
-.bbv2-ball--cutter img { filter: drop-shadow(0 0 8px rgb(245 158 11 / 88%)); }
+.bbv2-ball--fourSeam { --bbv2-pitch-tone: rgb(248 113 113 / 26%); }
+.bbv2-ball--twoSeam { --bbv2-pitch-tone: rgb(251 146 60 / 26%); }
+.bbv2-ball--slider { --bbv2-pitch-tone: rgb(167 139 250 / 26%); }
+.bbv2-ball--curve { --bbv2-pitch-tone: rgb(96 165 250 / 26%); }
+.bbv2-ball--changeup { --bbv2-pitch-tone: rgb(52 211 153 / 26%); }
+.bbv2-ball--fork { --bbv2-pitch-tone: rgb(34 211 238 / 26%); }
+.bbv2-ball--cutter { --bbv2-pitch-tone: rgb(245 158 11 / 26%); }
 
 .bbv2-stage__effects {
   position: absolute;
@@ -464,6 +459,10 @@
   z-index: 90;
   inset: 0;
   pointer-events: none;
+}
+
+.bbv2-stage__overlay-slot:has(> .bbv2-overlay[aria-modal="true"]) {
+  z-index: 110;
 }
 
 .bbv2-stage__overlay-slot > * {

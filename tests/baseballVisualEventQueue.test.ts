@@ -386,8 +386,8 @@ test("인플레이 득점은 접촉부터 다음 타자까지 정해진 순서�
   ]);
   assert.deepEqual(events.map((event) => event.camera), [
     "CONTACT",
-    "LEFT_FIELD",
-    "LEFT_FIELD",
+    "LEFT_CENTER",
+    "LEFT_CENTER",
     "BASE_RUNNING",
     "RUN_SCORED",
     "RUN_SCORED",
@@ -475,9 +475,9 @@ test("모든 이벤트 ID와 sequence는 안정적이고 연속이며 payload는
 
 test("타구·결과 카메라는 구역, 땅볼, 파울, 홈런, 득점을 우선순위대로 선택한다", () => {
   assert.equal(cameraForBattedBall(makeBall({ zone: "LF" })), "LEFT_FIELD");
-  assert.equal(cameraForBattedBall(makeBall({ zone: "LCF" })), "LEFT_FIELD");
+  assert.equal(cameraForBattedBall(makeBall({ zone: "LCF" })), "LEFT_CENTER");
   assert.equal(cameraForBattedBall(makeBall({ zone: "CF" })), "CENTER_FIELD");
-  assert.equal(cameraForBattedBall(makeBall({ zone: "RCF" })), "RIGHT_FIELD");
+  assert.equal(cameraForBattedBall(makeBall({ zone: "RCF" })), "RIGHT_CENTER");
   assert.equal(cameraForBattedBall(makeBall({ zone: "RF" })), "RIGHT_FIELD");
   assert.equal(
     cameraForBattedBall(makeBall({ type: "GROUND", zone: "RF" })),
