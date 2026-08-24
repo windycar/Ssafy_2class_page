@@ -18,7 +18,10 @@ import {
   type BaseballRoomCommandServerContext,
 } from "../api/_lib/baseballRoomCommandHandler.ts";
 import { handleLegacyBaseballLeaveRequest } from "../api/baseball-leave.ts";
-import { normalizeBaseballRoomCommandCommit } from "../api/baseball-room-command.ts";
+import {
+  mayExposeBaseballRoomCommandState,
+  normalizeBaseballRoomCommandCommit,
+} from "../api/baseball-room-command.ts";
 import type { BaseballRoom } from "../src/types/baseballRoom.ts";
 
 const HOST: BaseballRoomMemberIdentity = {
@@ -207,6 +210,17 @@ test("CREATE exact retry는 새 후보 id가 생겨도 로그의 최초 canonica
     sql.indexOf("where logs.actor_auth_id = p_actor_auth_id")
       < sql.indexOf("'baseball-room:' || p_room_id"),
   );
+});
+
+test("비회원 stale 명령은 비공개 canonical room을 오류 응답으로 노출하지 않는다", () => {
+  const room = joinedRoom();
+  assert.equal(mayExposeBaseballRoomCommandState(room, "SET_READY", REPLACEMENT), false);
+  assert.equal(mayExposeBaseballRoomCommandState(room, "HEARTBEAT", REPLACEMENT), false);
+  assert.equal(mayExposeBaseballRoomCommandState(room, "SET_READY", HOST), true);
+
+  // The unguessable room id is the invite capability, so JOIN alone may receive
+  // the canonical revision needed for its single CAS retry.
+  assert.equal(mayExposeBaseballRoomCommandState(room, "JOIN", REPLACEMENT), true);
 });
 
 test("START는 방장·두 명 준비·서버 heartbeat를 요구하고 서버 seed/match/game을 생성한다", () => {
@@ -417,7 +431,21 @@ test("SQL은 로비 CAS/글로벌 멱등/active 2인/행 잠금과 baseball 직�
     "utf8",
   );
   assert.match(sql, /drop policy if exists "Public bang rooms"/i);
+  assert.match(
+    sql,
+    /revoke all privileges on table public\.bang_rooms from public, anon, authenticated/i,
+  );
   assert.match(sql, /primary key \(actor_auth_id, command_id\)/i);
+  assert.match(sql, /'ACTOR_NOT_ACTIVE'::text/i);
+  assert.match(
+    sql,
+    /member\.auth_user_id = p_actor_auth_id[\s\S]*member\.is_active = true[\s\S]*= p_actor_student_id/i,
+  );
+  assert.match(sql, /= p_actor_student_id[\s\S]*for share/i);
+  assert.match(
+    sql,
+    /grant select, update \(updated_at\) on table public\.members to service_role/i,
+  );
   assert.match(sql, /pg_advisory_xact_lock/i);
   assert.ok(
     sql.indexOf("where logs.actor_auth_id = p_actor_auth_id")
@@ -425,7 +453,17 @@ test("SQL은 로비 CAS/글로벌 멱등/active 2인/행 잠금과 baseball 직�
   );
   assert.match(sql, /from public\.bang_rooms as rooms[\s\S]*for update/i);
   assert.match(sql, /v_current_revision <> p_expected_revision/i);
+  assert.ok(
+    sql.indexOf("elsif v_actor_player is null")
+      < sql.indexOf("if v_current_revision <> p_expected_revision"),
+  );
+  assert.match(sql, /v_next_player_count <> v_retained_old_player_count \+ 1/i);
+  assert.doesNotMatch(sql, /v_old_player_count - v_stale_player_count \+ 1/i);
   assert.match(sql, /member\.is_active = true/i);
+  assert.match(
+    sql,
+    /player\.value ->> 'studentId'[\s\S]*coalesce\([\s\S]*member\.student_id::bigint/i,
+  );
   assert.match(sql, /v_matched_active_players <> 2/i);
   assert.match(sql, /interval '45 seconds'/i);
   assert.match(sql, /interval '120 seconds'/i);
@@ -438,4 +476,17 @@ test("SQL은 로비 CAS/글로벌 멱등/active 2인/행 잠금과 baseball 직�
   assert.match(sql, /Baseball private topics can send/i);
   assert.match(sql, /baseball-game-presence:/i);
   assert.match(sql, /baseball-command-notice:/i);
+  assert.match(
+    sql,
+    /extension = 'presence'[\s\S]*baseball-game-presence:/i,
+  );
+  assert.match(
+    sql,
+    /extension = 'broadcast'[\s\S]*baseball-command-notice:/i,
+  );
+  assert.match(sql, /security invoker[\s\S]*set search_path = ''/i);
+  assert.match(
+    sql,
+    /revoke execute on function public\.commit_baseball_room_command[\s\S]*from public, anon, authenticated/i,
+  );
 });

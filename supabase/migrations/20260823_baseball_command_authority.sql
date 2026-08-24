@@ -14,7 +14,7 @@ drop policy if exists "Legacy Bang rooms are updatable" on public.bang_rooms;
 drop policy if exists "Legacy Bang rooms are deletable" on public.bang_rooms;
 drop policy if exists "Active members can read visible baseball rooms" on public.bang_rooms;
 
-revoke all privileges on table public.bang_rooms from anon, authenticated;
+revoke all privileges on table public.bang_rooms from public, anon, authenticated;
 grant select, insert, update, delete on table public.bang_rooms to anon, authenticated;
 
 create policy "Legacy Bang rooms are readable"
@@ -65,20 +65,24 @@ using (
     from public.members as member
     where member.auth_user_id = (select auth.uid())
       and member.is_active = true
-  )
-  and (
-    (room_data ->> 'isPublic') = 'true'
-    or exists (
-      select 1
-      from jsonb_array_elements(
-        case
-          when jsonb_typeof(room_data -> 'players') = 'array'
-            then room_data -> 'players'
-          else '[]'::jsonb
-        end
-      ) as player(value)
-      where (player.value ->> 'authId') = (select auth.uid())::text
-    )
+      and (
+        (room_data ->> 'isPublic') = 'true'
+        or exists (
+          select 1
+          from jsonb_array_elements(
+            case
+              when jsonb_typeof(room_data -> 'players') = 'array'
+                then room_data -> 'players'
+              else '[]'::jsonb
+            end
+          ) as player(value)
+          where (player.value ->> 'authId') = member.auth_user_id::text
+            and (player.value ->> 'studentId') = coalesce(
+              member.student_id::bigint,
+              900000000::bigint + member.id::bigint
+            )::text
+        )
+      )
   )
 );
 
@@ -86,7 +90,7 @@ using (
 -- these elevated privileges keeps browser roles from bypassing the intended DML.
 revoke truncate, references, trigger
 on table public.bang_rooms
-from anon, authenticated;
+from public, anon, authenticated;
 
 create table if not exists public.baseball_room_command_log (
   actor_auth_id uuid not null references auth.users(id) on delete restrict,
@@ -144,8 +148,8 @@ declare
   v_actor_player jsonb;
   v_old_player_count integer;
   v_next_player_count integer;
+  v_retained_old_player_count integer;
   v_matched_active_players integer;
-  v_stale_player_count integer;
 begin
   if p_actor_auth_id is null
     or p_actor_student_id <= 0
@@ -179,6 +183,28 @@ begin
     or (p_payload ->> 'expectedRevision') is distinct from p_expected_revision::text
   then
     raise exception using errcode = '22023', message = 'invalid revision room command';
+  end if;
+
+  -- Close the auth-to-commit race: the service authenticated this identity just
+  -- before the RPC, but deactivation or profile reassignment must take effect in
+  -- the same transaction that commits the room transition.
+  perform 1
+    from public.members as member
+    where member.auth_user_id = p_actor_auth_id
+      and member.is_active = true
+      and coalesce(
+        member.student_id::bigint,
+        900000000::bigint + member.id::bigint
+      ) = p_actor_student_id
+    for share;
+  if not found then
+    return query select
+      'ACTOR_NOT_ACTIVE'::text,
+      null::jsonb,
+      false,
+      null::bigint,
+      null::text;
+    return;
   end if;
 
   -- The actor/command lock makes CREATE idempotent even though its room id is
@@ -334,16 +360,6 @@ begin
   end if;
   v_current_revision := (v_room ->> 'revision')::bigint;
 
-  if v_current_revision <> p_expected_revision then
-    return query select
-      'STALE'::text,
-      v_room,
-      false,
-      v_current_revision,
-      null::text;
-    return;
-  end if;
-
   select player.value
     into v_actor_player
   from jsonb_array_elements(
@@ -371,6 +387,19 @@ begin
   elsif v_actor_player is null then
     return query select
       'CONTEXT_MISMATCH'::text,
+      v_room,
+      false,
+      v_current_revision,
+      null::text;
+    return;
+  end if;
+
+  -- Authorize the actor before returning a stale canonical room. JOIN is the
+  -- only capability-addressed operation allowed to discover a private invite
+  -- room by id; exact retries were already resolved from the actor-scoped log.
+  if v_current_revision <> p_expected_revision then
+    return query select
+      'STALE'::text,
       v_room,
       false,
       v_current_revision,
@@ -420,19 +449,22 @@ begin
 
     if p_kind = 'JOIN' then
       select count(*)
-        into v_stale_player_count
+        into v_retained_old_player_count
       from jsonb_array_elements(v_room -> 'players') as old_player(value)
-      where coalesce(
-          old_player.value ->> 'lastSeenAt',
-          old_player.value ->> 'joinedAt',
-          ''
-        ) <> ''
-        and coalesce(
-          old_player.value ->> 'lastSeenAt',
-          old_player.value ->> 'joinedAt'
-        )::timestamptz <= pg_catalog.now() - interval '120 seconds';
+      where exists (
+        select 1
+        from jsonb_array_elements(p_next_room -> 'players') as next_player(value)
+        where (next_player.value ->> 'seat') = (old_player.value ->> 'seat')
+          and (next_player.value ->> 'authId') = (old_player.value ->> 'authId')
+          and (next_player.value ->> 'studentId') = (old_player.value ->> 'studentId')
+          and (next_player.value ->> 'joinedAt') = (old_player.value ->> 'joinedAt')
+      );
 
-      if v_next_player_count <> v_old_player_count - v_stale_player_count + 1
+      -- The API evaluates staleness shortly before this transaction. A player
+      -- may cross the 120s boundary in between, so DB time must not require that
+      -- every newly-stale player be reaped. It does require that every removed
+      -- old player is stale and that the actor is the sole new identity.
+      if v_next_player_count <> v_retained_old_player_count + 1
         or v_next_player_count not in (1, 2)
         or (p_next_room ->> 'status') is distinct from (
           case when v_next_player_count = 2 then 'ready' else 'recruiting' end
@@ -590,6 +622,20 @@ begin
         null::text;
       return;
     end if;
+
+    -- Hold both active member profiles stable until START commits so a
+    -- concurrent deactivation cannot create a match with an inactive seat.
+    perform member.id
+    from public.members as member
+    where member.is_active = true
+      and exists (
+        select 1
+        from jsonb_array_elements(v_room -> 'players') as player(value)
+        where member.auth_user_id::text = (player.value ->> 'authId')
+          and coalesce(member.student_id::bigint, 900000000::bigint + member.id::bigint)
+            = (player.value ->> 'studentId')::bigint
+      )
+    for share;
 
     select count(*)
       into v_matched_active_players
@@ -766,6 +812,29 @@ declare
   v_current_room_revision bigint;
   v_current_game_revision bigint;
 begin
+  -- Recheck the canonical member identity inside the commit transaction. This
+  -- prevents a deactivated/reassigned profile from winning a race after the API
+  -- has authenticated it but before the authoritative write is serialized.
+  perform 1
+    from public.members as member
+    where member.auth_user_id = p_actor_auth_id
+      and member.is_active = true
+      and coalesce(
+        member.student_id::bigint,
+        900000000::bigint + member.id::bigint
+      ) = p_actor_student_id
+    for share;
+  if not found then
+    return query select
+      'ACTOR_NOT_ACTIVE'::text,
+      null::jsonb,
+      null::bigint,
+      null::bigint,
+      null::bigint,
+      null::text;
+    return;
+  end if;
+
   select rooms.room_data
     into v_room
   from public.bang_rooms as rooms
@@ -1036,7 +1105,10 @@ grant execute on function public.commit_baseball_command(
 ) to service_role;
 
 grant select, insert, update, delete on table public.bang_rooms to service_role;
-grant select on table public.members to service_role;
+-- PostgreSQL requires UPDATE on at least one column for SELECT ... FOR SHARE.
+-- This migration adds only the narrow column grant needed to lock member rows;
+-- these functions never update members.
+grant select, update (updated_at) on table public.members to service_role;
 
 -- Private Realtime authorization. The client uses private:true and calls
 -- realtime.setAuth() before subscribing. State is never accepted from Realtime;
@@ -1049,8 +1121,7 @@ on realtime.messages
 for select
 to authenticated
 using (
-  realtime.messages.extension in ('broadcast', 'presence')
-  and exists (
+  exists (
     select 1
     from public.bang_rooms as room
     cross join lateral jsonb_array_elements(
@@ -1060,14 +1131,29 @@ using (
         else '[]'::jsonb
       end
     ) as player(value)
+    cross join public.members as member
     where room.id like 'baseball-%'
       and (room.room_data ->> 'schemaVersion') = '2'
       and (room.room_data ->> 'status') = 'playing'
       and nullif(room.room_data ->> 'matchId', '') is not null
-      and (player.value ->> 'authId') = (select auth.uid())::text
-      and (select realtime.topic()) in (
-        'baseball-game-presence:' || room.id || ':' || (room.room_data ->> 'matchId'),
-        'baseball-command-notice:' || room.id || ':' || (room.room_data ->> 'matchId')
+      and member.auth_user_id = (select auth.uid())
+      and member.is_active = true
+      and (player.value ->> 'authId') = member.auth_user_id::text
+      and (player.value ->> 'studentId') = coalesce(
+        member.student_id::bigint,
+        900000000::bigint + member.id::bigint
+      )::text
+      and (
+        (
+          realtime.messages.extension = 'presence'
+          and (select realtime.topic()) =
+            'baseball-game-presence:' || room.id || ':' || (room.room_data ->> 'matchId')
+        )
+        or (
+          realtime.messages.extension = 'broadcast'
+          and (select realtime.topic()) =
+            'baseball-command-notice:' || room.id || ':' || (room.room_data ->> 'matchId')
+        )
       )
   )
 );
@@ -1077,8 +1163,7 @@ on realtime.messages
 for insert
 to authenticated
 with check (
-  realtime.messages.extension in ('broadcast', 'presence')
-  and exists (
+  exists (
     select 1
     from public.bang_rooms as room
     cross join lateral jsonb_array_elements(
@@ -1088,14 +1173,29 @@ with check (
         else '[]'::jsonb
       end
     ) as player(value)
+    cross join public.members as member
     where room.id like 'baseball-%'
       and (room.room_data ->> 'schemaVersion') = '2'
       and (room.room_data ->> 'status') = 'playing'
       and nullif(room.room_data ->> 'matchId', '') is not null
-      and (player.value ->> 'authId') = (select auth.uid())::text
-      and (select realtime.topic()) in (
-        'baseball-game-presence:' || room.id || ':' || (room.room_data ->> 'matchId'),
-        'baseball-command-notice:' || room.id || ':' || (room.room_data ->> 'matchId')
+      and member.auth_user_id = (select auth.uid())
+      and member.is_active = true
+      and (player.value ->> 'authId') = member.auth_user_id::text
+      and (player.value ->> 'studentId') = coalesce(
+        member.student_id::bigint,
+        900000000::bigint + member.id::bigint
+      )::text
+      and (
+        (
+          realtime.messages.extension = 'presence'
+          and (select realtime.topic()) =
+            'baseball-game-presence:' || room.id || ':' || (room.room_data ->> 'matchId')
+        )
+        or (
+          realtime.messages.extension = 'broadcast'
+          and (select realtime.topic()) =
+            'baseball-command-notice:' || room.id || ':' || (room.room_data ->> 'matchId')
+        )
       )
   )
 );

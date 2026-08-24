@@ -43,6 +43,21 @@ function firstRpcRow(value: unknown): BaseballCommitRpcRow | null {
   return row as BaseballCommitRpcRow;
 }
 
+/**
+ * A canonical room is synchronization data, not authentication error detail.
+ * It is returned only to a verified current member and never on 401/403.
+ */
+export function mayExposeBaseballCommandState(
+  room: BaseballRoom,
+  identity: { authId: string; studentId: number },
+  status: number,
+) {
+  if (status === 401 || status === 403) return false;
+  return room.players.some((player) => (
+    player.authId === identity.authId && player.studentId === identity.studentId
+  ));
+}
+
 export async function handleBaseballCommandRequest(request: Request) {
   if (request.method !== "POST") {
     return new Response("Method not allowed", {
@@ -97,7 +112,13 @@ export async function handleBaseballCommandRequest(request: Request) {
     );
   }
   if (normalized.sourceVersion !== 2 || normalized.needsPersistence) {
-    return jsonError("ROOM_SCHEMA_UPGRADE_REQUIRED", 426, normalized.value);
+    return jsonError(
+      "ROOM_SCHEMA_UPGRADE_REQUIRED",
+      426,
+      mayExposeBaseballCommandState(normalized.value, authentication.identity, 426)
+        ? normalized.value
+        : undefined,
+    );
   }
 
   const room = normalized.value;
@@ -109,7 +130,17 @@ export async function handleBaseballCommandRequest(request: Request) {
   let nextRoom = room;
   if (!authorization.ok) {
     if (authorization.code !== "STALE_REVISION") {
-      return jsonError(authorization.code, authorization.status, room);
+      return jsonError(
+        authorization.code,
+        authorization.status,
+        mayExposeBaseballCommandState(
+          room,
+          authentication.identity,
+          authorization.status,
+        )
+          ? room
+          : undefined,
+      );
     }
     // The RPC checks its command log before CAS. Passing the current room here
     // lets an exact stale retry succeed without trusting or replaying the client.
@@ -119,7 +150,15 @@ export async function handleBaseballCommandRequest(request: Request) {
       envelope,
       new Date().toISOString(),
     );
-    if (!applied.ok) return jsonError(applied.code, applied.status, room);
+    if (!applied.ok) {
+      return jsonError(
+        applied.code,
+        applied.status,
+        mayExposeBaseballCommandState(room, authentication.identity, applied.status)
+          ? room
+          : undefined,
+      );
+    }
     nextRoom = applied.room;
   }
 
@@ -135,6 +174,9 @@ export async function handleBaseballCommandRequest(request: Request) {
 
   const commit = firstRpcRow(commitData);
   if (!commit) return jsonError("INVALID_COMMAND_COMMIT_RESULT", 502);
+  if (commit.outcome === "ACTOR_NOT_ACTIVE") {
+    return jsonError("MEMBER_FORBIDDEN", 403);
+  }
   if (commit.outcome === "ROOM_NOT_FOUND") return jsonError("ROOM_NOT_FOUND", 404);
 
   const committedRoom = normalizeBaseballRoom(commit.room_data, envelope.roomId);
@@ -161,7 +203,9 @@ export async function handleBaseballCommandRequest(request: Request) {
   return jsonError(
     conflicts[commit.outcome] ?? "COMMAND_REJECTED",
     409,
-    committedRoom.value,
+    mayExposeBaseballCommandState(committedRoom.value, authentication.identity, 409)
+      ? committedRoom.value
+      : undefined,
   );
 }
 

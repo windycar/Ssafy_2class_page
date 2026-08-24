@@ -7,6 +7,7 @@ import {
   applyBaseballRoomCommand,
   buildBaseballRoomCommandRpcArguments,
   parseBaseballRoomCommandRequestBody,
+  type BaseballRoomCommandKind,
   type BaseballRoomCommandServerContext,
 } from "./_lib/baseballRoomCommandHandler.ts";
 
@@ -57,6 +58,24 @@ export function normalizeBaseballRoomCommandCommit(
     return null;
   }
   return normalized.value;
+}
+
+/**
+ * Private rooms are capability-addressed for CREATE/JOIN. Every other error may
+ * include canonical room data only when the verified actor is still a member.
+ * In particular, a forged stale command must not turn the service-role endpoint
+ * into a private-room read oracle.
+ */
+export function mayExposeBaseballRoomCommandState(
+  room: BaseballRoom,
+  kind: BaseballRoomCommandKind,
+  identity: { authId: string; studentId: number },
+) {
+  return kind === "CREATE"
+    || kind === "JOIN"
+    || room.players.some((player) => (
+      player.authId === identity.authId && player.studentId === identity.studentId
+    ));
 }
 
 export async function handleBaseballRoomCommandRequest(request: Request) {
@@ -123,7 +142,17 @@ export async function handleBaseballRoomCommandRequest(request: Request) {
         );
       }
       if (normalized.sourceVersion !== 2 || normalized.needsPersistence) {
-        return jsonError("ROOM_SCHEMA_UPGRADE_REQUIRED", 426, normalized.value);
+        return jsonError(
+          "ROOM_SCHEMA_UPGRADE_REQUIRED",
+          426,
+          mayExposeBaseballRoomCommandState(
+            normalized.value,
+            envelope.kind,
+            authentication.identity,
+          )
+            ? normalized.value
+            : undefined,
+        );
       }
       currentRoom = normalized.value;
     }
@@ -136,7 +165,17 @@ export async function handleBaseballRoomCommandRequest(request: Request) {
     context,
   );
   if (!applied.ok && applied.code !== "STALE_REVISION" && currentRoom) {
-    return jsonError(applied.code, applied.status, currentRoom);
+    return jsonError(
+      applied.code,
+      applied.status,
+      mayExposeBaseballRoomCommandState(
+        currentRoom,
+        envelope.kind,
+        authentication.identity,
+      )
+        ? currentRoom
+        : undefined,
+    );
   }
 
   const nextRoom = applied.ok ? applied.room : null;
@@ -155,6 +194,9 @@ export async function handleBaseballRoomCommandRequest(request: Request) {
 
   const commit = firstRpcRow(commitData);
   if (!commit) return jsonError("INVALID_ROOM_COMMAND_COMMIT_RESULT", 502);
+  if (commit.outcome === "ACTOR_NOT_ACTIVE") {
+    return jsonError("MEMBER_FORBIDDEN", 403);
+  }
 
   let committedRoom: BaseballRoom | undefined;
   if (!commit.deleted && commit.room_data !== null) {
@@ -192,10 +234,19 @@ export async function handleBaseballRoomCommandRequest(request: Request) {
     PLAYERS_NOT_READY: "PLAYERS_NOT_READY",
     PLAYERS_NOT_CONNECTED: "PLAYERS_NOT_CONNECTED",
   };
+  const canonicalErrorRoom = committedRoom ?? currentRoom ?? undefined;
+  const exposedErrorRoom = canonicalErrorRoom
+    && mayExposeBaseballRoomCommandState(
+      canonicalErrorRoom,
+      envelope.kind,
+      authentication.identity,
+    )
+    ? canonicalErrorRoom
+    : undefined;
   return jsonError(
     conflicts[commit.outcome] ?? "ROOM_COMMAND_REJECTED",
     409,
-    committedRoom ?? currentRoom ?? undefined,
+    exposedErrorRoom,
   );
 }
 

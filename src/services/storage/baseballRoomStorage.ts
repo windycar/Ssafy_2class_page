@@ -1,4 +1,3 @@
-import { supabase } from "../../lib/supabase.ts";
 import type { BaseballRoom } from "../../types/baseballRoom.ts";
 import {
   normalizeBaseballRoom,
@@ -9,6 +8,17 @@ const LOCAL_KEY = "ssafy-gwangju-2-baseball-rooms";
 const TABLE = "bang_rooms";
 const ID_PATTERN = "baseball-%";
 let localCacheGeneration = 0;
+
+async function getSupabaseClient() {
+  try {
+    const { supabase } = await import("../../lib/supabase.ts");
+    return supabase;
+  } catch {
+    // The local canonical cache remains readable in tests and offline builds
+    // where Vite's import.meta.env replacement is unavailable.
+    return null;
+  }
+}
 
 interface BaseballRoomRow {
   id: string;
@@ -190,6 +200,7 @@ export const baseballRoomStorage = {
 
   async refreshRooms(): Promise<BaseballRoom[]> {
     const localRooms = load().rooms;
+    const supabase = await getSupabaseClient();
     if (!supabase) return localRooms;
     const generationAtStart = localCacheGeneration;
     const baselineRevisions = new Map(
@@ -216,6 +227,7 @@ export const baseballRoomStorage = {
 
   async refreshRoom(roomId: string): Promise<BaseballRoom | null> {
     const localRoom = this.getRoom(roomId);
+    const supabase = await getSupabaseClient();
     if (!supabase) return localRoom;
 
     const { data, error } = await supabase

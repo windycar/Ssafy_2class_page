@@ -14,6 +14,7 @@ import {
   type BaseballRoom,
 } from "../src/types/baseballRoom.ts";
 import { createGameState } from "../src/utils/games/baseball/gameState.ts";
+import { canRenderBaseballOnlineRoom } from "../src/utils/games/baseball/onlineRoomAccess.ts";
 import { startPitch } from "../src/utils/games/baseball/playEngine.ts";
 
 const NOW = "2026-08-23T12:00:00.000Z";
@@ -84,6 +85,26 @@ function resolveStartedPitch(room: BaseballRoom) {
     } satisfies BaseballRoom,
   };
 }
+
+test("진행 중 경기는 인증된 두 참가자를 강제하고 취소 결과는 남은 참가자에게 표시한다", () => {
+  const playing = createPlayingRoom();
+  assert.equal(canRenderBaseballOnlineRoom(playing, AUTH_0), true);
+
+  const missingOpponent = {
+    ...playing,
+    players: [playing.players[0]],
+  } satisfies BaseballRoom;
+  assert.equal(canRenderBaseballOnlineRoom(missingOpponent, AUTH_0), false);
+
+  const cancelled = {
+    ...missingOpponent,
+    revision: playing.revision + 1,
+    status: "cancelled" as const,
+  } satisfies BaseballRoom;
+  assert.equal(canRenderBaseballOnlineRoom(cancelled, AUTH_0), true);
+  assert.equal(canRenderBaseballOnlineRoom(cancelled, AUTH_1), false);
+  assert.equal(canRenderBaseballOnlineRoom({ ...cancelled, matchId: undefined }, AUTH_0), false);
+});
 
 test("수비 seat만 START_PITCH envelope를 만들고 revision·sequence를 서버 CAS 기준으로 고정한다", () => {
   const room = createPlayingRoom();
@@ -245,6 +266,10 @@ test("온라인 플레이 코드는 room heartbeat/upsert를 사용하지 않고
     new URL("../src/components/games/baseball/v2/BaseballOnlineGameV2.tsx", import.meta.url),
     "utf8",
   );
+  const viewSource = await readFile(
+    new URL("../src/views/games/BaseballGameView.tsx", import.meta.url),
+    "utf8",
+  );
   assert.doesNotMatch(controllerSource, /\.updateRoom\s*\(/);
   assert.doesNotMatch(controllerSource, /\.createRoom\s*\(/);
   assert.doesNotMatch(controllerSource, /withBaseballPresenceHeartbeat/);
@@ -252,4 +277,10 @@ test("온라인 플레이 코드는 room heartbeat/upsert를 사용하지 않고
   assert.match(controllerSource, /PRESENCE_RECONNECTED/);
   assert.doesNotMatch(componentSource, /useBaseballRoomPresence/);
   assert.match(componentSource, /allPlayersConnected/);
+  assert.match(componentSource, /room\.status === "cancelled"/);
+  assert.match(componentSource, /title="경기 취소"/);
+  assert.match(viewSource, /BaseballSoloGameV2/);
+  assert.match(viewSource, /BaseballOnlineGameV2/);
+  assert.doesNotMatch(viewSource, /useBaseballMatchChannel|sendGameEvent|Math\.random/);
+  assert.doesNotMatch(viewSource, /applyPlateOutcome|createGameState|judgeSwingContact/);
 });

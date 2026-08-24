@@ -605,6 +605,16 @@ export function BaseballOnlineGameV2({
         onCancel={onExit}
       />
     );
+  } else if (room.status === "cancelled") {
+    overlay = (
+      <BaseballFinalOverlayV2
+        game={game}
+        title="경기 취소"
+        summary="참가자가 방을 나가 온라인 경기가 종료되었습니다."
+        backgroundSrc={baseballArenaSwingFacing}
+        onExit={onExit}
+      />
+    );
   } else if (role === "FINAL") {
     overlay = (
       <BaseballFinalOverlayV2

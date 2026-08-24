@@ -16,6 +16,7 @@ import {
   canonicalizeBaseballCommandEnvelope,
   parseBaseballCommandRequestBody,
 } from "../api/_lib/baseballCommandHandler.ts";
+import { mayExposeBaseballCommandState } from "../api/baseball-command.ts";
 import {
   BASEBALL_ROOM_SCHEMA_VERSION,
   type BaseballRoom,
@@ -305,6 +306,26 @@ test("투구는 수비 seat, 타격은 공격 seat만 승인한다", () => {
   });
 });
 
+test("401/403은 canonical room을 숨기고 검증된 멤버의 409만 동기화 상태를 제공한다", () => {
+  const room = playingRoom();
+  const outsider: BaseballMemberIdentity = {
+    memberId: 33,
+    studentId: 303,
+    authId: "00000000-0000-4000-8000-000000000303",
+  };
+
+  assert.equal(mayExposeBaseballCommandState(room, homeIdentity, 401), false);
+  assert.equal(mayExposeBaseballCommandState(room, homeIdentity, 403), false);
+  assert.equal(mayExposeBaseballCommandState(room, outsider, 409), false);
+  assert.equal(mayExposeBaseballCommandState(room, homeIdentity, 409), true);
+
+  const source = readFileSync(path.join(process.cwd(), "api/baseball-command.ts"), "utf8");
+  assert.match(
+    source,
+    /commit\.outcome === "ACTOR_NOT_ACTIVE"[\s\S]*jsonError\("MEMBER_FORBIDDEN", 403\)/,
+  );
+});
+
 test("승인된 투구와 타격은 동일 엔진으로 실행하고 방/game revision을 각각 1 올린다", () => {
   const room = playingRoom();
   const roomSnapshot = structuredClone(room);
@@ -383,6 +404,12 @@ test("SQL RPC는 행 잠금·CAS·멱등성·sequence 고유성·service_role �
   assert.match(sql, /revoke execute on function public\.commit_baseball_command[\s\S]*from public, anon, authenticated/i);
   assert.match(sql, /grant execute on function public\.commit_baseball_command[\s\S]*to service_role/i);
   assert.match(sql, /drop policy if exists "Public bang rooms" on public\.bang_rooms/i);
+  assert.match(sql, /'ACTOR_NOT_ACTIVE'::text/i);
+  assert.match(
+    sql,
+    /member\.auth_user_id = p_actor_auth_id[\s\S]*member\.is_active = true[\s\S]*= p_actor_student_id/i,
+  );
+  assert.match(sql, /= p_actor_student_id[\s\S]*for share/i);
   assert.match(sql, /\(v_room ->> 'status'\) is distinct from 'playing'/i);
   assert.match(sql, /\(p_next_room -> 'players'\) is distinct from \(v_room -> 'players'\)/i);
   assert.match(sql, /lineupPlayerIds/i);
