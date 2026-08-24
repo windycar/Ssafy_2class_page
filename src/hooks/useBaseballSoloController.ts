@@ -22,6 +22,7 @@ import {
 } from "../utils/games/baseball/playEngine.ts";
 import { deriveSeed } from "../utils/games/baseball/random.ts";
 import { createSoloVisualPlaybackPlan } from "../utils/games/baseball/soloPresentation.ts";
+import { useBaseballVisualPlayback } from "./useBaseballVisualPlayback.ts";
 import type {
   BaseballGameState,
   BaseballPitchType,
@@ -159,9 +160,6 @@ export function useBaseballSoloController(
   const [pitchProgress, setPitchProgress] = useState(0);
   const [pitchPulseProgress, setPitchPulseProgress] = useState(0);
   const [pitchTimingQuality, setPitchTimingQuality] = useState<PitchQuality>("GOOD");
-  const [visualEvents, setVisualEvents] = useState<VisualEvent[]>([]);
-  const [visualEventIndex, setVisualEventIndex] = useState(0);
-  const [currentVisualEventProgress, setCurrentVisualEventProgress] = useState(0);
 
   const gameRef = useRef(game);
   const displayGameRef = useRef(displayGame);
@@ -173,13 +171,10 @@ export function useBaseballSoloController(
   const swingTypeRef = useRef(swingType);
   const pitchProgressRef = useRef(0);
   const pitchPulseProgressRef = useRef(0);
-  const visualEventsRef = useRef<VisualEvent[]>([]);
   const visualEventDisplaySnapshotsRef = useRef<ReadonlyMap<string, BaseballGameState>>(new Map());
-  const visualEventIndexRef = useRef(0);
   const afterPlaybackRef = useRef<BaseballSoloPresentation>("BETWEEN_PLAYS");
   const flightStartedAtRef = useRef<number | null>(null);
   const pitchPulseStartedAtRef = useRef<number | null>(null);
-  const visualEventStartedAtRef = useRef<number | null>(null);
   const cpuBatterActionRef = useRef<ReturnType<typeof chooseCpuBatterAction> | null>(null);
   const recentCpuPitchesRef = useRef<CpuPitchHistoryEntry[]>([]);
   const occurredAtByPlayRef = useRef(new Map<string, string>());
@@ -203,6 +198,24 @@ export function useBaseballSoloController(
     presentationRef.current = next;
     setPresentation(next);
   }, []);
+
+  const {
+    currentEvent: playbackCurrentEvent,
+    currentEventProgress,
+    start: startVisualPlayback,
+    skip: skipVisualPlayback,
+    cancel: cancelVisualPlayback,
+  } = useBaseballVisualPlayback({
+    onEventStart: (event) => {
+      const snapshot = visualEventDisplaySnapshotsRef.current.get(event.id);
+      if (snapshot) commitDisplayGame(snapshot);
+    },
+    onComplete: () => {
+      visualEventDisplaySnapshotsRef.current = new Map();
+      commitDisplayGame(gameRef.current);
+      commitPresentation(afterPlaybackRef.current);
+    },
+  });
 
   const setAim = useCallback<Dispatch<SetStateAction<Vec2>>>((value) => {
     setAimState((previous) => {
@@ -376,26 +389,29 @@ export function useBaseballSoloController(
       : sideChanged
         ? "HALF_INNING"
         : "BETWEEN_PLAYS";
-    visualEventsRef.current = nextEvents;
     visualEventDisplaySnapshotsRef.current = playbackPlan.displaySnapshotByEventId;
-    visualEventIndexRef.current = 0;
-    visualEventStartedAtRef.current = null;
-    setVisualEvents(nextEvents);
-    setVisualEventIndex(0);
-    setCurrentVisualEventProgress(0);
     pitchProgressRef.current = 1;
     setPitchProgress(1);
     commitGame(result.state);
     if (nextEvents.length > 0) {
-      const firstSnapshot = playbackPlan.displaySnapshotByEventId.get(nextEvents[0].id);
-      if (firstSnapshot) commitDisplayGame(firstSnapshot);
-      commitPresentation("EVENT_PLAYBACK");
+      const started = startVisualPlayback({
+        playId: activePlay.playId,
+        events: nextEvents,
+        sourceGame: result.state,
+      });
+      if (started) {
+        commitPresentation("EVENT_PLAYBACK");
+      } else {
+        visualEventDisplaySnapshotsRef.current = new Map();
+        commitDisplayGame(result.state);
+        commitPresentation(afterPlaybackRef.current);
+      }
     } else {
       commitDisplayGame(result.state);
       commitPresentation(afterPlaybackRef.current);
     }
     return true;
-  }, [commitDisplayGame, commitGame, commitPresentation]);
+  }, [commitDisplayGame, commitGame, commitPresentation, startVisualPlayback]);
 
   const resolveTake = useCallback(() => {
     const state = gameRef.current;
@@ -405,37 +421,10 @@ export function useBaseballSoloController(
     return resolveCurrentPitch(true);
   }, [resolveCurrentPitch]);
 
-  const finishVisualPlayback = useCallback(() => {
-    visualEventIndexRef.current = visualEventsRef.current.length;
-    setVisualEventIndex(visualEventsRef.current.length);
-    visualEventStartedAtRef.current = null;
-    setCurrentVisualEventProgress(1);
-    visualEventDisplaySnapshotsRef.current = new Map();
-    commitDisplayGame(gameRef.current);
-    commitPresentation(afterPlaybackRef.current);
-  }, [commitDisplayGame, commitPresentation]);
-
-  const advanceVisualEvent = useCallback(() => {
-    if (presentationRef.current !== "EVENT_PLAYBACK") return;
-    const nextIndex = visualEventIndexRef.current + 1;
-    if (nextIndex >= visualEventsRef.current.length) {
-      finishVisualPlayback();
-      return;
-    }
-    const nextEvent = visualEventsRef.current[nextIndex];
-    const nextSnapshot = visualEventDisplaySnapshotsRef.current.get(nextEvent.id);
-    if (nextSnapshot) commitDisplayGame(nextSnapshot);
-    visualEventIndexRef.current = nextIndex;
-    visualEventStartedAtRef.current = null;
-    setCurrentVisualEventProgress(0);
-    setVisualEventIndex(nextIndex);
-  }, [commitDisplayGame, finishVisualPlayback]);
-
   const skip = useCallback(() => {
     if (presentationRef.current !== "EVENT_PLAYBACK") return;
-    const current = visualEventsRef.current[visualEventIndexRef.current];
-    if (current?.skippable) advanceVisualEvent();
-  }, [advanceVisualEvent]);
+    skipVisualPlayback();
+  }, [skipVisualPlayback]);
 
   const advance = useCallback(() => {
     switch (presentationRef.current) {
@@ -487,15 +476,13 @@ export function useBaseballSoloController(
     animationFrameRef.current = null;
     flightStartedAtRef.current = null;
     pitchPulseStartedAtRef.current = null;
-    visualEventStartedAtRef.current = null;
+    cancelVisualPlayback();
     cpuBatterActionRef.current = null;
     recentCpuPitchesRef.current = [];
     occurredAtByPlayRef.current.clear();
     startCommandLocksRef.current.clear();
     actionCommandLocksRef.current.clear();
-    visualEventsRef.current = [];
     visualEventDisplaySnapshotsRef.current = new Map();
-    visualEventIndexRef.current = 0;
     afterPlaybackRef.current = "BETWEEN_PLAYS";
     aimRef.current = { ...DEFAULT_AIM };
     selectedPitchTypeRef.current = DEFAULT_PITCH_TYPE;
@@ -516,13 +503,10 @@ export function useBaseballSoloController(
     setPitchProgress(0);
     setPitchPulseProgress(0);
     setPitchTimingQuality("GOOD");
-    setVisualEvents([]);
-    setVisualEventIndex(0);
-    setCurrentVisualEventProgress(0);
     commitGame(nextGame);
     commitDisplayGame(nextGame);
     commitPresentation("INTRO");
-  }, [commitDisplayGame, commitGame, commitPresentation]);
+  }, [cancelVisualPlayback, commitDisplayGame, commitGame, commitPresentation]);
 
   useEffect(() => {
     if (presentation !== "READY_FOR_PITCH" || !isUserPitching(game)) return;
@@ -609,36 +593,8 @@ export function useBaseballSoloController(
   }, [presentation, resolveCurrentPitch, resolveTake]);
 
   const currentVisualEvent = presentation === "EVENT_PLAYBACK"
-    ? visualEvents[visualEventIndex] ?? null
+    ? playbackCurrentEvent
     : null;
-
-  useEffect(() => {
-    if (presentation !== "EVENT_PLAYBACK" || !currentVisualEvent) return;
-    if (visualEventStartedAtRef.current === null) {
-      visualEventStartedAtRef.current = monotonicNow();
-    }
-
-    const animate = (now: number) => {
-      const startedAt = visualEventStartedAtRef.current ?? now;
-      const progress = clamp(
-        (now - startedAt) / Math.max(1, currentVisualEvent.durationMs),
-        0,
-        1,
-      );
-      setCurrentVisualEventProgress(progress);
-      if (progress >= 1) {
-        advanceVisualEvent();
-        return;
-      }
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(animate);
-    return () => {
-      if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    };
-  }, [advanceVisualEvent, currentVisualEvent, presentation]);
 
   useEffect(() => () => {
     if (readyTimeoutRef.current !== null) clearTimeout(readyTimeoutRef.current);

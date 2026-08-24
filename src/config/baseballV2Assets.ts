@@ -5,6 +5,7 @@ import baseballBatterActions from "../assets/games/baseball-batter-actions-blue.
 import baseballBattingField from "../assets/games/baseball-batting-field-v4.png";
 import baseballCameraHomeRun from "../assets/games/baseball-camera-home-run.png";
 import baseballCameraCenterField from "../assets/games/baseball-camera-center-field-v4.png";
+import baseballCameraFirstBaseLine from "../assets/games/baseball-camera-first-base-line-v4.png";
 import baseballCameraInfieldWide from "../assets/games/baseball-camera-infield-wide-v3.png";
 import baseballCameraLeftCenter from "../assets/games/baseball-camera-left-center-v4.png";
 import baseballCameraLeftField from "../assets/games/baseball-camera-left-field-v4.png";
@@ -13,6 +14,7 @@ import baseballCameraRightCenter from "../assets/games/baseball-camera-right-cen
 import baseballCameraRightField from "../assets/games/baseball-camera-right-field-v4.png";
 import baseballCameraRunScored from "../assets/games/baseball-camera-run-scored-v3.png";
 import baseballCameraScoreboardWide from "../assets/games/baseball-camera-scoreboard-wide-v3.png";
+import baseballCameraThirdBaseLine from "../assets/games/baseball-camera-third-base-line-v4.png";
 import baseballFielderActions from "../assets/games/baseball-fielder-actions-red.png";
 import baseballPitcherActions from "../assets/games/baseball-pitcher-actions-red.png";
 import type { BaseballCameraBackgroundSources } from "../utils/games/baseball/cameraBackground.ts";
@@ -41,6 +43,8 @@ export const BASEBALL_V2_CAMERA_BACKGROUND_SOURCES = Object.freeze({
   centerField: baseballCameraCenterField,
   rightCenter: baseballCameraRightCenter,
   rightField: baseballCameraRightField,
+  firstBaseLine: baseballCameraFirstBaseLine,
+  thirdBaseLine: baseballCameraThirdBaseLine,
   runScored: baseballCameraRunScored,
   homeRun: baseballCameraHomeRun,
 }) satisfies BaseballCameraBackgroundSources;
@@ -59,6 +63,8 @@ export const BASEBALL_V2_ASSET_MANIFEST = [
   { id: "center-field-camera", source: baseballCameraCenterField, group: "lazy", kind: "background", dynamicBallOnly: true },
   { id: "right-center-camera", source: baseballCameraRightCenter, group: "lazy", kind: "background", dynamicBallOnly: true },
   { id: "right-field-camera", source: baseballCameraRightField, group: "lazy", kind: "background", dynamicBallOnly: true },
+  { id: "first-base-line-camera", source: baseballCameraFirstBaseLine, group: "lazy", kind: "background", dynamicBallOnly: true },
+  { id: "third-base-line-camera", source: baseballCameraThirdBaseLine, group: "lazy", kind: "background", dynamicBallOnly: true },
   { id: "run-scored-camera", source: baseballCameraRunScored, group: "lazy", kind: "effect" },
   { id: "scoreboard-wide-camera", source: baseballCameraScoreboardWide, group: "lazy", kind: "background" },
   { id: "home-run-camera", source: baseballCameraHomeRun, group: "lazy", kind: "effect" },

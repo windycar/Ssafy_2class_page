@@ -6,10 +6,14 @@ import {
   createPitchVisualFrame,
   DEFAULT_PITCH_STAGE_PROJECTION,
   DEFAULT_RUNNER_DIAMOND_LAYOUT,
+  FIRST_BASE_LINE_RUNNER_LAYOUT,
   derivePitchStageProjection,
   projectBattedBallToCamera,
   projectPitchFlightSample,
   projectRunnerAdvance,
+  projectRunnerAdvanceToCamera,
+  runnerDiamondLayoutForCamera,
+  THIRD_BASE_LINE_RUNNER_LAYOUT,
 } from "../src/utils/games/baseball/presentation.ts";
 import { samplePitchFlight } from "../src/utils/games/baseball/pitchEngine.ts";
 import type {
@@ -150,7 +154,8 @@ test("타구는 수평·발사 각도와 비거리·체공 시간을 쓰고 카�
 test("모든 카메라의 타구 좌표는 유한하고 스테이지 범위를 벗어나지 않는다", () => {
   const cameras: BaseballCameraMode[] = [
     "BATTER", "PITCHER", "CONTACT", "INFIELD", "LEFT_FIELD", "LEFT_CENTER", "CENTER_FIELD",
-    "RIGHT_CENTER", "RIGHT_FIELD", "FOUL", "BASE_RUNNING", "HOME_RUN", "RUN_SCORED", "DUGOUT", "REPLAY",
+    "RIGHT_CENTER", "RIGHT_FIELD", "FOUL", "FIRST_BASE_LINE", "THIRD_BASE_LINE",
+    "BASE_RUNNING", "HOME_RUN", "RUN_SCORED", "DUGOUT", "REPLAY",
   ];
   for (const camera of cameras) {
     for (const progress of [-1, 0, 0.5, 1, 2]) {
@@ -194,6 +199,45 @@ test("SAFE는 도착루에 멈추고 OUT은 outAtMs 시점 위치에서 고정�
   assert.equal(atOut.progress, 0.5);
   assert.deepEqual(afterOut.position, atOut.position);
   assert.equal(afterOut.status, "OUT");
+});
+
+test("1·3루 라인 카메라는 실제 배경의 베이스 중심에 주자 종착점을 맞춘다", () => {
+  const firstBaseAdvance = advance({
+    startedAtMs: 0,
+    arrivedAtMs: 1_000,
+  });
+  const first = projectRunnerAdvanceToCamera(
+    firstBaseAdvance,
+    1_000,
+    "FIRST_BASE_LINE",
+  );
+  assert.equal(first.camera, "FIRST_BASE_LINE");
+  assert.deepEqual(first.position, FIRST_BASE_LINE_RUNNER_LAYOUT.first);
+  assert.equal(first.status, "SAFE");
+
+  const thirdBaseAdvance = advance({
+    fromBase: 2,
+    toBase: 3,
+    startedAtMs: 100,
+    arrivedAtMs: 1_100,
+  });
+  const third = projectRunnerAdvanceToCamera(
+    thirdBaseAdvance,
+    1_100,
+    "THIRD_BASE_LINE",
+  );
+  assert.equal(third.camera, "THIRD_BASE_LINE");
+  assert.deepEqual(third.position, THIRD_BASE_LINE_RUNNER_LAYOUT.third);
+  assert.equal(third.status, "SAFE");
+
+  assert.equal(
+    runnerDiamondLayoutForCamera("BASE_RUNNING"),
+    DEFAULT_RUNNER_DIAMOND_LAYOUT,
+  );
+  assert.deepEqual(
+    projectRunnerAdvanceToCamera(firstBaseAdvance, 500, "FIRST_BASE_LINE"),
+    projectRunnerAdvanceToCamera(firstBaseAdvance, 500, "FIRST_BASE_LINE"),
+  );
 });
 
 test("잘못된 경계·시간·배치 입력은 즉시 거부한다", () => {

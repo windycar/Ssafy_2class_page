@@ -224,6 +224,8 @@ const BALL_CAMERA_PROFILES: Readonly<Record<BaseballCameraMode, BattedBallCamera
   RIGHT_CENTER: { home: { xPercent: 39, yPercent: 91 }, lateralPercentPerMeter: 0.35, depthPercentPerMeter: 0.38, heightPercentPerMeter: 0.49, baseScale: 0.76 },
   RIGHT_FIELD: { home: { xPercent: 28, yPercent: 90 }, lateralPercentPerMeter: 0.37, depthPercentPerMeter: 0.36, heightPercentPerMeter: 0.48, baseScale: 0.76 },
   FOUL: { home: { xPercent: 50, yPercent: 88 }, lateralPercentPerMeter: 0.58, depthPercentPerMeter: 0.27, heightPercentPerMeter: 0.42, baseScale: 0.72 },
+  FIRST_BASE_LINE: { home: { xPercent: 97, yPercent: 96 }, lateralPercentPerMeter: 0.23, depthPercentPerMeter: 0.24, heightPercentPerMeter: 0.34, baseScale: 0.74 },
+  THIRD_BASE_LINE: { home: { xPercent: 3, yPercent: 96 }, lateralPercentPerMeter: 0.23, depthPercentPerMeter: 0.24, heightPercentPerMeter: 0.34, baseScale: 0.74 },
   BASE_RUNNING: { home: { xPercent: 50, yPercent: 91 }, lateralPercentPerMeter: 0.29, depthPercentPerMeter: 0.31, heightPercentPerMeter: 0.36, baseScale: 0.72 },
   HOME_RUN: { home: { xPercent: 50, yPercent: 94 }, lateralPercentPerMeter: 0.28, depthPercentPerMeter: 0.32, heightPercentPerMeter: 0.57, baseScale: 0.74 },
   RUN_SCORED: { home: { xPercent: 50, yPercent: 91 }, lateralPercentPerMeter: 0.29, depthPercentPerMeter: 0.31, heightPercentPerMeter: 0.36, baseScale: 0.72 },
@@ -351,6 +353,36 @@ export const DEFAULT_RUNNER_DIAMOND_LAYOUT: Readonly<RunnerDiamondLayout> = {
   third: { xPercent: 27, yPercent: 65 },
 };
 
+/** Base anchors measured from the clean first-base-line v4 scene. */
+export const FIRST_BASE_LINE_RUNNER_LAYOUT: Readonly<RunnerDiamondLayout> = {
+  home: { xPercent: 97, yPercent: 96 },
+  first: { xPercent: 76.5, yPercent: 77.5 },
+  second: { xPercent: 6, yPercent: 70 },
+  third: { xPercent: 3, yPercent: 88 },
+};
+
+/** Base anchors measured from the clean third-base-line v4 scene. */
+export const THIRD_BASE_LINE_RUNNER_LAYOUT: Readonly<RunnerDiamondLayout> = {
+  home: { xPercent: 3, yPercent: 96 },
+  first: { xPercent: 98, yPercent: 88 },
+  second: { xPercent: 92, yPercent: 60 },
+  third: { xPercent: 42, yPercent: 77 },
+};
+
+const RUNNER_DIAMOND_LAYOUT_BY_CAMERA: Readonly<
+  Partial<Record<BaseballCameraMode, Readonly<RunnerDiamondLayout>>>
+> = {
+  FIRST_BASE_LINE: FIRST_BASE_LINE_RUNNER_LAYOUT,
+  THIRD_BASE_LINE: THIRD_BASE_LINE_RUNNER_LAYOUT,
+};
+
+/** Returns the calibrated diamond projection for a presentation camera. */
+export function runnerDiamondLayoutForCamera(
+  camera: BaseballCameraMode,
+): Readonly<RunnerDiamondLayout> {
+  return RUNNER_DIAMOND_LAYOUT_BY_CAMERA[camera] ?? DEFAULT_RUNNER_DIAMOND_LAYOUT;
+}
+
 export interface RunnerScreenSample {
   runnerId: string;
   progress: number;
@@ -359,6 +391,10 @@ export interface RunnerScreenSample {
   fromBase: RunnerAdvance["fromBase"];
   toBase: RunnerAdvance["toBase"];
   currentLeg: 0 | 1 | 2 | 3;
+}
+
+export interface CameraRunnerScreenSample extends RunnerScreenSample {
+  camera: BaseballCameraMode;
 }
 
 function validateRunnerLayout(layout: RunnerDiamondLayout) {
@@ -459,5 +495,21 @@ export function projectRunnerAdvance(
     fromBase: advance.fromBase,
     toBase: advance.toBase,
     currentLeg,
+  };
+}
+
+/** Projects a runner directly into the calibrated layout of the active camera. */
+export function projectRunnerAdvanceToCamera(
+  advance: RunnerAdvance,
+  elapsedMs: number,
+  camera: BaseballCameraMode,
+): CameraRunnerScreenSample {
+  return {
+    ...projectRunnerAdvance(
+      advance,
+      elapsedMs,
+      runnerDiamondLayoutForCamera(camera),
+    ),
+    camera,
   };
 }

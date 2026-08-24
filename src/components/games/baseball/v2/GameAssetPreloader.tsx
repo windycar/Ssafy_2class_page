@@ -4,10 +4,13 @@ import {
   BASEBALL_V2_CRITICAL_ASSET_SOURCES,
   BASEBALL_V2_LAZY_ASSET_SOURCES,
 } from "../../../../config/baseballV2Assets";
-import { baseballImageAssetPreloader } from "../../../../utils/games/baseball/assetPreloader";
+import {
+  baseballImageAssetPreloader,
+  createBaseballIdleTaskScheduler,
+  startBaseballLazyAssetPreload,
+} from "../../../../utils/games/baseball/assetPreloader";
 
 const CRITICAL_ASSET_TIMEOUT_MS = 5_000;
-const LAZY_PRELOAD_DELAY_MS = 150;
 let hasReleasedCriticalGate = false;
 
 interface GameAssetPreloaderProps {
@@ -48,11 +51,13 @@ export function GameAssetPreloader({ children }: GameAssetPreloaderProps) {
   useEffect(() => {
     if (!isReady) return;
 
-    const timeoutId = window.setTimeout(() => {
-      void baseballImageAssetPreloader.preload(BASEBALL_V2_LAZY_ASSET_SOURCES);
-    }, LAZY_PRELOAD_DELAY_MS);
+    const lazyPreload = startBaseballLazyAssetPreload({
+      sources: BASEBALL_V2_LAZY_ASSET_SOURCES,
+      load: baseballImageAssetPreloader.load,
+      scheduler: createBaseballIdleTaskScheduler(),
+    });
 
-    return () => window.clearTimeout(timeoutId);
+    return lazyPreload.cancel;
   }, [isReady]);
 
   if (!isReady) {

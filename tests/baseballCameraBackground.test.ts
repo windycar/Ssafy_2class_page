@@ -21,6 +21,8 @@ const SOURCES = {
   centerField: "baseball-camera-center-field-v4.png",
   rightCenter: "baseball-camera-right-center-v4.png",
   rightField: "baseball-camera-right-field-v4.png",
+  firstBaseLine: "baseball-camera-first-base-line-v4.png",
+  thirdBaseLine: "baseball-camera-third-base-line-v4.png",
   runScored: "baseball-camera-run-scored-v3.png",
   homeRun: "baseball-camera-home-run.png",
 } as const satisfies BaseballCameraBackgroundSources;
@@ -33,6 +35,8 @@ test("카메라 모드는 각 상황에 맞는 실제 배경 자산으로 해석
     CENTER_FIELD: SOURCES.centerField,
     RIGHT_CENTER: SOURCES.rightCenter,
     RIGHT_FIELD: SOURCES.rightField,
+    FIRST_BASE_LINE: SOURCES.firstBaseLine,
+    THIRD_BASE_LINE: SOURCES.thirdBaseLine,
     BASE_RUNNING: SOURCES.infieldWide,
     RUN_SCORED: SOURCES.runScored,
     HOME_RUN: SOURCES.homeRun,
@@ -54,10 +58,12 @@ test("카메라 모드는 각 상황에 맞는 실제 배경 자산으로 해석
       expected.CENTER_FIELD,
       expected.RIGHT_CENTER,
       expected.RIGHT_FIELD,
+      expected.FIRST_BASE_LINE,
+      expected.THIRD_BASE_LINE,
       expected.RUN_SCORED,
       expected.HOME_RUN,
     ]).size,
-    8,
+    10,
     "주요 카메라 장면은 서로 다른 배경이어야 한다",
   );
 });
@@ -93,8 +99,10 @@ test("Solo와 Online은 공통 카메라 resolver와 clean-v3 공을 사용한�
   assert.match(assetsSource, /baseball-camera-run-scored-v3\.png/);
   assert.match(assetsSource, /baseball-camera-left-center-v4\.png/);
   assert.match(assetsSource, /baseball-camera-right-center-v4\.png/);
+  assert.match(assetsSource, /baseball-camera-first-base-line-v4\.png/);
+  assert.match(assetsSource, /baseball-camera-third-base-line-v4\.png/);
   assert.match(assetsSource, /baseball-batting-field-v4\.png/);
-  assert.equal((assetsSource.match(/dynamicBallOnly: true/g) ?? []).length, 6);
+  assert.equal((assetsSource.match(/dynamicBallOnly: true/g) ?? []).length, 8);
   assert.doesNotMatch(assetsSource, /baseball-camera-(?:left-field|left-center|center-field|right-center|right-field)-v3\.png/);
   assert.doesNotMatch(assetsSource, /baseball-batting-field\.png/);
   assert.match(assetsSource, /baseball-camera-scoreboard-wide-v3\.png/);

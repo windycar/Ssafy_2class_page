@@ -3,6 +3,8 @@ import type {
   BattedBall,
   BattedBallZone,
   OfficialPlayResult,
+  RunnerAdvance,
+  RunnerResolution,
 } from "./types.ts";
 
 const ZONE_CAMERA: Readonly<Record<BattedBallZone, BaseballCameraMode>> = {
@@ -101,4 +103,37 @@ export function cameraForOfficialResult(
   }
 
   return official.plateAppearanceEnded ? "DUGOUT" : "BATTER";
+}
+
+function cameraForRunnerDestination(
+  destination: RunnerAdvance["toBase"],
+): BaseballCameraMode {
+  if (destination === 1) return "FIRST_BASE_LINE";
+  if (destination === 3) return "THIRD_BASE_LINE";
+  return "BASE_RUNNING";
+}
+
+/**
+ * Selects one deterministic camera for the shared runner-advance event.
+ * A contested out is always shown first. Scoring advances are deliberately
+ * excluded here because the following RUN_SCORE event owns the home-plate cut.
+ */
+export function cameraForRunnerResolution(
+  runners: RunnerResolution | null,
+): BaseballCameraMode {
+  if (!runners || runners.advances.length === 0) return "BASE_RUNNING";
+
+  const contestedOut = runners.advances.find((advance) => advance.result === "OUT");
+  if (contestedOut) return cameraForRunnerDestination(contestedOut.toBase);
+
+  const nonScoringAdvances = runners.advances.filter(
+    (advance) => advance.result !== "SCORE" && advance.result !== "HOLD",
+  );
+  if (nonScoringAdvances.some((advance) => advance.toBase === 1)) {
+    return "FIRST_BASE_LINE";
+  }
+  if (nonScoringAdvances.some((advance) => advance.toBase === 3)) {
+    return "THIRD_BASE_LINE";
+  }
+  return "BASE_RUNNING";
 }

@@ -11,6 +11,8 @@ export interface BaseballCameraBackgroundSources {
   readonly centerField: string;
   readonly rightCenter: string;
   readonly rightField: string;
+  readonly firstBaseLine: string;
+  readonly thirdBaseLine: string;
   readonly runScored: string;
   readonly homeRun: string;
 }
@@ -24,6 +26,8 @@ const CAMERA_BACKGROUND_KEY_BY_MODE = {
   CENTER_FIELD: "centerField",
   RIGHT_CENTER: "rightCenter",
   RIGHT_FIELD: "rightField",
+  FIRST_BASE_LINE: "firstBaseLine",
+  THIRD_BASE_LINE: "thirdBaseLine",
   BASE_RUNNING: "infieldWide",
   RUN_SCORED: "runScored",
   HOME_RUN: "homeRun",

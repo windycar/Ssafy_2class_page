@@ -32,8 +32,130 @@ export interface BaseballImageAssetPreloader {
   getProgress: (sources: readonly string[]) => BaseballAssetLoadProgress;
 }
 
+export interface BaseballIdleDeadline {
+  didTimeout: boolean;
+  timeRemaining: () => number;
+}
+
+export interface BaseballIdleTaskScheduler {
+  schedule: (callback: (deadline: BaseballIdleDeadline) => void) => unknown;
+  cancel: (handle: unknown) => void;
+}
+
+export interface BaseballIdleSchedulerHost {
+  requestIdleCallback?: (
+    callback: (deadline: BaseballIdleDeadline) => void,
+    options?: { timeout: number },
+  ) => unknown;
+  cancelIdleCallback?: (handle: unknown) => void;
+  setTimeout: (callback: () => void, delayMs: number) => unknown;
+  clearTimeout: (handle: unknown) => void;
+}
+
+export interface BaseballLazyAssetPreloadController {
+  cancel: () => void;
+  finished: Promise<"completed" | "cancelled">;
+}
+
+export interface BaseballLazyAssetPreloadOptions {
+  sources: readonly string[];
+  load: (source: string) => Promise<unknown>;
+  scheduler: BaseballIdleTaskScheduler;
+}
+
 function uniqueSources(sources: readonly string[]) {
   return [...new Set(sources.map((source) => source.trim()).filter(Boolean))];
+}
+
+function globalIdleSchedulerHost(): BaseballIdleSchedulerHost {
+  const host = globalThis as typeof globalThis & {
+    requestIdleCallback?: BaseballIdleSchedulerHost["requestIdleCallback"];
+    cancelIdleCallback?: BaseballIdleSchedulerHost["cancelIdleCallback"];
+  };
+
+  return {
+    requestIdleCallback: host.requestIdleCallback?.bind(host),
+    cancelIdleCallback: host.cancelIdleCallback?.bind(host),
+    setTimeout: (callback, delayMs) => globalThis.setTimeout(callback, delayMs),
+    clearTimeout: (handle) => globalThis.clearTimeout(handle as ReturnType<typeof setTimeout>),
+  };
+}
+
+/**
+ * Uses native idle callbacks when available and a short timer otherwise.
+ * The fallback deadline deliberately reports no spare budget: callers should
+ * start one bounded unit of work and yield again instead of draining a queue.
+ */
+export function createBaseballIdleTaskScheduler(
+  host: BaseballIdleSchedulerHost = globalIdleSchedulerHost(),
+): BaseballIdleTaskScheduler {
+  if (host.requestIdleCallback && host.cancelIdleCallback) {
+    return {
+      schedule: (callback) => host.requestIdleCallback!(callback, { timeout: 1_000 }),
+      cancel: (handle) => host.cancelIdleCallback!(handle),
+    };
+  }
+
+  return {
+    schedule: (callback) => host.setTimeout(
+      () => callback({ didTimeout: true, timeRemaining: () => 0 }),
+      50,
+    ),
+    cancel: (handle) => host.clearTimeout(handle),
+  };
+}
+
+/**
+ * Starts at most one image request per idle turn and waits for it to settle
+ * before scheduling the next. A failed decode/load is isolated to that source.
+ */
+export function startBaseballLazyAssetPreload({
+  sources,
+  load,
+  scheduler,
+}: BaseballLazyAssetPreloadOptions): BaseballLazyAssetPreloadController {
+  const queue = uniqueSources(sources);
+  let queueIndex = 0;
+  let cancelled = false;
+  let pendingHandle: unknown;
+  let finish: (outcome: "completed" | "cancelled") => void = () => undefined;
+  const finished = new Promise<"completed" | "cancelled">((resolve) => {
+    finish = resolve;
+  });
+
+  const scheduleNext = () => {
+    if (cancelled) return;
+    if (queueIndex >= queue.length) {
+      finish("completed");
+      return;
+    }
+
+    pendingHandle = scheduler.schedule(() => {
+      pendingHandle = undefined;
+      if (cancelled) return;
+
+      const source = queue[queueIndex];
+      queueIndex += 1;
+      void Promise.resolve()
+        .then(() => load(source!))
+        // A single broken optional asset must not block later lazy assets.
+        .catch(() => undefined)
+        .then(scheduleNext);
+    });
+  };
+
+  scheduleNext();
+
+  return {
+    cancel: () => {
+      if (cancelled) return;
+      cancelled = true;
+      if (pendingHandle !== undefined) scheduler.cancel(pendingHandle);
+      pendingHandle = undefined;
+      finish("cancelled");
+    },
+    finished,
+  };
 }
 
 function createBrowserImage(): BaseballImageResource | null {

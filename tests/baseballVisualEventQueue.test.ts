@@ -5,6 +5,7 @@ import test from "node:test";
 import {
   cameraForBattedBall,
   cameraForOfficialResult,
+  cameraForRunnerResolution,
 } from "../src/utils/games/baseball/cameraDirector.ts";
 import {
   buildPlayVisualEvents,
@@ -388,7 +389,7 @@ test("인플레이 득점은 접촉부터 다음 타자까지 정해진 순서�
     "CONTACT",
     "LEFT_CENTER",
     "LEFT_CENTER",
-    "BASE_RUNNING",
+    "FIRST_BASE_LINE",
     "RUN_SCORED",
     "RUN_SCORED",
     "RUN_SCORED",
@@ -499,6 +500,106 @@ test("타구·결과 카메라는 구역, 땅볼, 파울, 홈런, 득점을 우�
     cameraForOfficialResult(makeOfficial({ code: "SINGLE_CENTER", runsScored: 1 })),
     "RUN_SCORED",
   );
+});
+
+test("주루 카메라는 OUT 경합을 우선하고 1·3루 목적지를 전용 라인 장면으로 고른다", () => {
+  const safeFirst = makeRunners({
+    advances: [{
+      runnerId: "batter-1",
+      runnerName: "타자",
+      fromBase: 0,
+      toBase: 1,
+      result: "SAFE",
+      startedAtMs: 0,
+      arrivedAtMs: 900,
+      isForce: true,
+    }],
+    scoredRunnerIds: [],
+    outRunnerIds: [],
+    runsScored: 0,
+    outsRecorded: 0,
+  });
+  assert.equal(cameraForRunnerResolution(safeFirst), "FIRST_BASE_LINE");
+
+  const safeThird = makeRunners({
+    advances: [{
+      runnerId: "runner-2",
+      runnerName: "2루 주자",
+      fromBase: 2,
+      toBase: 3,
+      result: "SAFE",
+      startedAtMs: 0,
+      arrivedAtMs: 1_000,
+      isForce: false,
+    }],
+    scoredRunnerIds: [],
+    outRunnerIds: [],
+    runsScored: 0,
+    outsRecorded: 0,
+  });
+  assert.equal(cameraForRunnerResolution(safeThird), "THIRD_BASE_LINE");
+
+  const contestedSecond = makeRunners({
+    advances: [
+      safeFirst.advances[0],
+      {
+        runnerId: "runner-1",
+        runnerName: "1루 주자",
+        fromBase: 1,
+        toBase: 2,
+        result: "OUT",
+        startedAtMs: 0,
+        arrivedAtMs: 1_100,
+        outAtMs: 1_050,
+        isForce: true,
+      },
+    ],
+    scoredRunnerIds: [],
+    outRunnerIds: ["runner-1"],
+    runsScored: 0,
+    outsRecorded: 1,
+  });
+  assert.equal(
+    cameraForRunnerResolution(contestedSecond),
+    "BASE_RUNNING",
+    "1루 SAFE보다 2루 OUT 경합을 우선해야 한다",
+  );
+
+  const scoreOnly = makeRunners({
+    advances: [{
+      runnerId: "runner-3",
+      runnerName: "3루 주자",
+      fromBase: 3,
+      toBase: 4,
+      result: "SCORE",
+      startedAtMs: 0,
+      arrivedAtMs: 800,
+      isForce: false,
+    }],
+  });
+  assert.equal(cameraForRunnerResolution(scoreOnly), "BASE_RUNNING");
+  assert.equal(cameraForRunnerResolution(null), "BASE_RUNNING");
+});
+
+test("RUNNER_ADVANCE만 전용 주루 카메라를 쓰고 득점 컷은 RUN_SCORED를 유지한다", () => {
+  const official = makeOfficial({
+    code: "SINGLE_LEFT",
+    hitValue: 1,
+    rbi: 1,
+    runsScored: 1,
+    scoredRunnerIds: ["runner-3"],
+    plateAppearanceEnded: true,
+  });
+  const events = buildPlayVisualEvents({
+    playId: official.playId,
+    official,
+    contact: makeContact(),
+    ball: makeBall(),
+    defense: makeDefense(),
+    runners: makeRunners(),
+  });
+  assert.equal(events.find((event) => event.kind === "RUNNER_ADVANCE")?.camera, "FIRST_BASE_LINE");
+  assert.equal(events.find((event) => event.kind === "RUN_SCORE")?.camera, "RUN_SCORED");
 });
 
 test("접촉·득점·점수판·판정 이벤트는 건너뛸 수 없다", () => {

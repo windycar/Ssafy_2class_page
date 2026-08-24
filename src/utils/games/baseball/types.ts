@@ -397,6 +397,8 @@ export type BaseballCameraMode =
   | "RIGHT_CENTER"
   | "RIGHT_FIELD"
   | "FOUL"
+  | "FIRST_BASE_LINE"
+  | "THIRD_BASE_LINE"
   | "BASE_RUNNING"
   | "HOME_RUN"
   | "RUN_SCORED"

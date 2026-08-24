@@ -1,6 +1,7 @@
 import {
   cameraForBattedBall,
   cameraForOfficialResult,
+  cameraForRunnerResolution,
 } from "./cameraDirector.ts";
 import type {
   BaseballCameraMode,
@@ -152,7 +153,7 @@ export function buildPlayVisualEvents(
   if (homeRun || (runners !== null && runners.advances.length > 0)) {
     drafts.push({
       kind: "RUNNER_ADVANCE",
-      camera: "BASE_RUNNING",
+      camera: cameraForRunnerResolution(runners),
       durationMs: runnerAdvanceDuration(runners),
       payload: {
         runners: runners ? jsonCopy(runners) : null,
