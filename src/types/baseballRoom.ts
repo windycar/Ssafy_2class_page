@@ -27,6 +27,13 @@ export interface BaseballRoomActivity {
   createdAt: string;
 }
 
+export interface BaseballPresentationGate {
+  playId: string;
+  openedAt: string;
+  expiresAt: string;
+  acknowledgedSeats: TeamIndex[];
+}
+
 export interface BaseballRoom {
   schemaVersion: typeof BASEBALL_ROOM_SCHEMA_VERSION;
   revision: number;
@@ -44,4 +51,9 @@ export interface BaseballRoom {
   finishedAt?: string;
   matchId?: string;
   gameState?: BaseballGameState;
+  /**
+   * Server-authoritative playback barrier for the most recently resolved play.
+   * It remains present after both acknowledgements until START_PITCH consumes it.
+   */
+  presentationGate?: BaseballPresentationGate;
 }

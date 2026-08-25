@@ -413,7 +413,8 @@ export type VisualEventKind =
   | "RUN_SCORE"
   | "SCOREBOARD_UPDATE"
   | "PLAY_RESULT"
-  | "NEXT_BATTER";
+  | "NEXT_BATTER"
+  | "HALF_INNING";
 
 export interface VisualEvent {
   id: string;

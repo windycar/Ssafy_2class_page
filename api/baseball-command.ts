@@ -122,10 +122,12 @@ export async function handleBaseballCommandRequest(request: Request) {
   }
 
   const room = normalized.value;
+  const occurredAt = new Date().toISOString();
   const authorization = authorizeBaseballCommand(
     room,
     envelope,
     authentication.identity,
+    occurredAt,
   );
   let nextRoom = room;
   if (!authorization.ok) {
@@ -148,7 +150,7 @@ export async function handleBaseballCommandRequest(request: Request) {
     const applied = applyAuthorizedBaseballCommand(
       room,
       envelope,
-      new Date().toISOString(),
+      occurredAt,
     );
     if (!applied.ok) {
       return jsonError(
@@ -199,6 +201,7 @@ export async function handleBaseballCommandRequest(request: Request) {
     COMMAND_CONFLICT: "COMMAND_ID_CONFLICT",
     SEQUENCE_CONFLICT: "COMMAND_SEQUENCE_CONFLICT",
     CONTEXT_MISMATCH: "ROOM_CONTEXT_MISMATCH",
+    PRESENTATION_PENDING: "PRESENTATION_PENDING",
   };
   return jsonError(
     conflicts[commit.outcome] ?? "COMMAND_REJECTED",

@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -7,7 +8,6 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import confetti from "canvas-confetti";
 
 import baseballArenaFacing from "../../../../assets/games/baseball-arena-facing.png";
 import baseballArenaSwingFacing from "../../../../assets/games/baseball-arena-swing-facing.png";
@@ -22,8 +22,8 @@ import {
 } from "../../../../config/baseballV2Assets.ts";
 import { useBaseballSoloController } from "../../../../hooks/useBaseballSoloController.ts";
 import { resolveBaseballCameraBackground } from "../../../../utils/games/baseball/cameraBackground.ts";
+import { isBaseballHomeRunCinematicSkippablePhaseV2 } from "../../../../utils/games/baseball/scoringPresentation.ts";
 import {
-  getCurrentBatter,
   getCurrentPitcher,
 } from "../../../../utils/games/baseball/gameState.ts";
 import {
@@ -49,8 +49,8 @@ import { BaseballHudV2 } from "./BaseballHudV2.tsx";
 import {
   BaseballFinalOverlayV2,
   BaseballHalfInningOverlayV2,
-  BaseballIntroOverlayV2,
 } from "./BaseballOverlaysV2.tsx";
+import { BaseballGameIntroSequenceV2 } from "./BaseballPresentationSequencesV2.tsx";
 import {
   createBaseballDefenseThrowPresentationV2,
   createBaseballFielderPresentationsV2,
@@ -254,7 +254,6 @@ export function BaseballSoloGameV2({
     seed,
   });
   const stageShellRef = useRef<HTMLDivElement>(null);
-  const celebratedHomeRunsRef = useRef(new Set<string>());
   const [pitchProjection, setPitchProjection] = useState<PitchStageProjection>({
     ...DEFAULT_PITCH_STAGE_PROJECTION,
   });
@@ -279,6 +278,7 @@ export function BaseballSoloGameV2({
     primaryAction,
     startNewGame,
     skip,
+    skipSequence,
     advance,
   } = controller;
 
@@ -344,12 +344,25 @@ export function BaseballSoloGameV2({
 
   const canAim = presentation === "READY_FOR_PITCH"
     || (userBatting && (presentation === "PITCH_WINDUP" || presentation === "PITCH_FLIGHT"));
+  const homeRunSequenceActive = presentation === "EVENT_PLAYBACK"
+    && isBaseballHomeRunResultV2(officialResult?.code);
+  const homeRunSequenceCanSkip = homeRunSequenceActive
+    && isBaseballHomeRunCinematicSkippablePhaseV2(currentVisualEvent?.kind);
+  const handlePrimaryAction = useCallback(() => {
+    if (homeRunSequenceCanSkip) {
+      skipSequence();
+      return;
+    }
+    primaryAction();
+  }, [homeRunSequenceCanSkip, primaryAction, skipSequence]);
   const shortcutCanRun = presentation === "INTRO"
     || presentation === "BETWEEN_PLAYS"
     || presentation === "HALF_INNING"
     || (presentation === "READY_FOR_PITCH" && userPitching)
     || (presentation === "PITCH_FLIGHT" && userBatting)
-    || (presentation === "EVENT_PLAYBACK" && currentVisualEvent?.skippable === true);
+    || (presentation === "EVENT_PLAYBACK" && (
+      currentVisualEvent?.skippable === true || homeRunSequenceCanSkip
+    ));
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -368,7 +381,7 @@ export function BaseballSoloGameV2({
       if (event.code === "Space" || event.key === " ") {
         if (!shortcutCanRun) return;
         event.preventDefault();
-        primaryAction();
+        handlePrimaryAction();
         return;
       }
       if (!canAim || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
@@ -390,28 +403,7 @@ export function BaseballSoloGameV2({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canAim, primaryAction, setAim, shortcutCanRun]);
-
-  useEffect(() => {
-    if (
-      !currentVisualEventKey
-      || currentVisualEvent?.kind !== "RUN_SCORE"
-      || !officialResult
-      || !isBaseballHomeRunResultV2(officialResult.code)
-      || celebratedHomeRunsRef.current.has(officialResult.playId)
-    ) {
-      return;
-    }
-    celebratedHomeRunsRef.current.add(officialResult.playId);
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    void confetti({
-      particleCount: reducedMotion ? 36 : 150,
-      spread: reducedMotion ? 46 : 96,
-      origin: { y: 0.62 },
-      colors: ["#1259aa", "#ffffff", "#ef4444", "#fde047"],
-      disableForReducedMotion: true,
-    });
-  }, [currentVisualEvent, currentVisualEventKey, officialResult]);
+  }, [canAim, handlePrimaryAction, setAim, shortcutCanRun]);
 
   const activePitch = game.activePlay?.pitch;
   const pitchBall = useMemo(() => (
@@ -481,20 +473,14 @@ export function BaseballSoloGameV2({
     () => getCurrentPitcher(game).pitching?.pitches.map((pitch) => pitch.type) ?? [],
     [game],
   );
-  const batter = getCurrentBatter(displayGame);
-  const pitcher = getCurrentPitcher(displayGame);
-
   let overlay: ReactNode = null;
   if (presentation === "INTRO") {
     overlay = (
-      <BaseballIntroOverlayV2
-        eyebrow="SOLO · HOME 1P"
-        title="PLAY BALL!"
-        description="1회초, 홈팀 1P가 먼저 수비합니다. 조준한 뒤 Space로 투구하세요."
-        batter={batter}
-        pitcher={pitcher}
+      <BaseballGameIntroSequenceV2
+        game={displayGame}
         backgroundSrc={baseballArenaFacing}
-        onContinue={advance}
+        modeLabel="SOLO · HOME 1P"
+        onComplete={advance}
       />
     );
   } else if (presentation === "EVENT_PLAYBACK" && currentVisualEvent) {
@@ -503,8 +489,12 @@ export function BaseballSoloGameV2({
         event={currentVisualEvent}
         official={officialResult}
         game={displayGame}
+        authoritativeGame={game}
+        eventProgress={currentVisualEventProgress}
         onSkip={skip}
+        onSkipSequence={skipSequence}
         homeRunImageSrc={baseballArenaSwingFacing}
+        transitionBackgroundSrc={backgroundSrc}
       />
     );
   } else if (presentation === "HALF_INNING") {
@@ -535,7 +525,8 @@ export function BaseballSoloGameV2({
     : userBatting
       ? "BATTING"
       : "PITCHING";
-  const eventCanSkip = presentation === "EVENT_PLAYBACK" && Boolean(currentVisualEvent?.skippable);
+  const eventCanSkip = presentation === "EVENT_PLAYBACK"
+    && (Boolean(currentVisualEvent?.skippable) || homeRunSequenceCanSkip);
   const phase: BaseballControlPhaseV2 = eventCanSkip
     ? "BETWEEN_PLAYS"
     : presentation === "PITCH_WINDUP" && userBatting
@@ -658,6 +649,9 @@ export function BaseballSoloGameV2({
           }}
           cameraMode={cameraMode}
           perspective={perspective}
+          className={homeRunSequenceActive && currentVisualEvent?.kind === "CONTACT"
+            ? "bbv2-stage--home-run-impact"
+            : undefined}
           pitchBall={battedBall ? null : pitchBall}
           battedBall={pitchBall ? null : battedBall}
           defenseThrow={defenseThrow}
@@ -690,7 +684,7 @@ export function BaseballSoloGameV2({
         primaryActionBusy={presentation === "PITCH_WINDUP"}
         onSelectPitch={setSelectedPitchType}
         onSelectSwing={setSwingType}
-        onPrimaryAction={primaryAction}
+        onPrimaryAction={handlePrimaryAction}
       />
 
       <p style={{ margin: "9px 4px 0", color: "#4b647b", fontSize: "12px", fontWeight: 700 }}>

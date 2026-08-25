@@ -2,6 +2,7 @@ import {
   BASEBALL_ROOM_SCHEMA_VERSION,
   type BaseballRoom,
   type BaseballRoomActivity,
+  type BaseballPresentationGate,
   type BaseballRoomPlayer,
 } from "../../../types/baseballRoom.ts";
 import type { GameRoomStatus } from "../../../types/game.ts";
@@ -70,6 +71,49 @@ function isSafePositiveInteger(value: unknown): value is number {
 
 function isIsoTimestamp(value: unknown): value is string {
   return typeof value === "string" && value.length > 0 && Number.isFinite(Date.parse(value));
+}
+
+function normalizePresentationGate(
+  raw: unknown,
+  gameState: NonNullable<BaseballRoom["gameState"]> | undefined,
+  roomStatus: GameRoomStatus,
+): BaseballPresentationGate | BaseballRoomNormalizeFailure | undefined {
+  if (raw === undefined) return undefined;
+  if (!isRecord(raw)) return failure("INVALID_FIELD", "$.presentationGate");
+  if (!isNonEmptyString(raw.playId)) {
+    return failure("INVALID_FIELD", "$.presentationGate.playId");
+  }
+  if (!isIsoTimestamp(raw.openedAt) || !isIsoTimestamp(raw.expiresAt)) {
+    return failure("INVALID_FIELD", "$.presentationGate.expiresAt");
+  }
+  if (!Array.isArray(raw.acknowledgedSeats)
+    || raw.acknowledgedSeats.some((seat) => seat !== 0 && seat !== 1)
+    || new Set(raw.acknowledgedSeats).size !== raw.acknowledgedSeats.length
+    || raw.acknowledgedSeats.some((seat, index) => index > 0
+      && Number(raw.acknowledgedSeats[index - 1]) >= Number(seat))) {
+    return failure("INVALID_FIELD", "$.presentationGate.acknowledgedSeats");
+  }
+  const openedAtMs = Date.parse(raw.openedAt);
+  const expiresAtMs = Date.parse(raw.expiresAt);
+  if (expiresAtMs <= openedAtMs || expiresAtMs - openedAtMs > 60_000) {
+    return failure("INVALID_INVARIANT", "$.presentationGate.expiresAt");
+  }
+  if (
+    roomStatus !== "playing"
+    || !gameState
+    || gameState.status !== "playing"
+    || gameState.activePlay?.phase !== "RESOLVED"
+    || gameState.activePlay.playId !== raw.playId
+    || gameState.lastPlay?.playId !== raw.playId
+  ) {
+    return failure("INVALID_INVARIANT", "$.presentationGate.playId");
+  }
+  return {
+    playId: raw.playId,
+    openedAt: raw.openedAt,
+    expiresAt: raw.expiresAt,
+    acknowledgedSeats: [...raw.acknowledgedSeats] as (0 | 1)[],
+  };
 }
 
 function isRoomStatus(value: unknown): value is GameRoomStatus {
@@ -302,6 +346,10 @@ export function normalizeBaseballRoom(
     }
   }
 
+
+  const presentationGate = normalizePresentationGate(raw.presentationGate, gameState, raw.status);
+  if (presentationGate && "ok" in presentationGate) return presentationGate;
+
   const hasMatch = matchIdPresent && gameStatePresent;
   const statusFailure = validateRoomStatus(raw.status, players, hasMatch);
   if (statusFailure) return statusFailure;
@@ -344,6 +392,7 @@ export function normalizeBaseballRoom(
     ...(raw.finishedAt === undefined ? {} : { finishedAt: raw.finishedAt }),
     ...(raw.matchId === undefined ? {} : { matchId: raw.matchId }),
     ...(gameState === undefined ? {} : { gameState }),
+    ...(presentationGate === undefined ? {} : { presentationGate }),
   };
 
   return {

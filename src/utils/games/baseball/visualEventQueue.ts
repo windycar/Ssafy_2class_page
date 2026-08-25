@@ -43,6 +43,7 @@ export const VISUAL_EVENT_SKIPPABLE_POLICY: Readonly<
   SCOREBOARD_UPDATE: false,
   PLAY_RESULT: false,
   NEXT_BATTER: true,
+  HALF_INNING: true,
 };
 
 function isHomeRun(official: OfficialPlayResult) {
@@ -68,9 +69,8 @@ function clampDuration(value: number, minimum: number, maximum: number) {
 }
 
 function ballFlightDuration(ball: BattedBall, homeRun: boolean) {
-  const minimum = homeRun ? 2_400 : 850;
-  const maximum = homeRun ? 4_800 : 3_800;
-  return clampDuration(ball.hangTime, minimum, maximum);
+  if (homeRun) return clampDuration(ball.hangTime * 0.2, 700, 800);
+  return clampDuration(ball.hangTime, 850, 3_800);
 }
 
 function runnerAdvanceDuration(runners: RunnerResolution | null) {
@@ -119,7 +119,7 @@ export function buildPlayVisualEvents(
     drafts.push({
       kind: "CONTACT",
       camera: "CONTACT",
-      durationMs: 420,
+      durationMs: homeRun ? 150 : 420,
       payload: {
         contact: contact ? jsonCopy(contact) : null,
         batterId: official.batterId,
@@ -154,7 +154,7 @@ export function buildPlayVisualEvents(
     drafts.push({
       kind: "RUNNER_ADVANCE",
       camera: cameraForRunnerResolution(runners),
-      durationMs: runnerAdvanceDuration(runners),
+      durationMs: homeRun ? 450 : runnerAdvanceDuration(runners),
       payload: {
         runners: runners ? jsonCopy(runners) : null,
         homeRun,
@@ -166,10 +166,11 @@ export function buildPlayVisualEvents(
     drafts.push({
       kind: "RUN_SCORE",
       camera: "RUN_SCORED",
-      durationMs: homeRun ? 1_600 : 1_200,
+      durationMs: homeRun ? 350 : 1_200,
       payload: {
         runsScored: official.runsScored,
         scoredRunnerIds: [...official.scoredRunnerIds],
+        homeRun,
       },
     });
   }
@@ -182,7 +183,7 @@ export function buildPlayVisualEvents(
     drafts.push({
       kind: "SCOREBOARD_UPDATE",
       camera: official.runsScored > 0 ? "RUN_SCORED" : "DUGOUT",
-      durationMs: 700,
+      durationMs: homeRun ? 200 : 700,
       payload: {
         runsScored: official.runsScored,
         outsRecorded: official.outsRecorded,
@@ -194,7 +195,7 @@ export function buildPlayVisualEvents(
   drafts.push({
     kind: "PLAY_RESULT",
     camera: cameraForOfficialResult(official, inPlay ? ball : null),
-    durationMs: homeRun ? 1_800 : official.plateAppearanceEnded ? 1_200 : 750,
+    durationMs: homeRun ? 350 : official.plateAppearanceEnded ? 1_200 : 750,
     payload: {
       official: jsonCopy(official),
     },
@@ -204,10 +205,20 @@ export function buildPlayVisualEvents(
     drafts.push({
       kind: "NEXT_BATTER",
       camera: "BATTER",
-      durationMs: 650,
+      durationMs: homeRun ? 750 : 850,
       payload: {
         previousBatterId: official.batterId,
         resultCode: official.code,
+      },
+    });
+  } else if (official.plateAppearanceEnded && !input.gameEnded && input.sideChanged) {
+    drafts.push({
+      kind: "HALF_INNING",
+      camera: "DUGOUT",
+      durationMs: 2_400,
+      payload: {
+        resultCode: official.code,
+        outsRecorded: official.outsRecorded,
       },
     });
   }

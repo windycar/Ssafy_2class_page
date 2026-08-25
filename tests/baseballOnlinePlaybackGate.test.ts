@@ -23,7 +23,10 @@ test("온라인 canonical RESOLVED 플레이는 공통 재생기에 sourceGame�
   const source = await readComponent();
 
   assert.match(source, /useBaseballVisualPlayback/);
-  assert.match(source, /const playback = useBaseballVisualPlayback\(\)/);
+  assert.match(
+    source,
+    /const playback = useBaseballVisualPlayback\(\{[\s\S]*?onComplete: \(playId\)[\s\S]*?acknowledgePresentation\(playId\)/,
+  );
   assert.match(source, /activePlay\?\.phase === "RESOLVED"/);
   assert.match(
     source,
@@ -76,8 +79,21 @@ test("초기 canonical 복구와 Presence 검증 전에는 캐시된 RESOLVED �
   const playbackEffectEnd = source.indexOf("pitchProgressRef.current = pitchProgress", playbackEffectStart);
   const playbackEffect = source.slice(playbackEffectStart, playbackEffectEnd);
   assert.ok(playbackEffectStart >= 0);
-  assert.ok(playbackEffect.indexOf("if (!onlinePlaybackReady") >= 0);
-  assert.ok(playbackEffect.indexOf("if (!onlinePlaybackReady") < playbackEffect.indexOf("playback.start"));
+  assert.ok(playbackEffect.indexOf("if (!resolvedPlaybackPending") >= 0);
+  assert.ok(playbackEffect.indexOf("if (!resolvedPlaybackPending") < playbackEffect.indexOf("playback.start"));
+});
+
+test("canonical gate에서 내 좌석이 ACK하지 않은 play만 재생하고 완료 시 ACK한다", async () => {
+  const source = await readComponent();
+
+  assert.match(source, /presentationPending,/);
+  assert.match(source, /presentationGate,/);
+  assert.match(source, /acknowledgePresentation,/);
+  assert.match(source, /presentationGate\?\.playId === resolvedPlay\.playId/);
+  assert.match(source, /!presentationGate\.acknowledgedSeats\.includes\(actorSeat\)/);
+  assert.match(source, /void acknowledgePresentation\(playId\)/);
+  assert.match(source, /liveFinalPlaybackPending/);
+  assert.match(source, /preResolutionGameByPlayIdRef\.current\.has\(resolvedPlay\.playId\)/);
 });
 
 test("canonical play가 바뀌면 기존 재생을 취소하고 처리한 play는 영구 pending으로 되돌리지 않는다", async () => {
@@ -99,7 +115,7 @@ test("canonical play가 바뀌면 기존 재생을 취소하고 처리한 play�
   const playbackEffect = source.slice(playbackEffectStart, playbackEffectEnd);
   const staleGuard = playbackEffect.indexOf("playback.active");
   const cancel = playbackEffect.indexOf("playback.cancel()", staleGuard);
-  const readyGuard = playbackEffect.indexOf("if (!onlinePlaybackReady");
+  const readyGuard = playbackEffect.indexOf("if (!resolvedPlaybackPending");
   const start = playbackEffect.indexOf("playback.start");
   const handled = playbackEffect.indexOf("handledResolvedPlayIdsRef.current.add");
   assert.ok(staleGuard >= 0);
@@ -169,11 +185,17 @@ test("온라인 재생 중에는 현재 이벤트 카메라·진행률을 쓰고
 test("FINAL 판정 재생도 skippable 이벤트면 클릭·터치 기본 버튼으로 건너뛴다", async () => {
   const source = await readComponent();
 
-  assert.match(source, /const eventCanSkip = playback\.active && Boolean\(playback\.currentEvent\?\.skippable\)/);
+  assert.match(
+    source,
+    /const eventCanSkip = playback\.active\s*&& \(Boolean\(playback\.currentEvent\?\.skippable\) \|\| homeRunSequenceCanSkip\)/,
+  );
   assert.match(
     source,
     /disabled=\{role === "SPECTATING"\s*\|\| \(role === "FINAL" && !eventCanSkip\)\s*\|\| \(playbackBlocking && !eventCanSkip\)\}/,
   );
-  assert.match(source, /primaryActionEnabled=\{eventCanSkip \|\| canPitchNow \|\| canBatNow\}/);
+  assert.match(
+    source,
+    /primaryActionEnabled=\{gameIntroBlocking \|\| eventCanSkip \|\| canPitchNow \|\| canBatNow\}/,
+  );
   assert.match(source, /onPrimaryAction=\{handlePrimaryAction\}/);
 });

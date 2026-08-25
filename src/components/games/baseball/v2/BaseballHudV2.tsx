@@ -1,5 +1,7 @@
 import type { CSSProperties } from "react";
 
+import "../../../../styles/baseball-hud-situations-v2.css";
+import { selectBaseballHudSituationV2 } from "../../../../utils/games/baseball/hudSituation.ts";
 import {
   getCurrentBatter,
   getCurrentPitcher,
@@ -10,6 +12,7 @@ import {
   type BaseRunner,
   type TeamIndex,
 } from "../../../../utils/games/baseballEngine";
+import type { PlayByPlayEntry } from "../../../../utils/games/baseball/types.ts";
 
 export interface BaseballHudAssetsV2 {
   playerPortraits?: Readonly<Partial<Record<string, string>>>;
@@ -198,6 +201,78 @@ function LinescoreV2({
   );
 }
 
+function inningLabel(entry: PlayByPlayEntry) {
+  return `${entry.inning}회${entry.half === "top" ? "초" : "말"}`;
+}
+
+function PlayByPlayRowV2({
+  entry,
+  teamName,
+}: {
+  entry: PlayByPlayEntry;
+  teamName: string;
+}) {
+  return (
+    <li>
+      <span>
+        {inningLabel(entry)} · {teamName}
+      </span>
+      <p>{entry.message}</p>
+    </li>
+  );
+}
+
+function BaseballPlayByPlayPanelV2({ game }: { game: BaseballGameState }) {
+  const recent = game.playByPlay.slice(-3).reverse();
+  const allEntries = [...game.playByPlay].reverse();
+
+  return (
+    <section className="bbv2-play-by-play" aria-label="경기 중계">
+      <div className="bbv2-play-by-play__bar">
+        <strong>PLAY BY PLAY</strong>
+        <details>
+          <summary aria-label={`전체 중계 ${allEntries.length}개 펼치기`}>
+            전체 {allEntries.length}
+          </summary>
+          <div className="bbv2-play-by-play__full">
+            <div className="bbv2-play-by-play__full-heading">
+              <strong>PLAY BY PLAY</strong>
+              <span>최신 기록부터 표시</span>
+            </div>
+            {allEntries.length > 0 ? (
+              <ol>
+                {allEntries.map((entry) => (
+                  <PlayByPlayRowV2
+                    entry={entry}
+                    teamName={game.teams[entry.battingTeam].shortName}
+                    key={entry.id}
+                  />
+                ))}
+              </ol>
+            ) : (
+              <p className="bbv2-play-by-play__empty">첫 투구를 기다리는 중입니다.</p>
+            )}
+          </div>
+        </details>
+      </div>
+
+      {recent.length > 0 ? (
+        <ol className="bbv2-play-by-play__recent" aria-live="polite">
+          {recent.map((entry) => (
+            <PlayByPlayRowV2
+              entry={entry}
+              teamName={game.teams[entry.battingTeam].shortName}
+              key={entry.id}
+            />
+          ))}
+        </ol>
+      ) : (
+        <p className="bbv2-play-by-play__empty">첫 투구를 기다리는 중입니다.</p>
+      )}
+    </section>
+  );
+}
+
 export function BaseballHudV2({ game, assets, className }: BaseballHudV2Props) {
   const batter = getCurrentBatter(game);
   const pitcher = getCurrentPitcher(game);
@@ -217,15 +292,35 @@ export function BaseballHudV2({ game, assets, className }: BaseballHudV2Props) {
     : `${game.inning}회${halfLabel} · ${battingTeam.shortName} 공격`;
   const pitcherState = fieldingTeam.pitcher;
   const portraits = assets?.playerPortraits;
+  const situation = selectBaseballHudSituationV2(game);
 
   return (
-    <header className={joinClassNames("bbv2-hud", className)} aria-label="야구 경기 현황">
+    <header
+      className={joinClassNames(
+        "bbv2-hud",
+        `bbv2-hud--tension-${situation.tension}`,
+        className,
+      )}
+      aria-label="야구 경기 현황"
+    >
       <LinescoreV2 game={game} innings={innings} assets={assets} />
 
       <section className="bbv2-hud__situation" aria-label="현재 경기 상황">
         <div className="bbv2-inning-status" aria-live="polite">
           <small>INNING</small>
           <strong>{statusLabel}</strong>
+          {situation.visibleBadges.length > 0 ? (
+            <div className="bbv2-situation-badges" aria-label="주요 경기 상황">
+              {situation.visibleBadges.map((badge) => (
+                <span
+                  className={`bbv2-situation-badge bbv2-situation-badge--${badge.tone}`}
+                  key={badge.id}
+                >
+                  {badge.label}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div className="bbv2-count" aria-label={`볼 ${game.count.balls}, 스트라이크 ${game.count.strikes}, 아웃 ${game.count.outs}`}>
@@ -272,6 +367,8 @@ export function BaseballHudV2({ game, assets, className }: BaseballHudV2Props) {
           </ol>
         </div>
       </section>
+
+      <BaseballPlayByPlayPanelV2 game={game} />
     </header>
   );
 }

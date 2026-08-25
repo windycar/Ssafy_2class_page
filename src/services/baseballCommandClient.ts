@@ -134,6 +134,18 @@ function canonicalCommandEnvelope(
     };
   }
 
+  if (envelope.kind === "ACK_PRESENTATION") {
+    return {
+      ...base,
+      kind: "ACK_PRESENTATION",
+      command: {
+        commandId: envelope.command.commandId,
+        expectedRevision: envelope.command.expectedRevision,
+        playId: envelope.command.playId,
+      },
+    };
+  }
+
   return {
     ...base,
     kind: "BATTER_ACTION",

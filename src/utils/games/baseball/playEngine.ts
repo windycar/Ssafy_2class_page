@@ -22,6 +22,7 @@ import {
   getFieldingTeam,
 } from "./gameState.ts";
 import { resolvePitch } from "./pitchEngine.ts";
+import { createBaseballPlayByPlayEntryV2 } from "./playByPlay.ts";
 import { deriveSeed } from "./random.ts";
 import type {
   BaseRunner,
@@ -32,7 +33,6 @@ import type {
   DefenseResolution,
   OfficialPlayResult,
   PitchQuality,
-  PlayByPlayEntry,
   RunnerAdvance,
   RunnerResolution,
   TeamIndex,
@@ -717,64 +717,6 @@ function finishOrChangeSides(
   ensureInningSlot(state, 0);
 }
 
-const RESULT_LABELS: Readonly<Record<BaseballPlayResultCode, string>> = {
-  BALL: "볼",
-  CALLED_STRIKE: "스트라이크",
-  SWINGING_STRIKE: "헛스윙",
-  FOUL: "파울",
-  WALK: "볼넷",
-  STRIKEOUT_LOOKING: "루킹 삼진",
-  STRIKEOUT_SWINGING: "헛스윙 삼진",
-  GROUND_OUT_1B: "1루수 땅볼 아웃",
-  GROUND_OUT_2B: "2루수 땅볼 아웃",
-  GROUND_OUT_SS: "유격수 땅볼 아웃",
-  GROUND_OUT_3B: "3루수 땅볼 아웃",
-  FLY_OUT_LF: "좌익수 뜬공 아웃",
-  FLY_OUT_CF: "중견수 뜬공 아웃",
-  FLY_OUT_RF: "우익수 뜬공 아웃",
-  LINE_OUT: "직선타 아웃",
-  POP_OUT: "내야 뜬공 아웃",
-  SINGLE_LEFT: "좌전 안타",
-  SINGLE_CENTER: "중전 안타",
-  SINGLE_RIGHT: "우전 안타",
-  INFIELD_SINGLE: "내야 안타",
-  DOUBLE_LEFT: "좌중간 2루타",
-  DOUBLE_CENTER: "중앙 2루타",
-  DOUBLE_RIGHT: "우중간 2루타",
-  TRIPLE: "3루타",
-  HOME_RUN_LEFT: "좌월 홈런",
-  HOME_RUN_CENTER: "중월 홈런",
-  HOME_RUN_RIGHT: "우월 홈런",
-  DOUBLE_PLAY: "병살타",
-  FIELDER_CHOICE: "야수 선택",
-  SAC_FLY: "희생 플라이",
-  ERROR: "실책 출루",
-};
-
-function createPlayByPlayEntry(
-  stateBefore: BaseballGameState,
-  command: BatterActionCommand,
-  official: OfficialPlayResult,
-): PlayByPlayEntry {
-  const batterName = getBaseballPlayer(official.batterId)?.name ?? official.batterId;
-  const runs = official.runsScored > 0 ? ` · ${official.runsScored}득점` : "";
-  return {
-    id: command.commandId,
-    ...(stateBefore.activePlay?.startCommandId
-      ? { startCommandId: stateBefore.activePlay.startCommandId }
-      : {}),
-    playId: official.playId,
-    inning: stateBefore.inning,
-    half: stateBefore.half,
-    battingTeam: stateBefore.battingTeam,
-    batterId: official.batterId,
-    result: official.code,
-    message: `${batterName}, ${RESULT_LABELS[official.code]}${runs}`,
-    runsScored: official.runsScored,
-    createdAt: command.occurredAt,
-  };
-}
-
 export function startPitch(
   state: BaseballGameState,
   command: StartPitchCommand,
@@ -918,7 +860,13 @@ export function executeBatterAction(
   finishOrChangeSides(next, walkOff);
 
   next.lastPlay = { ...official };
-  next.playByPlay.push(createPlayByPlayEntry(state, command, official));
+  next.playByPlay.push(createBaseballPlayByPlayEntryV2({
+    stateBefore: state,
+    stateAfter: next,
+    commandId: command.commandId,
+    occurredAt: command.occurredAt,
+    official,
+  }));
   const visualEvents = buildPlayVisualEvents({
     playId: command.playId,
     official,

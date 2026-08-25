@@ -82,6 +82,7 @@ export interface BaseballSoloController {
   primaryAction: () => void;
   startNewGame: () => void;
   skip: () => void;
+  skipSequence: () => void;
   advance: () => void;
 }
 
@@ -204,6 +205,7 @@ export function useBaseballSoloController(
     currentEventProgress,
     start: startVisualPlayback,
     skip: skipVisualPlayback,
+    seek: seekVisualPlayback,
     cancel: cancelVisualPlayback,
   } = useBaseballVisualPlayback({
     onEventStart: (event) => {
@@ -356,8 +358,6 @@ export function useBaseballSoloController(
     }
 
     actionCommandLocksRef.current.add(ids.actionCommandId);
-    const previousInning = state.inning;
-    const previousHalf = state.half;
     const result = executeBatterAction(state, {
       commandId: ids.actionCommandId,
       expectedRevision: state.revision,
@@ -383,12 +383,9 @@ export function useBaseballSoloController(
       showThirdOutSnapshot,
     });
     const nextEvents = playbackPlan.events;
-    const sideChanged = result.state.inning !== previousInning || result.state.half !== previousHalf;
     afterPlaybackRef.current = result.state.status === "finished"
       ? "FINAL"
-      : sideChanged
-        ? "HALF_INNING"
-        : "BETWEEN_PLAYS";
+      : "BETWEEN_PLAYS";
     visualEventDisplaySnapshotsRef.current = playbackPlan.displaySnapshotByEventId;
     pitchProgressRef.current = 1;
     setPitchProgress(1);
@@ -425,6 +422,11 @@ export function useBaseballSoloController(
     if (presentationRef.current !== "EVENT_PLAYBACK") return;
     skipVisualPlayback();
   }, [skipVisualPlayback]);
+
+  const skipSequence = useCallback(() => {
+    if (presentationRef.current !== "EVENT_PLAYBACK") return;
+    seekVisualPlayback("RUN_SCORE");
+  }, [seekVisualPlayback]);
 
   const advance = useCallback(() => {
     switch (presentationRef.current) {
@@ -623,6 +625,7 @@ export function useBaseballSoloController(
     primaryAction,
     startNewGame,
     skip,
+    skipSequence,
     advance,
   };
 }

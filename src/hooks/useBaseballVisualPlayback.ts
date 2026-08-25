@@ -9,6 +9,7 @@ import { cloneGameState } from "../utils/games/baseball/gameState.ts";
 import type {
   BaseballGameState,
   VisualEvent,
+  VisualEventKind,
 } from "../utils/games/baseball/types.ts";
 
 export interface BaseballVisualPlaybackState {
@@ -49,6 +50,11 @@ export type BaseballVisualPlaybackAction =
       type: "SKIP";
       playId: string;
       eventId: string;
+    }
+  | {
+      type: "SEEK";
+      playId: string;
+      targetKind: VisualEventKind;
     }
   | { type: "CANCEL" };
 
@@ -91,6 +97,7 @@ export interface BaseballVisualPlaybackController {
   currentEventProgress: number;
   start: (request: BaseballVisualPlaybackStartRequest) => boolean;
   skip: () => boolean;
+  seek: (targetKind: VisualEventKind) => boolean;
   cancel: () => void;
 }
 
@@ -267,6 +274,24 @@ export function transitionBaseballVisualPlayback(
       }
       return advancePlayback(state, action.playId, action.eventId);
     }
+    case "SEEK": {
+      if (!state.active || state.playId !== action.playId) {
+        return { state, effects: [] };
+      }
+      const targetIndex = state.events.findIndex((event, index) => (
+        index > state.eventIndex && event.kind === action.targetKind
+      ));
+      if (targetIndex < 0) return { state, effects: [] };
+      const sought = {
+        ...state,
+        eventIndex: targetIndex,
+        eventProgress: 0,
+      };
+      return {
+        state: sought,
+        effects: [eventStartEffect(sought, sought.events[targetIndex])],
+      };
+    }
     case "CANCEL": {
       if (
         !state.active
@@ -304,7 +329,7 @@ function monotonicNow() {
 }
 
 export function baseballVisualEventTerminalHoldMs(event: VisualEvent) {
-  if (event.kind === "RUN_SCORE") return 420;
+  if (event.kind === "RUN_SCORE") return event.payload.homeRun === true ? 250 : 420;
   if (event.kind === "FIELD_RESULT" || event.kind === "RUNNER_ADVANCE") return 120;
   return 0;
 }
@@ -418,6 +443,19 @@ export function useBaseballVisualPlayback(
     return transition.state !== playback;
   }, [applyAction]);
 
+  const seek = useCallback((targetKind: VisualEventKind) => {
+    const playback = stateRef.current;
+    if (!playback.active || !playback.playId) return false;
+    const hasTarget = playback.events.some((event, index) => (
+      index > playback.eventIndex && event.kind === targetKind
+    ));
+    if (!hasTarget) return false;
+    cancelFrameLoopRef.current?.();
+    cancelFrameLoopRef.current = null;
+    const transition = applyAction({ type: "SEEK", playId: playback.playId, targetKind });
+    return transition.state !== playback;
+  }, [applyAction]);
+
   const cancel = useCallback(() => {
     cancelFrameLoopRef.current?.();
     cancelFrameLoopRef.current = null;
@@ -459,6 +497,7 @@ export function useBaseballVisualPlayback(
     currentEventProgress: state.eventProgress,
     start,
     skip,
+    seek,
     cancel,
   };
 }

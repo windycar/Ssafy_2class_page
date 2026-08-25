@@ -6,8 +6,16 @@ export const BASEBALL_ONLINE_PROTOCOL_VERSION = 2 as const;
 
 const ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
 
-export type BaseballMatchCommandKind = "START_PITCH" | "BATTER_ACTION";
+export type BaseballMatchCommandKind =
+  | "START_PITCH"
+  | "BATTER_ACTION"
+  | "ACK_PRESENTATION";
 export type BaseballBatterActionIntent = Omit<BatterActionCommand, "occurredAt">;
+export interface BaseballPresentationAckCommand {
+  commandId: string;
+  expectedRevision: number;
+  playId: string;
+}
 
 export type BaseballMatchCommandEnvelope = {
   schemaVersion: typeof BASEBALL_ONLINE_PROTOCOL_VERSION;
@@ -23,6 +31,7 @@ export type BaseballMatchCommandEnvelope = {
 } & (
   | { kind: "START_PITCH"; command: StartPitchCommand }
   | { kind: "BATTER_ACTION"; command: BaseballBatterActionIntent }
+  | { kind: "ACK_PRESENTATION"; command: BaseballPresentationAckCommand }
 );
 
 export interface BaseballMatchCommittedNotice {
@@ -134,6 +143,16 @@ function isBatterActionIntent(
     && action.swing.progress <= 1.25;
 }
 
+function isPresentationAckIntent(
+  command: Record<string, unknown>,
+  envelope: Record<string, unknown>,
+): boolean {
+  return command.commandId === envelope.commandId
+    && command.expectedRevision === envelope.baseGameRevision
+    && command.playId === envelope.playId
+    && Object.keys(command).length === 3;
+}
+
 export function parseBaseballMatchCommandEnvelope(
   value: unknown,
 ): BaseballMatchCommandEnvelope | null {
@@ -155,6 +174,9 @@ export function parseBaseballMatchCommandEnvelope(
   if (value.kind === "BATTER_ACTION" && isBatterActionIntent(value.command, value)) {
     return value as unknown as BaseballMatchCommandEnvelope;
   }
+  if (value.kind === "ACK_PRESENTATION" && isPresentationAckIntent(value.command, value)) {
+    return value as unknown as BaseballMatchCommandEnvelope;
+  }
   return null;
 }
 
@@ -171,7 +193,11 @@ function hasNoticeShape(value: Record<string, unknown>): boolean {
     && isSeat(value.actorSeat)
     && isUint32(value.seed)
     && isId(value.playId)
-    && (value.kind === "START_PITCH" || value.kind === "BATTER_ACTION");
+    && (
+      value.kind === "START_PITCH"
+      || value.kind === "BATTER_ACTION"
+      || value.kind === "ACK_PRESENTATION"
+    );
 }
 
 export function parseBaseballMatchCommittedNotice(

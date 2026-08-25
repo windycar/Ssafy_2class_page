@@ -1,0 +1,354 @@
+.bbv2-presentation-sequence {
+  box-sizing: border-box;
+  color: #fff;
+}
+
+.bbv2-presentation-sequence *,
+.bbv2-presentation-sequence *::before,
+.bbv2-presentation-sequence *::after {
+  box-sizing: border-box;
+}
+
+.bbv2-presentation-sequence button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.43rem 0.58rem;
+  border: 1px solid rgb(255 255 255 / 32%);
+  border-radius: 0.52rem;
+  color: white;
+  background: rgb(3 20 38 / 62%);
+  cursor: pointer;
+  font-size: 0.54rem;
+  font-weight: 900;
+  backdrop-filter: blur(8px);
+}
+
+.bbv2-presentation-sequence button:hover {
+  background: rgb(22 119 210 / 70%);
+}
+
+.bbv2-presentation-sequence kbd {
+  padding: 0.08rem 0.22rem;
+  border: 1px solid rgb(255 255 255 / 32%);
+  border-radius: 0.22rem;
+  font: inherit;
+  font-size: 0.42rem;
+}
+
+.bbv2-presentation-sequence--game-intro,
+.bbv2-presentation-sequence--half {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #031426;
+}
+
+.bbv2-presentation-sequence--game-intro > img,
+.bbv2-presentation-sequence--half > img {
+  position: absolute;
+  inset: -2%;
+  width: 104%;
+  height: 104%;
+  object-fit: cover;
+  animation: bbv2-presentation-wide-push var(--bbv2-sequence-duration, 3000ms) ease-out both;
+}
+
+.bbv2-presentation-sequence__shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgb(1 8 18 / 68%), rgb(1 8 18 / 20%) 40%, rgb(1 8 18 / 76%)),
+    radial-gradient(circle at 50% 48%, transparent 8%, rgb(1 8 18 / 26%) 78%);
+}
+
+.bbv2-presentation-sequence__copy,
+.bbv2-half-sequence__copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: min(760px, calc(100% - 34px));
+  padding: 1.1rem;
+  text-align: center;
+  animation: bbv2-presentation-copy-enter 180ms ease-out both;
+}
+
+.bbv2-presentation-sequence__copy > span,
+.bbv2-half-sequence__copy > span {
+  color: #fde047;
+  font-size: clamp(0.6rem, 1.8vw, 0.82rem);
+  font-weight: 1000;
+  letter-spacing: 0.16em;
+}
+
+.bbv2-presentation-sequence__copy h2,
+.bbv2-half-sequence__copy h2 {
+  margin: 0.3rem 0 0;
+  font-size: clamp(1.8rem, 7vw, 4.2rem);
+  font-weight: 1000;
+  line-height: 0.98;
+  text-wrap: balance;
+  text-shadow: 0 5px 24px rgb(0 0 0 / 64%);
+}
+
+.bbv2-presentation-sequence__copy p,
+.bbv2-half-sequence__copy > p {
+  margin: 0.46rem 0 0;
+  color: rgb(226 232 240 / 84%);
+  font-size: clamp(0.68rem, 2vw, 0.94rem);
+  font-weight: 800;
+}
+
+.bbv2-presentation-sequence--game-intro > button,
+.bbv2-presentation-sequence--half > button {
+  position: absolute;
+  z-index: 4;
+  right: 14px;
+  bottom: 14px;
+}
+
+.bbv2-presentation-sequence__timeline,
+.bbv2-presentation-sequence__event-progress {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #fde047, #fb923c);
+  transform-origin: left;
+}
+
+.bbv2-presentation-sequence__timeline {
+  animation: bbv2-presentation-timeline var(--bbv2-sequence-duration, 3000ms) linear both;
+}
+
+.bbv2-presentation-sequence__event-progress {
+  transform: scaleX(var(--bbv2-sequence-progress, 0));
+}
+
+.bbv2-presentation-sequence--player {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  width: min(520px, calc(100% - 28px));
+  min-height: 190px;
+  overflow: hidden;
+  border: 1px solid rgb(147 197 253 / 65%);
+  border-radius: 1rem;
+  background: linear-gradient(145deg, rgb(5 46 89 / 96%), rgb(3 20 38 / 97%));
+  box-shadow: 0 22px 60px rgb(0 0 0 / 48%);
+  transform: translate(-50%, -36%);
+  animation: bbv2-presentation-player-enter 180ms ease-out both;
+}
+
+.bbv2-presentation-sequence--player::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #60a5fa, #fde047);
+  content: "";
+  transform: scaleX(var(--bbv2-sequence-progress, 0));
+  transform-origin: left;
+}
+
+.bbv2-presentation-sequence--player.is-team-1 {
+  border-color: rgb(252 165 165 / 70%);
+  background: linear-gradient(145deg, rgb(127 29 29 / 96%), rgb(3 20 38 / 97%));
+}
+
+.bbv2-player-intro__jersey {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  border-right: 1px solid rgb(255 255 255 / 16%);
+  background: rgb(255 255 255 / 7%);
+}
+
+.bbv2-player-intro__jersey small {
+  color: rgb(255 255 255 / 68%);
+  font-size: 0.58rem;
+  font-weight: 1000;
+  letter-spacing: 0.13em;
+}
+
+.bbv2-player-intro__jersey strong {
+  color: #fff;
+  font-size: 3.5rem;
+  font-style: italic;
+  font-weight: 1000;
+  line-height: 1;
+  text-shadow: 0 5px 18px rgb(0 0 0 / 45%);
+}
+
+.bbv2-player-intro__copy {
+  display: grid;
+  align-content: center;
+  gap: 0.28rem;
+  padding: 0.85rem 1rem;
+}
+
+.bbv2-player-intro__copy > span {
+  color: #fde047;
+  font-size: 0.56rem;
+  font-weight: 1000;
+  letter-spacing: 0.12em;
+}
+
+.bbv2-player-intro__copy h2 {
+  margin: 0;
+  font-size: clamp(1.45rem, 4vw, 2.2rem);
+  font-weight: 1000;
+  line-height: 1;
+}
+
+.bbv2-player-intro__copy dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.34rem;
+  margin: 0.18rem 0 0;
+}
+
+.bbv2-player-intro__copy dl > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+  padding: 0.32rem 0.4rem;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 0.4rem;
+  background: rgb(255 255 255 / 7%);
+}
+
+.bbv2-player-intro__copy dt {
+  color: rgb(226 232 240 / 68%);
+  font-size: 0.43rem;
+  font-weight: 900;
+}
+
+.bbv2-player-intro__copy dd {
+  margin: 0;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 1000;
+}
+
+.bbv2-player-intro__copy p {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.18rem 0 0;
+  color: rgb(255 255 255 / 84%);
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+
+.bbv2-player-intro__copy p b {
+  color: #fde047;
+  letter-spacing: 0.1em;
+}
+
+.bbv2-presentation-sequence--player > button {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+}
+
+.bbv2-half-sequence__copy h2 i {
+  color: rgb(255 255 255 / 45%);
+  font-style: normal;
+}
+
+.bbv2-half-sequence__linescore {
+  display: grid;
+  width: min(520px, 100%);
+  gap: 0.3rem;
+  margin-top: 0.72rem;
+  padding: 0.55rem;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 0.7rem;
+  background: rgb(3 20 38 / 72%);
+  backdrop-filter: blur(8px);
+}
+
+.bbv2-half-sequence__linescore p {
+  display: grid;
+  grid-template-columns: 64px repeat(5, minmax(24px, 1fr)) 38px;
+  gap: 0.22rem;
+  margin: 0;
+  color: rgb(226 232 240 / 84%);
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.bbv2-half-sequence__linescore b {
+  text-align: left;
+}
+
+.bbv2-half-sequence__linescore strong {
+  color: #fde047;
+}
+
+@keyframes bbv2-presentation-wide-push {
+  from { transform: scale(1.06); }
+  to { transform: scale(1.14); }
+}
+
+@keyframes bbv2-presentation-copy-enter {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes bbv2-presentation-player-enter {
+  from { opacity: 0; transform: translate(-50%, -30%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -36%) scale(1); }
+}
+
+@keyframes bbv2-presentation-timeline {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (max-width: 680px) {
+  .bbv2-presentation-sequence--player {
+    top: 58%;
+    grid-template-columns: 82px minmax(0, 1fr);
+    min-height: 176px;
+  }
+
+  .bbv2-player-intro__jersey strong {
+    font-size: 2.7rem;
+  }
+
+  .bbv2-player-intro__copy {
+    padding: 0.7rem 0.75rem;
+  }
+
+  .bbv2-player-intro__copy dl > div {
+    display: grid;
+  }
+
+  .bbv2-presentation-sequence--game-intro > button,
+  .bbv2-presentation-sequence--half > button {
+    right: 10px;
+    bottom: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bbv2-presentation-sequence--game-intro > img,
+  .bbv2-presentation-sequence--half > img,
+  .bbv2-presentation-sequence__copy,
+  .bbv2-half-sequence__copy,
+  .bbv2-presentation-sequence--player,
+  .bbv2-presentation-sequence__timeline {
+    animation: none !important;
+    transition: none !important;
+  }
+}

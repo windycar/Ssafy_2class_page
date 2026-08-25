@@ -218,6 +218,8 @@ export function createBaseballVisualEventCopyV2(
       return { title: resultLabel, detail: lastLog, tone };
     case "NEXT_BATTER":
       return { title: "다음 타자", detail: "다음 투타 대결을 준비합니다.", tone: "neutral" };
+    case "HALF_INNING":
+      return { title: "공수교대", detail: "3아웃. 다음 공격을 준비합니다.", tone: "neutral" };
   }
 }
 

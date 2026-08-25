@@ -18,6 +18,10 @@ import {
 } from "../utils/games/baseball/gameState.ts";
 import { normalizeBaseballRoom } from "../utils/games/baseball/normalizeRoom.ts";
 import {
+  hasBaseballPresentationAcknowledgement,
+  isBaseballPresentationGateBlocking,
+} from "../utils/games/baseball/presentationGate.ts";
+import {
   BASEBALL_ONLINE_PROTOCOL_VERSION,
   type BaseballMatchCommandEnvelope,
 } from "../utils/games/baseball/onlineProtocol.ts";
@@ -63,6 +67,12 @@ export interface OnlineStartPitchInput {
   timingQuality?: PitchQuality;
   commandId?: string;
   playId?: string;
+  nowMs?: number;
+}
+
+export interface OnlinePresentationAckInput {
+  playId?: string;
+  commandId?: string;
 }
 
 export type OnlineBatterActionInput =
@@ -199,6 +209,7 @@ export function buildOnlineStartPitchEnvelope(
     || game.status !== "playing"
     || actorSeat !== otherSeat(game.battingTeam)
     || (game.activePlay !== null && game.activePlay.phase !== "RESOLVED")
+    || isBaseballPresentationGateBlocking(canonical, input.nowMs ?? Date.now())
   ) return null;
 
   const commandId = input.commandId ?? idFactory("baseball-command");
@@ -233,6 +244,51 @@ export function buildOnlineStartPitchEnvelope(
         y: clamp(input.target.y, 0, 1),
       },
       timingQuality: input.timingQuality ?? "GOOD",
+    },
+  };
+}
+
+export function buildOnlinePresentationAckEnvelope(
+  room: BaseballRoom,
+  actorSeat: TeamIndex,
+  input: OnlinePresentationAckInput = {},
+  idFactory: IdFactory = createBaseballClientId,
+): BaseballMatchCommandEnvelope | null {
+  const canonical = normalizeCurrentRoom(room, room.id);
+  const game = canonical?.gameState;
+  const gate = canonical?.presentationGate;
+  const playId = input.playId ?? gate?.playId;
+  if (
+    !canonical
+    || canonical.status !== "playing"
+    || !canonical.matchId
+    || !game
+    || game.status !== "playing"
+    || !gate
+    || !playId
+    || gate.playId !== playId
+    || game.activePlay?.phase !== "RESOLVED"
+    || game.activePlay.playId !== playId
+    || hasBaseballPresentationAcknowledgement(gate, actorSeat)
+  ) return null;
+
+  const commandId = input.commandId ?? idFactory("baseball-presentation-ack");
+  return {
+    schemaVersion: BASEBALL_ONLINE_PROTOCOL_VERSION,
+    roomId: canonical.id,
+    matchId: canonical.matchId,
+    commandId,
+    commandSequence: game.revision + 1,
+    baseRoomRevision: canonical.revision,
+    baseGameRevision: game.revision,
+    actorSeat,
+    seed: game.seed,
+    playId,
+    kind: "ACK_PRESENTATION",
+    command: {
+      commandId,
+      expectedRevision: game.revision,
+      playId,
     },
   };
 }
@@ -408,6 +464,7 @@ export function useBaseballOnlineController({
   const [busy, setBusy] = useState(false);
   const [recovering, setRecovering] = useState(() => enabled && Boolean(room?.id));
   const [presenceRecoveryPending, setPresenceRecoveryPending] = useState(true);
+  const [presentationClock, setPresentationClock] = useState(() => Date.now());
   const [error, setError] = useState<BaseballOnlineControllerError | null>(() => (
     room ? null : { status: 0, code: "INVALID_CANONICAL_ROOM" }
   ));
@@ -555,6 +612,14 @@ export function useBaseballOnlineController({
     };
   }, [enabled, refreshCanonicalRoom, room?.id]);
 
+  useEffect(() => {
+    const expiresAt = room?.presentationGate?.expiresAt;
+    if (!expiresAt || !isBaseballPresentationGateBlocking(room, Date.now())) return;
+    const delay = Math.max(0, Date.parse(expiresAt) - Date.now()) + 25;
+    const timer = window.setTimeout(() => setPresentationClock(Date.now()), delay);
+    return () => window.clearTimeout(timer);
+  }, [room]);
+
   const availablePitches = useMemo(
     () => game ? getCurrentPitcher(game).pitching?.pitches.map((pitch) => pitch.type) ?? [] : [],
     [game],
@@ -576,9 +641,13 @@ export function useBaseballOnlineController({
     });
   }, []);
 
-  const runEnvelope = useCallback(async (envelope: BaseballMatchCommandEnvelope | null) => {
+  const runEnvelope = useCallback(async (
+    envelope: BaseballMatchCommandEnvelope | null,
+    requireOpponent = true,
+    allowStaleIdempotentRetry = false,
+  ) => {
     const current = roomRef.current;
-    if (!presenceAllConnectedRef.current || !presenceGateRef.current) {
+    if (requireOpponent && (!presenceAllConnectedRef.current || !presenceGateRef.current)) {
       if (mountedRef.current) setError({ status: 409, code: "OPPONENT_OFFLINE" });
       return false;
     }
@@ -588,10 +657,10 @@ export function useBaseballOnlineController({
       }
       return false;
     }
-    if (
+    if (!allowStaleIdempotentRetry && (
       envelope.baseRoomRevision !== current.revision
       || envelope.baseGameRevision !== current.gameState?.revision
-    ) {
+    )) {
       void refreshCanonicalRoom("LOCAL_STALE_GUARD");
       return false;
     }
@@ -658,16 +727,50 @@ export function useBaseballOnlineController({
     return runEnvelope(buildOnlineBatterActionEnvelope(current, actorSeat, { kind: "TAKE" }));
   }, [actorSeat, runEnvelope]);
 
+  const acknowledgePresentation = useCallback(async (requestedPlayId?: string) => {
+    if (actorSeat === null) return false;
+    const initial = roomRef.current;
+    const playId = requestedPlayId ?? initial?.presentationGate?.playId;
+    if (!initial || !playId) return false;
+
+    // Both clients commonly finish on the same frame and race on the same CAS
+    // revision. Exact retry first preserves idempotency after a lost response;
+    // a fresh envelope then retries against the canonical revision won by the
+    // other seat.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const current = roomRef.current;
+      const gate = current?.presentationGate;
+      if (!current || !gate || gate.playId !== playId) return true;
+      if (hasBaseballPresentationAcknowledgement(gate, actorSeat)) return true;
+
+      const envelope = buildOnlinePresentationAckEnvelope(current, actorSeat, { playId });
+      if (!envelope) return false;
+      if (await runEnvelope(envelope, false)) return true;
+      if (hasBaseballPresentationAcknowledgement(
+        roomRef.current?.presentationGate,
+        actorSeat,
+      )) return true;
+      if (await runEnvelope(envelope, false, true)) return true;
+    }
+    return hasBaseballPresentationAcknowledgement(
+      roomRef.current?.presentationGate,
+      actorSeat,
+    );
+  }, [actorSeat, runEnvelope]);
+
   const clearError = useCallback(() => setError(null), []);
   const presenceReady = presence.allPlayersConnected && presenceGateRef.current
     && !presenceRecoveryPending;
+  const presentationPending = Boolean(
+    room && isBaseballPresentationGateBlocking(room, presentationClock),
+  );
 
   return {
     room,
     game,
     actorSeat,
     role,
-    canPitch: role === "PITCHING" && !busy && presenceReady,
+    canPitch: role === "PITCHING" && !busy && presenceReady && !presentationPending,
     canBat: role === "BATTING" && !busy && presenceReady,
     aim,
     setAim,
@@ -689,7 +792,10 @@ export function useBaseballOnlineController({
     opponentConnected: presence.opponentConnected,
     allPlayersConnected: presence.allPlayersConnected,
     presenceRecoveryPending,
+    presentationPending,
+    presentationGate: room?.presentationGate,
     refresh: refreshCanonicalRoom,
+    acknowledgePresentation,
     submitPitch,
     submitSwing,
     submitTake,

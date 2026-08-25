@@ -538,8 +538,9 @@ export function applyBaseballRoomCommand(
     if (room.status === "finished" || room.status === "cancelled") {
       return { ok: false, status: 409, code: "ROOM_STATE_CONFLICT" };
     }
+    const { presentationGate: _presentationGate, ...roomWithoutPresentationGate } = room;
     return normalizeResult({
-      ...room,
+      ...roomWithoutPresentationGate,
       revision: room.revision + 1,
       status: "cancelled",
       finishedAt: context.now,
@@ -562,8 +563,9 @@ export function applyBaseballRoomCommand(
   const waitingStatus = room.status === "ready" || room.status === "full"
     ? "recruiting"
     : room.status;
+  const { presentationGate: _presentationGate, ...roomWithoutPresentationGate } = room;
   return normalizeResult({
-    ...room,
+    ...roomWithoutPresentationGate,
     revision: room.revision + 1,
     hostStudentId: nextHost.studentId,
     players: remaining.map((player) => ({
@@ -575,6 +577,9 @@ export function applyBaseballRoomCommand(
     })),
     status: leavingActiveMatch ? "cancelled" : waitingStatus,
     ...(leavingActiveMatch ? { finishedAt: context.now } : {}),
+    ...(!leavingActiveMatch && room.presentationGate
+      ? { presentationGate: room.presentationGate }
+      : {}),
     activityLogs: withActivity(room, activity(
       context,
       "leave",

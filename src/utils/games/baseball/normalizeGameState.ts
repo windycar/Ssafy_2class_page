@@ -227,7 +227,7 @@ const CAMERA_MODES = new Set([
 ]);
 const VISUAL_EVENT_KINDS = new Set([
   "CONTACT", "BALL_FLIGHT", "FIELD_RESULT", "RUNNER_ADVANCE", "RUN_SCORE",
-  "SCOREBOARD_UPDATE", "PLAY_RESULT", "NEXT_BATTER",
+  "SCOREBOARD_UPDATE", "PLAY_RESULT", "NEXT_BATTER", "HALF_INNING",
 ]);
 
 function hasExactlyKeys(value: UnknownRecord, keys: readonly string[]) {

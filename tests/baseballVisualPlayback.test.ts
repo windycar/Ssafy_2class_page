@@ -247,6 +247,34 @@ test("빈 큐도 즉시 완료를 한 번만 알리고 reducer는 transition 상
   assert.deepEqual(duplicate.effects, []);
 });
 
+test("SEEK는 홈런 앞부분을 RUN_SCORE로 넘기되 득점·전광판 이벤트는 보존한다", () => {
+  const events = [
+    visualEvent("play-finish", 0, "BALL_FLIGHT", true, "HOME_RUN"),
+    visualEvent("play-finish", 1, "RUN_SCORE", false, "RUN_SCORED"),
+  ];
+  const started = run(
+    createInitialBaseballVisualPlaybackState(),
+    createBaseballVisualPlaybackStartAction({ playId: "play-finish", events }),
+  );
+  const sought = run(started.state, {
+    type: "SEEK",
+    playId: "play-finish",
+    targetKind: "RUN_SCORE",
+  });
+  assert.equal(sought.state.active, true);
+  assert.equal(sought.state.eventIndex, 1);
+  assert.equal(sought.state.eventProgress, 0);
+  assert.deepEqual(sought.effects.map((effect) => effect.type), ["EVENT_START"]);
+
+  const repeated = run(sought.state, {
+    type: "SEEK",
+    playId: "play-finish",
+    targetKind: "RUN_SCORE",
+  });
+  assert.equal(repeated.state, sought.state);
+  assert.deepEqual(repeated.effects, []);
+});
+
 test("RAF 루프는 progress=1을 먼저 그린 다음 프레임에서만 다음 이벤트로 넘어간다", () => {
   const event = { ...visualEvent("play-frame", 0, "BALL_FLIGHT", true), durationMs: 100 };
   const frames = createFakeFrameScheduler();

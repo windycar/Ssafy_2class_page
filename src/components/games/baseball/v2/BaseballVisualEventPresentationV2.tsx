@@ -3,21 +3,33 @@ import type {
   OfficialPlayResult,
   VisualEvent,
 } from "../../../../utils/games/baseball/types.ts";
+import { createBaseballScoringPresentationV2 } from "../../../../utils/games/baseball/scoringPresentation.ts";
 import { BaseballEventOverlayV2 } from "./BaseballOverlaysV2.tsx";
+import { BaseballHomeRunSequenceV2 } from "./BaseballHomeRunSequenceV2.tsx";
+import {
+  BaseballHalfInningSequenceV2,
+  BaseballPlayerIntroSequenceV2,
+} from "./BaseballPresentationSequencesV2.tsx";
 import {
   createBaseballVisualEventCopyV2,
   isBaseballHomeRunResultV2,
 } from "./BaseballPlayPresentationV2.ts";
+import { BaseballScoringSequenceV2 } from "./BaseballScoringSequenceV2.tsx";
 
 export interface BaseballVisualEventOverlayV2Props {
   event: VisualEvent;
   official: OfficialPlayResult | null;
   game: BaseballGameState;
+  authoritativeGame?: BaseballGameState;
+  eventProgress?: number;
   onSkip: () => void;
+  onSkipSequence?: () => void;
   homeRunImageSrc?: string;
+  transitionBackgroundSrc?: string;
 }
 
 const LIVE_CALLOUT_KINDS = new Set(["FIELD_RESULT", "RUNNER_ADVANCE", "RUN_SCORE"]);
+const SCORING_SEQUENCE_KINDS = new Set(["RUN_SCORE", "SCOREBOARD_UPDATE", "PLAY_RESULT"]);
 
 /**
  * Shared event feedback for Solo and Online. Motion-heavy fielding/running events
@@ -28,9 +40,60 @@ export function BaseballVisualEventOverlayV2({
   event,
   official,
   game,
+  authoritativeGame = game,
+  eventProgress = 0,
   onSkip,
+  onSkipSequence,
   homeRunImageSrc,
+  transitionBackgroundSrc,
 }: BaseballVisualEventOverlayV2Props) {
+  if (event.kind === "NEXT_BATTER") {
+    return (
+      <BaseballPlayerIntroSequenceV2
+        game={game}
+        eventProgress={eventProgress}
+        onSkip={event.skippable ? onSkip : undefined}
+      />
+    );
+  }
+
+  if (event.kind === "HALF_INNING" && transitionBackgroundSrc) {
+    return (
+      <BaseballHalfInningSequenceV2
+        game={authoritativeGame}
+        eventProgress={eventProgress}
+        backgroundSrc={transitionBackgroundSrc}
+        onSkip={event.skippable ? onSkip : undefined}
+      />
+    );
+  }
+
+  const scoring = official
+    ? createBaseballScoringPresentationV2(authoritativeGame, official)
+    : null;
+
+  if (scoring?.isHomeRun) {
+    return (
+      <BaseballHomeRunSequenceV2
+        event={event}
+        model={scoring}
+        eventProgress={eventProgress}
+        imageSrc={homeRunImageSrc}
+        onSkipSequence={onSkipSequence}
+      />
+    );
+  }
+
+  if (scoring && SCORING_SEQUENCE_KINDS.has(event.kind)) {
+    return (
+      <BaseballScoringSequenceV2
+        event={event}
+        model={scoring}
+        eventProgress={eventProgress}
+      />
+    );
+  }
+
   if (event.kind === "CONTACT" || event.kind === "BALL_FLIGHT") return null;
   const copy = createBaseballVisualEventCopyV2(event, official, game);
 

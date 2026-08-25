@@ -9,6 +9,12 @@ import {
   startPitch,
   type EngineCommandErrorCode,
 } from "../../src/utils/games/baseball/playEngine.ts";
+import {
+  acknowledgeBaseballPresentationGate,
+  createBaseballPresentationGate,
+  hasBaseballPresentationAcknowledgement,
+  isBaseballPresentationGateBlocking,
+} from "../../src/utils/games/baseball/presentationGate.ts";
 import type { BaseballMemberIdentity } from "./baseballAuth.ts";
 
 export type BaseballCommandAuthorizationCode =
@@ -17,6 +23,9 @@ export type BaseballCommandAuthorizationCode =
   | "ROOM_MEMBER_FORBIDDEN"
   | "ACTOR_SEAT_FORBIDDEN"
   | "ACTOR_TURN_FORBIDDEN"
+  | "PRESENTATION_PENDING"
+  | "PRESENTATION_GATE_MISMATCH"
+  | "PRESENTATION_ALREADY_ACKNOWLEDGED"
   | "STALE_REVISION";
 
 export type BaseballCommandAuthorizationResult =
@@ -32,7 +41,11 @@ export type BaseballCommandApplicationResult =
   | {
       ok: false;
       status: 400 | 403 | 409;
-      code: EngineCommandErrorCode | "INVALID_RESULTING_ROOM";
+      code: EngineCommandErrorCode
+        | "INVALID_RESULTING_ROOM"
+        | "PRESENTATION_PENDING"
+        | "PRESENTATION_GATE_MISMATCH"
+        | "PRESENTATION_ALREADY_ACKNOWLEDGED";
     };
 
 export interface BaseballCommandRpcArguments {
@@ -43,7 +56,7 @@ export interface BaseballCommandRpcArguments {
   p_base_room_revision: number;
   p_base_game_revision: number;
   p_seed: number;
-  p_kind: "START_PITCH" | "BATTER_ACTION";
+  p_kind: "START_PITCH" | "BATTER_ACTION" | "ACK_PRESENTATION";
   p_payload: Record<string, unknown>;
   p_next_room: BaseballRoom;
   p_actor_auth_id: string;
@@ -65,6 +78,14 @@ function canonicalCommand(envelope: BaseballMatchCommandEnvelope) {
         y: envelope.command.target.y,
       },
       timingQuality: envelope.command.timingQuality,
+    };
+  }
+
+  if (envelope.kind === "ACK_PRESENTATION") {
+    return {
+      commandId: envelope.command.commandId,
+      expectedRevision: envelope.command.expectedRevision,
+      playId: envelope.command.playId,
     };
   }
 
@@ -124,6 +145,7 @@ export function authorizeBaseballCommand(
   room: BaseballRoom,
   envelope: BaseballMatchCommandEnvelope,
   identity: BaseballMemberIdentity,
+  occurredAt = new Date().toISOString(),
 ): BaseballCommandAuthorizationResult {
   const game = room.gameState;
   if (
@@ -159,6 +181,29 @@ export function authorizeBaseballCommand(
     return { ok: false, status: 409, code: "ROOM_NOT_PLAYING" };
   }
 
+
+  if (envelope.kind === "ACK_PRESENTATION") {
+    if (
+      !room.presentationGate
+      || room.presentationGate.playId !== envelope.playId
+      || game.activePlay?.phase !== "RESOLVED"
+      || game.activePlay.playId !== envelope.playId
+    ) {
+      return { ok: false, status: 409, code: "PRESENTATION_GATE_MISMATCH" };
+    }
+    if (hasBaseballPresentationAcknowledgement(room.presentationGate, envelope.actorSeat)) {
+      return { ok: false, status: 409, code: "PRESENTATION_ALREADY_ACKNOWLEDGED" };
+    }
+    return { ok: true };
+  }
+
+  if (envelope.kind === "START_PITCH" && isBaseballPresentationGateBlocking(
+    room,
+    Date.parse(occurredAt),
+  )) {
+    return { ok: false, status: 409, code: "PRESENTATION_PENDING" };
+  }
+
   const requiredSeat = envelope.kind === "START_PITCH"
     ? (game.battingTeam === 0 ? 1 : 0)
     : game.battingTeam;
@@ -190,6 +235,43 @@ export function applyAuthorizedBaseballCommand(
     return { ok: false, status: 409, code: "INVALID_RESULTING_ROOM" };
   }
 
+
+  if (envelope.kind === "ACK_PRESENTATION") {
+    const gate = room.presentationGate;
+    if (
+      !gate
+      || gate.playId !== envelope.playId
+      || room.gameState.activePlay?.phase !== "RESOLVED"
+      || room.gameState.activePlay.playId !== envelope.playId
+    ) {
+      return { ok: false, status: 409, code: "PRESENTATION_GATE_MISMATCH" };
+    }
+    if (hasBaseballPresentationAcknowledgement(gate, envelope.actorSeat)) {
+      return { ok: false, status: 409, code: "PRESENTATION_ALREADY_ACKNOWLEDGED" };
+    }
+    const nextRoom: BaseballRoom = {
+      ...room,
+      revision: room.revision + 1,
+      gameState: {
+        ...room.gameState,
+        revision: room.gameState.revision + 1,
+      },
+      presentationGate: acknowledgeBaseballPresentationGate(gate, envelope.actorSeat),
+    };
+    const normalized = normalizeBaseballRoom(nextRoom, room.id);
+    if (!normalized.ok || normalized.sourceVersion !== 2) {
+      return { ok: false, status: 400, code: "INVALID_RESULTING_ROOM" };
+    }
+    return { ok: true, room: normalized.value };
+  }
+
+  if (envelope.kind === "START_PITCH" && isBaseballPresentationGateBlocking(
+    room,
+    Date.parse(occurredAt),
+  )) {
+    return { ok: false, status: 409, code: "PRESENTATION_PENDING" };
+  }
+
   const engineResult = envelope.kind === "START_PITCH"
     ? startPitch(room.gameState, envelope.command)
     : executeBatterAction(room.gameState, {
@@ -205,12 +287,16 @@ export function applyAuthorizedBaseballCommand(
   }
 
   const finished = engineResult.state.status === "finished";
+  const { presentationGate: _previousPresentationGate, ...roomWithoutPresentationGate } = room;
   const nextRoom: BaseballRoom = {
-    ...room,
+    ...roomWithoutPresentationGate,
     revision: room.revision + 1,
     status: finished ? "finished" : "playing",
     gameState: engineResult.state,
     ...(finished ? { finishedAt: occurredAt } : {}),
+    ...(envelope.kind === "BATTER_ACTION" && !finished
+      ? { presentationGate: createBaseballPresentationGate(envelope.playId, occurredAt) }
+      : {}),
   };
   const normalized = normalizeBaseballRoom(nextRoom, room.id);
   if (!normalized.ok || normalized.sourceVersion !== 2) {

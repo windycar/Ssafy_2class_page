@@ -11,6 +11,7 @@ import {
   buildPlayVisualEvents,
   VISUAL_EVENT_SKIPPABLE_POLICY,
 } from "../src/utils/games/baseball/visualEventQueue.ts";
+import { baseballVisualEventTerminalHoldMs } from "../src/hooks/useBaseballVisualPlayback.ts";
 import { createGameState } from "../src/utils/games/baseball/gameState.ts";
 import {
   createSoloVisualPlaybackPlan,
@@ -333,11 +334,11 @@ test("만루 볼넷 득점은 주자 진루부터 공식 판정까지 점수 흐
   ]);
 });
 
-test("경기 종료 또는 공수 교대 판정 뒤에는 NEXT_BATTER를 예약하지 않는다", () => {
+test("경기 종료는 판정에서 끝나고 공수 교대는 HALF_INNING 연출을 예약한다", () => {
   for (const terminal of [
-    { gameEnded: true, sideChanged: false },
-    { gameEnded: false, sideChanged: true },
-  ]) {
+    { gameEnded: true, sideChanged: false, expectedLastKind: "PLAY_RESULT" },
+    { gameEnded: false, sideChanged: true, expectedLastKind: "HALF_INNING" },
+  ] as const) {
     const official = makeOfficial({
       code: "STRIKEOUT_LOOKING",
       outsRecorded: 1,
@@ -350,11 +351,16 @@ test("경기 종료 또는 공수 교대 판정 뒤에는 NEXT_BATTER를 예약�
       ball: null,
       defense: null,
       runners: null,
-      ...terminal,
+      gameEnded: terminal.gameEnded,
+      sideChanged: terminal.sideChanged,
     });
 
     assert.equal(events.some((event) => event.kind === "NEXT_BATTER"), false);
-    assert.equal(events.at(-1)?.kind, "PLAY_RESULT");
+    assert.equal(events.at(-1)?.kind, terminal.expectedLastKind);
+    if (terminal.sideChanged) {
+      assert.equal(events.at(-1)?.durationMs, 2_400);
+      assert.equal(events.at(-1)?.skippable, true);
+    }
   }
 });
 
@@ -441,7 +447,13 @@ test("홈런은 수비 결과를 생략하고 홈런 전용 흐름을 만든다"
   ]);
   assert.equal(events[1].camera, "HOME_RUN");
   assert.equal(events[5].camera, "HOME_RUN");
-  assert.ok(events[1].durationMs >= 2_400);
+  assert.ok(events[1].durationMs >= 700 && events[1].durationMs <= 800);
+  const sequenceDuration = events.reduce(
+    (total, event) => total + event.durationMs + baseballVisualEventTerminalHoldMs(event),
+    0,
+  );
+  assert.ok(sequenceDuration >= 2_000);
+  assert.ok(sequenceDuration <= 4_000, `홈런 시퀀스가 너무 김: ${sequenceDuration}ms`);
 });
 
 test("모든 이벤트 ID와 sequence는 안정적이고 연속이며 payload는 JSON 왕복 가능하다", () => {
