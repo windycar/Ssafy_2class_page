@@ -14,4 +14,5 @@ supportedArchitectures:
     - glibc
 allowBuilds:
   '@tailwindcss/oxide': true
+  canvas: false
   esbuild: true
