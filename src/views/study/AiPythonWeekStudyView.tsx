@@ -93,7 +93,15 @@ const AI_PYTHON_WEEK_SECTION_GROUPS: Partial<
   },
   "week4-1": {
     groupLabel: "4번째",
-    sections: ["week4-1"],
+    sections: ["week4-1", "week4-2"],
+  },
+  "week4-2": {
+    groupLabel: "4번째",
+    sections: ["week4-1", "week4-2"],
+  },
+  "week5-1": {
+    groupLabel: "5번째",
+    sections: ["week5-1"],
   },
 };
 

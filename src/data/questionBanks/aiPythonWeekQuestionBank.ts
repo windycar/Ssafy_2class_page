@@ -6,13 +6,18 @@ import { QUESTION_BANK as WEEK_3_2_SOURCE_BANK } from "./week3-2Easy";
 import { QUESTION_BANK as WEEK_3_2_MEDIUM_SOURCE_BANK } from "./week3-2medium";
 import { QUESTION_BANK as WEEK_4_1_SOURCE_BANK } from "./week4-1Easy";
 import { QUESTION_BANK as WEEK_4_1_MEDIUM_SOURCE_BANK } from "./week4-1medium";
+import { QUESTION_BANK as WEEK_4_2_SOURCE_BANK } from "./week4-2Easy";
+import { QUESTION_BANK as WEEK_5_1_SOURCE_BANK } from "./week5-1Easy";
 import type {
   AiPythonWeek,
   AiPythonWeekDifficulty,
   AiPythonWeekQuestion,
 } from "../../types/aiPythonWeekStudy";
 import { enrichAiPythonWeekQuestionBankExplanations } from "./enrichAiPythonWeekExplanations";
-import { stabilizeAiPythonWeekQuestionBank } from "./stabilizeAiPythonWeekOptions";
+import {
+  balanceAiPythonWeekQuestionBankOptionLengths,
+  stabilizeAiPythonWeekQuestionBank,
+} from "./stabilizeAiPythonWeekOptions";
 export { AI_PYTHON_WEEK_META } from "./aiPythonWeekMeta";
 
 const CITATION_MARKER = /\s*\[cite:\s*\d+\]/gi;
@@ -23,7 +28,9 @@ type WeekSourceQuestion =
   | (typeof WEEK_3_2_SOURCE_BANK.easy)[number]
   | (typeof WEEK_3_2_MEDIUM_SOURCE_BANK.medium)[number]
   | (typeof WEEK_4_1_SOURCE_BANK.easy)[number]
-  | (typeof WEEK_4_1_MEDIUM_SOURCE_BANK.medium)[number];
+  | (typeof WEEK_4_1_MEDIUM_SOURCE_BANK.medium)[number]
+  | (typeof WEEK_4_2_SOURCE_BANK.easy)[number]
+  | (typeof WEEK_5_1_SOURCE_BANK.easy)[number];
 
 function withoutCitationMarker(value: string) {
   return value.replace(CITATION_MARKER, "").trim();
@@ -33,6 +40,7 @@ function normalizeWeekQuestion(
   question: WeekSourceQuestion,
   difficulty: "easy" | "medium",
   questionIndex: number,
+  questionIdPrefix = "",
 ): AiPythonWeekQuestion {
   const options = question.options.map(withoutCitationMarker);
   let answer = question.answer;
@@ -51,6 +59,7 @@ function normalizeWeekQuestion(
 
   return {
     ...question,
+    id: `${questionIdPrefix}${question.id}`,
     difficulty,
     prompt: withoutCitationMarker(question.prompt),
     options,
@@ -68,16 +77,17 @@ function normalizeWeekQuestion(
 function buildWeekQuestionBank(
   easyQuestions: WeekSourceQuestion[],
   mediumQuestions: WeekSourceQuestion[],
+  questionIdPrefix = "",
 ): Record<
   AiPythonWeekDifficulty,
   AiPythonWeekQuestion[]
 > {
   return {
     easy: easyQuestions.map((question, index) =>
-      normalizeWeekQuestion(question, "easy", index),
+      normalizeWeekQuestion(question, "easy", index, questionIdPrefix),
     ),
     medium: mediumQuestions.map((question, index) =>
-      normalizeWeekQuestion(question, "medium", index),
+      normalizeWeekQuestion(question, "medium", index, questionIdPrefix),
     ),
     hard: [],
   };
@@ -98,6 +108,18 @@ const WEEK_4_1_QUESTION_BANK = buildWeekQuestionBank(
   WEEK_4_1_MEDIUM_SOURCE_BANK.medium,
 );
 
+const WEEK_4_2_QUESTION_BANK = buildWeekQuestionBank(
+  WEEK_4_2_SOURCE_BANK.easy,
+  [],
+  "week4-2-",
+);
+
+const WEEK_5_1_QUESTION_BANK = buildWeekQuestionBank(
+  WEEK_5_1_SOURCE_BANK.easy,
+  [],
+  "week5-1-",
+);
+
 export const AI_PYTHON_WEEK_QUESTION_BANKS = {
   week1: enrichAiPythonWeekQuestionBankExplanations(
     stabilizeAiPythonWeekQuestionBank(WEEK_1_QUESTION_BANK),
@@ -113,6 +135,16 @@ export const AI_PYTHON_WEEK_QUESTION_BANKS = {
   ),
   "week4-1": enrichAiPythonWeekQuestionBankExplanations(
     stabilizeAiPythonWeekQuestionBank(WEEK_4_1_QUESTION_BANK),
+  ),
+  "week4-2": enrichAiPythonWeekQuestionBankExplanations(
+    balanceAiPythonWeekQuestionBankOptionLengths(
+      stabilizeAiPythonWeekQuestionBank(WEEK_4_2_QUESTION_BANK),
+    ),
+  ),
+  "week5-1": enrichAiPythonWeekQuestionBankExplanations(
+    balanceAiPythonWeekQuestionBankOptionLengths(
+      stabilizeAiPythonWeekQuestionBank(WEEK_5_1_QUESTION_BANK),
+    ),
   ),
 } as Record<
   AiPythonWeek,

@@ -85,6 +85,34 @@ export const AI_PYTHON_WEEK_META: Record<
     questionCount: 120,
     hasDifficultyLevels: true,
   },
+  "week4-2": {
+    weekLabel: "4번째",
+    sectionLabel: "4-2",
+    title: "AI 파이썬 4-2",
+    cardTitle: "AI 파이썬 4번째",
+    shortTitle: "LLM 정렬 · RAG · 에이전트 모델",
+    description: "사후 학습과 정렬, RAG, 도구 활용, 멀티 에이전트 구조를 학습합니다.",
+    topics: "Post-training · RLHF · RAG · Agent · MCP",
+    imageSrc: "/images/study-tracks/ai-python-week4.png",
+    gradient: "from-[#102044] via-[#4338a8] to-[#8b2fc9]",
+    accent: "#22d3ee",
+    questionCount: 60,
+    hasDifficultyLevels: false,
+  },
+  "week5-1": {
+    weekLabel: "5번째",
+    sectionLabel: "5-1",
+    title: "AI 파이썬 5-1",
+    cardTitle: "AI 파이썬 5번째",
+    shortTitle: "리소스 효율적 학습",
+    description: "수 체계와 연산부터 모델 압축, PEFT, LoRA와 QLoRA까지 학습합니다.",
+    topics: "수 체계 · 모델 압축 · PEFT · LoRA · QLoRA",
+    imageSrc: "/images/study-tracks/ai-python-week5.png",
+    gradient: "from-[#172554] via-[#4c1d95] to-[#0f766e]",
+    accent: "#2dd4bf",
+    questionCount: 60,
+    hasDifficultyLevels: false,
+  },
 };
 
 export const AI_PYTHON_WEEK_CARD_GROUPS = [
@@ -114,7 +142,17 @@ export const AI_PYTHON_WEEK_CARD_GROUPS = [
     ...AI_PYTHON_WEEK_META["week4-1"],
     title: "AI 파이썬 4번째",
     cardTitle: "AI 파이썬 4번째",
-    links: [{ week: "week4-1", label: "4-1 범위 선택하기" }],
+    description: "4-1 LLM 응용과 4-2 에이전트 모델을 함께 학습합니다.",
+    topics: "4-1 SFT · RAG · 4-2 Agent · MCP · Multi-Agent",
+    questionCount: 180,
+    links: [{ week: "week4-1", label: "4-1 · 4-2 범위 선택하기" }],
+  },
+  {
+    id: "week5",
+    ...AI_PYTHON_WEEK_META["week5-1"],
+    title: "AI 파이썬 5번째",
+    cardTitle: "AI 파이썬 5번째",
+    links: [{ week: "week5-1", label: "5-1 범위 선택하기" }],
   },
 ] as const;
 

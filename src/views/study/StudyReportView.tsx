@@ -67,6 +67,16 @@ export default function StudyReportView() {
         (attempt) => attempt.week === "week4-1",
       ),
     ),
+    "ai-python-week4-2": countUnresolvedMistakes(
+      aiPythonWeek.progress.attempts.filter(
+        (attempt) => attempt.week === "week4-2",
+      ),
+    ),
+    "ai-python-week5-1": countUnresolvedMistakes(
+      aiPythonWeek.progress.attempts.filter(
+        (attempt) => attempt.week === "week5-1",
+      ),
+    ),
     "special-mock-a2-r1": countUnresolvedMistakes(
       specialMockExam.progress.attempts.filter(
         (attempt) => attempt.mockRound === 1,

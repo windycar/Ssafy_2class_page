@@ -3,7 +3,9 @@ export type AiPythonWeek =
   | "week2"
   | "week3-1"
   | "week3-2"
-  | "week4-1";
+  | "week4-1"
+  | "week4-2"
+  | "week5-1";
 
 export const AI_PYTHON_WEEK_BANK_VERSIONS = {
   week1: "v6",
@@ -11,6 +13,8 @@ export const AI_PYTHON_WEEK_BANK_VERSIONS = {
   "week3-1": "v1",
   "week3-2": "v1",
   "week4-1": "v1",
+  "week4-2": "v1",
+  "week5-1": "v1",
 } as const satisfies Record<AiPythonWeek, string>;
 
 export const AI_PYTHON_WEEK_ATTEMPT_ID_PREFIXES = {
@@ -19,6 +23,8 @@ export const AI_PYTHON_WEEK_ATTEMPT_ID_PREFIXES = {
   "week3-1": `ai-python-week3-1-${AI_PYTHON_WEEK_BANK_VERSIONS["week3-1"]}-`,
   "week3-2": `ai-python-week3-2-${AI_PYTHON_WEEK_BANK_VERSIONS["week3-2"]}-`,
   "week4-1": `ai-python-week4-1-${AI_PYTHON_WEEK_BANK_VERSIONS["week4-1"]}-`,
+  "week4-2": `ai-python-week4-2-${AI_PYTHON_WEEK_BANK_VERSIONS["week4-2"]}-`,
+  "week5-1": `ai-python-week5-1-${AI_PYTHON_WEEK_BANK_VERSIONS["week5-1"]}-`,
 } as const satisfies Record<AiPythonWeek, string>;
 
 export function getAiPythonWeekAttemptIdPrefix(week: AiPythonWeek) {

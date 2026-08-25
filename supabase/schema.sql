@@ -528,7 +528,7 @@ create table if not exists public.ai_python_week_attempts (
   id text primary key,
   student_id integer not null check (student_id > 0),
   auth_user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
-  week text not null check (week in ('week1', 'week2', 'week3-1', 'week3-2', 'week4-1')),
+  week text not null check (week in ('week1', 'week2', 'week3-1', 'week3-2', 'week4-1', 'week4-2', 'week5-1')),
   question_id text not null,
   difficulty text not null check (difficulty in ('easy', 'medium', 'hard')),
   category text not null,

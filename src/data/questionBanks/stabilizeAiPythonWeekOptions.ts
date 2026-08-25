@@ -363,3 +363,51 @@ export function stabilizeAiPythonWeekQuestionBank(
     ]),
   ) as AiPythonWeekQuestionBank;
 }
+
+function hasUniquelyLongestCorrectOption(question: AiPythonWeekQuestion) {
+  if (
+    question.questionType !== "multiple-choice" ||
+    question.answer === null ||
+    question.options.length !== 4
+  ) {
+    return false;
+  }
+
+  const correctLength = optionLength(question.options[question.answer]);
+  return question.options.every(
+    (option, index) =>
+      index === question.answer || optionLength(option) < correctLength,
+  );
+}
+
+export function balanceAiPythonWeekQuestionBankOptionLengths(
+  bank: AiPythonWeekQuestionBank,
+): AiPythonWeekQuestionBank {
+  return Object.fromEntries(
+    Object.entries(bank).map(([difficulty, questions]) => [
+      difficulty,
+      questions.map((question, questionIndex) => {
+        if (!hasUniquelyLongestCorrectOption(question)) return question;
+
+        let balanced = question;
+        for (
+          let pass = 0;
+          pass < 6 && hasUniquelyLongestCorrectOption(balanced);
+          pass += 1
+        ) {
+          const distractorIndex = longestDistractorIndex(
+            balanced.options,
+            balanced.answer as number,
+          );
+          const options = [...balanced.options];
+          options[distractorIndex] = expandKnownDistractor(
+            options[distractorIndex],
+            questionIndex + pass,
+          );
+          balanced = { ...balanced, options };
+        }
+        return balanced;
+      }),
+    ]),
+  ) as AiPythonWeekQuestionBank;
+}

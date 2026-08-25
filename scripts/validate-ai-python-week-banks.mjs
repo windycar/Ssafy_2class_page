@@ -29,6 +29,16 @@ const EXPECTED_DIFFICULTY_TYPE_COUNTS = {
     medium: { "multiple-choice": 48, "short-answer": 8, essay: 4 },
     hard: { "multiple-choice": 0, "short-answer": 0, essay: 0 },
   },
+  "week4-2": {
+    easy: { "multiple-choice": 48, "short-answer": 8, essay: 4 },
+    medium: { "multiple-choice": 0, "short-answer": 0, essay: 0 },
+    hard: { "multiple-choice": 0, "short-answer": 0, essay: 0 },
+  },
+  "week5-1": {
+    easy: { "multiple-choice": 48, "short-answer": 8, essay: 4 },
+    medium: { "multiple-choice": 0, "short-answer": 0, essay: 0 },
+    hard: { "multiple-choice": 0, "short-answer": 0, essay: 0 },
+  },
 };
 const EXPECTED_QUESTIONS_PER_DIFFICULTY = {
   week1: { easy: 105, medium: 105, hard: 90 },
@@ -36,6 +46,8 @@ const EXPECTED_QUESTIONS_PER_DIFFICULTY = {
   "week3-1": { easy: 75, medium: 75, hard: 0 },
   "week3-2": { easy: 75, medium: 75, hard: 0 },
   "week4-1": { easy: 60, medium: 60, hard: 0 },
+  "week4-2": { easy: 60, medium: 0, hard: 0 },
+  "week5-1": { easy: 60, medium: 0, hard: 0 },
 };
 const EXPECTED_CATEGORIES_PER_DIFFICULTY = {
   week1: { easy: 7, medium: 7, hard: 6 },
@@ -43,6 +55,8 @@ const EXPECTED_CATEGORIES_PER_DIFFICULTY = {
   "week3-1": { easy: 5, medium: 5, hard: 0 },
   "week3-2": { easy: 5, medium: 5, hard: 0 },
   "week4-1": { easy: 4, medium: 4, hard: 0 },
+  "week4-2": { easy: 4, medium: 0, hard: 0 },
+  "week5-1": { easy: 4, medium: 0, hard: 0 },
 };
 
 const AI_PYTHON_WEEK_TRACKS = [
@@ -51,6 +65,8 @@ const AI_PYTHON_WEEK_TRACKS = [
   "week3-1",
   "week3-2",
   "week4-1",
+  "week4-2",
+  "week5-1",
 ];
 
 const server = await createServer({
@@ -76,6 +92,7 @@ try {
   );
   const failures = [];
   const report = {};
+  const allQuestionIds = new Set();
 
   for (const week of AI_PYTHON_WEEK_TRACKS) {
     const bank = AI_PYTHON_WEEK_QUESTION_BANKS[week];
@@ -123,6 +140,10 @@ try {
     questions.forEach((question) => {
       if (ids.has(question.id)) failures.push(`${week}: 중복 ID ${question.id}`);
       ids.add(question.id);
+      if (allQuestionIds.has(question.id)) {
+        failures.push(`${week}: 다른 세트와 중복 ID ${question.id}`);
+      }
+      allQuestionIds.add(question.id);
       const normalizedPrompt = question.prompt.replace(/\s+/g, " ").trim();
       if (prompts.has(normalizedPrompt)) {
         failures.push(`${week}: 중복 문제 문장 ${question.id}`);

@@ -2,16 +2,34 @@
 setlocal
 cd /d "%~dp0"
 
-call corepack pnpm install --frozen-lockfile
-if errorlevel 1 goto :error
+set "NODE_OPTIONS=--no-deprecation"
 
+if exist "node_modules\.bin\vite.cmd" goto :start
+
+echo Installing project dependencies...
+call corepack pnpm install --frozen-lockfile
+if not errorlevel 1 goto :start
+
+echo.
+echo Lockfile configuration changed. Refreshing pnpm-lock.yaml...
+call corepack pnpm install --no-frozen-lockfile
+if errorlevel 1 goto :install_error
+
+:start
 call corepack pnpm dev --open
-if errorlevel 1 goto :error
+if errorlevel 1 goto :run_error
 goto :end
 
-:error
+:install_error
 echo.
-echo Setup failed. Check your internet connection and run start.bat again.
+echo Dependency installation failed.
+echo Review the pnpm error above. If it reports a network error, check your connection.
+pause
+goto :end
+
+:run_error
+echo.
+echo The development server could not start. Review the error above.
 pause
 
 :end
