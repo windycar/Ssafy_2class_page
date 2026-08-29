@@ -295,7 +295,13 @@ export function applyAuthorizedBaseballCommand(
     gameState: engineResult.state,
     ...(finished ? { finishedAt: occurredAt } : {}),
     ...(envelope.kind === "BATTER_ACTION" && !finished
-      ? { presentationGate: createBaseballPresentationGate(envelope.playId, occurredAt) }
+      ? {
+          presentationGate: createBaseballPresentationGate(
+            envelope.playId,
+            occurredAt,
+            room.gameState,
+          ),
+        }
       : {}),
   };
   const normalized = normalizeBaseballRoom(nextRoom, room.id);

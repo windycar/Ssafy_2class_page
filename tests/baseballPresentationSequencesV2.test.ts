@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import test from "node:test";
 
 import { createGameState } from "../src/utils/games/baseball/gameState.ts";
@@ -85,4 +87,31 @@ test("공수교대는 3 OUT부터 다음 공격팀까지 5단계를 canonical �
   assert.equal(model.nextBattingTeam, 1);
   assert.equal(model.score[0], 1);
   assert.equal(model.inningRuns[0][0], 1);
+  assert.equal(model.inningCount, 3);
+});
+
+test("연장 라인스코어는 실제 이닝 수만큼 열을 확장하고 짧은 팀 행을 안전하게 유지한다", () => {
+  const game = createGameState("원정", "홈", 94);
+  game.inning = 7;
+  game.teams[0].inningRuns = [0, 1, 0, 0, 2, 0, 1];
+  game.teams[1].inningRuns = [0, 0, 1, 0, 2, 0];
+
+  const model = createBaseballHalfInningModelV2(game);
+
+  assert.equal(model.inningCount, 7);
+  assert.equal(model.inningRuns[0].length, 7);
+  assert.equal(model.inningRuns[1].length, 6);
+
+  const component = readFileSync(path.join(
+    process.cwd(),
+    "src/components/games/baseball/v2/BaseballPresentationSequencesV2.tsx",
+  ), "utf8");
+  const css = readFileSync(path.join(
+    process.cwd(),
+    "src/styles/baseball-presentation-sequences-v2.css",
+  ), "utf8");
+  const halfSequence = component.slice(component.indexOf("export function BaseballHalfInningSequenceV2"));
+  assert.match(halfSequence, /"--bbv2-linescore-innings": model\.inningCount/);
+  assert.match(halfSequence, /Array\.from\(\{ length: model\.inningCount \}/);
+  assert.match(css, /repeat\(var\(--bbv2-linescore-innings, 3\), minmax\(24px, 1fr\)\)/);
 });

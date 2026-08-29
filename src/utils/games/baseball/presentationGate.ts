@@ -2,7 +2,9 @@ import type {
   BaseballPresentationGate,
   BaseballRoom,
 } from "../../../types/baseballRoom.ts";
+import { cloneGameState } from "./gameState.ts";
 import type { TeamIndex } from "./types.ts";
+import type { BaseballGameState } from "./types.ts";
 
 export const BASEBALL_PRESENTATION_GATE_TIMEOUT_MS = 20_000;
 
@@ -14,6 +16,7 @@ function timestampMs(value: string) {
 export function createBaseballPresentationGate(
   playId: string,
   openedAt: string,
+  displayBeforeResult: BaseballGameState,
 ): BaseballPresentationGate {
   const openedAtMs = timestampMs(openedAt);
   if (!playId || openedAtMs === null) {
@@ -26,6 +29,7 @@ export function createBaseballPresentationGate(
       openedAtMs + BASEBALL_PRESENTATION_GATE_TIMEOUT_MS,
     ).toISOString(),
     acknowledgedSeats: [],
+    displayBeforeResult: cloneGameState(displayBeforeResult),
   };
 }
 

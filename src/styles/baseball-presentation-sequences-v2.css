@@ -275,11 +275,15 @@
   border-radius: 0.7rem;
   background: rgb(3 20 38 / 72%);
   backdrop-filter: blur(8px);
+  overflow-x: auto;
 }
 
 .bbv2-half-sequence__linescore p {
   display: grid;
-  grid-template-columns: 64px repeat(5, minmax(24px, 1fr)) 38px;
+  grid-template-columns:
+    64px
+    repeat(var(--bbv2-linescore-innings, 3), minmax(24px, 1fr))
+    38px;
   gap: 0.22rem;
   margin: 0;
   color: rgb(226 232 240 / 84%);

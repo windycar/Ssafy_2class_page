@@ -32,6 +32,12 @@ export interface BaseballPresentationGate {
   openedAt: string;
   expiresAt: string;
   acknowledgedSeats: TeamIndex[];
+  /**
+   * Canonical game snapshot immediately before the batter action resolved.
+   * Reconnecting clients use it so score, count, bases and batter order stay
+   * unrevealed until the matching visual event reaches its reveal point.
+   */
+  displayBeforeResult?: BaseballGameState;
 }
 
 export interface BaseballRoom {

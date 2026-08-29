@@ -108,11 +108,33 @@ function normalizePresentationGate(
   ) {
     return failure("INVALID_INVARIANT", "$.presentationGate.playId");
   }
+  let displayBeforeResult: NonNullable<BaseballPresentationGate["displayBeforeResult"]> | undefined;
+  if (raw.displayBeforeResult !== undefined) {
+    const normalizedDisplay = normalizeBaseballGameState(raw.displayBeforeResult);
+    if (!normalizedDisplay.ok || normalizedDisplay.sourceVersion !== 2) {
+      return failure("INVALID_FIELD", "$.presentationGate.displayBeforeResult");
+    }
+    const displayActivePlay = normalizedDisplay.value.activePlay;
+    if (
+      normalizedDisplay.value.status !== "playing"
+      || normalizedDisplay.value.seed !== gameState.seed
+      || normalizedDisplay.value.revision >= gameState.revision
+      || displayActivePlay?.phase !== "AWAITING_BATTER"
+      || displayActivePlay.playId !== raw.playId
+      || displayActivePlay.batterId !== gameState.lastPlay?.batterId
+      || normalizedDisplay.value.teams[0].id !== gameState.teams[0].id
+      || normalizedDisplay.value.teams[1].id !== gameState.teams[1].id
+    ) {
+      return failure("INVALID_INVARIANT", "$.presentationGate.displayBeforeResult");
+    }
+    displayBeforeResult = normalizedDisplay.value;
+  }
   return {
     playId: raw.playId,
     openedAt: raw.openedAt,
     expiresAt: raw.expiresAt,
     acknowledgedSeats: [...raw.acknowledgedSeats] as (0 | 1)[],
+    ...(displayBeforeResult ? { displayBeforeResult } : {}),
   };
 }
 

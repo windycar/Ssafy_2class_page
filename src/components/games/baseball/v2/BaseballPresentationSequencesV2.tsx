@@ -21,6 +21,7 @@ import "../../../../styles/baseball-presentation-sequences-v2.css";
 type SequenceStyle = CSSProperties & {
   "--bbv2-sequence-progress"?: number;
   "--bbv2-sequence-duration"?: string;
+  "--bbv2-linescore-innings"?: number;
 };
 
 const GAME_INTRO_PHASES: readonly BaseballGameIntroPhaseV2[] = [
@@ -170,6 +171,7 @@ export function BaseballHalfInningSequenceV2({
   const phase = baseballHalfInningPhaseV2(eventProgress);
   const style: SequenceStyle = {
     "--bbv2-sequence-progress": Math.min(1, Math.max(0, eventProgress)),
+    "--bbv2-linescore-innings": model.inningCount,
   };
   const halfLabel = `${model.completedInning}회${model.completedHalf === "top" ? "초" : "말"}`;
 
@@ -194,7 +196,9 @@ export function BaseballHalfInningSequenceV2({
               {model.inningRuns.map((runs, teamIndex) => (
                 <p key={teamIndex}>
                   <b>{game.teams[teamIndex].shortName}</b>
-                  {runs.map((run, inningIndex) => <span key={inningIndex}>{run ?? "-"}</span>)}
+                  {Array.from({ length: model.inningCount }, (_, inningIndex) => (
+                    <span key={inningIndex}>{runs[inningIndex] ?? "-"}</span>
+                  ))}
                   <strong>{model.score[teamIndex]}</strong>
                 </p>
               ))}

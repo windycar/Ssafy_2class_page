@@ -114,25 +114,34 @@ function resolvedRoom() {
   });
   assert.ok(action?.kind === "BATTER_ACTION");
   const resolved = committed(applyAuthorizedBaseballCommand(pitched, action, OPENED_AT));
-  return { resolved, playId: pitch.playId };
+  return { resolved, pitched, playId: pitch.playId };
 }
 
-test("resolved play는 빈 20초 canonical gate를 만들고 직렬화 후에도 보존한다", () => {
-  const { resolved, playId } = resolvedRoom();
-  assert.deepEqual(resolved.presentationGate, {
-    playId,
-    openedAt: OPENED_AT,
-    expiresAt: new Date(
-      Date.parse(OPENED_AT) + BASEBALL_PRESENTATION_GATE_TIMEOUT_MS,
-    ).toISOString(),
-    acknowledgedSeats: [],
-  });
+test("resolved play는 결과 전 HUD 상태가 포함된 20초 canonical gate를 만들고 직렬화 후에도 보존한다", () => {
+  const { resolved, pitched, playId } = resolvedRoom();
+  assert.equal(resolved.presentationGate?.playId, playId);
+  assert.equal(resolved.presentationGate?.openedAt, OPENED_AT);
+  assert.equal(resolved.presentationGate?.expiresAt, new Date(
+    Date.parse(OPENED_AT) + BASEBALL_PRESENTATION_GATE_TIMEOUT_MS,
+  ).toISOString());
+  assert.deepEqual(resolved.presentationGate?.acknowledgedSeats, []);
+  assert.deepEqual(resolved.presentationGate?.displayBeforeResult, pitched.gameState);
+  assert.notDeepEqual(resolved.presentationGate?.displayBeforeResult, resolved.gameState);
   assert.equal(isBaseballPresentationGateBlocking(resolved, Date.parse(OPENED_AT)), true);
 
-  const restored = normalizeBaseballRoom(JSON.parse(JSON.stringify(resolved)), resolved.id);
+  const serialized = JSON.parse(JSON.stringify(resolved)) as BaseballRoom;
+  const restored = normalizeBaseballRoom(serialized, resolved.id);
   assert.equal(restored.ok, true);
   if (!restored.ok) return;
-  assert.deepEqual(restored.value.presentationGate, resolved.presentationGate);
+  assert.deepEqual(restored.value.presentationGate, serialized.presentationGate);
+
+  const legacySerialized = JSON.parse(JSON.stringify(resolved)) as BaseballRoom;
+  delete legacySerialized.presentationGate?.displayBeforeResult;
+  const restoredLegacy = normalizeBaseballRoom(legacySerialized, resolved.id);
+  assert.equal(restoredLegacy.ok, true);
+  if (restoredLegacy.ok) {
+    assert.equal(restoredLegacy.value.presentationGate?.displayBeforeResult, undefined);
+  }
 });
 
 test("두 좌석 ACK 전 START_PITCH를 서버와 클라이언트 양쪽에서 차단한다", () => {
@@ -279,6 +288,7 @@ test("migration은 ACK 멱등 로그·행 잠금·서버 deadline·START 소비�
   assert.match(sql, /PRESENTATION_PENDING/);
   assert.match(sql, /statement_timestamp\(\)/);
   assert.match(sql, /interval '20 seconds'/);
+  assert.match(sql, /presentationGate,displayBeforeResult[\s\S]*v_room\s*->\s*'gameState'/i);
   assert.match(sql, /start pitch must consume the presentation gate/);
   assert.match(sql, /jsonb_build_array\(p_actor_seat\)/);
   assert.match(sql, /revoke execute on function public\.commit_baseball_command[\s\S]*from public, anon, authenticated/i);

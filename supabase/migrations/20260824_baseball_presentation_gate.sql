@@ -140,6 +140,8 @@ begin
               is distinct from (p_payload ->> 'playId')
             or (p_next_room #> '{presentationGate,acknowledgedSeats}')
               is distinct from '[]'::jsonb
+            or (p_next_room #> '{presentationGate,displayBeforeResult}')
+              is distinct from (v_room -> 'gameState')
           then
             raise exception using
               errcode = '22023',

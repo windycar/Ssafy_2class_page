@@ -52,6 +52,7 @@ export interface BaseballHalfInningModelV2 {
   nextBattingTeamName: string;
   nextBattingTeamShortName: string;
   score: readonly [number, number];
+  inningCount: number;
   inningRuns: readonly [readonly number[], readonly number[]];
 }
 
@@ -137,6 +138,12 @@ export function createBaseballHalfInningModelV2(
   const completedInning = lastEntry?.inning
     ?? (game.half === "top" ? Math.max(1, game.inning - 1) : game.inning);
   const completedBattingTeam = lastEntry?.battingTeam ?? (game.battingTeam === 0 ? 1 : 0);
+  const inningCount = Math.max(
+    3,
+    game.inning,
+    game.teams[0].inningRuns.length,
+    game.teams[1].inningRuns.length,
+  );
 
   return {
     completedInning,
@@ -146,6 +153,7 @@ export function createBaseballHalfInningModelV2(
     nextBattingTeamName: game.teams[game.battingTeam].name,
     nextBattingTeamShortName: game.teams[game.battingTeam].shortName,
     score: [game.teams[0].runs, game.teams[1].runs],
+    inningCount,
     inningRuns: [
       [...game.teams[0].inningRuns],
       [...game.teams[1].inningRuns],

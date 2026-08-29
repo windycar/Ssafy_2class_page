@@ -41,6 +41,10 @@ test("온라인 canonical RESOLVED 플레이는 공통 재생기에 sourceGame�
     /authoritativePresentationGame = playback\.active && playback\.sourceGame[\s\S]*?\? playback\.sourceGame[\s\S]*?: game/,
   );
   assert.match(source, /preResolutionGameByPlayIdRef/);
+  assert.match(
+    source,
+    /presentationGate\?\.playId === resolvedPlay\.playId[\s\S]*?cloneGameState\(presentationGate\.displayBeforeResult\)/,
+  );
   assert.match(source, /cloneGameState\(game\)/);
   assert.match(source, /createSoloVisualPlaybackPlan\(\{/);
   assert.match(source, /resolveBaseballVisualPlaybackDisplayGame\(/);
@@ -90,10 +94,16 @@ test("canonical gate에서 내 좌석이 ACK하지 않은 play만 재생하고 �
   assert.match(source, /presentationGate,/);
   assert.match(source, /acknowledgePresentation,/);
   assert.match(source, /presentationGate\?\.playId === resolvedPlay\.playId/);
+  assert.match(source, /const resolvedPlaybackHasSnapshot = Boolean/);
+  assert.match(source, /&& resolvedPlaybackHasSnapshot/);
   assert.match(source, /!presentationGate\.acknowledgedSeats\.includes\(actorSeat\)/);
   assert.match(source, /void acknowledgePresentation\(playId\)/);
   assert.match(source, /liveFinalPlaybackPending/);
   assert.match(source, /preResolutionGameByPlayIdRef\.current\.has\(resolvedPlay\.playId\)/);
+  assert.match(
+    source,
+    /presentationGate\.displayBeforeResult[\s\S]*?void acknowledgePresentation\(resolvedPlay\.playId\)/,
+  );
 });
 
 test("canonical play가 바뀌면 기존 재생을 취소하고 처리한 play는 영구 pending으로 되돌리지 않는다", async () => {

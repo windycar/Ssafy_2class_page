@@ -365,6 +365,9 @@ export function BaseballOnlineGameV2({
   const resolvedPlaybackPlan = useMemo<OnlineVisualPlaybackPlan | null>(() => {
     if (!game || !resolvedPlay) return null;
     const displayBeforeResult = preResolutionGameByPlayIdRef.current.get(resolvedPlay.playId)
+      ?? (presentationGate?.playId === resolvedPlay.playId && presentationGate.displayBeforeResult
+        ? cloneGameState(presentationGate.displayBeforeResult)
+        : null)
       ?? cloneGameState(game);
     const official = game.lastPlay;
     const showThirdOutSnapshot = official !== null
@@ -380,7 +383,7 @@ export function BaseballOnlineGameV2({
         showThirdOutSnapshot,
       }),
     };
-  }, [game, resolvedPlay]);
+  }, [game, presentationGate, resolvedPlay]);
   const onlinePlaybackReady = !recovering
     && allPlayersConnected
     && !presenceRecoveryPending;
@@ -398,9 +401,20 @@ export function BaseballOnlineGameV2({
     && resolvedPlay
     && preResolutionGameByPlayIdRef.current.has(resolvedPlay.playId),
   );
+  const resolvedPlaybackHasSnapshot = Boolean(
+    resolvedPlay
+    && (
+      preResolutionGameByPlayIdRef.current.has(resolvedPlay.playId)
+      || (
+        presentationGate?.playId === resolvedPlay.playId
+        && presentationGate.displayBeforeResult
+      )
+    ),
+  );
   const resolvedPlaybackPending = Boolean(
     onlinePlaybackReady
     && resolvedPlay
+    && resolvedPlaybackHasSnapshot
     && (
       liveFinalPlaybackPending
       || (
@@ -443,6 +457,31 @@ export function BaseballOnlineGameV2({
   const skipHomeRunSequence = useCallback(() => {
     playback.seek("RUN_SCORE");
   }, [playback.seek]);
+
+  useEffect(() => {
+    if (
+      !onlinePlaybackReady
+      || !presentationPending
+      || !resolvedPlay
+      || presentationGate?.playId !== resolvedPlay.playId
+      || presentationGate.displayBeforeResult
+      || preResolutionGameByPlayIdRef.current.has(resolvedPlay.playId)
+      || actorSeat === null
+      || presentationGate.acknowledgedSeats.includes(actorSeat)
+    ) return;
+
+    // Rolling deployments can leave a short-lived legacy gate without the
+    // canonical pre-result snapshot. Do not replay a post-result HUD as if it
+    // were the old state; acknowledge that legacy gate and continue safely.
+    void acknowledgePresentation(resolvedPlay.playId);
+  }, [
+    acknowledgePresentation,
+    actorSeat,
+    onlinePlaybackReady,
+    presentationGate,
+    presentationPending,
+    resolvedPlay,
+  ]);
 
   useEffect(() => {
     if (room?.status === "cancelled") {
