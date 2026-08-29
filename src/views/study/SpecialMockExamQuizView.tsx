@@ -20,19 +20,22 @@ import katex from "katex";
 import "katex/dist/katex.min.css";
 import { ESSAY_MIN_LENGTH } from "../../constants/study";
 import {
+  getSpecialMockExamCollection,
   getSpecialMockExamQuestion,
-  SPECIAL_MOCK_EXAM_BANKS,
-  SPECIAL_MOCK_EXAM_META,
-} from "../../data/모의고사/2회차";
+} from "../../data/모의고사";
 import { useAuth } from "../../hooks/useAuth";
 import { useSpecialMockExamProgress } from "../../hooks/useSpecialMockExamProgress";
 import type {
+  SpecialMockExamAvailableAssessmentRound,
   SpecialMockExamDifficulty,
   SpecialMockExamQuestion,
   SpecialMockExamQuestionType,
   SpecialMockExamRound,
 } from "../../types/specialMockExam";
-import { isSpecialMockExamRound } from "../../types/specialMockExam";
+import {
+  isSpecialMockExamAssessmentRound,
+  isSpecialMockExamRound,
+} from "../../types/specialMockExam";
 import { shuffleArray } from "../../utils/shuffleArray";
 import { getLatestAttemptsByQuestion } from "../../utils/studyProgressStats";
 import { isAnsweredSpecialMockExamAttempt } from "../../utils/specialMockExamGrading";
@@ -71,7 +74,15 @@ type QuizSession = {
 };
 
 export default function SpecialMockExamQuizView() {
-  const { assessmentRound, mockRound: mockRoundParam } = useParams();
+  const {
+    assessmentRound: assessmentRoundParam,
+    mockRound: mockRoundParam,
+  } = useParams();
+  const validAssessmentRound =
+    isSpecialMockExamAssessmentRound(assessmentRoundParam);
+  const assessmentRound = validAssessmentRound
+    ? (Number(assessmentRoundParam) as SpecialMockExamAvailableAssessmentRound)
+    : null;
   const validRound = isSpecialMockExamRound(mockRoundParam);
   const mockRound = validRound
     ? (Number(mockRoundParam) as SpecialMockExamRound)
@@ -91,10 +102,14 @@ export default function SpecialMockExamQuizView() {
   const [reviewQuestionIds, setReviewQuestionIds] = useState<string[]>([]);
   const [finished, setFinished] = useState(false);
   const [reviewingAnswers, setReviewingAnswers] = useState(false);
+  const collection = assessmentRound
+    ? getSpecialMockExamCollection(assessmentRound)
+    : null;
 
   useEffect(() => {
     if (
-      assessmentRound !== "2" ||
+      !assessmentRound ||
+      !collection ||
       !mockRound ||
       session?.key === sessionKey ||
       syncState === "loading"
@@ -104,6 +119,7 @@ export default function SpecialMockExamQuizView() {
 
     const roundAttempts = progress.attempts.filter(
       (attempt) =>
+        attempt.assessmentRound === assessmentRound &&
         attempt.mockRound === mockRound &&
         isAnsweredSpecialMockExamAttempt(attempt),
     );
@@ -114,13 +130,17 @@ export default function SpecialMockExamQuizView() {
       )
         .filter((attempt) => !attempt.correct)
         .map((attempt) =>
-          getSpecialMockExamQuestion(mockRound, attempt.questionId),
+          getSpecialMockExamQuestion(
+            assessmentRound,
+            mockRound,
+            attempt.questionId,
+          ),
         )
         .filter(
           (question): question is SpecialMockExamQuestion => Boolean(question),
         );
     } else {
-      questions = [...SPECIAL_MOCK_EXAM_BANKS[mockRound]];
+      questions = [...collection.banks[mockRound]];
     }
 
     const sessionQuestions = isSavedReview
@@ -139,6 +159,7 @@ export default function SpecialMockExamQuizView() {
     setReviewingAnswers(isSavedReview);
   }, [
     assessmentRound,
+    collection,
     isSavedReview,
     mode,
     mockRound,
@@ -148,7 +169,7 @@ export default function SpecialMockExamQuizView() {
     syncState,
   ]);
 
-  if (assessmentRound !== "2" || !mockRound) {
+  if (!assessmentRound || !collection || !mockRound) {
     return (
       <section className="rounded-3xl border border-slate-200 bg-white p-12 text-center">
         <h1 className="text-2xl font-black text-slate-900">
@@ -166,8 +187,9 @@ export default function SpecialMockExamQuizView() {
 
   const sessionReady = session?.key === sessionKey;
   const questions = sessionReady ? session.questions : [];
+  const listHref = `/study/special-mock?assessment=${assessmentRound}`;
   const buildAllQuestionsHref = () =>
-    `/study/special-mock/2/${mockRound}/quiz?mode=all&run=${Date.now()}`;
+    `/study/special-mock/${assessmentRound}/${mockRound}/quiz?mode=all&run=${Date.now()}`;
 
   if (!sessionReady) {
     return (
@@ -199,7 +221,7 @@ export default function SpecialMockExamQuizView() {
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link
-              to="/study/special-mock"
+              to={listHref}
               className="rounded-xl border border-violet-100 bg-violet-50 px-5 py-3 text-sm font-extrabold text-violet-700"
             >
               다른 모의고사 선택
@@ -244,7 +266,7 @@ export default function SpecialMockExamQuizView() {
             <RotateCcw className="mx-auto h-14 w-14" />
           )}
           <p className="mt-5 text-xs font-black tracking-[0.16em] text-white/70">
-            과목평가 2회차 · {SPECIAL_MOCK_EXAM_META[mockRound].label} ·{` `}
+            과목평가 {assessmentRound}회차 · {collection.meta[mockRound].label} ·{` `}
             {mode === "wrong" ? "오답 복습" : "실전 모의고사"} 채점 완료
           </p>
           <h1 className="mt-2 text-3xl font-black">
@@ -275,7 +297,7 @@ export default function SpecialMockExamQuizView() {
               <ListChecks className="h-4 w-4" /> 답변 다시 보기
             </button>
             <Link
-              to="/study/special-mock"
+              to={listHref}
               className="rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-extrabold text-white"
             >
               모의고사 목록
@@ -285,7 +307,7 @@ export default function SpecialMockExamQuizView() {
               onClick={() =>
                 navigate(
                   mode === "wrong"
-                    ? `/study/special-mock/2/${mockRound}/quiz?mode=wrong&run=${Date.now()}`
+                    ? `/study/special-mock/${assessmentRound}/${mockRound}/quiz?mode=wrong&run=${Date.now()}`
                     : buildAllQuestionsHref(),
                 )
               }
@@ -347,6 +369,7 @@ export default function SpecialMockExamQuizView() {
 
   const finishAndGrade = () => {
     const graded = recordAnswers(
+      assessmentRound,
       mockRound,
       questions.map((question) => ({
         question,
@@ -404,7 +427,7 @@ export default function SpecialMockExamQuizView() {
           <header className="border-b border-slate-100 bg-slate-50/80 px-5 py-4 sm:px-8">
             <div className="flex items-center justify-between gap-4 text-xs font-bold text-slate-400">
               <span className="flex items-center gap-1.5">
-                <Shuffle className="h-3.5 w-3.5" /> 과목평가 2회차 · 모의고사
+                <Shuffle className="h-3.5 w-3.5" /> 과목평가 {assessmentRound}회차 · 모의고사
                 {mockRound}회차 ·{` `}
                 {reviewingAnswers
                   ? isSavedReview
@@ -648,7 +671,7 @@ export default function SpecialMockExamQuizView() {
               onClick={() => {
                 if (reviewingAnswers && isLast) {
                   if (isSavedReview) {
-                    navigate("/study/special-mock");
+                    navigate(listHref);
                   } else {
                     setReviewingAnswers(false);
                     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -689,7 +712,7 @@ export default function SpecialMockExamQuizView() {
           onAction={() => {
             if (reviewingAnswers) {
               if (isSavedReview) {
-                navigate("/study/special-mock");
+                navigate(listHref);
               } else {
                 setReviewingAnswers(false);
                 window.scrollTo({ top: 0, behavior: "smooth" });
@@ -706,10 +729,10 @@ export default function SpecialMockExamQuizView() {
   function BackLink() {
     return (
       <Link
-        to="/study/special-mock"
+        to={listHref}
         className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-500 hover:text-violet-700"
       >
-        <ArrowLeft className="h-4 w-4" /> 과목평가 2회차 모의고사 목록
+        <ArrowLeft className="h-4 w-4" /> 과목평가 {assessmentRound}회차 모의고사 목록
       </Link>
     );
   }

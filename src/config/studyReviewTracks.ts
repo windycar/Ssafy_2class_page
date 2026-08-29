@@ -1,5 +1,8 @@
 import type { AiPythonWeek } from "../types/aiPythonWeekStudy";
-import type { SpecialMockExamRound } from "../types/specialMockExam";
+import type {
+  SpecialMockExamAvailableAssessmentRound,
+  SpecialMockExamRound,
+} from "../types/specialMockExam";
 
 type BaseReviewTrack = {
   id: string;
@@ -15,7 +18,11 @@ export type StudyReviewTrack = BaseReviewTrack &
     | { source: "web" }
     | { source: "ai-python" }
     | { source: "ai-python-week"; week: AiPythonWeek }
-    | { source: "special-mock-exam"; round: SpecialMockExamRound }
+    | {
+        source: "special-mock-exam";
+        assessmentRound: SpecialMockExamAvailableAssessmentRound;
+        round: SpecialMockExamRound;
+      }
   );
 
 /**
@@ -117,6 +124,7 @@ export const STUDY_REVIEW_TRACKS: readonly StudyReviewTrack[] = [
     href: "/study/special-mock/2/1/quiz?mode=wrong",
     tone: "amber",
     source: "special-mock-exam",
+    assessmentRound: 2,
     round: 1,
   },
   {
@@ -126,6 +134,7 @@ export const STUDY_REVIEW_TRACKS: readonly StudyReviewTrack[] = [
     href: "/study/special-mock/2/2/quiz?mode=wrong",
     tone: "amber",
     source: "special-mock-exam",
+    assessmentRound: 2,
     round: 2,
   },
   {
@@ -135,6 +144,7 @@ export const STUDY_REVIEW_TRACKS: readonly StudyReviewTrack[] = [
     href: "/study/special-mock/2/3/quiz?mode=wrong",
     tone: "amber",
     source: "special-mock-exam",
+    assessmentRound: 2,
     round: 3,
   },
   {
@@ -144,6 +154,7 @@ export const STUDY_REVIEW_TRACKS: readonly StudyReviewTrack[] = [
     href: "/study/special-mock/2/4/quiz?mode=wrong",
     tone: "amber",
     source: "special-mock-exam",
+    assessmentRound: 2,
     round: 4,
   },
   {
@@ -153,6 +164,57 @@ export const STUDY_REVIEW_TRACKS: readonly StudyReviewTrack[] = [
     href: "/study/special-mock/2/5/quiz?mode=wrong",
     tone: "amber",
     source: "special-mock-exam",
+    assessmentRound: 2,
+    round: 5,
+  },
+  {
+    id: "special-mock-a3-r1",
+    label: "특별 모의고사 3-1",
+    description: "과목평가 3회차 · 모의고사 1회차",
+    href: "/study/special-mock/3/1/quiz?mode=wrong",
+    tone: "amber",
+    source: "special-mock-exam",
+    assessmentRound: 3,
+    round: 1,
+  },
+  {
+    id: "special-mock-a3-r2",
+    label: "특별 모의고사 3-2",
+    description: "과목평가 3회차 · 모의고사 2회차",
+    href: "/study/special-mock/3/2/quiz?mode=wrong",
+    tone: "amber",
+    source: "special-mock-exam",
+    assessmentRound: 3,
+    round: 2,
+  },
+  {
+    id: "special-mock-a3-r3",
+    label: "특별 모의고사 3-3",
+    description: "과목평가 3회차 · 모의고사 3회차",
+    href: "/study/special-mock/3/3/quiz?mode=wrong",
+    tone: "amber",
+    source: "special-mock-exam",
+    assessmentRound: 3,
+    round: 3,
+  },
+  {
+    id: "special-mock-a3-r4",
+    label: "특별 모의고사 3-4",
+    description: "과목평가 3회차 · 모의고사 4회차",
+    href: "/study/special-mock/3/4/quiz?mode=wrong",
+    tone: "amber",
+    source: "special-mock-exam",
+    assessmentRound: 3,
+    round: 4,
+  },
+  {
+    id: "special-mock-a3-r5",
+    label: "특별 모의고사 3-5",
+    description: "과목평가 3회차 · 모의고사 5회차",
+    href: "/study/special-mock/3/5/quiz?mode=wrong",
+    tone: "amber",
+    source: "special-mock-exam",
+    assessmentRound: 3,
     round: 5,
   },
 ] as const;

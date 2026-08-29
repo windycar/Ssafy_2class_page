@@ -1,5 +1,6 @@
 import type {
   SpecialMockExamAttempt,
+  SpecialMockExamAvailableAssessmentRound,
   SpecialMockExamProgress,
   SpecialMockExamRound,
 } from "../../types/specialMockExam";
@@ -80,10 +81,15 @@ function write(userId: number, progress: SpecialMockExamProgress) {
 
 export function getSpecialMockExamResetAttemptIds(
   progress: SpecialMockExamProgress,
+  assessmentRound: SpecialMockExamAvailableAssessmentRound,
   mockRound: SpecialMockExamRound,
 ) {
   return progress.attempts
-    .filter((attempt) => attempt.mockRound === mockRound)
+    .filter(
+      (attempt) =>
+        attempt.assessmentRound === assessmentRound &&
+        attempt.mockRound === mockRound,
+    )
     .map((attempt) => attempt.id);
 }
 

@@ -1,4 +1,5 @@
-import { Link } from "react-router";
+import { useState } from "react";
+import { Link, useSearchParams } from "react-router";
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,15 +15,16 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-  SPECIAL_MOCK_EXAM_BANKS,
-  SPECIAL_MOCK_EXAM_META,
-} from "../../data/모의고사/2회차";
+  getSpecialMockExamCollection,
+} from "../../data/모의고사";
 import { useSpecialMockExamProgress } from "../../hooks/useSpecialMockExamProgress";
 import {
   SPECIAL_MOCK_EXAM_ASSESSMENT_ROUNDS,
-  SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND,
+  SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS,
   SPECIAL_MOCK_EXAM_ROUNDS,
   SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT,
+  isSpecialMockExamAssessmentRound,
+  type SpecialMockExamAvailableAssessmentRound,
   type SpecialMockExamRound,
 } from "../../types/specialMockExam";
 import { isAnsweredSpecialMockExamAttempt } from "../../utils/specialMockExamGrading";
@@ -83,17 +85,29 @@ const ROUND_STYLES = {
 
 export default function SpecialMockExamView() {
   const { progress, resetProgress, syncState } = useSpecialMockExamProgress();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedAssessmentRound = searchParams.get("assessment") ?? undefined;
+  const [selectedAssessmentRound, setSelectedAssessmentRound] =
+    useState<SpecialMockExamAvailableAssessmentRound>(() =>
+      isSpecialMockExamAssessmentRound(requestedAssessmentRound)
+        ? (Number(
+            requestedAssessmentRound,
+          ) as SpecialMockExamAvailableAssessmentRound)
+        : 2,
+    );
+  const collection = getSpecialMockExamCollection(selectedAssessmentRound);
 
   const resetRound = async (
+    assessmentRound: SpecialMockExamAvailableAssessmentRound,
     round: SpecialMockExamRound,
     attemptCount: number,
   ) => {
     if (!attemptCount) return;
     const confirmed = window.confirm(
-      `과목평가 2회차 · 모의고사 ${round}회차의 풀이 기록 ${attemptCount}개를 초기화할까요?`,
+      `과목평가 ${assessmentRound}회차 · 모의고사 ${round}회차의 풀이 기록 ${attemptCount}개를 초기화할까요?`,
     );
     if (!confirmed) return;
-    const reset = await resetProgress(round);
+    const reset = await resetProgress(assessmentRound, round);
     if (reset) {
       toast.success(`모의고사 ${round}회차 풀이 기록을 초기화했습니다.`);
     } else {
@@ -134,12 +148,15 @@ export default function SpecialMockExamView() {
             </span>
           </h1>
           <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-slate-200/80 sm:text-base">
-            과목평가 2회차 핵심 범위를 {SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND}문제씩 점검합니다. 문제 순서는 매번
-            바뀌며, 60점 이상이면 통과입니다.
+            과목평가 2·3회차 핵심 범위를 실전 문제로 점검합니다. 문제 순서는
+            매번 바뀌며, 60점 이상이면 통과입니다.
           </p>
 
           <div className="mt-7 grid max-w-xl grid-cols-3 gap-2.5">
-            <HeroStat value="5세트" label="실전 모의고사" />
+            <HeroStat
+              value={`${SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.length * SPECIAL_MOCK_EXAM_ROUNDS.length}세트`}
+              label="실전 모의고사"
+            />
             <HeroStat
               value={`${SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT}문제`}
               label="전체 문제"
@@ -175,7 +192,7 @@ export default function SpecialMockExamView() {
             </h2>
           </div>
           <p className="text-xs font-bold text-slate-500">
-            현재 2회차 이용 가능 · 3~10회차 순차 공개
+            현재 2·3회차 이용 가능 · 4~10회차 순차 공개
           </p>
         </div>
 
@@ -185,28 +202,44 @@ export default function SpecialMockExamView() {
           className="grid grid-cols-3 gap-2 p-5 sm:grid-cols-5 sm:p-7 lg:grid-cols-9"
         >
           {SPECIAL_MOCK_EXAM_ASSESSMENT_ROUNDS.map((round) => {
-            const available = round === 2;
+            const available = SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.some(
+              (availableRound) => availableRound === round,
+            );
+            const selected = selectedAssessmentRound === round;
             return (
               <button
                 key={round}
                 type="button"
                 role="tab"
-                aria-selected={available}
+                aria-selected={selected}
                 disabled={!available}
+                onClick={() => {
+                  const availableRound =
+                    round as SpecialMockExamAvailableAssessmentRound;
+                  setSelectedAssessmentRound(availableRound);
+                  setSearchParams(
+                    { assessment: String(availableRound) },
+                    { replace: true },
+                  );
+                }}
                 className={`relative min-h-20 overflow-hidden rounded-2xl border px-2 py-3 text-center transition ${
-                  available
+                  selected
                     ? "border-violet-700 bg-[#101a3e] text-white shadow-[0_10px_24px_rgba(47,39,130,0.2)]"
+                    : available
+                      ? "border-violet-200 bg-white text-violet-800 hover:border-violet-400 hover:bg-violet-50"
                     : "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-400"
                 }`}
               >
-                {available ? (
+                {selected ? (
                   <span className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-400 via-violet-400 to-amber-300" />
                 ) : null}
                 <strong className="block text-base font-black">{round}회차</strong>
                 <span
                   className={`mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[9px] font-black ${
-                    available
+                    selected
                       ? "bg-white/10 text-amber-200"
+                      : available
+                        ? "bg-violet-50 text-violet-600"
                       : "bg-slate-100 text-slate-400"
                   }`}
                 >
@@ -218,11 +251,15 @@ export default function SpecialMockExamView() {
         </div>
       </section>
 
-      <section role="tabpanel" aria-label="과목평가 2회차 모의고사">
+      <section
+        role="tabpanel"
+        aria-label={`과목평가 ${selectedAssessmentRound}회차 모의고사`}
+      >
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
             <p className="text-xs font-black tracking-[0.16em] text-violet-600">
-              ASSESSMENT 02 · EXAM COLLECTION
+              ASSESSMENT {String(selectedAssessmentRound).padStart(2, "0")} ·
+              EXAM COLLECTION
             </p>
             <h2 className="mt-1 text-3xl font-black tracking-tight text-slate-950">
               모의고사 1~5회차
@@ -233,15 +270,16 @@ export default function SpecialMockExamView() {
             </p>
           </div>
           <span className="rounded-full border border-violet-100 bg-violet-50 px-3.5 py-2 text-xs font-black text-violet-700">
-            세트당 {SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND}문제 · 총 {SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT}문제
+            세트당 {collection.questionsPerRound}문제 · 총 {collection.totalQuestionCount}문제
           </span>
         </div>
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {SPECIAL_MOCK_EXAM_ROUNDS.map((round) => {
-            const questions = SPECIAL_MOCK_EXAM_BANKS[round];
+            const questions = collection.banks[round];
             const attempts = progress.attempts.filter(
               (attempt) =>
+                attempt.assessmentRound === selectedAssessmentRound &&
                 attempt.mockRound === round &&
                 isAnsweredSpecialMockExamAttempt(attempt),
             );
@@ -258,7 +296,7 @@ export default function SpecialMockExamView() {
               (completed / questions.length) * 100,
             );
             const style = ROUND_STYLES[round];
-            const startHref = `/study/special-mock/2/${round}/quiz?mode=all`;
+            const startHref = `/study/special-mock/${selectedAssessmentRound}/${round}/quiz?mode=all`;
 
             return (
               <article
@@ -316,7 +354,7 @@ export default function SpecialMockExamView() {
 
                 <div className="p-5">
                   <p className="min-h-11 text-sm font-medium leading-6 text-slate-600">
-                    {SPECIAL_MOCK_EXAM_META[round].description}
+                    {collection.meta[round].description}
                   </p>
 
                   <div className="mt-4">
@@ -344,7 +382,7 @@ export default function SpecialMockExamView() {
                   <div className="mt-4 grid grid-cols-3 gap-2">
                     <RoundStat
                       label="완료"
-                      value={`${completed}/${SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND}`}
+                      value={`${completed}/${questions.length}`}
                       tone={`${style.soft} ${style.accent}`}
                     />
                     <RoundStat
@@ -373,7 +411,7 @@ export default function SpecialMockExamView() {
                     </Link>
                     {wrong > 0 ? (
                       <Link
-                        to={`/study/special-mock/2/${round}/quiz?mode=wrong`}
+                        to={`/study/special-mock/${selectedAssessmentRound}/${round}/quiz?mode=wrong`}
                         aria-label={`${round}회차 오답 ${wrong}문제 다시 풀기`}
                         className="inline-flex min-h-12 w-12 items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-rose-600 transition hover:bg-rose-100"
                       >
@@ -389,7 +427,13 @@ export default function SpecialMockExamView() {
                     ) : null}
                     <button
                       type="button"
-                      onClick={() => void resetRound(round, attempts.length)}
+                      onClick={() =>
+                        void resetRound(
+                          selectedAssessmentRound,
+                          round,
+                          attempts.length,
+                        )
+                      }
                       disabled={!attempts.length || syncState === "loading"}
                       aria-label={`${round}회차 풀이 기록 초기화`}
                       className="inline-flex min-h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-400 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30"
@@ -399,7 +443,7 @@ export default function SpecialMockExamView() {
                   </div>
 
                   <Link
-                    to={`/study/special-mock/2/${round}/quiz?mode=review`}
+                    to={`/study/special-mock/${selectedAssessmentRound}/${round}/quiz?mode=review`}
                     className={`mt-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 transition hover:-translate-y-0.5 ${style.border} ${style.soft} ${style.accent}`}
                   >
                     <span className="inline-flex items-center gap-2 text-sm font-extrabold">
@@ -419,8 +463,8 @@ export default function SpecialMockExamView() {
       <section className="grid gap-3 sm:grid-cols-3">
         <InfoCard
           icon={<FileCheck2 className="h-5 w-5" />}
-          title={`실전형 ${SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND}문제`}
-          description="핵심 개념을 확인하는 객관식 32문제로 구성됩니다."
+          title={`실전형 ${collection.questionsPerRound}문제`}
+          description={`과목평가 ${selectedAssessmentRound}회차 핵심 개념을 확인하는 객관식 ${collection.questionsPerRound}문제로 구성됩니다.`}
         />
         <InfoCard
           icon={<RotateCcw className="h-5 w-5" />}
@@ -430,7 +474,7 @@ export default function SpecialMockExamView() {
         <InfoCard
           icon={<Hourglass className="h-5 w-5" />}
           title="다음 과목평가 준비 중"
-          description="과목평가 3~10회차는 준비되는 대로 순차 공개됩니다."
+          description="과목평가 4~10회차는 준비되는 대로 순차 공개됩니다."
         />
       </section>
     </div>

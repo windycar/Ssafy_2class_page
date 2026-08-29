@@ -5,25 +5,55 @@ export const SPECIAL_MOCK_EXAM_ASSESSMENT_ROUNDS = [
 export type SpecialMockExamAssessmentRound =
   (typeof SPECIAL_MOCK_EXAM_ASSESSMENT_ROUNDS)[number];
 
+export const SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS = [2, 3] as const;
+
+export type SpecialMockExamAvailableAssessmentRound =
+  (typeof SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS)[number];
+
 export type SpecialMockExamRound = 1 | 2 | 3 | 4 | 5;
 
 export const SPECIAL_MOCK_EXAM_ROUNDS = [1, 2, 3, 4, 5] as const satisfies
   readonly SpecialMockExamRound[];
 
-export const SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND = 32;
+export const SPECIAL_MOCK_EXAM_QUESTIONS_PER_ASSESSMENT = {
+  2: 32,
+  3: 60,
+} as const satisfies Record<SpecialMockExamAvailableAssessmentRound, number>;
+
 export const SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT =
-  SPECIAL_MOCK_EXAM_ROUNDS.length * SPECIAL_MOCK_EXAM_QUESTIONS_PER_ROUND;
+  SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.reduce(
+    (total, assessmentRound) =>
+      total +
+      SPECIAL_MOCK_EXAM_ROUNDS.length *
+        SPECIAL_MOCK_EXAM_QUESTIONS_PER_ASSESSMENT[assessmentRound],
+    0,
+  );
 
 export const SPECIAL_MOCK_EXAM_BANK_VERSIONS = {
-  1: "v3",
-  2: "v3",
-  3: "v3",
-  4: "v3",
-  5: "v3",
-} as const satisfies Record<SpecialMockExamRound, string>;
+  2: {
+    1: "v3",
+    2: "v3",
+    3: "v3",
+    4: "v3",
+    5: "v3",
+  },
+  3: {
+    1: "v1",
+    2: "v1",
+    3: "v1",
+    4: "v1",
+    5: "v1",
+  },
+} as const satisfies Record<
+  SpecialMockExamAvailableAssessmentRound,
+  Record<SpecialMockExamRound, string>
+>;
 
-export function getSpecialMockExamAttemptIdPrefix(round: SpecialMockExamRound) {
-  return `special-mock-a2-r${round}-${SPECIAL_MOCK_EXAM_BANK_VERSIONS[round]}-`;
+export function getSpecialMockExamAttemptIdPrefix(
+  assessmentRound: SpecialMockExamAvailableAssessmentRound,
+  mockRound: SpecialMockExamRound,
+) {
+  return `special-mock-a${assessmentRound}-r${mockRound}-${SPECIAL_MOCK_EXAM_BANK_VERSIONS[assessmentRound][mockRound]}-`;
 }
 
 export type SpecialMockExamDifficulty =
@@ -58,7 +88,7 @@ export interface SpecialMockExamQuestion {
 
 export interface SpecialMockExamAttempt {
   id: string;
-  assessmentRound: 2;
+  assessmentRound: SpecialMockExamAvailableAssessmentRound;
   mockRound: SpecialMockExamRound;
   questionId: string;
   difficulty: SpecialMockExamDifficulty;
@@ -75,10 +105,31 @@ export interface SpecialMockExamProgress {
 }
 
 export function isCurrentSpecialMockExamAttempt(
-  attempt: Pick<SpecialMockExamAttempt, "id" | "mockRound">,
+  attempt: Pick<
+    SpecialMockExamAttempt,
+    "id" | "assessmentRound" | "mockRound"
+  >,
 ) {
+  if (
+    !SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.includes(
+      attempt.assessmentRound,
+    )
+  ) {
+    return false;
+  }
   return attempt.id.startsWith(
-    getSpecialMockExamAttemptIdPrefix(attempt.mockRound),
+    getSpecialMockExamAttemptIdPrefix(
+      attempt.assessmentRound,
+      attempt.mockRound,
+    ),
+  );
+}
+
+export function isSpecialMockExamAssessmentRound(
+  value: string | undefined,
+): value is `${SpecialMockExamAvailableAssessmentRound}` {
+  return SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.some(
+    (round) => String(round) === value,
   );
 }
 

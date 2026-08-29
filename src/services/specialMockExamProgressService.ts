@@ -11,6 +11,7 @@ import {
 } from "./scopedStudyProgressReset";
 import type {
   SpecialMockExamAttempt,
+  SpecialMockExamAvailableAssessmentRound,
   SpecialMockExamDifficulty,
   SpecialMockExamProgress,
   SpecialMockExamQuestionType,
@@ -22,7 +23,7 @@ import { isAnsweredSpecialMockExamAttempt } from "../utils/specialMockExamGradin
 type SpecialMockExamAttemptRow = {
   id: string;
   student_id: number;
-  assessment_round: 2;
+  assessment_round: SpecialMockExamAvailableAssessmentRound;
   mock_round: SpecialMockExamRound;
   question_id: string;
   difficulty: SpecialMockExamDifficulty;
@@ -148,10 +149,15 @@ export async function saveSpecialMockExamAttempt(studentId: number) {
 
 export async function resetSpecialMockExamProgress(
   studentId: number,
+  assessmentRound: SpecialMockExamAvailableAssessmentRound,
   mockRound: SpecialMockExamRound,
 ): Promise<{ progress: SpecialMockExamProgress; synced: boolean }> {
   const current = specialMockExamProgressStorage.get(studentId);
-  const attemptIds = getSpecialMockExamResetAttemptIds(current, mockRound);
+  const attemptIds = getSpecialMockExamResetAttemptIds(
+    current,
+    assessmentRound,
+    mockRound,
+  );
   if (!attemptIds.length) return { progress: current, synced: false };
 
   return resetScopedStudyProgress(

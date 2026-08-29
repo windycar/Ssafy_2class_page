@@ -14,6 +14,7 @@ import {
 import { subscribeToStudyProgressRefresh } from "../utils/studyProgressSync";
 import type {
   SpecialMockExamAttempt,
+  SpecialMockExamAvailableAssessmentRound,
   SpecialMockExamProgress,
   SpecialMockExamQuestion,
   SpecialMockExamRound,
@@ -76,6 +77,7 @@ export function useSpecialMockExamProgress() {
   }, [currentUser, hasAccess]);
 
   const recordAnswers = (
+    assessmentRound: SpecialMockExamAvailableAssessmentRound,
     mockRound: SpecialMockExamRound,
     responses: Array<{
       question: SpecialMockExamQuestion;
@@ -97,8 +99,8 @@ export function useSpecialMockExamProgress() {
     const answeredAt = new Date(submittedAt).toISOString();
     const attempts: SpecialMockExamAttempt[] = submittedAnswers.map(
       ({ question, response, correct }, index) => ({
-        id: `${getSpecialMockExamAttemptIdPrefix(mockRound)}${submittedAt}-${index}-${question.sourceId}-${Math.random().toString(36).slice(2, 7)}`,
-        assessmentRound: 2,
+        id: `${getSpecialMockExamAttemptIdPrefix(assessmentRound, mockRound)}${submittedAt}-${index}-${question.sourceId}-${Math.random().toString(36).slice(2, 7)}`,
+        assessmentRound,
         mockRound,
         questionId: question.id,
         difficulty: question.difficulty,
@@ -119,14 +121,20 @@ export function useSpecialMockExamProgress() {
   };
 
   const recordAnswer = (
+    assessmentRound: SpecialMockExamAvailableAssessmentRound,
     mockRound: SpecialMockExamRound,
     question: SpecialMockExamQuestion,
     response: number | string,
   ) => {
-    return recordAnswers(mockRound, [{ question, response }])[0].correct;
+    return recordAnswers(assessmentRound, mockRound, [{ question, response }])[
+      0
+    ].correct;
   };
 
-  const resetProgress = async (mockRound: SpecialMockExamRound) => {
+  const resetProgress = async (
+    assessmentRound: SpecialMockExamAvailableAssessmentRound,
+    mockRound: SpecialMockExamRound,
+  ) => {
     if (
       !currentUser ||
       !hasAccess ||
@@ -135,7 +143,13 @@ export function useSpecialMockExamProgress() {
     ) {
       return false;
     }
-    if (!progress.attempts.some((attempt) => attempt.mockRound === mockRound)) {
+    if (
+      !progress.attempts.some(
+        (attempt) =>
+          attempt.assessmentRound === assessmentRound &&
+          attempt.mockRound === mockRound,
+      )
+    ) {
       return true;
     }
 
@@ -145,6 +159,7 @@ export function useSpecialMockExamProgress() {
     try {
       const result = await resetSpecialMockExamProgress(
         currentUser.id,
+        assessmentRound,
         mockRound,
       );
       setProgress(result.progress);

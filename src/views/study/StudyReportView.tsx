@@ -77,29 +77,22 @@ export default function StudyReportView() {
         (attempt) => attempt.week === "week5-1",
       ),
     ),
-    "special-mock-a2-r1": countUnresolvedMistakes(
-      specialMockExam.progress.attempts.filter(
-        (attempt) => attempt.mockRound === 1,
-      ),
-    ),
-    "special-mock-a2-r2": countUnresolvedMistakes(
-      specialMockExam.progress.attempts.filter(
-        (attempt) => attempt.mockRound === 2,
-      ),
-    ),
-    "special-mock-a2-r3": countUnresolvedMistakes(
-      specialMockExam.progress.attempts.filter(
-        (attempt) => attempt.mockRound === 3,
-      ),
-    ),
-    "special-mock-a2-r4": countUnresolvedMistakes(
-      specialMockExam.progress.attempts.filter(
-        (attempt) => attempt.mockRound === 4,
-      ),
-    ),
-    "special-mock-a2-r5": countUnresolvedMistakes(
-      specialMockExam.progress.attempts.filter(
-        (attempt) => attempt.mockRound === 5,
+    ...Object.fromEntries(
+      STUDY_REVIEW_TRACKS.flatMap((track) =>
+        track.source === "special-mock-exam"
+          ? [
+              [
+                track.id,
+                countUnresolvedMistakes(
+                  specialMockExam.progress.attempts.filter(
+                    (attempt) =>
+                      attempt.assessmentRound === track.assessmentRound &&
+                      attempt.mockRound === track.round,
+                  ),
+                ),
+              ],
+            ]
+          : [],
       ),
     ),
   };
