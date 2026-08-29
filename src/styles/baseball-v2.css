@@ -144,6 +144,16 @@
   animation: bbv2-batter-motion 460ms steps(3, end) both;
 }
 
+.bbv2-character-sprite[data-motion="CATCH"] {
+  transform: translateX(calc(-50% + var(--bbv2-catcher-shift-x, 0%)))
+    translateY(var(--bbv2-catcher-shift-y, 0%));
+  transition: transform 110ms cubic-bezier(0.2, 0.78, 0.28, 1);
+}
+
+.bbv2-character-sprite[data-motion="CATCH"][data-caught="true"] {
+  filter: drop-shadow(0 12px 9px rgb(0 0 0 / 42%)) brightness(1.06);
+}
+
 .bbv2-character--pitcher {
   bottom: 22%;
   left: 50%;
@@ -527,6 +537,78 @@
   inset: 0;
   overflow: hidden;
   pointer-events: none;
+}
+
+.bbv2-catcher-mitt {
+  position: absolute;
+  z-index: 27;
+  top: var(--bbv2-point-y);
+  left: var(--bbv2-point-x);
+  display: block;
+  width: clamp(58px, 7.2vw, 108px);
+  aspect-ratio: 1.5;
+  opacity: var(--bbv2-point-opacity);
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(var(--bbv2-point-scale));
+  transform-origin: center;
+  filter: drop-shadow(0 7px 7px rgb(0 0 0 / 45%));
+  will-change: top, left, opacity, transform;
+}
+
+.bbv2-catcher-mitt img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.bbv2-catcher-mitt[data-caught="true"] img {
+  animation: bbv2-mitt-catch 180ms cubic-bezier(0.16, 0.85, 0.3, 1.35) both;
+}
+
+.bbv2-pitch-meter {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: min(300px, 42%);
+  padding: 9px 11px;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 10px;
+  color: white;
+  background: rgb(3 20 38 / 84%);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 28%);
+}
+
+.bbv2-pitch-meter__heading {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.bbv2-pitch-meter__track {
+  position: relative;
+  height: 8px;
+  margin-top: 7px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #ef4444, #facc15, #22c55e, #facc15, #ef4444);
+}
+
+.bbv2-pitch-meter__track i {
+  position: absolute;
+  top: -4px;
+  width: 4px;
+  height: 16px;
+  border-radius: 4px;
+  background: white;
+  box-shadow: 0 0 8px white;
+  transform: translateX(-50%);
+  will-change: left;
+}
+
+.bbv2-pitch-meter[data-quality="PERFECT"] .bbv2-pitch-meter__heading strong {
+  color: #86efac;
+  text-shadow: 0 0 8px rgb(34 197 94 / 70%);
 }
 
 .bbv2-pitch-readout {
@@ -1794,6 +1876,12 @@
 @keyframes bbv2-batter-motion {
   from { background-position: 0% center; }
   to { background-position: 100% center; }
+}
+
+@keyframes bbv2-mitt-catch {
+  0% { transform: scale(1.08) rotate(-4deg); }
+  55% { transform: scale(0.88) rotate(3deg); }
+  100% { transform: scale(1) rotate(0); }
 }
 
 @keyframes bbv2-fielder-approach {

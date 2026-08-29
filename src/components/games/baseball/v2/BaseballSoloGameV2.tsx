@@ -16,6 +16,8 @@ import {
   BASEBALL_V2_BALL_SOURCE,
   BASEBALL_V2_BATTER_ACTION_SOURCES,
   BASEBALL_V2_CAMERA_BACKGROUND_SOURCES,
+  BASEBALL_V2_CATCHER_ACTION_SOURCE,
+  BASEBALL_V2_CATCHER_MITT_SOURCE,
   BASEBALL_V2_FIELDER_SOURCES,
   BASEBALL_V2_RUNNER_SOURCES,
   BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE,
@@ -53,14 +55,17 @@ import {
 import { BaseballGameIntroSequenceV2 } from "./BaseballPresentationSequencesV2.tsx";
 import {
   createBaseballDefenseThrowPresentationV2,
+  createBaseballCatcherMittPresentationV2,
   createBaseballFielderPresentationsV2,
   createBaseballRunnerPresentationsV2,
   isBaseballHomeRunResultV2,
 } from "./BaseballPlayPresentationV2.ts";
+import { BaseballPitchTimingMeterV2 } from "./BaseballPitchTimingMeterV2.tsx";
 import {
   BaseballStageV2,
   type BaseballBallPresentationV2,
   type BaseballPresentationPointV2,
+  type BaseballStageAnimationV2,
   type BaseballTrailPointsV2,
 } from "./BaseballStageV2.tsx";
 import { BaseballVisualEventOverlayV2 } from "./BaseballVisualEventPresentationV2.tsx";
@@ -270,10 +275,9 @@ export function BaseballSoloGameV2({
     setSwingType,
     currentVisualEvent,
     currentVisualEventKey,
-    currentVisualEventProgress,
-    pitchProgress,
-    pitchPulseProgress,
-    pitchTimingQuality,
+    currentVisualEventProgressSource,
+    pitchProgressSource,
+    pitchPulseProgressSource,
     officialResult,
     primaryAction,
     startNewGame,
@@ -406,54 +410,106 @@ export function BaseballSoloGameV2({
   }, [canAim, handlePrimaryAction, setAim, shortcutCanRun]);
 
   const activePitch = game.activePlay?.pitch;
-  const pitchBall = useMemo(() => (
+  const createPitchBallAtProgress = useCallback((progress: number) => (
     presentation === "PITCH_FLIGHT" && activePitch
       ? createPitchPresentation(
           activePitch.trajectory,
-          pitchProgress,
+          progress,
           pitchProjection,
           userPitching,
         )
       : null
-  ), [activePitch, pitchProgress, pitchProjection, presentation, userPitching]);
+  ), [activePitch, pitchProjection, presentation, userPitching]);
 
-  const battedBall = useMemo(() => {
+  const createBattedBallAtProgress = useCallback((progress: number) => {
     const ball = game.activePlay?.battedBall;
     return currentVisualEvent?.kind === "BALL_FLIGHT" && ball
-      ? createBattedPresentation(ball, currentVisualEventProgress, cameraMode)
+      ? createBattedPresentation(ball, progress, cameraMode)
       : null;
-  }, [cameraMode, currentVisualEvent, currentVisualEventProgress, game.activePlay?.battedBall]);
+  }, [cameraMode, currentVisualEvent?.kind, game.activePlay?.battedBall]);
 
   const visualBattingTeam = currentVisualEvent
     ? lastPlayEntry?.battingTeam ?? displayGame.battingTeam
     : displayGame.battingTeam;
   const visualFieldingTeam = visualBattingTeam === 0 ? 1 : 0;
-  const runners = useMemo(() => createBaseballRunnerPresentationsV2({
+  const createRunnersAtProgress = useCallback((progress: number) => createBaseballRunnerPresentationsV2({
     authoritativeGame: game,
     presentationGame: displayGame,
     event: currentVisualEvent,
-    eventProgress: currentVisualEventProgress,
+    eventProgress: progress,
     cameraMode,
     runnerAssetSrc: BASEBALL_V2_RUNNER_SOURCES[visualBattingTeam],
   }), [
     cameraMode,
     currentVisualEvent,
-    currentVisualEventProgress,
     displayGame,
     game,
     visualBattingTeam,
   ]);
-  const fielders = useMemo(() => createBaseballFielderPresentationsV2({
+  const createFieldersAtProgress = useCallback((progress: number) => createBaseballFielderPresentationsV2({
     game,
     event: currentVisualEvent,
-    eventProgress: currentVisualEventProgress,
+    eventProgress: progress,
     fielderAssetSrc: BASEBALL_V2_FIELDER_SOURCES[visualFieldingTeam],
-  }), [currentVisualEvent, currentVisualEventProgress, game, visualFieldingTeam]);
-  const defenseThrow = useMemo(() => createBaseballDefenseThrowPresentationV2({
+  }), [currentVisualEvent, game, visualFieldingTeam]);
+  const createDefenseThrowAtProgress = useCallback((progress: number) => createBaseballDefenseThrowPresentationV2({
     game,
     event: currentVisualEvent,
-    eventProgress: currentVisualEventProgress,
-  }), [currentVisualEvent, currentVisualEventProgress, game]);
+    eventProgress: progress,
+  }), [currentVisualEvent, game]);
+  const createCatcherMittAtProgress = useCallback((progress: number) => (
+    activePitch && perspective === "BATTING" ? createBaseballCatcherMittPresentationV2({
+      actualLocation: activePitch.location.actual,
+      eventProgress: progress,
+      projection: pitchProjection,
+      pitchingPerspective: false,
+    }) : null
+  ), [activePitch, perspective, pitchProjection]);
+  const runners = useMemo(() => currentVisualEvent ? [] : createRunnersAtProgress(0), [
+    createRunnersAtProgress,
+    currentVisualEvent,
+  ]);
+  const fielders = useMemo(() => currentVisualEvent ? [] : createFieldersAtProgress(0), [
+    createFieldersAtProgress,
+    currentVisualEvent,
+  ]);
+  const activePlayKey = game.activePlay?.playId ?? currentVisualEventKey ?? "idle";
+  const stageAnimation = useMemo<BaseballStageAnimationV2 | undefined>(() => {
+    if (presentation === "PITCH_FLIGHT" && activePitch) {
+      return {
+        key: `${activePlayKey}:pitch-flight`,
+        progressSource: pitchProgressSource,
+        createPitchBall: createPitchBallAtProgress,
+        createCatcherMitt: createCatcherMittAtProgress,
+      };
+    }
+    if (!currentVisualEvent) return undefined;
+    return {
+      key: currentVisualEvent.id,
+      progressSource: currentVisualEventProgressSource,
+      createBattedBall: currentVisualEvent.kind === "BALL_FLIGHT"
+        ? createBattedBallAtProgress
+        : undefined,
+      createDefenseThrow: currentVisualEvent.kind === "FIELD_RESULT"
+        ? createDefenseThrowAtProgress
+        : undefined,
+      createRunners: createRunnersAtProgress,
+      createFielders: createFieldersAtProgress,
+    };
+  }, [
+    activePitch,
+    activePlayKey,
+    createBattedBallAtProgress,
+    createCatcherMittAtProgress,
+    createDefenseThrowAtProgress,
+    createFieldersAtProgress,
+    createPitchBallAtProgress,
+    createRunnersAtProgress,
+    currentVisualEvent,
+    currentVisualEventProgressSource,
+    pitchProgressSource,
+    presentation,
+  ]);
 
   const strikeZoneTarget = presentation === "READY_FOR_PITCH"
     || (userBatting && (presentation === "PITCH_WINDUP" || presentation === "PITCH_FLIGHT"))
@@ -467,7 +523,6 @@ export function BaseballSoloGameV2({
     && officialResult.code !== "CALLED_STRIKE"
     && officialResult.code !== "WALK";
   const pitcherIsThrowing = presentation === "PITCH_WINDUP";
-  const activePlayKey = game.activePlay?.playId ?? currentVisualEventKey ?? "idle";
 
   const availablePitches = useMemo(
     () => getCurrentPitcher(game).pitching?.pitches.map((pitch) => pitch.type) ?? [],
@@ -490,7 +545,7 @@ export function BaseballSoloGameV2({
         official={officialResult}
         game={displayGame}
         authoritativeGame={game}
-        eventProgress={currentVisualEventProgress}
+        eventProgressSource={currentVisualEventProgressSource}
         onSkip={skip}
         onSkipSequence={skipSequence}
         homeRunImageSrc={baseballArenaSwingFacing}
@@ -552,7 +607,7 @@ export function BaseballSoloGameV2({
               ? "경기 종료"
               : "경기 시작";
   const instruction = presentation === "READY_FOR_PITCH" && userPitching
-    ? `조준 · 타이밍 ${pitchTimingQuality} · Space로 투구`
+    ? "조준 · 게이지 중앙에 맞춰 Space로 투구"
     : presentation === "PITCH_FLIGHT" && userBatting
       ? "방향키/포인터로 조준하고 Space로 스윙"
       : presentation === "BETWEEN_PLAYS"
@@ -561,41 +616,9 @@ export function BaseballSoloGameV2({
           ? `${currentVisualEvent.kind.replaceAll("_", " ")} · 카메라 ${cameraMode}`
           : "Space 또는 화면 버튼으로 진행";
 
-  const pitchMeter = presentation === "READY_FOR_PITCH" && userPitching ? (
-    <div
-      style={{
-        position: "absolute",
-        right: "16px",
-        bottom: "16px",
-        width: "min(300px, 42%)",
-        padding: "9px 11px",
-        border: "1px solid rgba(255,255,255,.3)",
-        borderRadius: "10px",
-        color: "white",
-        background: "rgba(3,20,38,.84)",
-        boxShadow: "0 8px 24px rgba(0,0,0,.28)",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: 900 }}>
-        <span>PITCH TIMING</span><strong>{pitchTimingQuality}</strong>
-      </div>
-      <div style={{ position: "relative", height: "8px", marginTop: "7px", borderRadius: "99px", background: "linear-gradient(90deg,#ef4444,#facc15,#22c55e,#facc15,#ef4444)" }}>
-        <i
-          style={{
-            position: "absolute",
-            top: "-4px",
-            left: `${pitchPulseProgress * 100}%`,
-            width: "4px",
-            height: "16px",
-            borderRadius: "4px",
-            background: "white",
-            boxShadow: "0 0 8px white",
-            transform: "translateX(-50%)",
-          }}
-        />
-      </div>
-    </div>
-  ) : null;
+  const pitchMeter = presentation === "READY_FOR_PITCH" && userPitching
+    ? <BaseballPitchTimingMeterV2 progressSource={pitchPulseProgressSource} />
+    : null;
   const pitchReadout = activePitch && (
     presentation === "PITCH_WINDUP"
     || presentation === "PITCH_FLIGHT"
@@ -632,6 +655,7 @@ export function BaseballSoloGameV2({
             backgroundSrc,
             backgroundAlt: perspective === "BATTING" ? "타자 시점 야구장" : perspective === "PITCHING" ? "투수 시점 야구장" : "수비 시점 야구장",
             ballSrc: BASEBALL_V2_BALL_SOURCE,
+            catcherMittSrc: BASEBALL_V2_CATCHER_MITT_SOURCE,
             batterSprite: perspective === "FIELD" ? undefined : {
               src: BASEBALL_V2_BATTER_ACTION_SOURCES[visualBattingTeam],
               frameCount: 4,
@@ -646,17 +670,24 @@ export function BaseballSoloGameV2({
               motion: pitcherIsThrowing ? "PITCH" : "IDLE",
               animationKey: activePlayKey,
             } : undefined,
+            catcherSprite: perspective === "PITCHING" ? {
+              src: BASEBALL_V2_CATCHER_ACTION_SOURCE,
+              frameCount: 4,
+              frameIndex: 0,
+              motion: presentation === "PITCH_FLIGHT" ? "CATCH" : "IDLE",
+              animationKey: activePlayKey,
+              progressSource: presentation === "PITCH_FLIGHT" ? pitchProgressSource : undefined,
+              catchTarget: activePitch?.location.actual,
+            } : undefined,
           }}
           cameraMode={cameraMode}
           perspective={perspective}
           className={homeRunSequenceActive && currentVisualEvent?.kind === "CONTACT"
             ? "bbv2-stage--home-run-impact"
             : undefined}
-          pitchBall={battedBall ? null : pitchBall}
-          battedBall={pitchBall ? null : battedBall}
-          defenseThrow={defenseThrow}
           fielders={fielders}
           runners={runners}
+          animation={stageAnimation}
           showStrikeZone={showStrikeZone}
           strikeZoneTarget={strikeZoneTarget}
           aimEnabled={canAim && showStrikeZone}

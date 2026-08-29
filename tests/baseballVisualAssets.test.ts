@@ -76,6 +76,10 @@ test("스테이지는 동일한 공 이미지로 본체 1개와 이전 위치 �
     path.join(SOURCE_DIRECTORY, "styles/baseball-v2.css"),
     "utf8",
   );
+  const animatedLayerSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballAnimatedStageLayersV2.tsx"),
+    "utf8",
+  );
   const trailStyleSource = styleSource.slice(
     styleSource.indexOf(".bbv2-ball-trail-point {"),
     styleSource.indexOf(".bbv2-ball-body {"),
@@ -95,15 +99,18 @@ test("스테이지는 동일한 공 이미지로 본체 1개와 이전 위치 �
   );
   assert.match(stageSource, /BASEBALL_TRAIL_SAMPLE_COUNT = 10/);
   assert.match(stageSource, /presentation\.trail\.map\(\(point, index\)/);
-  assert.equal(
-    stageSource.match(/<BaseballFlightLayerV2\b/g)?.length,
-    1,
-    "스테이지에는 활성 공 비행 레이어가 하나만 있어야 한다",
-  );
+  assert.match(stageSource, /const activeFlight = animatedFlight \? null : defenseThrow/);
+  assert.match(stageSource, /\{animatedFlight && animation \? \(/);
+  assert.match(stageSource, /\{activeFlight \? \(/);
   assert.equal(
     stageSource.match(/<img src=\{ballSrc\}/g)?.length,
     2,
-    "잔상과 본체는 동일한 ballSrc만 사용해야 한다",
+    "정적 레이어의 잔상과 본체는 동일한 ballSrc만 사용해야 한다",
+  );
+  assert.equal(
+    animatedLayerSource.match(/<img src=\{ballSrc\}/g)?.length,
+    2,
+    "RAF 레이어의 잔상과 본체도 동일한 ballSrc만 사용해야 한다",
   );
   assert.ok(ballPresentationContract, "공 프레젠테이션 계약 누락");
   assert.doesNotMatch(ballPresentationContract, /assetSrc/);
@@ -126,6 +133,33 @@ test("스테이지는 동일한 공 이미지로 본체 1개와 이전 위치 �
     pitchToneOpacity.every((opacity) => opacity <= 26),
     "구종 색상 효과는 공 형태를 가리지 않는 미세한 수준이어야 한다",
   );
+});
+
+test("포수 액션과 투명 미트는 실제 런타임 자산이며 투구 목표에 연결된다", () => {
+  const catcher = pngDimensions("baseball-catcher-actions-red.png");
+  const mitt = pngDimensions("baseball-catcher-mitt-v2.png");
+  const stageSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballStageV2.tsx"),
+    "utf8",
+  );
+  const animatedLayerSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballAnimatedStageLayersV2.tsx"),
+    "utf8",
+  );
+  const playPresentationSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballPlayPresentationV2.ts"),
+    "utf8",
+  );
+
+  assert.equal(catcher.width / catcher.height, 2048 / 768);
+  assert.equal(catcher.colorType, 6);
+  assert.ok(mitt.width >= 512 && mitt.height >= 512);
+  assert.equal(mitt.colorType, 6);
+  assert.match(stageSource, /motion !== "CATCH"/);
+  assert.match(stageSource, /sprite\.progressSource\.subscribe\(renderFrame\)/);
+  assert.match(animatedLayerSource, /className="bbv2-catcher-mitt"/);
+  assert.match(playPresentationSource, /actualLocation/);
+  assert.match(playPresentationSource, /caught: progress >= 0\.92/);
 });
 
 test("야구 화면은 경기장·카메라·캐릭터·공을 포함한 실제 이미지 묶음을 유지한다", () => {

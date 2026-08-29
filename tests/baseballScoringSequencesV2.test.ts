@@ -29,13 +29,13 @@ test("Solo와 Online은 같은 전용 시퀀스에 authoritative 상태·진행�
   ]);
 
   assert.match(solo, /authoritativeGame=\{game\}/);
-  assert.match(solo, /eventProgress=\{currentVisualEventProgress\}/);
+  assert.match(solo, /eventProgressSource=\{currentVisualEventProgressSource\}/);
   assert.match(solo, /onSkipSequence=\{skipSequence\}/);
   assert.match(solo, /skipSequence\(\)/);
   assert.doesNotMatch(solo, /canvas-confetti|celebratedHomeRunsRef/);
 
   assert.match(online, /authoritativeGame=\{authoritativePresentationGame\}/);
-  assert.match(online, /eventProgress=\{presentedVisualEventProgress\}/);
+  assert.match(online, /eventProgressSource=\{presentedVisualEventProgressSource\}/);
   assert.match(online, /onSkipSequence=\{skipHomeRunSequence\}/);
   assert.match(online, /playback\.seek\("RUN_SCORE"\)/);
 });

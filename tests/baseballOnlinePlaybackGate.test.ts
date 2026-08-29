@@ -49,7 +49,11 @@ test("온라인 canonical RESOLVED 플레이는 공통 재생기에 sourceGame�
   assert.match(source, /createSoloVisualPlaybackPlan\(\{/);
   assert.match(source, /resolveBaseballVisualPlaybackDisplayGame\(/);
   assert.match(source, /presentedVisualEvent = playback\.currentEvent/);
-  assert.match(source, /presentedVisualEventProgress = playback\.currentEvent/);
+  assert.match(
+    source,
+    /presentedVisualEventProgressSource = playback\.currentEventProgressSource/,
+  );
+  assert.match(source, /progressSource: presentedVisualEventProgressSource/);
   assert.doesNotMatch(source, /setBattedProgress|\[battedProgress,/);
   assert.match(source, /createBaseballRunnerPresentationsV2\(\{/);
   assert.match(source, /authoritativeGame: authoritativePresentationGame/);
@@ -80,7 +84,10 @@ test("초기 canonical 복구와 Presence 검증 전에는 캐시된 RESOLVED �
   );
 
   const playbackEffectStart = source.indexOf('if (room?.status === "cancelled")');
-  const playbackEffectEnd = source.indexOf("pitchProgressRef.current = pitchProgress", playbackEffectStart);
+  const playbackEffectEnd = source.indexOf(
+    "if (!activePitch || presentationPlay?.phase",
+    playbackEffectStart,
+  );
   const playbackEffect = source.slice(playbackEffectStart, playbackEffectEnd);
   assert.ok(playbackEffectStart >= 0);
   assert.ok(playbackEffect.indexOf("if (!resolvedPlaybackPending") >= 0);
@@ -121,7 +128,10 @@ test("canonical play가 바뀌면 기존 재생을 취소하고 처리한 play�
   );
 
   const playbackEffectStart = source.indexOf('if (room?.status === "cancelled")');
-  const playbackEffectEnd = source.indexOf("pitchProgressRef.current = pitchProgress", playbackEffectStart);
+  const playbackEffectEnd = source.indexOf(
+    "if (!activePitch || presentationPlay?.phase",
+    playbackEffectStart,
+  );
   const playbackEffect = source.slice(playbackEffectStart, playbackEffectEnd);
   const staleGuard = playbackEffect.indexOf("playback.active");
   const cancel = playbackEffect.indexOf("playback.cancel()", staleGuard);

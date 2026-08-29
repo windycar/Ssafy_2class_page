@@ -1,3 +1,5 @@
+import { useBaseballAnimationProgress } from "../../../../hooks/useBaseballAnimationProgress.ts";
+import type { BaseballAnimationProgressSource } from "../../../../utils/games/baseball/animationProgress.ts";
 import type {
   BaseballGameState,
   OfficialPlayResult,
@@ -21,7 +23,7 @@ export interface BaseballVisualEventOverlayV2Props {
   official: OfficialPlayResult | null;
   game: BaseballGameState;
   authoritativeGame?: BaseballGameState;
-  eventProgress?: number;
+  eventProgressSource: BaseballAnimationProgressSource;
   onSkip: () => void;
   onSkipSequence?: () => void;
   homeRunImageSrc?: string;
@@ -41,12 +43,15 @@ export function BaseballVisualEventOverlayV2({
   official,
   game,
   authoritativeGame = game,
-  eventProgress = 0,
+  eventProgressSource,
   onSkip,
   onSkipSequence,
   homeRunImageSrc,
   transitionBackgroundSrc,
 }: BaseballVisualEventOverlayV2Props) {
+  // Only this compact overlay subscribes to frame progress. The parent game
+  // shell and HUD remain untouched while phase-specific copy advances.
+  const eventProgress = useBaseballAnimationProgress(eventProgressSource);
   if (event.kind === "NEXT_BATTER") {
     return (
       <BaseballPlayerIntroSequenceV2

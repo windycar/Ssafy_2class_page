@@ -8,6 +8,11 @@ import {
 } from "react";
 import { chooseCpuBatterAction } from "../utils/games/baseball/cpuBattingAI.ts";
 import {
+  baseballPitchQualityAtMeterProgress,
+  createBaseballAnimationProgressSource,
+  type BaseballAnimationProgressSource,
+} from "../utils/games/baseball/animationProgress.ts";
+import {
   chooseCpuPitch,
   type CpuPitchHistoryEntry,
 } from "../utils/games/baseball/cpuPitchingAI.ts";
@@ -74,9 +79,9 @@ export interface BaseballSoloController {
   setSwingType: Dispatch<SetStateAction<SwingType>>;
   currentVisualEvent: VisualEvent | null;
   currentVisualEventKey: string | null;
-  currentVisualEventProgress: number;
-  pitchProgress: number;
-  pitchPulseProgress: number;
+  currentVisualEventProgressSource: BaseballAnimationProgressSource;
+  pitchProgressSource: BaseballAnimationProgressSource;
+  pitchPulseProgressSource: BaseballAnimationProgressSource;
   pitchTimingQuality: PitchQuality;
   officialResult: OfficialPlayResult | null;
   primaryAction: () => void;
@@ -115,14 +120,6 @@ function monotonicNow() {
   return typeof performance === "undefined" ? Date.now() : performance.now();
 }
 
-function pitchQualityForPulse(progress: number): PitchQuality {
-  const centerError = Math.abs(clamp(progress, 0, 1) - 0.5);
-  if (centerError <= 0.045) return "PERFECT";
-  if (centerError <= 0.14) return "GOOD";
-  if (centerError <= 0.28) return "NORMAL";
-  return "MISS";
-}
-
 function isUserBatting(state: BaseballGameState) {
   return state.battingTeam === USER_TEAM_INDEX;
 }
@@ -158,8 +155,6 @@ export function useBaseballSoloController(
   const [selectedPitchType, setSelectedPitchTypeState] =
     useState<BaseballPitchType>(DEFAULT_PITCH_TYPE);
   const [swingType, setSwingTypeState] = useState<SwingType>(DEFAULT_SWING_TYPE);
-  const [pitchProgress, setPitchProgress] = useState(0);
-  const [pitchPulseProgress, setPitchPulseProgress] = useState(0);
   const [pitchTimingQuality, setPitchTimingQuality] = useState<PitchQuality>("GOOD");
 
   const gameRef = useRef(game);
@@ -172,6 +167,16 @@ export function useBaseballSoloController(
   const swingTypeRef = useRef(swingType);
   const pitchProgressRef = useRef(0);
   const pitchPulseProgressRef = useRef(0);
+  const pitchProgressSourceRef = useRef<ReturnType<
+    typeof createBaseballAnimationProgressSource
+  > | null>(null);
+  const pitchPulseProgressSourceRef = useRef<ReturnType<
+    typeof createBaseballAnimationProgressSource
+  > | null>(null);
+  pitchProgressSourceRef.current ??= createBaseballAnimationProgressSource();
+  pitchPulseProgressSourceRef.current ??= createBaseballAnimationProgressSource();
+  const pitchProgressSource = pitchProgressSourceRef.current;
+  const pitchPulseProgressSource = pitchPulseProgressSourceRef.current;
   const visualEventDisplaySnapshotsRef = useRef<ReadonlyMap<string, BaseballGameState>>(new Map());
   const afterPlaybackRef = useRef<BaseballSoloPresentation>("BETWEEN_PLAYS");
   const flightStartedAtRef = useRef<number | null>(null);
@@ -202,7 +207,7 @@ export function useBaseballSoloController(
 
   const {
     currentEvent: playbackCurrentEvent,
-    currentEventProgress,
+    currentEventProgressSource,
     start: startVisualPlayback,
     skip: skipVisualPlayback,
     seek: seekVisualPlayback,
@@ -261,7 +266,9 @@ export function useBaseballSoloController(
     const cpuPitching = !isUserPitching(state);
     let pitchType = selectedPitchTypeRef.current;
     let target = normalizeAim(aimRef.current);
-    let timingQuality: PitchQuality = pitchQualityForPulse(pitchPulseProgressRef.current);
+    let timingQuality: PitchQuality = baseballPitchQualityAtMeterProgress(
+      pitchPulseProgressRef.current,
+    );
 
     if (cpuPitching) {
       const selection = chooseCpuPitch({
@@ -319,7 +326,7 @@ export function useBaseballSoloController(
     flightStartedAtRef.current = null;
     pitchPulseStartedAtRef.current = null;
     pitchProgressRef.current = 0;
-    setPitchProgress(0);
+    pitchProgressSource.setProgress(0);
     commitGame(result.state);
     commitDisplayGame(result.state);
     commitPresentation("PITCH_WINDUP");
@@ -388,7 +395,7 @@ export function useBaseballSoloController(
       : "BETWEEN_PLAYS";
     visualEventDisplaySnapshotsRef.current = playbackPlan.displaySnapshotByEventId;
     pitchProgressRef.current = 1;
-    setPitchProgress(1);
+    pitchProgressSource.setProgress(1);
     commitGame(result.state);
     if (nextEvents.length > 0) {
       const started = startVisualPlayback({
@@ -436,8 +443,8 @@ export function useBaseballSoloController(
         pitchProgressRef.current = 0;
         pitchPulseProgressRef.current = 0;
         pitchPulseStartedAtRef.current = null;
-        setPitchProgress(0);
-        setPitchPulseProgress(0);
+        pitchProgressSource.setProgress(0);
+        pitchPulseProgressSource.setProgress(0);
         commitPresentation("READY_FOR_PITCH");
         return;
       case "EVENT_PLAYBACK":
@@ -446,7 +453,7 @@ export function useBaseballSoloController(
       default:
         return;
     }
-  }, [commitPresentation, skip]);
+  }, [commitPresentation, pitchProgressSource, pitchPulseProgressSource, skip]);
 
   const primaryAction = useCallback(() => {
     switch (presentationRef.current) {
@@ -502,13 +509,20 @@ export function useBaseballSoloController(
     setAimState({ ...DEFAULT_AIM });
     setSelectedPitchTypeState(DEFAULT_PITCH_TYPE);
     setSwingTypeState(DEFAULT_SWING_TYPE);
-    setPitchProgress(0);
-    setPitchPulseProgress(0);
+    pitchProgressSource.setProgress(0);
+    pitchPulseProgressSource.setProgress(0);
     setPitchTimingQuality("GOOD");
     commitGame(nextGame);
     commitDisplayGame(nextGame);
     commitPresentation("INTRO");
-  }, [cancelVisualPlayback, commitDisplayGame, commitGame, commitPresentation]);
+  }, [
+    cancelVisualPlayback,
+    commitDisplayGame,
+    commitGame,
+    commitPresentation,
+    pitchProgressSource,
+    pitchPulseProgressSource,
+  ]);
 
   useEffect(() => {
     if (presentation !== "READY_FOR_PITCH" || !isUserPitching(game)) return;
@@ -518,8 +532,7 @@ export function useBaseballSoloController(
       const startedAt = pitchPulseStartedAtRef.current ?? now;
       const progress = ((now - startedAt) % PITCH_PULSE_PERIOD_MS) / PITCH_PULSE_PERIOD_MS;
       pitchPulseProgressRef.current = progress;
-      setPitchPulseProgress(progress);
-      setPitchTimingQuality(pitchQualityForPulse(progress));
+      pitchPulseProgressSource.setProgress(progress);
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
@@ -528,7 +541,7 @@ export function useBaseballSoloController(
       if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     };
-  }, [game, presentation]);
+  }, [game, pitchPulseProgressSource, presentation]);
 
   useEffect(() => {
     if (
@@ -567,7 +580,7 @@ export function useBaseballSoloController(
       const startedAt = flightStartedAtRef.current ?? now;
       const rawProgress = (now - startedAt) / pitch.flightDurationMs;
       pitchProgressRef.current = rawProgress;
-      setPitchProgress(clamp(rawProgress, 0, 1));
+      pitchProgressSource.setProgress(rawProgress);
 
       if (!isUserBatting(gameRef.current)) {
         const cpuAction = cpuBatterActionRef.current;
@@ -592,7 +605,7 @@ export function useBaseballSoloController(
       if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     };
-  }, [presentation, resolveCurrentPitch, resolveTake]);
+  }, [pitchProgressSource, presentation, resolveCurrentPitch, resolveTake]);
 
   const currentVisualEvent = presentation === "EVENT_PLAYBACK"
     ? playbackCurrentEvent
@@ -617,9 +630,9 @@ export function useBaseballSoloController(
     setSwingType,
     currentVisualEvent,
     currentVisualEventKey: currentVisualEvent?.id ?? null,
-    currentVisualEventProgress,
-    pitchProgress,
-    pitchPulseProgress,
+    currentVisualEventProgressSource,
+    pitchProgressSource,
+    pitchPulseProgressSource,
     pitchTimingQuality,
     officialResult: game.lastPlay,
     primaryAction,

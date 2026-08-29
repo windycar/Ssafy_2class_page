@@ -16,6 +16,8 @@ import baseballCameraRightField from "../assets/games/baseball-camera-right-fiel
 import baseballCameraRunScored from "../assets/games/baseball-camera-run-scored-v4.png";
 import baseballCameraScoreboardWide from "../assets/games/baseball-camera-scoreboard-wide-v3.png";
 import baseballCameraThirdBaseLine from "../assets/games/baseball-camera-third-base-line-v4.png";
+import baseballCatcherActionsRed from "../assets/games/baseball-catcher-actions-red.png";
+import baseballCatcherMitt from "../assets/games/baseball-catcher-mitt-v2.png";
 import baseballFielderBlue from "../assets/games/baseball-fielder-blue-chibi-v3.png";
 import baseballFielderRed from "../assets/games/baseball-fielder-red-chibi-v4.png";
 import baseballPitcherActions from "../assets/games/baseball-pitcher-actions-red.png";
@@ -36,6 +38,8 @@ export interface BaseballV2AssetDefinition {
 }
 
 export const BASEBALL_V2_BALL_SOURCE = baseballBallBody;
+export const BASEBALL_V2_CATCHER_ACTION_SOURCE = baseballCatcherActionsRed;
+export const BASEBALL_V2_CATCHER_MITT_SOURCE = baseballCatcherMitt;
 export const BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE = baseballCameraScoreboardWide;
 /** Team index 0 is the blue visitor side and team index 1 is the red home side. */
 export const BASEBALL_V2_BATTER_ACTION_SOURCES = Object.freeze([
@@ -75,6 +79,8 @@ export const BASEBALL_V2_ASSET_MANIFEST = [
   { id: "batter-actions-blue", source: baseballBatterActionsBlue, group: "critical", kind: "character" },
   { id: "batter-actions-red", source: baseballBatterActionsRed, group: "lazy", kind: "character" },
   { id: "pitcher-actions", source: baseballPitcherActions, group: "critical", kind: "character" },
+  { id: "catcher-actions-red", source: baseballCatcherActionsRed, group: "critical", kind: "character" },
+  { id: "catcher-mitt", source: baseballCatcherMitt, group: "critical", kind: "character" },
   { id: "infield-wide-camera", source: baseballCameraInfieldWide, group: "lazy", kind: "background" },
   { id: "left-field-camera", source: baseballCameraLeftField, group: "lazy", kind: "background", dynamicBallOnly: true },
   { id: "left-center-camera", source: baseballCameraLeftCenter, group: "lazy", kind: "background", dynamicBallOnly: true },

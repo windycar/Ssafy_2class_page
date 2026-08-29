@@ -6,6 +6,10 @@ import {
 } from "react";
 
 import { cloneGameState } from "../utils/games/baseball/gameState.ts";
+import {
+  createBaseballAnimationProgressSource,
+  type BaseballAnimationProgressSource,
+} from "../utils/games/baseball/animationProgress.ts";
 import type {
   BaseballGameState,
   VisualEvent,
@@ -95,6 +99,7 @@ export interface BaseballVisualPlaybackController {
   sourceGame: BaseballGameState | null;
   currentEvent: VisualEvent | null;
   currentEventProgress: number;
+  currentEventProgressSource: BaseballAnimationProgressSource;
   start: (request: BaseballVisualPlaybackStartRequest) => boolean;
   skip: () => boolean;
   seek: (targetKind: VisualEventKind) => boolean;
@@ -394,6 +399,11 @@ export function useBaseballVisualPlayback(
     createInitialBaseballVisualPlaybackState,
   );
   const stateRef = useRef(state);
+  const progressSourceRef = useRef<ReturnType<
+    typeof createBaseballAnimationProgressSource
+  > | null>(null);
+  progressSourceRef.current ??= createBaseballAnimationProgressSource();
+  const progressSource = progressSourceRef.current;
   const cancelFrameLoopRef = useRef<(() => void) | null>(null);
   const mountedRef = useRef(true);
   const eventStartRef = useRef(options.onEventStart);
@@ -406,7 +416,12 @@ export function useBaseballVisualPlayback(
     const transition = transitionBaseballVisualPlayback(previous, action);
     if (transition.state !== previous) {
       stateRef.current = transition.state;
-      if (mountedRef.current) setState(transition.state);
+      progressSource.setProgress(transition.state.eventProgress);
+      // TICK is a 60 FPS transport signal. Keep it out of parent React state;
+      // only event boundaries re-render the controller and its GameView.
+      if (action.type !== "TICK" && mountedRef.current) {
+        setState(transition.state);
+      }
     }
     for (const effect of transition.effects) {
       if (effect.type === "EVENT_START") {
@@ -420,7 +435,7 @@ export function useBaseballVisualPlayback(
       }
     }
     return transition;
-  }, []);
+  }, [progressSource]);
 
   const start = useCallback((request: BaseballVisualPlaybackStartRequest) => {
     if (stateRef.current.startedPlayIds.has(request.playId.trim())) return false;
@@ -494,7 +509,8 @@ export function useBaseballVisualPlayback(
     playId: state.playId,
     sourceGame: state.sourceGame,
     currentEvent: activeEvent,
-    currentEventProgress: state.eventProgress,
+    currentEventProgress: progressSource.getProgress(),
+    currentEventProgressSource: progressSource,
     start,
     skip,
     seek,

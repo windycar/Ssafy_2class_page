@@ -4,6 +4,7 @@ import {
   projectRunnerAdvanceToCamera,
   runnerAdvanceTerminalTimeMs,
   runnerDiamondLayoutForCamera,
+  type PitchStageProjection,
   type RunnerPresentationStatus,
 } from "../../../../utils/games/baseball/presentation.ts";
 import type {
@@ -15,6 +16,7 @@ import type {
   OfficialPlayResult,
   RunnerAdvance,
   RunnerDestination,
+  Vec2,
   VisualEvent,
 } from "../../../../utils/games/baseball/types.ts";
 
@@ -166,6 +168,57 @@ function clamp(value: number, minimum: number, maximum: number) {
 
 function lerp(start: number, end: number, progress: number) {
   return start + (end - start) * progress;
+}
+
+export interface BaseballCatcherMittPresentationV2 {
+  point: BaseballPresentationPointV2;
+  caught: boolean;
+  visible?: boolean;
+}
+
+function smoothStep(progress: number) {
+  const normalized = clamp(progress, 0, 1);
+  return normalized * normalized * (3 - 2 * normalized);
+}
+
+export interface CreateBaseballCatcherMittPresentationV2Input {
+  actualLocation: Vec2;
+  eventProgress: number;
+  projection: PitchStageProjection;
+  pitchingPerspective: boolean;
+}
+
+/** Moves a clean mitt from the catcher toward the canonical pitch endpoint. */
+export function createBaseballCatcherMittPresentationV2({
+  actualLocation,
+  eventProgress,
+  projection,
+  pitchingPerspective,
+}: CreateBaseballCatcherMittPresentationV2Input): BaseballCatcherMittPresentationV2 | null {
+  const progress = clamp(eventProgress, 0, 1);
+  if (progress < 0.64) return null;
+  const catchProgress = smoothStep((progress - 0.64) / 0.3);
+  const target = {
+    x: projection.leftPercent + clamp(actualLocation.x, 0, 1) * projection.widthPercent,
+    y: projection.topPercent + clamp(actualLocation.y, 0, 1) * projection.heightPercent,
+  };
+  const resting = pitchingPerspective
+    ? { x: 50, y: 59 }
+    : { x: 30, y: 72 };
+
+  return {
+    point: {
+      x: lerp(resting.x, target.x, catchProgress),
+      y: lerp(resting.y, target.y, catchProgress),
+      scale: pitchingPerspective
+        ? lerp(0.48, 0.62, catchProgress)
+        : lerp(0.74, 1.02, catchProgress),
+      opacity: clamp((progress - 0.64) / 0.12, 0, 1),
+      rotationDeg: lerp(actualLocation.x < 0.5 ? -8 : 8, 0, catchProgress),
+    },
+    caught: progress >= 0.92,
+    visible: true,
+  };
 }
 
 export function isBaseballHomeRunResultV2(code: BaseballPlayResultCode | undefined) {

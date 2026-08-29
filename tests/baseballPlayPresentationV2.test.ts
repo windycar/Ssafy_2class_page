@@ -5,6 +5,7 @@ import {
   BASEBALL_FIELDER_THROW_END_PROGRESS_V2,
   BASEBALL_FIELDER_THROW_START_PROGRESS_V2,
   baseballFielderPhaseV2,
+  createBaseballCatcherMittPresentationV2,
   createBaseballDefenseThrowPresentationV2,
   createBaseballFielderPresentationsV2,
   createBaseballRunnerPresentationsV2,
@@ -22,6 +23,33 @@ import type {
   RunnerResolution,
   VisualEvent,
 } from "../src/utils/games/baseball/types.ts";
+
+test("포수 미트는 투구 후반에만 나타나 실제 도착점에서 포구한다", () => {
+  const projection = {
+    leftPercent: 40,
+    topPercent: 35,
+    widthPercent: 20,
+    heightPercent: 40,
+  };
+  assert.equal(createBaseballCatcherMittPresentationV2({
+    actualLocation: { x: 0.2, y: 0.8 },
+    eventProgress: 0.63,
+    projection,
+    pitchingPerspective: false,
+  }), null);
+
+  const terminal = createBaseballCatcherMittPresentationV2({
+    actualLocation: { x: 0.2, y: 0.8 },
+    eventProgress: 1,
+    projection,
+    pitchingPerspective: false,
+  });
+  assert.ok(terminal);
+  assert.equal(terminal.caught, true);
+  assert.equal(terminal.point.x, 44);
+  assert.equal(terminal.point.y, 67);
+  assert.equal(terminal.point.opacity, 1);
+});
 
 function visualEvent(
   kind: VisualEvent["kind"],

@@ -1,8 +1,14 @@
-import type {
-  CSSProperties,
-  PointerEvent as ReactPointerEvent,
-  ReactNode,
+import {
+  useLayoutEffect,
+  useRef,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from "react";
+
+import type {
+  BaseballAnimationProgressSource,
+} from "../../../../utils/games/baseball/animationProgress.ts";
 
 import type {
   BaseballCameraMode,
@@ -10,11 +16,18 @@ import type {
   Vec2,
 } from "../../../../utils/games/baseballEngine";
 import type {
+  BaseballCatcherMittPresentationV2,
   BaseballDefenseThrowPresentationV2,
   BaseballFielderPresentationV2,
   BaseballPresentationPointV2,
   BaseballRunnerPresentationV2,
 } from "./BaseballPlayPresentationV2.ts";
+import {
+  AnimatedBaseballFlightLayerV2,
+  AnimatedCatcherMittLayerV2,
+  AnimatedFielderLayerV2,
+  AnimatedRunnerLayerV2,
+} from "./BaseballAnimatedStageLayersV2.tsx";
 
 export type {
   BaseballFielderPhaseV2,
@@ -50,6 +63,7 @@ export interface BaseballStageAssetsV2 {
   batterSrc?: string;
   pitcherSrc?: string;
   catcherSrc?: string;
+  catcherMittSrc?: string;
   homePlateSrc?: string;
   batterSprite?: BaseballCharacterSpriteV2;
   pitcherSprite?: BaseballCharacterSpriteV2;
@@ -60,8 +74,21 @@ export interface BaseballCharacterSpriteV2 {
   src: string;
   frameCount: number;
   frameIndex?: number;
-  motion?: "IDLE" | "SWING" | "PITCH";
+  motion?: "IDLE" | "SWING" | "PITCH" | "CATCH";
   animationKey?: string;
+  progressSource?: BaseballAnimationProgressSource;
+  catchTarget?: Vec2;
+}
+
+export interface BaseballStageAnimationV2 {
+  key: string;
+  progressSource: BaseballAnimationProgressSource;
+  createPitchBall?: (progress: number) => BaseballBallPresentationV2 | null;
+  createBattedBall?: (progress: number) => BaseballBallPresentationV2 | null;
+  createDefenseThrow?: (progress: number) => BaseballDefenseThrowPresentationV2 | null;
+  createRunners?: (progress: number) => readonly BaseballRunnerPresentationV2[];
+  createFielders?: (progress: number) => readonly BaseballFielderPresentationV2[];
+  createCatcherMitt?: (progress: number) => BaseballCatcherMittPresentationV2 | null;
 }
 
 export interface BaseballStageV2Props {
@@ -80,6 +107,7 @@ export interface BaseballStageV2Props {
   effects?: ReactNode;
   aimEnabled?: boolean;
   onAimChange?: (point: Vec2) => void;
+  animation?: BaseballStageAnimationV2;
   className?: string;
   ariaLabel?: string;
 }
@@ -134,6 +162,7 @@ function CharacterSpriteV2({
   sprite: BaseballCharacterSpriteV2;
   className: string;
 }) {
+  const elementRef = useRef<HTMLSpanElement>(null);
   const frameCount = Math.max(1, Math.floor(sprite.frameCount));
   const frameIndex = Math.min(
     frameCount - 1,
@@ -149,8 +178,26 @@ function CharacterSpriteV2({
     "--bbv2-sprite-index": frameIndex,
   };
 
+  useLayoutEffect(() => {
+    if (sprite.motion !== "CATCH" || !sprite.progressSource) return;
+    const renderFrame = (progress: number) => {
+      const element = elementRef.current;
+      if (!element) return;
+      const target = sprite.catchTarget ?? { x: 0.5, y: 0.5 };
+      const catchFrame = target.y > 0.67 ? 2 : 1;
+      const frame = progress >= 0.76 ? catchFrame : 0;
+      element.style.backgroundPosition = `${(frame / Math.max(1, frameCount - 1)) * 100}% center`;
+      element.style.setProperty("--bbv2-catcher-shift-x", `${(target.x - 0.5) * 24}%`);
+      element.style.setProperty("--bbv2-catcher-shift-y", `${(target.y - 0.5) * 16}%`);
+      element.dataset.caught = progress >= 0.92 ? "true" : "false";
+    };
+    renderFrame(sprite.progressSource.getProgress());
+    return sprite.progressSource.subscribe(renderFrame);
+  }, [frameCount, sprite.catchTarget, sprite.motion, sprite.progressSource]);
+
   return (
     <span
+      ref={elementRef}
       className={joinClassNames("bbv2-character", "bbv2-character-sprite", className)}
       data-motion={sprite.motion ?? "IDLE"}
       style={style}
@@ -360,10 +407,27 @@ export function BaseballStageV2({
   effects,
   aimEnabled = false,
   onAimChange,
+  animation,
   className,
   ariaLabel = "야구 경기장",
 }: BaseballStageV2Props) {
-  const activeFlight = defenseThrow
+  const animatedFlight = animation?.createDefenseThrow
+    ? {
+        createPresentation: animation.createDefenseThrow,
+        variant: "throw" as const,
+      }
+    : animation?.createBattedBall
+      ? {
+          createPresentation: animation.createBattedBall,
+          variant: "batted" as const,
+        }
+      : animation?.createPitchBall
+        ? {
+            createPresentation: animation.createPitchBall,
+            variant: "pitch" as const,
+          }
+        : null;
+  const activeFlight = animatedFlight ? null : defenseThrow
     ? { presentation: defenseThrow, variant: "throw" as const }
     : battedBall && battedBall.visible !== false
       ? { presentation: battedBall, variant: "batted" as const }
@@ -386,8 +450,24 @@ export function BaseballStageV2({
       />
       <div className="bbv2-stage__shade" aria-hidden="true" />
       <CharacterLayerV2 assets={assets} />
-      <FielderLayerV2 fielders={fielders} />
-      <RunnerLayerV2 runners={runners} />
+      {animation?.createFielders ? (
+        <AnimatedFielderLayerV2
+          key={`${animation.key}:fielders`}
+          progressSource={animation.progressSource}
+          createPresentations={animation.createFielders}
+        />
+      ) : (
+        <FielderLayerV2 fielders={fielders} />
+      )}
+      {animation?.createRunners ? (
+        <AnimatedRunnerLayerV2
+          key={`${animation.key}:runners`}
+          progressSource={animation.progressSource}
+          createPresentations={animation.createRunners}
+        />
+      ) : (
+        <RunnerLayerV2 runners={runners} />
+      )}
       <HomePlateAndZoneV2
         homePlateSrc={assets.homePlateSrc}
         showStrikeZone={showStrikeZone}
@@ -395,6 +475,24 @@ export function BaseballStageV2({
         aimEnabled={aimEnabled}
         onAimChange={onAimChange}
       />
+      {animation?.createCatcherMitt && assets.catcherMittSrc ? (
+        <AnimatedCatcherMittLayerV2
+          key={`${animation.key}:catcher-mitt`}
+          progressSource={animation.progressSource}
+          createPresentation={animation.createCatcherMitt}
+          source={assets.catcherMittSrc}
+        />
+      ) : null}
+      {animatedFlight && animation ? (
+        <AnimatedBaseballFlightLayerV2
+          key={`${animation.key}:${animatedFlight.variant}`}
+          animationKey={animation.key}
+          progressSource={animation.progressSource}
+          createPresentation={animatedFlight.createPresentation}
+          ballSrc={assets.ballSrc}
+          variant={animatedFlight.variant}
+        />
+      ) : null}
       {activeFlight ? (
         <BaseballFlightLayerV2
           presentation={activeFlight.presentation}
