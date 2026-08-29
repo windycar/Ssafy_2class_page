@@ -1,12 +1,14 @@
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
 import { normalizeLoginId, providerPassword } from "./auth.js";
 import {
+  buildSpecialMockExamAttemptFilter,
   countUniqueSolvedQuestions,
   type AttemptQuestionRow,
 } from "./adminStudyProgress.js";
 import { getAiPythonWeekAttemptIdPrefix } from "../src/types/aiPythonWeekStudy.js";
 import {
   getSpecialMockExamAttemptIdPrefix,
+  SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS,
   SPECIAL_MOCK_EXAM_ROUNDS,
 } from "../src/types/specialMockExam.js";
 type AdminRequest = {
@@ -84,10 +86,11 @@ async function loadAttemptQuestionRows(
     }
     if (table === "special_mock_exam_attempts") {
       query = query.or(
-        SPECIAL_MOCK_EXAM_ROUNDS.map(
-          (round) =>
-            `and(mock_round.eq.${round},id.like.${getSpecialMockExamAttemptIdPrefix(round)}%)`,
-        ).join(","),
+        buildSpecialMockExamAttemptFilter(
+          SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS,
+          SPECIAL_MOCK_EXAM_ROUNDS,
+          getSpecialMockExamAttemptIdPrefix,
+        ),
       );
     }
     const { data, error } = await query.range(

@@ -3,6 +3,27 @@ export type AttemptQuestionRow = {
   question_id: string;
 };
 
+export function buildSpecialMockExamAttemptFilter<
+  AssessmentRound extends number,
+  MockRound extends number,
+>(
+  assessmentRounds: readonly AssessmentRound[],
+  mockRounds: readonly MockRound[],
+  getAttemptIdPrefix: (
+    assessmentRound: AssessmentRound,
+    mockRound: MockRound,
+  ) => string,
+) {
+  return assessmentRounds
+    .flatMap((assessmentRound) =>
+      mockRounds.map(
+        (mockRound) =>
+          `and(assessment_round.eq.${assessmentRound},mock_round.eq.${mockRound},id.like.${getAttemptIdPrefix(assessmentRound, mockRound)}%)`,
+      ),
+    )
+    .join(",");
+}
+
 export function countUniqueSolvedQuestions(
   rowsByTable: AttemptQuestionRow[][],
 ) {
