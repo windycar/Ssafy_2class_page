@@ -20,6 +20,7 @@ import {
   BASEBALL_V2_CATCHER_MITT_SOURCE,
   BASEBALL_V2_FIELDER_SOURCES,
   BASEBALL_V2_PLAYER_PORTRAIT_SOURCES,
+  BASEBALL_V2_RESULT_EFFECT_SOURCES,
   BASEBALL_V2_RUNNER_SOURCES,
   BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE,
 } from "../../../../config/baseballV2Assets.ts";
@@ -554,6 +555,7 @@ export function BaseballSoloGameV2({
         onSkip={skip}
         onSkipSequence={skipSequence}
         homeRunImageSrc={baseballArenaSwingFacing}
+        resultEffectSources={BASEBALL_V2_RESULT_EFFECT_SOURCES}
         transitionBackgroundSrc={backgroundSrc}
         playerPortraits={BASEBALL_V2_PLAYER_PORTRAIT_SOURCES}
       />

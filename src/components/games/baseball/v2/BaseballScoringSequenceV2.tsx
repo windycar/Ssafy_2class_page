@@ -7,6 +7,8 @@ export interface BaseballScoringSequenceV2Props {
   event: VisualEvent;
   model: BaseballScoringPresentationV2;
   eventProgress: number;
+  imageSrc?: string;
+  imageAlt?: string;
 }
 
 type SequenceProgressStyle = CSSProperties & {
@@ -17,6 +19,8 @@ export function BaseballScoringSequenceV2({
   event,
   model,
   eventProgress,
+  imageSrc,
+  imageAlt = "",
 }: BaseballScoringSequenceV2Props) {
   const style: SequenceProgressStyle = {
     "--bbv2-sequence-progress": Math.min(1, Math.max(0, eventProgress)),
@@ -35,6 +39,14 @@ export function BaseballScoringSequenceV2({
       role="status"
       aria-live="assertive"
     >
+      {imageSrc ? (
+        <img
+          className="bbv2-scoring-sequence__effect"
+          src={imageSrc}
+          alt={imageAlt}
+          draggable={false}
+        />
+      ) : null}
       {event.kind === "RUN_SCORE" ? (
         <small className="bbv2-scoring-sequence__ruling">HOME PLATE · SAFE</small>
       ) : null}

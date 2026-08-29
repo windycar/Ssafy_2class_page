@@ -228,6 +228,49 @@ test("9명 타자와 양 팀 선발투수 초상은 RGBA 자산이며 소개·HU
   }
 });
 
+test("검수 완료된 결과 컷은 투명 RGBA이고 Solo·Online의 공식 판정 단계에 실제 연결된다", () => {
+  const effectNames = [
+    "baseball-effect-hit-v2.png",
+    "baseball-effect-triple-v2.png",
+    "baseball-effect-home-run-v2.png",
+  ] as const;
+  const assetsSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "config/baseballV2Assets.ts"),
+    "utf8",
+  );
+  const visualEventSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballVisualEventPresentationV2.tsx"),
+    "utf8",
+  );
+  const scoringSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballScoringSequenceV2.tsx"),
+    "utf8",
+  );
+
+  for (const name of effectNames) {
+    const effect = pngDimensions(name);
+    assert.ok(effect.width >= 1_000, `${name} 가로 해상도가 너무 작음`);
+    assert.ok(effect.height >= 1_000, `${name} 세로 해상도가 너무 작음`);
+    assert.equal(effect.colorType, 6, `${name}은 RGBA PNG여야 한다`);
+    assert.ok(effect.size >= 1_000_000, `${name}이 빈 placeholder처럼 너무 작음`);
+    assert.match(assetsSource, new RegExp(name.replaceAll(".", "\\.")));
+  }
+
+  assert.match(assetsSource, /BASEBALL_V2_RESULT_EFFECT_SOURCES/);
+  assert.match(visualEventSource, /baseballResultEffectForVisualEvent\(event\.kind, official\)/);
+  assert.match(visualEventSource, /resultEffectSources\?\.\[effectKey\]/);
+  assert.match(visualEventSource, /bbv2-play-callout__effect/);
+  assert.match(scoringSource, /bbv2-scoring-sequence__effect/);
+
+  for (const component of ["BaseballSoloGameV2.tsx", "BaseballOnlineGameV2.tsx"]) {
+    const source = readFileSync(
+      path.join(SOURCE_DIRECTORY, "components/games/baseball/v2", component),
+      "utf8",
+    );
+    assert.match(source, /resultEffectSources=\{BASEBALL_V2_RESULT_EFFECT_SOURCES\}/);
+  }
+});
+
 test("야구 화면은 경기장·카메라·캐릭터·공을 포함한 실제 이미지 묶음을 유지한다", () => {
   const names = readdirSync(ASSET_DIRECTORY)
     .filter((name) => name.startsWith("baseball-") && name.endsWith(".png"));

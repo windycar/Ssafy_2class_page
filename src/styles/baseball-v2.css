@@ -693,7 +693,19 @@
 .bbv2-play-callout.is-score { border-left-color: #4ade80; }
 .bbv2-play-callout.is-home-run { border-left-color: #facc15; background: rgb(120 53 15 / 91%); }
 
+.bbv2-play-callout__effect {
+  grid-row: 1 / span 4;
+  grid-column: 2;
+  align-self: center;
+  width: clamp(64px, 8vw, 88px);
+  max-height: 94px;
+  margin-left: 0.5rem;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 14px rgb(0 0 0 / 36%));
+}
+
 .bbv2-play-callout > small {
+  grid-column: 1;
   color: var(--bbv2-yellow);
   font-size: 0.44rem;
   font-weight: 1000;
@@ -701,12 +713,14 @@
 }
 
 .bbv2-play-callout > strong {
+  grid-column: 1;
   margin-top: 0.1rem;
   font-size: 0.84rem;
   font-weight: 1000;
 }
 
 .bbv2-play-callout > span {
+  grid-column: 1;
   margin-top: 0.12rem;
   color: rgb(226 232 240 / 76%);
   font-size: 0.55rem;
@@ -714,6 +728,7 @@
 }
 
 .bbv2-play-callout > button {
+  grid-column: 1;
   display: inline-flex;
   width: fit-content;
   align-items: center;
@@ -785,6 +800,14 @@
 .bbv2-scoring-sequence.is-lead-change {
   border-color: #fde047;
   background: linear-gradient(145deg, rgb(153 27 27 / 96%), rgb(120 53 15 / 96%));
+}
+
+.bbv2-scoring-sequence__effect {
+  width: clamp(84px, 13vw, 126px);
+  max-height: 126px;
+  margin: -0.4rem auto -0.12rem;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 20px rgb(0 0 0 / 42%));
 }
 
 .bbv2-scoring-sequence__eyebrow,
@@ -892,10 +915,8 @@
 .bbv2-home-run-sequence > img {
   width: min(230px, 68%);
   max-height: 160px;
-  object-fit: cover;
-  border: 1px solid rgb(255 255 255 / 35%);
-  border-radius: 0.72rem;
-  box-shadow: 0 12px 30px rgb(0 0 0 / 32%);
+  object-fit: contain;
+  filter: drop-shadow(0 12px 22px rgb(0 0 0 / 42%));
 }
 
 .bbv2-home-run-sequence > button {
