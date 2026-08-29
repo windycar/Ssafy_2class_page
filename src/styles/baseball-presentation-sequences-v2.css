@@ -102,6 +102,162 @@
   font-weight: 800;
 }
 
+.bbv2-game-intro__starters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(620px, 100%);
+  gap: 0.65rem;
+  margin-top: 0.78rem;
+}
+
+.bbv2-game-intro__starters article {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.42rem;
+  border: 1px solid rgb(255 255 255 / 22%);
+  border-radius: 0.72rem;
+  background: rgb(3 20 38 / 74%);
+  text-align: left;
+  backdrop-filter: blur(8px);
+}
+
+.bbv2-game-intro__starters article > img,
+.bbv2-game-intro__starters article > span {
+  width: 76px;
+  height: 76px;
+  border-radius: 0.55rem;
+  background: linear-gradient(145deg, rgb(96 165 250 / 42%), rgb(15 23 42 / 75%));
+}
+
+.bbv2-game-intro__starters article > img {
+  object-fit: cover;
+  object-position: center 16%;
+}
+
+.bbv2-game-intro__starters article > span {
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 1000;
+}
+
+.bbv2-game-intro__starters article div {
+  display: grid;
+  min-width: 0;
+  gap: 0.16rem;
+}
+
+.bbv2-game-intro__starters small,
+.bbv2-game-intro__starters em {
+  color: rgb(226 232 240 / 72%);
+  font-size: 0.48rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.bbv2-game-intro__starters strong {
+  overflow: hidden;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 1000;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bbv2-game-intro__lineups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: min(720px, 100%);
+  gap: 0.55rem;
+  margin-top: 0.6rem;
+}
+
+.bbv2-game-intro__lineups section {
+  min-width: 0;
+  padding: 0.38rem;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 0.66rem;
+  background: rgb(3 20 38 / 78%);
+  backdrop-filter: blur(8px);
+}
+
+.bbv2-game-intro__lineups h3 {
+  margin: 0 0 0.25rem;
+  color: #fde047;
+  font-size: 0.58rem;
+  font-weight: 1000;
+  letter-spacing: 0.14em;
+  text-align: left;
+}
+
+.bbv2-game-intro__lineups ol {
+  display: grid;
+  gap: 0.12rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bbv2-game-intro__lineups li {
+  display: grid;
+  grid-template-columns: 18px 26px minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 0.28rem;
+  min-width: 0;
+  min-height: 27px;
+  padding: 0.08rem 0.22rem;
+  border-radius: 0.3rem;
+  background: rgb(255 255 255 / 5%);
+  text-align: left;
+}
+
+.bbv2-game-intro__lineups li > b {
+  color: #fde047;
+  font-size: 0.46rem;
+  text-align: center;
+}
+
+.bbv2-game-intro__lineups li > img,
+.bbv2-game-intro__lineups li > span {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgb(96 165 250 / 22%);
+}
+
+.bbv2-game-intro__lineups li > img {
+  object-fit: cover;
+  object-position: center 15%;
+}
+
+.bbv2-game-intro__lineups li > span {
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 0.48rem;
+  font-weight: 1000;
+}
+
+.bbv2-game-intro__lineups li > strong {
+  overflow: hidden;
+  color: #fff;
+  font-size: 0.5rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bbv2-game-intro__lineups li > small {
+  color: rgb(226 232 240 / 66%);
+  font-size: 0.4rem;
+  font-weight: 850;
+  text-align: right;
+}
+
 .bbv2-presentation-sequence--game-intro > button,
 .bbv2-presentation-sequence--half > button {
   position: absolute;
@@ -135,7 +291,7 @@
   top: 50%;
   left: 50%;
   display: grid;
-  grid-template-columns: 110px minmax(0, 1fr);
+  grid-template-columns: 150px minmax(0, 1fr);
   width: min(520px, calc(100% - 28px));
   min-height: 190px;
   overflow: hidden;
@@ -278,6 +434,35 @@
   overflow-x: auto;
 }
 
+.bbv2-player-intro__portrait {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-right: 1px solid rgb(255 255 255 / 16%);
+  background:
+    radial-gradient(circle at 50% 30%, rgb(147 197 253 / 32%), transparent 58%),
+    rgb(255 255 255 / 7%);
+}
+
+.bbv2-player-intro__portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 14%;
+  filter: drop-shadow(0 8px 12px rgb(0 0 0 / 35%));
+}
+
+.bbv2-player-intro__portrait span {
+  position: absolute;
+  right: 7px;
+  bottom: 5px;
+  color: #fff;
+  font-size: 0.66rem;
+  font-style: italic;
+  font-weight: 1000;
+  text-shadow: 0 2px 8px rgb(0 0 0 / 86%);
+}
+
 .bbv2-half-sequence__linescore p {
   display: grid;
   grid-template-columns:
@@ -322,8 +507,45 @@
 @media (max-width: 680px) {
   .bbv2-presentation-sequence--player {
     top: 58%;
-    grid-template-columns: 82px minmax(0, 1fr);
+    grid-template-columns: 102px minmax(0, 1fr);
     min-height: 176px;
+  }
+
+  .bbv2-game-intro__starters {
+    gap: 0.36rem;
+  }
+
+  .bbv2-game-intro__starters article {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 0.35rem;
+    padding: 0.3rem;
+  }
+
+  .bbv2-game-intro__starters article > img,
+  .bbv2-game-intro__starters article > span {
+    width: 48px;
+    height: 48px;
+  }
+
+  .bbv2-game-intro__lineups {
+    gap: 0.28rem;
+  }
+
+  .bbv2-game-intro__lineups section {
+    padding: 0.25rem;
+  }
+
+  .bbv2-game-intro__lineups li {
+    grid-template-columns: 13px 22px minmax(0, 1fr) 22px;
+    gap: 0.16rem;
+    min-height: 23px;
+    padding-inline: 0.1rem;
+  }
+
+  .bbv2-game-intro__lineups li > img,
+  .bbv2-game-intro__lineups li > span {
+    width: 22px;
+    height: 22px;
   }
 
   .bbv2-player-intro__jersey strong {

@@ -21,12 +21,24 @@ import baseballCatcherMitt from "../assets/games/baseball-catcher-mitt-v2.png";
 import baseballFielderBlue from "../assets/games/baseball-fielder-blue-chibi-v3.png";
 import baseballFielderRed from "../assets/games/baseball-fielder-red-chibi-v4.png";
 import baseballPitcherActions from "../assets/games/baseball-pitcher-actions-red.png";
+import baseballPortraitCpu21 from "../assets/games/baseball-portrait-cpu-21-v2.png";
+import baseballPortraitKia01 from "../assets/games/baseball-portrait-kia-01-v2.png";
+import baseballPortraitKia03 from "../assets/games/baseball-portrait-kia-03-v2.png";
+import baseballPortraitKia05 from "../assets/games/baseball-portrait-kia-05-v2.png";
+import baseballPortraitKia16 from "../assets/games/baseball-portrait-kia-16-v2.png";
+import baseballPortraitKia25 from "../assets/games/baseball-portrait-kia-25-v2.png";
+import baseballPortraitKia34 from "../assets/games/baseball-portrait-kia-34-v2.png";
+import baseballPortraitKia42 from "../assets/games/baseball-portrait-kia-42-v2.png";
+import baseballPortraitKia47 from "../assets/games/baseball-portrait-kia-47-v2.png";
+import baseballPortraitKia54 from "../assets/games/baseball-portrait-kia-54-v2.png";
+import baseballPortraitKia66 from "../assets/games/baseball-portrait-kia-66-v2.png";
 import baseballRunnerBlue from "../assets/games/baseball-runner-blue-chibi-v3.png";
 import baseballRunnerRed from "../assets/games/baseball-runner-red-chibi-v3.png";
 import type { BaseballCameraBackgroundSources } from "../utils/games/baseball/cameraBackground.ts";
 
 export type BaseballV2AssetGroup = "critical" | "lazy";
-export type BaseballV2AssetKind = "background" | "character" | "ball" | "effect";
+export type BaseballV2AssetKind = "background" | "character" | "portrait" | "ball" | "effect";
+export type BaseballV2PlayerPortraitSources = Readonly<Partial<Record<string, string>>>;
 
 export interface BaseballV2AssetDefinition {
   id: string;
@@ -55,6 +67,36 @@ export const BASEBALL_V2_FIELDER_SOURCES = Object.freeze([
   baseballFielderRed,
 ] as const);
 
+/**
+ * Both stable player ids and roster portrait ids resolve to the same source.
+ * That keeps HUD, introductions, and final-result playback compatible with
+ * normalized legacy game states while the player data remains the authority.
+ */
+export const BASEBALL_V2_PLAYER_PORTRAIT_SOURCES = Object.freeze({
+  "kia-park-chanho": baseballPortraitKia01,
+  "portrait-kia-01": baseballPortraitKia01,
+  "kia-choi-wonjun": baseballPortraitKia16,
+  "portrait-kia-16": baseballPortraitKia16,
+  "kia-kim-doyoung": baseballPortraitKia05,
+  "portrait-kia-05": baseballPortraitKia05,
+  "kia-choi-hyoungwoo": baseballPortraitKia34,
+  "portrait-kia-34": baseballPortraitKia34,
+  "kia-na-sungbum": baseballPortraitKia47,
+  "portrait-kia-47": baseballPortraitKia47,
+  "kia-kim-sunbin": baseballPortraitKia03,
+  "portrait-kia-03": baseballPortraitKia03,
+  "kia-lee-woosung": baseballPortraitKia25,
+  "portrait-kia-25": baseballPortraitKia25,
+  "kia-kim-taegun": baseballPortraitKia42,
+  "portrait-kia-42": baseballPortraitKia42,
+  "kia-lee-changjin": baseballPortraitKia66,
+  "portrait-kia-66": baseballPortraitKia66,
+  "kia-yang-hyeonjong": baseballPortraitKia54,
+  "portrait-kia-54": baseballPortraitKia54,
+  "cpu-kang-minjae": baseballPortraitCpu21,
+  "portrait-cpu-21": baseballPortraitCpu21,
+}) satisfies BaseballV2PlayerPortraitSources;
+
 export const BASEBALL_V2_CAMERA_BACKGROUND_SOURCES = Object.freeze({
   batter: baseballBattingField,
   pitcher: baseballCameraPitcher,
@@ -81,6 +123,17 @@ export const BASEBALL_V2_ASSET_MANIFEST = [
   { id: "pitcher-actions", source: baseballPitcherActions, group: "critical", kind: "character" },
   { id: "catcher-actions-red", source: baseballCatcherActionsRed, group: "critical", kind: "character" },
   { id: "catcher-mitt", source: baseballCatcherMitt, group: "critical", kind: "character" },
+  { id: "portrait-kia-01", source: baseballPortraitKia01, group: "lazy", kind: "portrait" },
+  { id: "portrait-kia-16", source: baseballPortraitKia16, group: "lazy", kind: "portrait" },
+  { id: "portrait-kia-05", source: baseballPortraitKia05, group: "lazy", kind: "portrait" },
+  { id: "portrait-kia-34", source: baseballPortraitKia34, group: "lazy", kind: "portrait" },
+  { id: "portrait-kia-47", source: baseballPortraitKia47, group: "lazy", kind: "portrait" },
+  { id: "portrait-kia-03", source: baseballPortraitKia03, group: "lazy", kind: "portrait" },
+  { id: "portrait-kia-25", source: baseballPortraitKia25, group: "lazy", kind: "portrait" },
+  { id: "portrait-kia-42", source: baseballPortraitKia42, group: "lazy", kind: "portrait" },
+  { id: "portrait-kia-66", source: baseballPortraitKia66, group: "lazy", kind: "portrait" },
+  { id: "portrait-kia-54", source: baseballPortraitKia54, group: "lazy", kind: "portrait" },
+  { id: "portrait-cpu-21", source: baseballPortraitCpu21, group: "lazy", kind: "portrait" },
   { id: "infield-wide-camera", source: baseballCameraInfieldWide, group: "lazy", kind: "background" },
   { id: "left-field-camera", source: baseballCameraLeftField, group: "lazy", kind: "background", dynamicBallOnly: true },
   { id: "left-center-camera", source: baseballCameraLeftCenter, group: "lazy", kind: "background", dynamicBallOnly: true },

@@ -1,4 +1,5 @@
 import { useBaseballAnimationProgress } from "../../../../hooks/useBaseballAnimationProgress.ts";
+import type { BaseballV2PlayerPortraitSources } from "../../../../config/baseballV2Assets.ts";
 import type { BaseballAnimationProgressSource } from "../../../../utils/games/baseball/animationProgress.ts";
 import type {
   BaseballGameState,
@@ -28,6 +29,7 @@ export interface BaseballVisualEventOverlayV2Props {
   onSkipSequence?: () => void;
   homeRunImageSrc?: string;
   transitionBackgroundSrc?: string;
+  playerPortraits?: BaseballV2PlayerPortraitSources;
 }
 
 const LIVE_CALLOUT_KINDS = new Set(["FIELD_RESULT", "RUNNER_ADVANCE", "RUN_SCORE"]);
@@ -48,6 +50,7 @@ export function BaseballVisualEventOverlayV2({
   onSkipSequence,
   homeRunImageSrc,
   transitionBackgroundSrc,
+  playerPortraits,
 }: BaseballVisualEventOverlayV2Props) {
   // Only this compact overlay subscribes to frame progress. The parent game
   // shell and HUD remain untouched while phase-specific copy advances.
@@ -57,6 +60,7 @@ export function BaseballVisualEventOverlayV2({
       <BaseballPlayerIntroSequenceV2
         game={game}
         eventProgress={eventProgress}
+        playerPortraits={playerPortraits}
         onSkip={event.skippable ? onSkip : undefined}
       />
     );

@@ -19,6 +19,7 @@ import {
   BASEBALL_V2_CATCHER_ACTION_SOURCE,
   BASEBALL_V2_CATCHER_MITT_SOURCE,
   BASEBALL_V2_FIELDER_SOURCES,
+  BASEBALL_V2_PLAYER_PORTRAIT_SOURCES,
   BASEBALL_V2_RUNNER_SOURCES,
   BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE,
 } from "../../../../config/baseballV2Assets.ts";
@@ -83,6 +84,9 @@ import "../../../../styles/baseball-v2.css";
 const AIM_KEY_STEP = 0.035;
 const BATTED_TRAIL_PROGRESS_GAP = 0.042;
 const PITCH_PULSE_PERIOD_MS = 1_150;
+const BASEBALL_V2_HUD_ASSETS = Object.freeze({
+  playerPortraits: BASEBALL_V2_PLAYER_PORTRAIT_SOURCES,
+});
 
 const PITCH_NAMES = {
   fourSeam: "포심 직구",
@@ -903,6 +907,7 @@ export function BaseballOnlineGameV2({
         game={game}
         backgroundSrc={baseballArenaFacing}
         modeLabel="ONLINE · 2 PLAYERS"
+        playerPortraits={BASEBALL_V2_PLAYER_PORTRAIT_SOURCES}
         onComplete={() => setGameIntroComplete(true)}
       />
     );
@@ -921,6 +926,7 @@ export function BaseballOnlineGameV2({
         onSkipSequence={skipHomeRunSequence}
         homeRunImageSrc={baseballArenaSwingFacing}
         transitionBackgroundSrc={backgroundSrc}
+        playerPortraits={BASEBALL_V2_PLAYER_PORTRAIT_SOURCES}
       />
     ) : null;
   } else if (role === "FINAL") {
@@ -928,6 +934,7 @@ export function BaseballOnlineGameV2({
       <BaseballFinalOverlayV2
         game={game}
         backgroundSrc={BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE}
+        playerPortraits={BASEBALL_V2_PLAYER_PORTRAIT_SOURCES}
         onExit={onExit}
       />
     );
@@ -1102,7 +1109,9 @@ export function BaseballOnlineGameV2({
         strikeZoneTarget={canAim ? aim : null}
         aimEnabled={canAim}
         onAimChange={canAim ? handleAimChange : undefined}
-        hud={presentationGame ? <BaseballHudV2 game={presentationGame} /> : null}
+        hud={presentationGame ? (
+          <BaseballHudV2 game={presentationGame} assets={BASEBALL_V2_HUD_ASSETS} />
+        ) : null}
         overlay={overlay}
         effects={stageEffects}
         ariaLabel={game

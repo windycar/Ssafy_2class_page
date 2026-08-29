@@ -184,7 +184,10 @@ test("온라인 재생 중에는 현재 이벤트 카메라·진행률을 쓰고
   assert.match(source, /cameraMode: BaseballCameraMode = presentedVisualEvent\?\.camera/);
   assert.match(source, /presentedVisualEvent\?\.kind === "BALL_FLIGHT"/);
   assert.match(source, /presentedVisualEventProgress/);
-  assert.match(source, /hud=\{presentationGame \? <BaseballHudV2 game=\{presentationGame\}/);
+  assert.match(
+    source,
+    /hud=\{presentationGame \? \(\s*<BaseballHudV2\s+game=\{presentationGame\}\s+assets=\{BASEBALL_V2_HUD_ASSETS\}/,
+  );
   assert.match(source, /else if \(playbackBlocking\)/);
   assert.match(source, /<BaseballVisualEventOverlayV2/);
   assert.match(source, /official=\{authoritativePresentationGame\.lastPlay\}/);

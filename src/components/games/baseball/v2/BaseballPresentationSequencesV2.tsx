@@ -6,6 +6,7 @@ import {
   type CSSProperties,
 } from "react";
 
+import type { BaseballV2PlayerPortraitSources } from "../../../../config/baseballV2Assets.ts";
 import {
   BASEBALL_GAME_INTRO_DURATION_MS,
   baseballGameIntroPhaseV2,
@@ -15,7 +16,10 @@ import {
   createBaseballPlayerIntroModelV2,
   type BaseballGameIntroPhaseV2,
 } from "../../../../utils/games/baseball/presentationSequences.ts";
-import type { BaseballGameState } from "../../../../utils/games/baseball/types.ts";
+import type {
+  BaseballGameState,
+  BaseballPlayer,
+} from "../../../../utils/games/baseball/types.ts";
 import "../../../../styles/baseball-presentation-sequences-v2.css";
 
 type SequenceStyle = CSSProperties & {
@@ -40,14 +44,39 @@ export interface BaseballGameIntroSequenceV2Props {
   game: BaseballGameState;
   backgroundSrc: string;
   modeLabel: string;
+  playerPortraits?: BaseballV2PlayerPortraitSources;
   onComplete: () => void;
   durationMs?: number;
+}
+
+function playerPortraitSource(
+  player: BaseballPlayer,
+  portraits?: BaseballV2PlayerPortraitSources,
+) {
+  return portraits?.[player.id]
+    ?? (player.portraitAssetId ? portraits?.[player.portraitAssetId] : undefined);
+}
+
+function IntroPortraitV2({
+  player,
+  portraits,
+}: {
+  player: BaseballPlayer;
+  portraits?: BaseballV2PlayerPortraitSources;
+}) {
+  const src = playerPortraitSource(player, portraits);
+  return src ? (
+    <img src={src} alt={`${player.name} 선수 초상`} draggable={false} />
+  ) : (
+    <span aria-hidden="true">{player.number}</span>
+  );
 }
 
 export function BaseballGameIntroSequenceV2({
   game,
   backgroundSrc,
   modeLabel,
+  playerPortraits,
   onComplete,
   durationMs = BASEBALL_GAME_INTRO_DURATION_MS,
 }: BaseballGameIntroSequenceV2Props) {
@@ -78,7 +107,7 @@ export function BaseballGameIntroSequenceV2({
         : phase === "STARTERS"
           ? { eyebrow: "STARTING PITCHERS", title: `${model.starters[0].name} VS ${model.starters[1].name}`, detail: `#${model.starters[0].number} · #${model.starters[1].number}` }
           : phase === "LINEUP"
-            ? { eyebrow: "LINEUP", title: model.lineupNames[0].slice(0, 3).join(" · "), detail: model.lineupNames[1].slice(0, 3).join(" · ") }
+            ? { eyebrow: "LINEUP", title: "STARTING LINEUPS", detail: "양 팀 1번부터 9번 타순" }
             : phase === "PLAY_BALL"
               ? { eyebrow: "GAME READY", title: "PLAY BALL!", detail: "첫 투구를 준비합니다." }
               : { eyebrow: "FIRST BATTER", title: `#${model.firstBatter.number} ${model.firstBatter.name}`, detail: `${model.firstBatter.position} · CON ${model.firstBatter.contact} · PWR ${model.firstBatter.power}` };
@@ -98,6 +127,39 @@ export function BaseballGameIntroSequenceV2({
         <span>{phaseCopy.eyebrow}</span>
         <h2>{phaseCopy.title}</h2>
         <p>{phaseCopy.detail}</p>
+        {phase === "STARTERS" ? (
+          <div className="bbv2-game-intro__starters" aria-label="양 팀 선발투수">
+            {model.starters.map((pitcher, teamIndex) => (
+              <article key={pitcher.id}>
+                <IntroPortraitV2 player={pitcher} portraits={playerPortraits} />
+                <div>
+                  <small>{game.teams[teamIndex].shortName} · STARTER</small>
+                  <strong>#{pitcher.number} {pitcher.name}</strong>
+                  <em>{pitcher.throws}HP · 제구 {pitcher.pitching?.control ?? 0}</em>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : null}
+        {phase === "LINEUP" ? (
+          <div className="bbv2-game-intro__lineups" aria-label="양 팀 선발 라인업">
+            {model.lineups.map((lineup, teamIndex) => (
+              <section key={game.teams[teamIndex].id}>
+                <h3>{game.teams[teamIndex].shortName}</h3>
+                <ol>
+                  {lineup.map((player, battingOrder) => (
+                    <li key={player.id}>
+                      <b>{battingOrder + 1}</b>
+                      <IntroPortraitV2 player={player} portraits={playerPortraits} />
+                      <strong>{player.name}</strong>
+                      <small>{player.position}</small>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            ))}
+          </div>
+        ) : null}
       </div>
       <i className="bbv2-presentation-sequence__timeline" aria-hidden="true" />
       <button type="button" aria-keyshortcuts="Space" onClick={onComplete}>
@@ -110,15 +172,18 @@ export function BaseballGameIntroSequenceV2({
 export interface BaseballPlayerIntroSequenceV2Props {
   game: BaseballGameState;
   eventProgress: number;
+  playerPortraits?: BaseballV2PlayerPortraitSources;
   onSkip?: () => void;
 }
 
 export function BaseballPlayerIntroSequenceV2({
   game,
   eventProgress,
+  playerPortraits,
   onSkip,
 }: BaseballPlayerIntroSequenceV2Props) {
-  const model = createBaseballPlayerIntroModelV2(game);
+  const model = useMemo(() => createBaseballPlayerIntroModelV2(game), [game]);
+  const portraitSrc = playerPortraitSource(model.player, playerPortraits);
   const style: SequenceStyle = {
     "--bbv2-sequence-progress": Math.min(1, Math.max(0, eventProgress)),
   };
@@ -131,10 +196,17 @@ export function BaseballPlayerIntroSequenceV2({
       role="status"
       aria-live="polite"
     >
-      <div className="bbv2-player-intro__jersey" aria-hidden="true">
-        <small>{model.teamShortName}</small>
-        <strong>{model.player.number}</strong>
-      </div>
+      {portraitSrc ? (
+        <div className="bbv2-player-intro__portrait">
+          <img src={portraitSrc} alt={`${model.player.name} 선수 초상`} draggable={false} />
+          <span aria-hidden="true">#{model.player.number}</span>
+        </div>
+      ) : (
+        <div className="bbv2-player-intro__jersey" aria-hidden="true">
+          <small>{model.teamShortName}</small>
+          <strong>{model.player.number}</strong>
+        </div>
+      )}
       <div className="bbv2-player-intro__copy">
         <span>NEXT BATTER · {model.player.position}</span>
         <h2>{model.player.name}</h2>

@@ -19,6 +19,7 @@ import {
   BASEBALL_V2_CATCHER_ACTION_SOURCE,
   BASEBALL_V2_CATCHER_MITT_SOURCE,
   BASEBALL_V2_FIELDER_SOURCES,
+  BASEBALL_V2_PLAYER_PORTRAIT_SOURCES,
   BASEBALL_V2_RUNNER_SOURCES,
   BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE,
 } from "../../../../config/baseballV2Assets.ts";
@@ -74,6 +75,9 @@ import "../../../../styles/baseball-v2.css";
 const USER_TEAM_INDEX = 1;
 const AIM_KEY_STEP = 0.035;
 const BATTED_TRAIL_PROGRESS_GAP = 0.042;
+const BASEBALL_V2_HUD_ASSETS = Object.freeze({
+  playerPortraits: BASEBALL_V2_PLAYER_PORTRAIT_SOURCES,
+});
 
 const PITCH_NAMES = {
   fourSeam: "포심 직구",
@@ -535,6 +539,7 @@ export function BaseballSoloGameV2({
         game={displayGame}
         backgroundSrc={baseballArenaFacing}
         modeLabel="SOLO · HOME 1P"
+        playerPortraits={BASEBALL_V2_PLAYER_PORTRAIT_SOURCES}
         onComplete={advance}
       />
     );
@@ -550,6 +555,7 @@ export function BaseballSoloGameV2({
         onSkipSequence={skipSequence}
         homeRunImageSrc={baseballArenaSwingFacing}
         transitionBackgroundSrc={backgroundSrc}
+        playerPortraits={BASEBALL_V2_PLAYER_PORTRAIT_SOURCES}
       />
     );
   } else if (presentation === "HALF_INNING") {
@@ -568,6 +574,7 @@ export function BaseballSoloGameV2({
       <BaseballFinalOverlayV2
         game={displayGame}
         backgroundSrc={BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE}
+        playerPortraits={BASEBALL_V2_PLAYER_PORTRAIT_SOURCES}
         onRematch={startNewGame}
         onExit={onExit}
       />
@@ -695,7 +702,7 @@ export function BaseballSoloGameV2({
             x: clamp(point.x, 0.03, 0.97),
             y: clamp(point.y, 0.03, 0.97),
           })}
-          hud={<BaseballHudV2 game={displayGame} />}
+          hud={<BaseballHudV2 game={displayGame} assets={BASEBALL_V2_HUD_ASSETS} />}
           overlay={overlay}
           effects={stageEffects}
           ariaLabel={`${displayGame.inning}회${displayGame.half === "top" ? "초" : "말"} 야구 경기장`}

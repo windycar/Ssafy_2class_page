@@ -27,8 +27,13 @@ test("경기 시작 연출은 3초 안에서 요구된 7단계를 순서대로 �
   assert.match(model.matchup, /VS/);
   assert.equal(model.lineupNames[0].length, 9);
   assert.equal(model.lineupNames[1].length, 9);
+  assert.equal(model.lineups[0].length, 9);
+  assert.equal(model.lineups[1].length, 9);
+  assert.equal(new Set(model.lineups[1].map((player) => player.portraitAssetId)).size, 9);
   assert.ok(model.starters[0].pitching);
   assert.ok(model.starters[1].pitching);
+  assert.ok(model.starters[0].portraitAssetId);
+  assert.ok(model.starters[1].portraitAssetId);
 });
 
 test("타자 소개는 0.7~1초이며 실제 능력치와 TODAY 기록을 만든다", () => {

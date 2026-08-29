@@ -40,6 +40,7 @@ export interface BaseballGameIntroModelV2 {
   matchup: string;
   teams: readonly [string, string];
   starters: readonly [BaseballPlayer, BaseballPlayer];
+  lineups: readonly [readonly BaseballPlayer[], readonly BaseballPlayer[]];
   lineupNames: readonly [readonly string[], readonly string[]];
   firstBatter: BaseballPlayer;
 }
@@ -89,11 +90,16 @@ export function createBaseballGameIntroModelV2(
   const lineupNames = game.teams.map((team) => team.lineupPlayerIds.map((playerId) => (
     getBaseballPlayer(playerId)?.name ?? playerId
   ))) as unknown as [string[], string[]];
+  const lineups = game.teams.map((team) => team.lineupPlayerIds.flatMap((playerId) => {
+    const player = getBaseballPlayer(playerId);
+    return player ? [player] : [];
+  })) as unknown as [BaseballPlayer[], BaseballPlayer[]];
 
   return {
     matchup: `${game.teams[0].shortName} VS ${game.teams[1].shortName}`,
     teams: [game.teams[0].name, game.teams[1].name],
     starters,
+    lineups,
     lineupNames,
     firstBatter: getCurrentBatter(game),
   };

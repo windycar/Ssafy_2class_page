@@ -162,6 +162,72 @@ test("포수 액션과 투명 미트는 실제 런타임 자산이며 투구 목
   assert.match(playPresentationSource, /caught: progress >= 0\.92/);
 });
 
+test("9명 타자와 양 팀 선발투수 초상은 RGBA 자산이며 소개·HUD·MVP에 실제 연결된다", () => {
+  const portraitNames = [
+    "baseball-portrait-kia-01-v2.png",
+    "baseball-portrait-kia-16-v2.png",
+    "baseball-portrait-kia-05-v2.png",
+    "baseball-portrait-kia-34-v2.png",
+    "baseball-portrait-kia-47-v2.png",
+    "baseball-portrait-kia-03-v2.png",
+    "baseball-portrait-kia-25-v2.png",
+    "baseball-portrait-kia-42-v2.png",
+    "baseball-portrait-kia-66-v2.png",
+    "baseball-portrait-kia-54-v2.png",
+    "baseball-portrait-cpu-21-v2.png",
+  ] as const;
+  const assetsSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "config/baseballV2Assets.ts"),
+    "utf8",
+  );
+  const presentationSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballPresentationSequencesV2.tsx"),
+    "utf8",
+  );
+  const hudSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballHudV2.tsx"),
+    "utf8",
+  );
+  const finalSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballFinalOverlayV2.tsx"),
+    "utf8",
+  );
+
+  for (const name of portraitNames) {
+    const portrait = pngDimensions(name);
+    assert.ok(portrait.width >= 1_000, `${name} 가로 해상도가 너무 작음`);
+    assert.ok(portrait.height >= 1_000, `${name} 세로 해상도가 너무 작음`);
+    assert.equal(portrait.colorType, 6, `${name}은 실제 alpha가 있는 RGBA PNG여야 한다`);
+    assert.ok(portrait.size >= 1_000_000, `${name}이 빈 placeholder처럼 너무 작음`);
+    assert.match(assetsSource, new RegExp(name.replaceAll(".", "\\.")), `${name} manifest 연결 누락`);
+  }
+
+  const manifestBlock = assetsSource.slice(
+    assetsSource.indexOf("export const BASEBALL_V2_ASSET_MANIFEST"),
+    assetsSource.indexOf("] as const satisfies readonly BaseballV2AssetDefinition[]"),
+  );
+  const manifestCount = manifestBlock.match(/\{ id:/g)?.length ?? 0;
+  assert.ok(manifestCount >= 25 && manifestCount <= 40, `런타임 야구 자산은 25~40개여야 함: ${manifestCount}`);
+  assert.equal(manifestBlock.match(/kind: "portrait"/g)?.length, 11);
+  assert.match(assetsSource, /BASEBALL_V2_PLAYER_PORTRAIT_SOURCES/);
+  assert.match(presentationSource, /model\.lineups\.map/);
+  assert.match(presentationSource, /IntroPortraitV2 player=\{pitcher\}/);
+  assert.match(presentationSource, /bbv2-player-intro__portrait/);
+  assert.match(hudSource, /playerPortraitSource\(batter, portraits\)/);
+  assert.match(hudSource, /playerPortraitSource\(pitcher, portraits\)/);
+  assert.match(finalSource, /playerPortraits\?\.\[result\.mvp\.playerId\]/);
+
+  for (const component of ["BaseballSoloGameV2.tsx", "BaseballOnlineGameV2.tsx"]) {
+    const source = readFileSync(
+      path.join(SOURCE_DIRECTORY, "components/games/baseball/v2", component),
+      "utf8",
+    );
+    assert.match(source, /BASEBALL_V2_PLAYER_PORTRAIT_SOURCES/);
+    assert.match(source, /playerPortraits=\{BASEBALL_V2_PLAYER_PORTRAIT_SOURCES\}/);
+    assert.match(source, /assets=\{BASEBALL_V2_HUD_ASSETS\}/);
+  }
+});
+
 test("야구 화면은 경기장·카메라·캐릭터·공을 포함한 실제 이미지 묶음을 유지한다", () => {
   const names = readdirSync(ASSET_DIRECTORY)
     .filter((name) => name.startsWith("baseball-") && name.endsWith(".png"));

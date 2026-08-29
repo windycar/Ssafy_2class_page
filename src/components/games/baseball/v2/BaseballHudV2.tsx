@@ -39,6 +39,14 @@ function teamColorStyle(themeColor: string): CSSProperties {
   return { "--bbv2-team-color": themeColor } as CSSProperties;
 }
 
+function playerPortraitSource(
+  player: BaseballPlayer,
+  portraits?: BaseballHudAssetsV2["playerPortraits"],
+) {
+  return portraits?.[player.id]
+    ?? (player.portraitAssetId ? portraits?.[player.portraitAssetId] : undefined);
+}
+
 function PlayerPortraitV2({
   player,
   src,
@@ -344,13 +352,13 @@ export function BaseballHudV2({ game, assets, className }: BaseballHudV2Props) {
       <section className="bbv2-hud__matchup" aria-label="현재 투타 대결">
         <PlayerSummaryV2
           player={batter}
-          portrait={portraits?.[batter.id]}
+          portrait={playerPortraitSource(batter, portraits)}
           role="현재 타자"
           detail={`CON ${batter.contact} · PWR ${batter.power} · SPD ${batter.speed}`}
         />
         <PlayerSummaryV2
           player={pitcher}
-          portrait={portraits?.[pitcher.id]}
+          portrait={playerPortraitSource(pitcher, portraits)}
           role="현재 투수"
           detail={`투구 ${pitcherState.pitchCount} · 체력 ${Math.round(pitcherState.stamina)}`}
         />
