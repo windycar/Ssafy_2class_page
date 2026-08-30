@@ -20,8 +20,13 @@ import baseballCatcherActionsRed from "../assets/games/baseball-catcher-actions-
 import baseballCatcherMitt from "../assets/games/baseball-catcher-mitt-v2.png";
 import baseballFielderBlue from "../assets/games/baseball-fielder-blue-chibi-v3.png";
 import baseballFielderRed from "../assets/games/baseball-fielder-red-chibi-v4.png";
+import baseballEffectDouble from "../assets/games/baseball-effect-double-v2.png";
 import baseballEffectHit from "../assets/games/baseball-effect-hit-v2.png";
 import baseballEffectHomeRun from "../assets/games/baseball-effect-home-run-v2.png";
+import baseballEffectOut from "../assets/games/baseball-effect-out-v2.png";
+import baseballEffectSafe from "../assets/games/baseball-effect-safe-v2.png";
+import baseballEffectScore from "../assets/games/baseball-effect-score-v2.png";
+import baseballEffectStrikeout from "../assets/games/baseball-effect-strikeout-v2.png";
 import baseballEffectTriple from "../assets/games/baseball-effect-triple-v2.png";
 import baseballPitcherActions from "../assets/games/baseball-pitcher-actions-red.png";
 import baseballPortraitCpu21 from "../assets/games/baseball-portrait-cpu-21-v2.png";
@@ -44,7 +49,7 @@ export type BaseballV2AssetGroup = "critical" | "lazy";
 export type BaseballV2AssetKind = "background" | "character" | "portrait" | "ball" | "effect";
 export type BaseballV2PlayerPortraitSources = Readonly<Partial<Record<string, string>>>;
 export type BaseballV2ResultEffectSources = Readonly<
-  Partial<Record<BaseballResultEffectKey, string>>
+  Record<BaseballResultEffectKey, string>
 >;
 
 export interface BaseballV2AssetDefinition {
@@ -74,15 +79,16 @@ export const BASEBALL_V2_FIELDER_SOURCES = Object.freeze([
   baseballFielderRed,
 ] as const);
 
-/**
- * Result-cut generation is intentionally incremental: only artwork that passed
- * alpha/crop inspection is exposed. Missing keys render the normal text ruling
- * until their own reviewed artwork is added.
- */
+/** Every official result-effect key resolves to inspected, runtime-used artwork. */
 export const BASEBALL_V2_RESULT_EFFECT_SOURCES = Object.freeze({
   hit: baseballEffectHit,
+  double: baseballEffectDouble,
   triple: baseballEffectTriple,
   homeRun: baseballEffectHomeRun,
+  strikeout: baseballEffectStrikeout,
+  score: baseballEffectScore,
+  safe: baseballEffectSafe,
+  out: baseballEffectOut,
 }) satisfies BaseballV2ResultEffectSources;
 
 /**
@@ -175,8 +181,13 @@ export const BASEBALL_V2_ASSET_MANIFEST = [
   { id: "fielder-blue", source: baseballFielderBlue, group: "lazy", kind: "character" },
   { id: "fielder-red", source: baseballFielderRed, group: "lazy", kind: "character" },
   { id: "effect-hit", source: baseballEffectHit, group: "lazy", kind: "effect" },
+  { id: "effect-double", source: baseballEffectDouble, group: "lazy", kind: "effect" },
   { id: "effect-triple", source: baseballEffectTriple, group: "lazy", kind: "effect" },
   { id: "effect-home-run", source: baseballEffectHomeRun, group: "lazy", kind: "effect" },
+  { id: "effect-strikeout", source: baseballEffectStrikeout, group: "lazy", kind: "effect" },
+  { id: "effect-score", source: baseballEffectScore, group: "lazy", kind: "effect" },
+  { id: "effect-safe", source: baseballEffectSafe, group: "lazy", kind: "effect" },
+  { id: "effect-out", source: baseballEffectOut, group: "lazy", kind: "effect" },
 ] as const satisfies readonly BaseballV2AssetDefinition[];
 
 export type BaseballV2AssetId = (typeof BASEBALL_V2_ASSET_MANIFEST)[number]["id"];

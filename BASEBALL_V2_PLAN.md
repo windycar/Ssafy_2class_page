@@ -84,8 +84,8 @@
 
 - [ ] 같은 경기장/조명/유니폼 스타일의 상황 카메라 최소 15개 제작
 - [x] 타자 portrait 9개 이상, 투수 portrait 2개 이상 제작
-- [ ] hit/double/triple/homeRun/strikeout/score/safe/out 효과 또는 상황 컷 제작 (검수 완료: hit/triple/homeRun 3종)
-- [x] 전체 새 야구 전용 에셋 25~40개를 실제 화면에 연결
+- [x] hit/double/triple/homeRun/strikeout/score/safe/out 효과 또는 상황 컷 제작 및 공식 판정에 연결
+- [x] 전체 야구 전용 에셋 40개 이상을 실제 화면과 프리로더에 연결
 - [x] 생성된 공·주자·수비수·포수·미트·초상을 직접 열어 잘림·배경·가장자리·스타일·공 중복 검사
 - [x] critical/lazy 그룹을 가진 `GameAssetPreloader` 구현
 - [x] requestAnimationFrame 또는 CSS 변수 기반 공/타구/주자 애니메이션으로 전체 View의 60FPS setState 방지
@@ -119,7 +119,7 @@
 
 선수 초상 상태: 실제 선수 사진을 복제하지 않은 자체 제작 RGBA 초상 11개(홈 타순 9명, 양 팀 선발투수 2명)를 추가했다. 동일한 정적 자산 맵을 경기 시작 선발/전체 라인업, 매 타자 소개, 현재 타자·투수 HUD, FINAL MVP가 공유한다. 모든 초상은 lazy preload 대상이면서 실제 화면 소비 경로를 가진다.
 
-결과 컷 상태: 1254×1254 투명 RGBA로 생성하고 직접 검수한 hit/triple/homeRun 3종을 공식 판정 매핑, Solo·Online 이벤트 오버레이, 득점·홈런 시퀀스에 연결했다. 잘린 수비수 팔이 있던 double 시안은 폐기했고, double/strikeout/score/safe/out 5종은 재생성·검수 후 연결해야 한다.
+결과 컷 상태: 1254×1254 투명 RGBA로 생성하고 직접 검수한 hit/double/triple/homeRun/strikeout/score/safe/out 8종을 완전한 공식 판정 맵, Solo·Online 이벤트 오버레이, 득점·홈런 시퀀스와 lazy preload에 연결했다. 잘린 수비수 팔, 타격처럼 보이는 삼진, 가짜 체크무늬 배경, 상단 여백 부족 시안은 모두 폐기했다.
 
 카메라 라우팅 상태: BATTER/PITCHER/CONTACT/INFIELD/5개 외야/1·3루 라인/BASE_RUNNING/HOME_PLATE/HOME_RUN/REPLAY를 공통 resolver에서 명시적으로 선택한다. 파울은 실제 타구의 `FOUL_LEFT`·`FOUL_RIGHT`, 더그아웃은 공격팀의 홈·원정 문맥을 받는다. BASE_RUNNING은 검수된 빈 `infield-wide-v3`를 명시 경로로 재사용하며, 구형 `baseball-camera-infield.png`는 계속 런타임에서 제외한다. manifest는 39개다. 홈·원정 더그아웃과 일반·환호 관중 전용 원본 4장은 아직 생성해야 한다.
 

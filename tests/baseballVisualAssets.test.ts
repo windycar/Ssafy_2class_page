@@ -232,7 +232,7 @@ test("9명 타자와 양 팀 선발투수 초상은 RGBA 자산이며 소개·HU
     assetsSource.indexOf("] as const satisfies readonly BaseballV2AssetDefinition[]"),
   );
   const manifestCount = manifestBlock.match(/\{ id:/g)?.length ?? 0;
-  assert.ok(manifestCount >= 25 && manifestCount <= 40, `런타임 야구 자산은 25~40개여야 함: ${manifestCount}`);
+  assert.ok(manifestCount >= 40, `실사용 야구 자산은 최소 40개여야 함: ${manifestCount}`);
   assert.equal(manifestBlock.match(/kind: "portrait"/g)?.length, 11);
   assert.match(assetsSource, /BASEBALL_V2_PLAYER_PORTRAIT_SOURCES/);
   assert.match(presentationSource, /model\.lineups\.map/);
@@ -256,8 +256,23 @@ test("9명 타자와 양 팀 선발투수 초상은 RGBA 자산이며 소개·HU
 test("검수 완료된 결과 컷은 투명 RGBA이고 Solo·Online의 공식 판정 단계에 실제 연결된다", () => {
   const effectNames = [
     "baseball-effect-hit-v2.png",
+    "baseball-effect-double-v2.png",
     "baseball-effect-triple-v2.png",
     "baseball-effect-home-run-v2.png",
+    "baseball-effect-strikeout-v2.png",
+    "baseball-effect-score-v2.png",
+    "baseball-effect-safe-v2.png",
+    "baseball-effect-out-v2.png",
+  ] as const;
+  const effectIds = [
+    "effect-hit",
+    "effect-double",
+    "effect-triple",
+    "effect-home-run",
+    "effect-strikeout",
+    "effect-score",
+    "effect-safe",
+    "effect-out",
   ] as const;
   const assetsSource = readFileSync(
     path.join(SOURCE_DIRECTORY, "config/baseballV2Assets.ts"),
@@ -282,6 +297,10 @@ test("검수 완료된 결과 컷은 투명 RGBA이고 Solo·Online의 공식 �
   }
 
   assert.match(assetsSource, /BASEBALL_V2_RESULT_EFFECT_SOURCES/);
+  assert.match(assetsSource, /Readonly<\s*Record<BaseballResultEffectKey, string>/);
+  for (const id of effectIds) {
+    assert.match(assetsSource, new RegExp(`id: "${id}"`), `${id} lazy preload 연결 누락`);
+  }
   assert.match(visualEventSource, /baseballResultEffectForVisualEvent\(event\.kind, official\)/);
   assert.match(visualEventSource, /resultEffectSources\?\.\[effectKey\]/);
   assert.match(visualEventSource, /bbv2-play-callout__effect/);
