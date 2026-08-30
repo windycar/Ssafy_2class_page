@@ -16,6 +16,7 @@ import {
   BASEBALL_V2_BALL_SOURCE,
   BASEBALL_V2_BATTER_ACTION_SOURCES,
   BASEBALL_V2_CAMERA_BACKGROUND_SOURCES,
+  BASEBALL_V2_CROWD_SOURCES,
   BASEBALL_V2_CATCHER_ACTION_SOURCE,
   BASEBALL_V2_CATCHER_MITT_SOURCE,
   BASEBALL_V2_FIELDER_SOURCES,
@@ -543,6 +544,7 @@ export function BaseballSoloGameV2({
       <BaseballGameIntroSequenceV2
         game={displayGame}
         backgroundSrc={baseballArenaFacing}
+        crowdSrc={BASEBALL_V2_CROWD_SOURCES.normal}
         modeLabel="SOLO · HOME 1P"
         playerPortraits={BASEBALL_V2_PLAYER_PORTRAIT_SOURCES}
         onComplete={advance}
@@ -559,6 +561,7 @@ export function BaseballSoloGameV2({
         onSkip={skip}
         onSkipSequence={skipSequence}
         homeRunImageSrc={baseballArenaSwingFacing}
+        crowdImageSrc={BASEBALL_V2_CROWD_SOURCES.cheering}
         resultEffectSources={BASEBALL_V2_RESULT_EFFECT_SOURCES}
         transitionBackgroundSrc={backgroundSrc}
         playerPortraits={BASEBALL_V2_PLAYER_PORTRAIT_SOURCES}

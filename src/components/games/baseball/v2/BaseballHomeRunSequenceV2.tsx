@@ -16,6 +16,7 @@ export interface BaseballHomeRunSequenceV2Props {
   model: BaseballScoringPresentationV2;
   eventProgress: number;
   imageSrc?: string;
+  crowdImageSrc?: string;
   onSkipSequence?: () => void;
 }
 
@@ -51,6 +52,7 @@ export function BaseballHomeRunSequenceV2({
   model,
   eventProgress,
   imageSrc,
+  crowdImageSrc,
   onSkipSequence,
 }: BaseballHomeRunSequenceV2Props) {
   const celebratedPlayIdsRef = useRef(new Set<string>());
@@ -75,6 +77,9 @@ export function BaseballHomeRunSequenceV2({
     "--bbv2-sequence-progress": Math.min(1, Math.max(0, eventProgress)),
   };
   const compact = event.kind === "CONTACT" || event.kind === "BALL_FLIGHT";
+  const showCrowd = event.kind === "RUN_SCORE"
+    || event.kind === "SCOREBOARD_UPDATE"
+    || event.kind === "PLAY_RESULT";
   const canSkipSequence = Boolean(onSkipSequence)
     && isBaseballHomeRunCinematicSkippablePhaseV2(event.kind);
 
@@ -88,6 +93,15 @@ export function BaseballHomeRunSequenceV2({
       role="status"
       aria-live={event.kind === "RUN_SCORE" ? "assertive" : "polite"}
     >
+      {crowdImageSrc && showCrowd ? (
+        <img
+          className="bbv2-sequence-crowd"
+          src={crowdImageSrc}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
+      ) : null}
       {imageSrc && event.kind === "PLAY_RESULT" ? (
         <img src={imageSrc} alt="홈런 타자 세리머니" draggable={false} />
       ) : null}

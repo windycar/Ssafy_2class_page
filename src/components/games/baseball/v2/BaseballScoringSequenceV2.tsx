@@ -9,6 +9,7 @@ export interface BaseballScoringSequenceV2Props {
   eventProgress: number;
   imageSrc?: string;
   imageAlt?: string;
+  crowdImageSrc?: string;
 }
 
 type SequenceProgressStyle = CSSProperties & {
@@ -21,6 +22,7 @@ export function BaseballScoringSequenceV2({
   eventProgress,
   imageSrc,
   imageAlt = "",
+  crowdImageSrc,
 }: BaseballScoringSequenceV2Props) {
   const style: SequenceProgressStyle = {
     "--bbv2-sequence-progress": Math.min(1, Math.max(0, eventProgress)),
@@ -29,6 +31,7 @@ export function BaseballScoringSequenceV2({
   const scorerCopy = model.scorerNames.length > 0
     ? model.scorerNames.map((name) => `${name} SCORE!`).join(" · ")
     : `${model.battingTeamName} 득점`;
+  const showCrowd = event.kind === "SCOREBOARD_UPDATE" || event.kind === "PLAY_RESULT";
 
   return (
     <aside
@@ -39,6 +42,15 @@ export function BaseballScoringSequenceV2({
       role="status"
       aria-live="assertive"
     >
+      {crowdImageSrc && showCrowd ? (
+        <img
+          className="bbv2-sequence-crowd"
+          src={crowdImageSrc}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
+      ) : null}
       {imageSrc ? (
         <img
           className="bbv2-scoring-sequence__effect"

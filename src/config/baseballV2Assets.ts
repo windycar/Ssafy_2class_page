@@ -4,13 +4,17 @@ import baseballBallBody from "../assets/games/baseball-ball-clean-v3.png";
 import baseballBatterActionsBlue from "../assets/games/baseball-batter-actions-blue.png";
 import baseballBatterActionsRed from "../assets/games/baseball-batter-actions-red-v2.png";
 import baseballBattingField from "../assets/games/baseball-batting-field-v4.png";
-import baseballCameraHomeRun from "../assets/games/baseball-camera-home-run.png";
 import baseballCameraCenterField from "../assets/games/baseball-camera-center-field-v5.png";
+import baseballCameraCrowdCheering from "../assets/games/baseball-camera-crowd-cheering-v2.png";
+import baseballCameraCrowdNormal from "../assets/games/baseball-camera-crowd-normal-v2.png";
+import baseballCameraDugoutAway from "../assets/games/baseball-camera-dugout-away-v2.png";
+import baseballCameraDugoutHome from "../assets/games/baseball-camera-dugout-home-v2.png";
 import baseballCameraFirstBaseLine from "../assets/games/baseball-camera-first-base-line-v4.png";
+import baseballCameraHomeRun from "../assets/games/baseball-camera-home-run-v2.png";
 import baseballCameraInfieldWide from "../assets/games/baseball-camera-infield-wide-v3.png";
 import baseballCameraLeftCenter from "../assets/games/baseball-camera-left-center-v5.png";
 import baseballCameraLeftField from "../assets/games/baseball-camera-left-field-v5.png";
-import baseballCameraPitcher from "../assets/games/baseball-camera-pitcher-empty.png";
+import baseballCameraPitcher from "../assets/games/baseball-camera-pitcher-empty-v2.png";
 import baseballCameraRightCenter from "../assets/games/baseball-camera-right-center-v5.png";
 import baseballCameraRightField from "../assets/games/baseball-camera-right-field-v5.png";
 import baseballCameraRunScored from "../assets/games/baseball-camera-run-scored-v4.png";
@@ -47,6 +51,7 @@ import type { BaseballResultEffectKey } from "../utils/games/baseball/resultEffe
 
 export type BaseballV2AssetGroup = "critical" | "lazy";
 export type BaseballV2AssetKind = "background" | "character" | "portrait" | "ball" | "effect";
+export type BaseballV2CrowdSources = Readonly<Record<"normal" | "cheering", string>>;
 export type BaseballV2PlayerPortraitSources = Readonly<Partial<Record<string, string>>>;
 export type BaseballV2ResultEffectSources = Readonly<
   Record<BaseballResultEffectKey, string>
@@ -65,6 +70,10 @@ export const BASEBALL_V2_BALL_SOURCE = baseballBallBody;
 export const BASEBALL_V2_CATCHER_ACTION_SOURCE = baseballCatcherActionsRed;
 export const BASEBALL_V2_CATCHER_MITT_SOURCE = baseballCatcherMitt;
 export const BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE = baseballCameraScoreboardWide;
+export const BASEBALL_V2_CROWD_SOURCES = Object.freeze({
+  normal: baseballCameraCrowdNormal,
+  cheering: baseballCameraCrowdCheering,
+}) satisfies BaseballV2CrowdSources;
 /** Team index 0 is the blue visitor side and team index 1 is the red home side. */
 export const BASEBALL_V2_BATTER_ACTION_SOURCES = Object.freeze([
   baseballBatterActionsBlue,
@@ -137,8 +146,8 @@ export const BASEBALL_V2_CAMERA_BACKGROUND_SOURCES = Object.freeze({
   foulRight: baseballCameraFirstBaseLine,
   baseRunning: baseballCameraInfieldWide,
   homePlate: baseballCameraRunScored,
-  dugoutHome: baseballCameraScoreboardWide,
-  dugoutAway: baseballCameraScoreboardWide,
+  dugoutHome: baseballCameraDugoutHome,
+  dugoutAway: baseballCameraDugoutAway,
   homeRun: baseballCameraHomeRun,
   replay: baseballCameraScoreboardWide,
 }) satisfies BaseballCameraBackgroundSources;
@@ -166,6 +175,10 @@ export const BASEBALL_V2_ASSET_MANIFEST = [
   { id: "portrait-kia-54", source: baseballPortraitKia54, group: "lazy", kind: "portrait" },
   { id: "portrait-cpu-21", source: baseballPortraitCpu21, group: "lazy", kind: "portrait" },
   { id: "infield-wide-camera", source: baseballCameraInfieldWide, group: "lazy", kind: "background" },
+  { id: "dugout-home-camera", source: baseballCameraDugoutHome, group: "lazy", kind: "background" },
+  { id: "dugout-away-camera", source: baseballCameraDugoutAway, group: "lazy", kind: "background" },
+  { id: "crowd-normal-camera", source: baseballCameraCrowdNormal, group: "lazy", kind: "background" },
+  { id: "crowd-cheering-camera", source: baseballCameraCrowdCheering, group: "lazy", kind: "background" },
   { id: "left-field-camera", source: baseballCameraLeftField, group: "lazy", kind: "background", dynamicBallOnly: true },
   { id: "left-center-camera", source: baseballCameraLeftCenter, group: "lazy", kind: "background", dynamicBallOnly: true },
   { id: "center-field-camera", source: baseballCameraCenterField, group: "lazy", kind: "background", dynamicBallOnly: true },
@@ -175,7 +188,7 @@ export const BASEBALL_V2_ASSET_MANIFEST = [
   { id: "third-base-line-camera", source: baseballCameraThirdBaseLine, group: "lazy", kind: "background", dynamicBallOnly: true },
   { id: "run-scored-camera", source: baseballCameraRunScored, group: "lazy", kind: "effect", dynamicBallOnly: true },
   { id: "scoreboard-wide-camera", source: baseballCameraScoreboardWide, group: "lazy", kind: "background" },
-  { id: "home-run-camera", source: baseballCameraHomeRun, group: "lazy", kind: "effect" },
+  { id: "home-run-camera", source: baseballCameraHomeRun, group: "lazy", kind: "background" },
   { id: "runner-blue", source: baseballRunnerBlue, group: "lazy", kind: "character" },
   { id: "runner-red", source: baseballRunnerRed, group: "lazy", kind: "character" },
   { id: "fielder-blue", source: baseballFielderBlue, group: "lazy", kind: "character" },

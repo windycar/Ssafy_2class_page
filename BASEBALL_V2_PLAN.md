@@ -121,7 +121,7 @@
 
 결과 컷 상태: 1254×1254 투명 RGBA로 생성하고 직접 검수한 hit/double/triple/homeRun/strikeout/score/safe/out 8종을 완전한 공식 판정 맵, Solo·Online 이벤트 오버레이, 득점·홈런 시퀀스와 lazy preload에 연결했다. 잘린 수비수 팔, 타격처럼 보이는 삼진, 가짜 체크무늬 배경, 상단 여백 부족 시안은 모두 폐기했다.
 
-카메라 라우팅 상태: BATTER/PITCHER/CONTACT/INFIELD/5개 외야/1·3루 라인/BASE_RUNNING/HOME_PLATE/HOME_RUN/REPLAY를 공통 resolver에서 명시적으로 선택한다. 파울은 실제 타구의 `FOUL_LEFT`·`FOUL_RIGHT`, 더그아웃은 공격팀의 홈·원정 문맥을 받는다. BASE_RUNNING은 검수된 빈 `infield-wide-v3`를 명시 경로로 재사용하며, 구형 `baseball-camera-infield.png`는 계속 런타임에서 제외한다. manifest는 39개다. 홈·원정 더그아웃과 일반·환호 관중 전용 원본 4장은 아직 생성해야 한다.
+카메라 라우팅 상태: BATTER/PITCHER/CONTACT/INFIELD/5개 외야/1·3루 라인/BASE_RUNNING/HOME_PLATE/HOME_RUN/REPLAY를 공통 resolver에서 명시적으로 선택한다. 파울은 실제 타구의 `FOUL_LEFT`·`FOUL_RIGHT`, 더그아웃은 공격팀의 홈·원정 문맥을 받는다. BASE_RUNNING은 검수된 빈 `infield-wide-v3`를 명시 경로로 재사용하며, 구형 `baseball-camera-infield.png`는 계속 런타임에서 제외한다. 추가로 직접 확인한 1672×941 RGB 원본 6장(빈 투수 카메라·빈 홈런 외야·홈/원정 더그아웃·일반/환호 관중)을 같은 파란 펜스 3D 경기장 톤으로 교체·추가했다. 투수·홈런·더그아웃은 camera map, 일반 관중은 경기 소개, 환호 관중은 득점·홈런 시퀀스의 절대 cover 배경 레이어에 연결되며, 6장 모두 preload manifest에 포함된다. manifest는 48개다. 실제 브라우저 한 경기 캡처 검증은 아직 남아 있다.
 
 공통 플레이 재생 상태: 솔로와 온라인이 같은 타구·수비·주루·득점 이벤트 재생기를 사용한다. 좌·좌중·중·우중·우 외야와 홈인 배경에서 정적인 필드 선수를 제거했고, 공격·수비 팀 색상에 맞는 투명 주자/수비수 스프라이트를 동적으로 합성한다. 수비수는 타구 비행에서 접근한 위치를 수비 결과 장면까지 연속적으로 이어가며, 포구 뒤에는 실제 아웃 대상 베이스까지 clean 공 하나로 송구한다. 주자는 화면 이동 방향을 바라보며 SAFE/SCORE 종착점 또는 OUT 시각에 맞춰 멈춘다. 점수·주자·카운트 HUD는 SCOREBOARD_UPDATE 전후 스냅샷을 분리해 판정 전에 결과가 노출되지 않는다. 온라인은 초기 canonical 복구와 두 참가자 Presence 확인 전 캐시 플레이를 시작하지 않고, 최신 playId가 바뀌면 오래된 재생을 취소한다.
 

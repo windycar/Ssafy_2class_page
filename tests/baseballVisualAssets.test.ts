@@ -315,6 +315,61 @@ test("검수 완료된 결과 컷은 투명 RGBA이고 Solo·Online의 공식 �
   }
 });
 
+test("동일 경기장 컨텍스트 6종은 고해상도 원본이며 camera·crowd map과 manifest에 실제 연결된다", () => {
+  const sceneNames = [
+    "baseball-camera-pitcher-empty-v2.png",
+    "baseball-camera-home-run-v2.png",
+    "baseball-camera-dugout-home-v2.png",
+    "baseball-camera-dugout-away-v2.png",
+    "baseball-camera-crowd-normal-v2.png",
+    "baseball-camera-crowd-cheering-v2.png",
+  ] as const;
+  const manifestIds = [
+    "pitcher-camera",
+    "home-run-camera",
+    "dugout-home-camera",
+    "dugout-away-camera",
+    "crowd-normal-camera",
+    "crowd-cheering-camera",
+  ] as const;
+  const assetsSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "config/baseballV2Assets.ts"),
+    "utf8",
+  );
+  const cameraMapBlock = assetsSource.slice(
+    assetsSource.indexOf("export const BASEBALL_V2_CAMERA_BACKGROUND_SOURCES"),
+    assetsSource.indexOf("export const BASEBALL_V2_ASSET_MANIFEST"),
+  );
+  const manifestBlock = assetsSource.slice(
+    assetsSource.indexOf("export const BASEBALL_V2_ASSET_MANIFEST"),
+    assetsSource.indexOf("] as const satisfies readonly BaseballV2AssetDefinition[]"),
+  );
+
+  for (const name of sceneNames) {
+    const scene = pngDimensions(name);
+    assert.ok(scene.width >= 1_600, `${name} 가로 해상도가 너무 작음`);
+    assert.ok(scene.height >= 900, `${name} 세로 해상도가 너무 작음`);
+    assert.ok([2, 6].includes(scene.colorType), `${name}은 정상 RGB/RGBA PNG여야 함`);
+    assert.ok(scene.size >= 1_000_000, `${name}이 빈 placeholder처럼 너무 작음`);
+    assert.match(assetsSource, new RegExp(name.replaceAll(".", "\\.")), `${name} config import 누락`);
+  }
+
+  for (const id of manifestIds) {
+    assert.match(manifestBlock, new RegExp(`id: "${id}"`), `${id} manifest 연결 누락`);
+  }
+  assert.ok((manifestBlock.match(/\{ id:/g)?.length ?? 0) >= 48, "6종 컨텍스트 연결 후 manifest는 48개 이상이어야 함");
+  assert.match(
+    assetsSource,
+    /BASEBALL_V2_CROWD_SOURCES[\s\S]*?normal: baseballCameraCrowdNormal,[\s\S]*?cheering: baseballCameraCrowdCheering/,
+  );
+  assert.match(cameraMapBlock, /pitcher: baseballCameraPitcher/);
+  assert.match(cameraMapBlock, /dugoutHome: baseballCameraDugoutHome/);
+  assert.match(cameraMapBlock, /dugoutAway: baseballCameraDugoutAway/);
+  assert.match(cameraMapBlock, /homeRun: baseballCameraHomeRun/);
+  assert.doesNotMatch(assetsSource, /from "\.\.\/assets\/games\/baseball-camera-pitcher-empty\.png"/);
+  assert.doesNotMatch(assetsSource, /from "\.\.\/assets\/games\/baseball-camera-home-run\.png"/);
+});
+
 test("야구 화면은 경기장·카메라·캐릭터·공을 포함한 실제 이미지 묶음을 유지한다", () => {
   const names = readdirSync(ASSET_DIRECTORY)
     .filter((name) => name.startsWith("baseball-") && name.endsWith(".png"));

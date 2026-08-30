@@ -34,6 +34,7 @@ export interface BaseballVisualEventOverlayV2Props {
   onSkip: () => void;
   onSkipSequence?: () => void;
   homeRunImageSrc?: string;
+  crowdImageSrc?: string;
   resultEffectSources?: BaseballV2ResultEffectSources;
   transitionBackgroundSrc?: string;
   playerPortraits?: BaseballV2PlayerPortraitSources;
@@ -66,6 +67,7 @@ export function BaseballVisualEventOverlayV2({
   onSkip,
   onSkipSequence,
   homeRunImageSrc,
+  crowdImageSrc,
   resultEffectSources,
   transitionBackgroundSrc,
   playerPortraits,
@@ -109,6 +111,7 @@ export function BaseballVisualEventOverlayV2({
         model={scoring}
         eventProgress={eventProgress}
         imageSrc={resultEffectSources?.homeRun ?? homeRunImageSrc}
+        crowdImageSrc={crowdImageSrc}
         onSkipSequence={onSkipSequence}
       />
     );
@@ -122,6 +125,7 @@ export function BaseballVisualEventOverlayV2({
         eventProgress={eventProgress}
         imageSrc={effectSrc}
         imageAlt={effectAlt}
+        crowdImageSrc={crowdImageSrc}
       />
     );
   }

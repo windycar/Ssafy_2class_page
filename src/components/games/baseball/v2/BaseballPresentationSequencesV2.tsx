@@ -43,6 +43,7 @@ const GAME_INTRO_PHASE_START = [0, 0.14, 0.30, 0.44, 0.58, 0.76, 0.90] as const;
 export interface BaseballGameIntroSequenceV2Props {
   game: BaseballGameState;
   backgroundSrc: string;
+  crowdSrc?: string;
   modeLabel: string;
   playerPortraits?: BaseballV2PlayerPortraitSources;
   onComplete: () => void;
@@ -75,6 +76,7 @@ function IntroPortraitV2({
 export function BaseballGameIntroSequenceV2({
   game,
   backgroundSrc,
+  crowdSrc,
   modeLabel,
   playerPortraits,
   onComplete,
@@ -111,6 +113,7 @@ export function BaseballGameIntroSequenceV2({
             : phase === "PLAY_BALL"
               ? { eyebrow: "GAME READY", title: "PLAY BALL!", detail: "첫 투구를 준비합니다." }
               : { eyebrow: "FIRST BATTER", title: `#${model.firstBatter.number} ${model.firstBatter.name}`, detail: `${model.firstBatter.position} · CON ${model.firstBatter.contact} · PWR ${model.firstBatter.power}` };
+  const showCrowd = phase === "MATCH_INTRO";
 
   return (
     <section
@@ -121,7 +124,16 @@ export function BaseballGameIntroSequenceV2({
       aria-modal="true"
       aria-label="경기 시작 프레젠테이션"
     >
-      <img src={backgroundSrc} alt="경기 시작 야구장 전경" draggable={false} />
+      {showCrowd ? (
+        <img
+          className="bbv2-sequence-crowd"
+          src={crowdSrc ?? backgroundSrc}
+          alt="경기 시작 관중석 전경"
+          draggable={false}
+        />
+      ) : (
+        <img src={backgroundSrc} alt="경기 시작 야구장 전경" draggable={false} />
+      )}
       <div className="bbv2-presentation-sequence__shade" />
       <div className="bbv2-presentation-sequence__copy" key={phase}>
         <span>{phaseCopy.eyebrow}</span>

@@ -14,7 +14,7 @@ const ASSET_DIRECTORY = new URL("../src/assets/games/", import.meta.url);
 
 const SOURCES = {
   batter: "baseball-batting-field-v4.png",
-  pitcher: "baseball-camera-pitcher-empty.png",
+  pitcher: "baseball-camera-pitcher-empty-v2.png",
   contact: "baseball-batting-field-v4.png",
   infieldWide: "baseball-camera-infield-wide-v3.png",
   leftField: "baseball-camera-left-field-v5.png",
@@ -28,9 +28,9 @@ const SOURCES = {
   foulRight: "baseball-camera-first-base-line-v4.png",
   baseRunning: "baseball-camera-infield-wide-v3.png",
   homePlate: "baseball-camera-run-scored-v4.png",
-  dugoutHome: "baseball-camera-scoreboard-wide-v3.png",
-  dugoutAway: "baseball-camera-scoreboard-wide-v3.png",
-  homeRun: "baseball-camera-home-run.png",
+  dugoutHome: "baseball-camera-dugout-home-v2.png",
+  dugoutAway: "baseball-camera-dugout-away-v2.png",
+  homeRun: "baseball-camera-home-run-v2.png",
   replay: "baseball-camera-scoreboard-wide-v3.png",
 } as const satisfies BaseballCameraBackgroundSources;
 
@@ -85,7 +85,13 @@ test("파울 방향과 홈·원정 더그아웃은 이벤트 문맥으로 명시
     resolveBaseballCameraBackground("DUGOUT", "FIELD", SOURCES, { battingTeam: 0 }),
     SOURCES.dugoutAway,
   );
-  for (const source of [SOURCES.foulLeft, SOURCES.foulRight, SOURCES.dugoutHome]) {
+  assert.notEqual(SOURCES.dugoutHome, SOURCES.dugoutAway);
+  for (const source of [
+    SOURCES.foulLeft,
+    SOURCES.foulRight,
+    SOURCES.dugoutHome,
+    SOURCES.dugoutAway,
+  ]) {
     assert.ok(statSync(new URL(source, ASSET_DIRECTORY)).size >= 100_000);
   }
 });
@@ -113,6 +119,16 @@ test("Solo와 Online은 공통 카메라 resolver와 clean-v3 공을 사용한�
   assert.match(assetsSource, /baseball-camera-right-center-v5\.png/);
   assert.match(assetsSource, /baseball-camera-first-base-line-v4\.png/);
   assert.match(assetsSource, /baseball-camera-third-base-line-v4\.png/);
+  assert.match(assetsSource, /baseball-camera-pitcher-empty-v2\.png/);
+  assert.match(assetsSource, /baseball-camera-home-run-v2\.png/);
+  assert.match(assetsSource, /baseball-camera-dugout-home-v2\.png/);
+  assert.match(assetsSource, /baseball-camera-dugout-away-v2\.png/);
+  assert.match(assetsSource, /baseball-camera-crowd-normal-v2\.png/);
+  assert.match(assetsSource, /baseball-camera-crowd-cheering-v2\.png/);
+  assert.match(
+    assetsSource,
+    /BASEBALL_V2_CROWD_SOURCES[\s\S]*?normal: baseballCameraCrowdNormal,[\s\S]*?cheering: baseballCameraCrowdCheering/,
+  );
   assert.match(assetsSource, /baseball-batting-field-v4\.png/);
   assert.equal((assetsSource.match(/dynamicBallOnly: true/g) ?? []).length, 9);
   assert.doesNotMatch(assetsSource, /baseball-camera-(?:left-field|left-center|center-field|right-center|right-field)-v[34]\.png/);
@@ -120,6 +136,8 @@ test("Solo와 Online은 공통 카메라 resolver와 clean-v3 공을 사용한�
   assert.match(assetsSource, /baseball-camera-scoreboard-wide-v3\.png/);
   assert.match(assetsSource, /id: "run-scored-camera"/);
   assert.match(assetsSource, /id: "scoreboard-wide-camera"/);
+  assert.doesNotMatch(assetsSource, /baseball-camera-pitcher-empty\.png/);
+  assert.doesNotMatch(assetsSource, /baseball-camera-home-run\.png/);
   assert.doesNotMatch(assetsSource, /baseball-pitch-(?:fastball|curve|slider|changeup)-10\.png/);
 
   for (const component of ["BaseballSoloGameV2.tsx", "BaseballOnlineGameV2.tsx"]) {
