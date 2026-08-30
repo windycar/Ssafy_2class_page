@@ -62,7 +62,7 @@
 - [x] 논리 상태와 presentation 상태 분리
 - [x] `CONTACT → BALL_FLIGHT → FIELD_RESULT → RUNNER_ADVANCE → RUN_SCORE → SCOREBOARD_UPDATE → PLAY_RESULT → NEXT_BATTER` 이벤트 큐 구현
 - [x] 물리 trace에서 카메라를 고르는 `CameraDirector` 구현
-- [ ] 타격/투구/접촉/내야/좌·중·우 외야/파울/주루/홈인/더그아웃/홈런/리플레이 카메라 구현
+- [ ] 타격/투구/접촉/내야/좌·중·우 외야/파울/주루/홈인/더그아웃/홈런/리플레이 카메라 구현 (모든 모드 명시 선택 완료, 전용 더그아웃·관중 장면 제작 대기)
 - [x] 실제 타구 좌표를 쓰는 `BattedBallLayer` 구현
 - [x] 수비수 접근·포구·송구와 OUT/SAFE 장면 구현
 - [ ] 주자 sprint/slide/score 보간 애니메이션 구현 (sprint/score/OUT 종착은 완료, slide 동작은 남음)
@@ -119,7 +119,9 @@
 
 선수 초상 상태: 실제 선수 사진을 복제하지 않은 자체 제작 RGBA 초상 11개(홈 타순 9명, 양 팀 선발투수 2명)를 추가했다. 동일한 정적 자산 맵을 경기 시작 선발/전체 라인업, 매 타자 소개, 현재 타자·투수 HUD, FINAL MVP가 공유한다. 모든 초상은 lazy preload 대상이면서 실제 화면 소비 경로를 가진다.
 
-결과 컷 상태: 1254×1254 투명 RGBA로 생성하고 직접 검수한 hit/triple/homeRun 3종을 공식 판정 매핑, Solo·Online 이벤트 오버레이, 득점·홈런 시퀀스에 연결했다. 잘린 수비수 팔이 있던 double 시안은 폐기했고, double/strikeout/score/safe/out 5종은 재생성·검수 후 연결해야 한다. 현재 런타임 manifest는 총 39개다.
+결과 컷 상태: 1254×1254 투명 RGBA로 생성하고 직접 검수한 hit/triple/homeRun 3종을 공식 판정 매핑, Solo·Online 이벤트 오버레이, 득점·홈런 시퀀스에 연결했다. 잘린 수비수 팔이 있던 double 시안은 폐기했고, double/strikeout/score/safe/out 5종은 재생성·검수 후 연결해야 한다.
+
+카메라 라우팅 상태: BATTER/PITCHER/CONTACT/INFIELD/5개 외야/1·3루 라인/BASE_RUNNING/HOME_PLATE/HOME_RUN/REPLAY를 공통 resolver에서 명시적으로 선택한다. 파울은 실제 타구의 `FOUL_LEFT`·`FOUL_RIGHT`, 더그아웃은 공격팀의 홈·원정 문맥을 받는다. BASE_RUNNING은 검수된 빈 `infield-wide-v3`를 명시 경로로 재사용하며, 구형 `baseball-camera-infield.png`는 계속 런타임에서 제외한다. manifest는 39개다. 홈·원정 더그아웃과 일반·환호 관중 전용 원본 4장은 아직 생성해야 한다.
 
 공통 플레이 재생 상태: 솔로와 온라인이 같은 타구·수비·주루·득점 이벤트 재생기를 사용한다. 좌·좌중·중·우중·우 외야와 홈인 배경에서 정적인 필드 선수를 제거했고, 공격·수비 팀 색상에 맞는 투명 주자/수비수 스프라이트를 동적으로 합성한다. 수비수는 타구 비행에서 접근한 위치를 수비 결과 장면까지 연속적으로 이어가며, 포구 뒤에는 실제 아웃 대상 베이스까지 clean 공 하나로 송구한다. 주자는 화면 이동 방향을 바라보며 SAFE/SCORE 종착점 또는 OUT 시각에 맞춰 멈춘다. 점수·주자·카운트 HUD는 SCOREBOARD_UPDATE 전후 스냅샷을 분리해 판정 전에 결과가 노출되지 않는다. 온라인은 초기 canonical 복구와 두 참가자 Presence 확인 전 캐시 플레이를 시작하지 않고, 최신 playId가 바뀌면 오래된 재생을 취소한다.
 

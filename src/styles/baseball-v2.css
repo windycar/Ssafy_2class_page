@@ -76,6 +76,10 @@
   transform: scale(1.1) translateX(4%);
 }
 
+.bbv2-stage[data-camera-mode="LEFT_CENTER"] .bbv2-stage__background {
+  transform: scale(1.11) translateX(2%);
+}
+
 .bbv2-stage[data-camera-mode="CENTER_FIELD"] .bbv2-stage__background,
 .bbv2-stage[data-camera-mode="HOME_RUN"] .bbv2-stage__background {
   transform: scale(1.12) translateY(4%);
@@ -83,6 +87,18 @@
 
 .bbv2-stage[data-camera-mode="RIGHT_FIELD"] .bbv2-stage__background {
   transform: scale(1.1) translateX(-4%);
+}
+
+.bbv2-stage[data-camera-mode="RIGHT_CENTER"] .bbv2-stage__background {
+  transform: scale(1.11) translateX(-2%);
+}
+
+.bbv2-stage[data-camera-mode="FIRST_BASE_LINE"] .bbv2-stage__background {
+  transform: scale(1.08) translateX(-2%);
+}
+
+.bbv2-stage[data-camera-mode="THIRD_BASE_LINE"] .bbv2-stage__background {
+  transform: scale(1.08) translateX(2%);
 }
 
 .bbv2-stage[data-camera-mode="FOUL"] .bbv2-stage__background,

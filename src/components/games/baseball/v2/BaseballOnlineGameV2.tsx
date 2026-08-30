@@ -667,6 +667,12 @@ export function BaseballOnlineGameV2({
   const localIsPitching = presentationGame !== null
     && actorSeat !== null
     && actorSeat !== presentationGame.battingTeam;
+  const lastPlayEntry = authoritativePresentationGame?.playByPlay[
+    authoritativePresentationGame.playByPlay.length - 1
+  ];
+  const visualBattingTeam = presentedVisualEvent
+    ? lastPlayEntry?.battingTeam ?? authoritativePresentationGame?.battingTeam ?? 0
+    : presentationGame?.battingTeam ?? 0;
   const cameraMode: BaseballCameraMode = presentedVisualEvent?.camera
     ?? (presentationPlay?.battedBall && presentationPlay.phase === "RESOLVED"
       ? presentationPlay.visualEvents.find((event) => event.kind === "BALL_FLIGHT")?.camera ?? "INFIELD"
@@ -686,6 +692,10 @@ export function BaseballOnlineGameV2({
     cameraMode,
     perspective,
     BASEBALL_V2_CAMERA_BACKGROUND_SOURCES,
+    {
+      battingTeam: visualBattingTeam,
+      battedBallZone: presentationPlay?.battedBall?.zone,
+    },
   );
   const showStrikeZone = Boolean(presentationGame)
     && !playbackBlocking
@@ -754,12 +764,6 @@ export function BaseballOnlineGameV2({
     presentationPlay?.battedBall,
     presentedVisualEvent?.kind,
   ]);
-  const lastPlayEntry = authoritativePresentationGame?.playByPlay[
-    authoritativePresentationGame.playByPlay.length - 1
-  ];
-  const visualBattingTeam = presentedVisualEvent
-    ? lastPlayEntry?.battingTeam ?? authoritativePresentationGame?.battingTeam ?? 0
-    : presentationGame?.battingTeam ?? 0;
   const visualFieldingTeam = visualBattingTeam === 0 ? 1 : 0;
   const createRunnersAtProgress = useCallback(
     (progress: number) => authoritativePresentationGame && presentationGame ? createBaseballRunnerPresentationsV2({

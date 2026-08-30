@@ -118,6 +118,7 @@ export const BASEBALL_V2_PLAYER_PORTRAIT_SOURCES = Object.freeze({
 export const BASEBALL_V2_CAMERA_BACKGROUND_SOURCES = Object.freeze({
   batter: baseballBattingField,
   pitcher: baseballCameraPitcher,
+  contact: baseballBattingField,
   infieldWide: baseballCameraInfieldWide,
   leftField: baseballCameraLeftField,
   leftCenter: baseballCameraLeftCenter,
@@ -126,8 +127,14 @@ export const BASEBALL_V2_CAMERA_BACKGROUND_SOURCES = Object.freeze({
   rightField: baseballCameraRightField,
   firstBaseLine: baseballCameraFirstBaseLine,
   thirdBaseLine: baseballCameraThirdBaseLine,
-  runScored: baseballCameraRunScored,
+  foulLeft: baseballCameraThirdBaseLine,
+  foulRight: baseballCameraFirstBaseLine,
+  baseRunning: baseballCameraInfieldWide,
+  homePlate: baseballCameraRunScored,
+  dugoutHome: baseballCameraScoreboardWide,
+  dugoutAway: baseballCameraScoreboardWide,
   homeRun: baseballCameraHomeRun,
+  replay: baseballCameraScoreboardWide,
 }) satisfies BaseballCameraBackgroundSources;
 
 export const BASEBALL_V2_ASSET_MANIFEST = [

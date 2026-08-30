@@ -249,7 +249,7 @@ function scoreLabel(game: BaseballGameState) {
 }
 
 function isFieldCamera(camera: BaseballCameraMode) {
-  return !["BATTER", "PITCHER", "CONTACT", "DUGOUT", "REPLAY"].includes(camera);
+  return !["BATTER", "PITCHER", "CONTACT"].includes(camera);
 }
 
 export function BaseballSoloGameV2({
@@ -295,6 +295,9 @@ export function BaseballSoloGameV2({
   const userPitching = !userBatting;
   const lastPlayEntry = game.playByPlay[game.playByPlay.length - 1];
   const eventWasUserBatting = lastPlayEntry?.battingTeam === USER_TEAM_INDEX;
+  const visualBattingTeam = currentVisualEvent
+    ? lastPlayEntry?.battingTeam ?? displayGame.battingTeam
+    : displayGame.battingTeam;
   const cameraMode: BaseballCameraMode = currentVisualEvent?.camera
     ?? (userBatting ? "BATTER" : "PITCHER");
   const perspective = currentVisualEvent
@@ -310,6 +313,10 @@ export function BaseballSoloGameV2({
     cameraMode,
     perspective,
     BASEBALL_V2_CAMERA_BACKGROUND_SOURCES,
+    {
+      battingTeam: visualBattingTeam,
+      battedBallZone: game.activePlay?.battedBall?.zone,
+    },
   );
   const showStrikeZone = presentation === "READY_FOR_PITCH"
     || presentation === "PITCH_WINDUP"
@@ -433,9 +440,6 @@ export function BaseballSoloGameV2({
       : null;
   }, [cameraMode, currentVisualEvent?.kind, game.activePlay?.battedBall]);
 
-  const visualBattingTeam = currentVisualEvent
-    ? lastPlayEntry?.battingTeam ?? displayGame.battingTeam
-    : displayGame.battingTeam;
   const visualFieldingTeam = visualBattingTeam === 0 ? 1 : 0;
   const createRunnersAtProgress = useCallback((progress: number) => createBaseballRunnerPresentationsV2({
     authoritativeGame: game,

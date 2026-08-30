@@ -15,6 +15,7 @@ const ASSET_DIRECTORY = new URL("../src/assets/games/", import.meta.url);
 const SOURCES = {
   batter: "baseball-batting-field-v4.png",
   pitcher: "baseball-camera-pitcher-empty.png",
+  contact: "baseball-batting-field-v4.png",
   infieldWide: "baseball-camera-infield-wide-v3.png",
   leftField: "baseball-camera-left-field-v5.png",
   leftCenter: "baseball-camera-left-center-v5.png",
@@ -23,12 +24,21 @@ const SOURCES = {
   rightField: "baseball-camera-right-field-v5.png",
   firstBaseLine: "baseball-camera-first-base-line-v4.png",
   thirdBaseLine: "baseball-camera-third-base-line-v4.png",
-  runScored: "baseball-camera-run-scored-v4.png",
+  foulLeft: "baseball-camera-third-base-line-v4.png",
+  foulRight: "baseball-camera-first-base-line-v4.png",
+  baseRunning: "baseball-camera-infield-wide-v3.png",
+  homePlate: "baseball-camera-run-scored-v4.png",
+  dugoutHome: "baseball-camera-scoreboard-wide-v3.png",
+  dugoutAway: "baseball-camera-scoreboard-wide-v3.png",
   homeRun: "baseball-camera-home-run.png",
+  replay: "baseball-camera-scoreboard-wide-v3.png",
 } as const satisfies BaseballCameraBackgroundSources;
 
 test("카메라 모드는 각 상황에 맞는 실제 배경 자산으로 해석된다", () => {
   const expected = {
+    BATTER: SOURCES.batter,
+    PITCHER: SOURCES.pitcher,
+    CONTACT: SOURCES.contact,
     INFIELD: SOURCES.infieldWide,
     LEFT_FIELD: SOURCES.leftField,
     LEFT_CENTER: SOURCES.leftCenter,
@@ -37,9 +47,10 @@ test("카메라 모드는 각 상황에 맞는 실제 배경 자산으로 해석
     RIGHT_FIELD: SOURCES.rightField,
     FIRST_BASE_LINE: SOURCES.firstBaseLine,
     THIRD_BASE_LINE: SOURCES.thirdBaseLine,
-    BASE_RUNNING: SOURCES.infieldWide,
-    RUN_SCORED: SOURCES.runScored,
+    BASE_RUNNING: SOURCES.baseRunning,
+    RUN_SCORED: SOURCES.homePlate,
     HOME_RUN: SOURCES.homeRun,
+    REPLAY: SOURCES.replay,
   } as const;
 
   for (const [camera, source] of Object.entries(expected)) {
@@ -51,31 +62,32 @@ test("카메라 모드는 각 상황에 맞는 실제 배경 자산으로 해석
   }
 
   assert.equal(
-    new Set([
-      expected.INFIELD,
-      expected.LEFT_FIELD,
-      expected.LEFT_CENTER,
-      expected.CENTER_FIELD,
-      expected.RIGHT_CENTER,
-      expected.RIGHT_FIELD,
-      expected.FIRST_BASE_LINE,
-      expected.THIRD_BASE_LINE,
-      expected.RUN_SCORED,
-      expected.HOME_RUN,
-    ]).size,
-    10,
-    "주요 카메라 장면은 서로 다른 배경이어야 한다",
+    new Set(Object.values(expected)).size,
+    13,
+    "현재 명시적 카메라 경로는 검수된 서로 다른 배경 13개를 선택해야 한다",
   );
 });
 
-test("타자·투수 카메라와 비지정 장면은 관점별 배경으로 안전하게 돌아간다", () => {
-  assert.equal(resolveBaseballCameraBackground("BATTER", "FIELD", SOURCES), SOURCES.batter);
-  assert.equal(resolveBaseballCameraBackground("PITCHER", "FIELD", SOURCES), SOURCES.pitcher);
-  assert.equal(resolveBaseballCameraBackground("CONTACT", "BATTING", SOURCES), SOURCES.batter);
-  assert.equal(resolveBaseballCameraBackground("REPLAY", "PITCHING", SOURCES), SOURCES.pitcher);
-  assert.equal(resolveBaseballCameraBackground("FOUL", "FIELD", SOURCES), SOURCES.infieldWide);
-  assert.ok(statSync(new URL(SOURCES.batter, ASSET_DIRECTORY)).size >= 100_000);
-  assert.ok(statSync(new URL(SOURCES.pitcher, ASSET_DIRECTORY)).size >= 100_000);
+test("파울 방향과 홈·원정 더그아웃은 이벤트 문맥으로 명시적으로 선택된다", () => {
+  assert.equal(
+    resolveBaseballCameraBackground("FOUL", "FIELD", SOURCES, { battedBallZone: "FOUL_LEFT" }),
+    SOURCES.foulLeft,
+  );
+  assert.equal(
+    resolveBaseballCameraBackground("FOUL", "FIELD", SOURCES, { battedBallZone: "FOUL_RIGHT" }),
+    SOURCES.foulRight,
+  );
+  assert.equal(
+    resolveBaseballCameraBackground("DUGOUT", "FIELD", SOURCES, { battingTeam: 1 }),
+    SOURCES.dugoutHome,
+  );
+  assert.equal(
+    resolveBaseballCameraBackground("DUGOUT", "FIELD", SOURCES, { battingTeam: 0 }),
+    SOURCES.dugoutAway,
+  );
+  for (const source of [SOURCES.foulLeft, SOURCES.foulRight, SOURCES.dugoutHome]) {
+    assert.ok(statSync(new URL(source, ASSET_DIRECTORY)).size >= 100_000);
+  }
 });
 
 test("Solo와 Online은 공통 카메라 resolver와 clean-v3 공을 사용한다", () => {
@@ -116,5 +128,7 @@ test("Solo와 Online은 공통 카메라 resolver와 clean-v3 공을 사용한�
       "utf8",
     );
     assert.match(source, /backgroundSrc=\{BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE\}/);
+    assert.match(source, /battingTeam: visualBattingTeam/);
+    assert.match(source, /battedBallZone:/);
   }
 });
