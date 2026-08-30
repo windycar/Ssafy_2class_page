@@ -9,6 +9,7 @@ import {
   isBaseballHomeRunCinematicSkippablePhaseV2,
   type BaseballScoringPresentationV2,
 } from "../../../../utils/games/baseball/scoringPresentation.ts";
+import { baseballContactFeedbackForEventV2 } from "../../../../utils/games/baseball/contactFeedback.ts";
 import type { VisualEvent } from "../../../../utils/games/baseball/types.ts";
 
 export interface BaseballHomeRunSequenceV2Props {
@@ -17,6 +18,7 @@ export interface BaseballHomeRunSequenceV2Props {
   eventProgress: number;
   imageSrc?: string;
   crowdImageSrc?: string;
+  dugoutImageSrc?: string;
   onSkipSequence?: () => void;
 }
 
@@ -25,9 +27,16 @@ type SequenceProgressStyle = CSSProperties & {
 };
 
 function phaseCopy(event: VisualEvent, model: BaseballScoringPresentationV2) {
+  const contactFeedback = baseballContactFeedbackForEventV2(event);
   switch (event.kind) {
     case "CONTACT":
-      return { eyebrow: "CONTACT", title: "CRUSHED!", detail: "완벽한 타구가 뻗어 나갑니다." };
+      return contactFeedback
+        ? {
+            eyebrow: `${contactFeedback.timingLabel} TIMING`,
+            title: contactFeedback.contactLabel,
+            detail: `PCI OVERLAP · ${contactFeedback.pciPercent}%`,
+          }
+        : { eyebrow: "CONTACT", title: "CRUSHED!", detail: "강한 타구가 뻗어 나갑니다." };
     case "BALL_FLIGHT":
       return { eyebrow: "DEEP FLY", title: "펜스를 향해!", detail: "외야 깊숙한 타구를 추적합니다." };
     case "RUNNER_ADVANCE":
@@ -53,6 +62,7 @@ export function BaseballHomeRunSequenceV2({
   eventProgress,
   imageSrc,
   crowdImageSrc,
+  dugoutImageSrc,
   onSkipSequence,
 }: BaseballHomeRunSequenceV2Props) {
   const celebratedPlayIdsRef = useRef(new Set<string>());
@@ -77,9 +87,12 @@ export function BaseballHomeRunSequenceV2({
     "--bbv2-sequence-progress": Math.min(1, Math.max(0, eventProgress)),
   };
   const compact = event.kind === "CONTACT" || event.kind === "BALL_FLIGHT";
-  const showCrowd = event.kind === "RUN_SCORE"
-    || event.kind === "SCOREBOARD_UPDATE"
-    || event.kind === "PLAY_RESULT";
+  const reactionImageSrc = event.kind === "PLAY_RESULT"
+    ? dugoutImageSrc
+    : event.kind === "RUN_SCORE" || event.kind === "SCOREBOARD_UPDATE"
+      ? crowdImageSrc
+      : undefined;
+  const reactionKind = event.kind === "PLAY_RESULT" ? "dugout" : "crowd";
   const canSkipSequence = Boolean(onSkipSequence)
     && isBaseballHomeRunCinematicSkippablePhaseV2(event.kind);
 
@@ -93,10 +106,11 @@ export function BaseballHomeRunSequenceV2({
       role="status"
       aria-live={event.kind === "RUN_SCORE" ? "assertive" : "polite"}
     >
-      {crowdImageSrc && showCrowd ? (
+      {reactionImageSrc ? (
         <img
-          className="bbv2-sequence-crowd"
-          src={crowdImageSrc}
+          className="bbv2-sequence-reaction"
+          data-reaction={reactionKind}
+          src={reactionImageSrc}
           alt=""
           aria-hidden="true"
           draggable={false}

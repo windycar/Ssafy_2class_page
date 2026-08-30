@@ -27,6 +27,7 @@ import {
 } from "../../../../config/baseballV2Assets.ts";
 import { useBaseballSoloController } from "../../../../hooks/useBaseballSoloController.ts";
 import { resolveBaseballCameraBackground } from "../../../../utils/games/baseball/cameraBackground.ts";
+import { baseballStageImpactClassV2 } from "../../../../utils/games/baseball/contactFeedback.ts";
 import { isBaseballHomeRunCinematicSkippablePhaseV2 } from "../../../../utils/games/baseball/scoringPresentation.ts";
 import {
   getCurrentPitcher,
@@ -365,6 +366,7 @@ export function BaseballSoloGameV2({
     && isBaseballHomeRunResultV2(officialResult?.code);
   const homeRunSequenceCanSkip = homeRunSequenceActive
     && isBaseballHomeRunCinematicSkippablePhaseV2(currentVisualEvent?.kind);
+  const stageImpactClass = baseballStageImpactClassV2(currentVisualEvent, officialResult);
   const handlePrimaryAction = useCallback(() => {
     if (homeRunSequenceCanSkip) {
       skipSequence();
@@ -562,6 +564,9 @@ export function BaseballSoloGameV2({
         onSkipSequence={skipSequence}
         homeRunImageSrc={baseballArenaSwingFacing}
         crowdImageSrc={BASEBALL_V2_CROWD_SOURCES.cheering}
+        dugoutImageSrc={visualBattingTeam === 0
+          ? BASEBALL_V2_CAMERA_BACKGROUND_SOURCES.dugoutAway
+          : BASEBALL_V2_CAMERA_BACKGROUND_SOURCES.dugoutHome}
         resultEffectSources={BASEBALL_V2_RESULT_EFFECT_SOURCES}
         transitionBackgroundSrc={backgroundSrc}
         playerPortraits={BASEBALL_V2_PLAYER_PORTRAIT_SOURCES}
@@ -698,9 +703,7 @@ export function BaseballSoloGameV2({
           }}
           cameraMode={cameraMode}
           perspective={perspective}
-          className={homeRunSequenceActive && currentVisualEvent?.kind === "CONTACT"
-            ? "bbv2-stage--home-run-impact"
-            : undefined}
+          className={stageImpactClass}
           fielders={fielders}
           runners={runners}
           animation={stageAnimation}

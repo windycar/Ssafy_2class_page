@@ -29,6 +29,7 @@ import { useBaseballOnlineController } from "../../../../hooks/useBaseballOnline
 import { useBaseballVisualPlayback } from "../../../../hooks/useBaseballVisualPlayback.ts";
 import type { BaseballRoom } from "../../../../types/baseballRoom.ts";
 import { resolveBaseballCameraBackground } from "../../../../utils/games/baseball/cameraBackground.ts";
+import { baseballStageImpactClassV2 } from "../../../../utils/games/baseball/contactFeedback.ts";
 import {
   baseballPitchQualityAtMeterProgress,
   createBaseballAnimationProgressSource,
@@ -674,6 +675,10 @@ export function BaseballOnlineGameV2({
   const visualBattingTeam = presentedVisualEvent
     ? lastPlayEntry?.battingTeam ?? authoritativePresentationGame?.battingTeam ?? 0
     : presentationGame?.battingTeam ?? 0;
+  const stageImpactClass = baseballStageImpactClassV2(
+    presentedVisualEvent,
+    authoritativePresentationGame?.lastPlay,
+  );
   const cameraMode: BaseballCameraMode = presentedVisualEvent?.camera
     ?? (presentationPlay?.battedBall && presentationPlay.phase === "RESOLVED"
       ? presentationPlay.visualEvents.find((event) => event.kind === "BALL_FLIGHT")?.camera ?? "INFIELD"
@@ -933,6 +938,9 @@ export function BaseballOnlineGameV2({
         onSkipSequence={skipHomeRunSequence}
         homeRunImageSrc={baseballArenaSwingFacing}
         crowdImageSrc={BASEBALL_V2_CROWD_SOURCES.cheering}
+        dugoutImageSrc={visualBattingTeam === 0
+          ? BASEBALL_V2_CAMERA_BACKGROUND_SOURCES.dugoutAway
+          : BASEBALL_V2_CAMERA_BACKGROUND_SOURCES.dugoutHome}
         resultEffectSources={BASEBALL_V2_RESULT_EFFECT_SOURCES}
         transitionBackgroundSrc={backgroundSrc}
         playerPortraits={BASEBALL_V2_PLAYER_PORTRAIT_SOURCES}
@@ -1108,9 +1116,7 @@ export function BaseballOnlineGameV2({
         }}
         cameraMode={cameraMode}
         perspective={perspective}
-        className={homeRunSequenceActive && presentedVisualEvent?.kind === "CONTACT"
-          ? "bbv2-stage--home-run-impact"
-          : undefined}
+        className={stageImpactClass}
         fielders={fielders}
         runners={runners}
         animation={stageAnimation}

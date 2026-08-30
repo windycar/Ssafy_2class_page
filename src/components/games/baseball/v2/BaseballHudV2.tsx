@@ -137,11 +137,15 @@ function PlayerSummaryV2({
   portrait,
   role,
   detail,
+  statline,
+  stamina,
 }: {
   player: BaseballPlayer;
   portrait?: string;
   role: string;
   detail: string;
+  statline?: string;
+  stamina?: number;
 }) {
   return (
     <div className="bbv2-player-summary">
@@ -152,6 +156,21 @@ function PlayerSummaryV2({
           <span>#{player.number}</span> {player.name}
         </strong>
         <em>{detail}</em>
+        {statline ? <span className="bbv2-player-summary__statline">{statline}</span> : null}
+        {stamina !== undefined ? (
+          <div className="bbv2-player-summary__stamina">
+            <span>STAMINA</span>
+            <meter
+              min={0}
+              max={100}
+              value={Math.min(100, Math.max(0, stamina))}
+              aria-label={`${player.name} 투수 체력`}
+            >
+              {Math.round(stamina)}%
+            </meter>
+            <b>{Math.round(stamina)}</b>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -299,6 +318,8 @@ export function BaseballHudV2({ game, assets, className }: BaseballHudV2Props) {
     ? "경기 종료"
     : `${game.inning}회${halfLabel} · ${battingTeam.shortName} 공격`;
   const pitcherState = fieldingTeam.pitcher;
+  const batterStats = battingTeam.batterStats[batter.id];
+  const pitcherStats = fieldingTeam.pitcherStats[pitcher.id];
   const portraits = assets?.playerPortraits;
   const situation = selectBaseballHudSituationV2(game);
 
@@ -355,12 +376,15 @@ export function BaseballHudV2({ game, assets, className }: BaseballHudV2Props) {
           portrait={playerPortraitSource(batter, portraits)}
           role="현재 타자"
           detail={`CON ${batter.contact} · PWR ${batter.power} · SPD ${batter.speed}`}
+          statline={`TODAY ${batterStats?.ab ?? 0} AB · ${batterStats?.h ?? 0} H · ${batterStats?.hr ?? 0} HR`}
         />
         <PlayerSummaryV2
           player={pitcher}
           portrait={playerPortraitSource(pitcher, portraits)}
           role="현재 투수"
-          detail={`투구 ${pitcherState.pitchCount} · 체력 ${Math.round(pitcherState.stamina)}`}
+          detail={`PITCHES ${pitcherState.pitchCount} · K ${pitcherStats?.strikeouts ?? 0} · BB ${pitcherStats?.walks ?? 0}`}
+          statline={`H ${pitcherStats?.hitsAllowed ?? 0} · R ${pitcherStats?.runsAllowed ?? 0}`}
+          stamina={pitcherState.stamina}
         />
         <div className="bbv2-next-batters" aria-label="다음 타자">
           <small>NEXT</small>

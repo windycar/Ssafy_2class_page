@@ -11,9 +11,12 @@ function readComponent(name: string) {
   return readFile(new URL(name, componentRoot), "utf8");
 }
 
-test("공통 시각 이벤트 계층이 득점과 홈런 전용 시퀀스를 선택한다", async () => {
+test("공통 시각 이벤트 계층이 CONTACT 피드백과 득점·홈런 전용 시퀀스를 선택한다", async () => {
   const source = await readComponent("BaseballVisualEventPresentationV2.tsx");
 
+  assert.match(source, /import \{ BaseballContactFeedbackV2 \}/);
+  assert.match(source, /event\.kind === "CONTACT"/);
+  assert.match(source, /<BaseballContactFeedbackV2 event=\{event\} \/>/);
   assert.match(source, /createBaseballScoringPresentationV2\(authoritativeGame, official\)/);
   assert.match(source, /if \(scoring\?\.isHomeRun\)/);
   assert.match(source, /<BaseballHomeRunSequenceV2/);
@@ -32,12 +35,19 @@ test("Solo와 Online은 같은 전용 시퀀스에 authoritative 상태·진행�
   assert.match(solo, /eventProgressSource=\{currentVisualEventProgressSource\}/);
   assert.match(solo, /onSkipSequence=\{skipSequence\}/);
   assert.match(solo, /skipSequence\(\)/);
+  assert.match(solo, /baseballStageImpactClassV2\(currentVisualEvent, officialResult\)/);
+  assert.match(solo, /dugoutImageSrc=\{visualBattingTeam === 0/);
   assert.doesNotMatch(solo, /canvas-confetti|celebratedHomeRunsRef/);
 
   assert.match(online, /authoritativeGame=\{authoritativePresentationGame\}/);
   assert.match(online, /eventProgressSource=\{presentedVisualEventProgressSource\}/);
   assert.match(online, /onSkipSequence=\{skipHomeRunSequence\}/);
   assert.match(online, /playback\.seek\("RUN_SCORE"\)/);
+  assert.match(
+    online,
+    /baseballStageImpactClassV2\([\s\S]*?presentedVisualEvent,[\s\S]*?authoritativePresentationGame\?\.lastPlay,[\s\S]*?\)/,
+  );
+  assert.match(online, /dugoutImageSrc=\{visualBattingTeam === 0/);
 });
 
 test("홈런 전용 시퀀스만 공통 축포를 실행하고 득점·전광판은 스킵 버튼을 숨긴다", async () => {
@@ -47,6 +57,8 @@ test("홈런 전용 시퀀스만 공통 축포를 실행하고 득점·전광판
   assert.match(source, /event\.kind !== "RUN_SCORE"/);
   assert.match(source, /celebratedPlayIdsRef\.current\.has\(model\.playId\)/);
   assert.match(source, /isBaseballHomeRunCinematicSkippablePhaseV2\(event\.kind\)/);
+  assert.match(source, /baseballContactFeedbackForEventV2\(event\)/);
+  assert.match(source, /PCI OVERLAP/);
   assert.match(source, /\{canSkipSequence \? \(/);
   assert.match(source, /HOME PLATE · SAFE/);
 });

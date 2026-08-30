@@ -788,8 +788,66 @@
   font-size: 0.4rem;
 }
 
-.bbv2-stage--home-run-impact {
-  animation: bbv2-home-run-camera-impact 160ms ease-out both;
+.bbv2-contact-feedback {
+  position: absolute;
+  top: 124px;
+  left: 50%;
+  display: grid;
+  min-width: min(290px, calc(100% - 28px));
+  place-items: center;
+  gap: 0.18rem;
+  padding: 0.62rem 0.9rem;
+  border: 1px solid rgb(255 255 255 / 36%);
+  border-radius: 0.75rem;
+  color: white;
+  background: rgb(3 20 38 / 87%);
+  box-shadow: 0 14px 34px rgb(0 0 0 / 36%);
+  pointer-events: none;
+  transform: translateX(-50%);
+  text-align: center;
+  backdrop-filter: blur(10px);
+  animation: bbv2-contact-feedback-enter 180ms cubic-bezier(0.2, 0.85, 0.25, 1) both;
+}
+
+.bbv2-contact-feedback span {
+  color: #bfdbfe;
+  font-size: 0.62rem;
+  font-weight: 1000;
+  letter-spacing: 0.14em;
+}
+
+.bbv2-contact-feedback span[data-tone="early"] { color: #fca5a5; }
+.bbv2-contact-feedback span[data-tone="late"] { color: #93c5fd; }
+.bbv2-contact-feedback span[data-tone="perfect"] { color: #fde047; }
+
+.bbv2-contact-feedback strong {
+  font-size: clamp(1rem, 3.4vw, 1.55rem);
+  font-weight: 1000;
+  line-height: 1;
+  text-shadow: 0 3px 14px rgb(0 0 0 / 44%);
+}
+
+.bbv2-contact-feedback strong[data-tone="perfect"] { color: #fef08a; }
+.bbv2-contact-feedback strong[data-tone="good"] { color: #bbf7d0; }
+.bbv2-contact-feedback strong[data-tone="weak"] { color: #e2e8f0; }
+
+.bbv2-contact-feedback small {
+  color: rgb(226 232 240 / 72%);
+  font-size: 0.48rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+}
+
+.bbv2-stage--impact-perfect {
+  animation: bbv2-perfect-contact-impact 140ms ease-out both;
+}
+
+.bbv2-stage--impact-home-run {
+  animation: bbv2-home-run-camera-impact 170ms ease-out both;
+}
+
+.bbv2-stage--impact-grand-slam {
+  animation: bbv2-grand-slam-camera-impact 220ms ease-out both;
 }
 
 .bbv2-scoring-sequence,
@@ -958,8 +1016,8 @@
   filter: drop-shadow(0 12px 22px rgb(0 0 0 / 42%));
 }
 
-.bbv2-scoring-sequence > .bbv2-sequence-crowd,
-.bbv2-home-run-sequence > .bbv2-sequence-crowd {
+.bbv2-scoring-sequence > .bbv2-sequence-reaction,
+.bbv2-home-run-sequence > .bbv2-sequence-reaction {
   position: absolute;
   z-index: 0;
   inset: 0;
@@ -973,11 +1031,11 @@
   filter: saturate(1.08) brightness(0.72);
   transform: scale(1);
   transform-origin: center;
-  animation: bbv2-sequence-crowd-enter 360ms cubic-bezier(0.2, 0.82, 0.25, 1) both;
+  animation: bbv2-sequence-reaction-enter 360ms cubic-bezier(0.2, 0.82, 0.25, 1) both;
 }
 
-.bbv2-scoring-sequence > :not(.bbv2-sequence-crowd),
-.bbv2-home-run-sequence > :not(.bbv2-sequence-crowd) {
+.bbv2-scoring-sequence > :not(.bbv2-sequence-reaction),
+.bbv2-home-run-sequence > :not(.bbv2-sequence-reaction) {
   position: relative;
   z-index: 1;
 }
@@ -1019,12 +1077,30 @@
   68% { transform: translate3d(2px, -1px, 0); }
 }
 
+@keyframes bbv2-perfect-contact-impact {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  42% { transform: translate3d(-1px, 0.5px, 0); }
+  72% { transform: translate3d(1px, -0.5px, 0); }
+}
+
+@keyframes bbv2-grand-slam-camera-impact {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  22% { transform: translate3d(-3px, 1.5px, 0); }
+  48% { transform: translate3d(3px, -1.5px, 0); }
+  74% { transform: translate3d(-2px, -1px, 0); }
+}
+
+@keyframes bbv2-contact-feedback-enter {
+  from { opacity: 0; transform: translateX(-50%) scale(0.92); }
+  to { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
 @keyframes bbv2-scoring-enter {
   from { opacity: 0; transform: translate(-50%, -34%) scale(0.94); }
   to { opacity: 1; transform: translate(-50%, var(--bbv2-sequence-y)) scale(1); }
 }
 
-@keyframes bbv2-sequence-crowd-enter {
+@keyframes bbv2-sequence-reaction-enter {
   from { opacity: 0; transform: scale(1.035); }
   to { opacity: var(--bbv2-sequence-crowd-opacity); transform: scale(1); }
 }
@@ -1321,6 +1397,38 @@
   font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.bbv2-player-summary__statline {
+  overflow: hidden;
+  margin-top: 0.06rem;
+  color: rgb(255 255 255 / 82%);
+  font-size: 0.4rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bbv2-player-summary__stamina {
+  display: grid;
+  grid-template-columns: auto minmax(34px, 1fr) auto;
+  align-items: center;
+  gap: 0.22rem;
+  margin-top: 0.12rem;
+  color: rgb(226 232 240 / 72%);
+  font-size: 0.34rem;
+  font-weight: 900;
+}
+
+.bbv2-player-summary__stamina meter {
+  width: 100%;
+  height: 0.34rem;
+  accent-color: #4ade80;
+}
+
+.bbv2-player-summary__stamina b {
+  color: white;
+  font-size: 0.36rem;
 }
 
 .bbv2-next-batters {
@@ -2182,10 +2290,14 @@
   .bbv2-fielder-sprite__body,
   .bbv2-runner-sprite img,
   .bbv2-play-callout,
+  .bbv2-contact-feedback,
   .bbv2-scoring-sequence,
   .bbv2-sequence-crowd,
+  .bbv2-sequence-reaction,
   .bbv2-home-run-sequence,
-  .bbv2-stage--home-run-impact,
+  .bbv2-stage--impact-perfect,
+  .bbv2-stage--impact-home-run,
+  .bbv2-stage--impact-grand-slam,
   .bbv2-selector-button,
   .bbv2-primary-action,
   .bbv2-overlay__content,

@@ -121,7 +121,7 @@ test("연장 라인스코어는 실제 이닝 수만큼 열을 확장하고 짧�
   assert.match(css, /repeat\(var\(--bbv2-linescore-innings, 3\), minmax\(24px, 1fr\)\)/);
 });
 
-test("일반·환호 관중은 경기 소개와 득점·홈런 단계에 배경 레이어로 실제 연결된다", () => {
+test("일반·환호 관중과 공격팀 더그아웃은 경기 소개·득점·홈런 단계에 실제 연결된다", () => {
   const componentDirectory = path.join(
     process.cwd(),
     "src/components/games/baseball/v2",
@@ -150,25 +150,35 @@ test("일반·환호 관중은 경기 소개와 득점·홈런 단계에 배경 
   assert.match(introSource, /crowdSrc\?: string/);
   assert.match(introSource, /className="bbv2-sequence-crowd"/);
   assert.match(visualEventSource, /crowdImageSrc\?: string/);
+  assert.match(visualEventSource, /dugoutImageSrc\?: string/);
   assert.equal(
     visualEventSource.match(/crowdImageSrc=\{crowdImageSrc\}/g)?.length,
     2,
     "환호 관중은 득점과 홈런 시퀀스 모두에 전달되어야 함",
   );
+  assert.equal(
+    visualEventSource.match(/dugoutImageSrc=\{dugoutImageSrc\}/g)?.length,
+    2,
+    "공격팀 더그아웃은 득점과 홈런 시퀀스 모두에 전달되어야 함",
+  );
   for (const source of [scoringSource, homeRunSource]) {
     assert.match(source, /crowdImageSrc\?: string/);
-    assert.match(source, /className="bbv2-sequence-crowd"/);
-    assert.match(source, /src=\{crowdImageSrc\}/);
+    assert.match(source, /dugoutImageSrc\?: string/);
+    assert.match(source, /event\.kind === "PLAY_RESULT"[\s\S]*?dugoutImageSrc/);
+    assert.match(source, /event\.kind === "SCOREBOARD_UPDATE"[\s\S]*?crowdImageSrc/);
+    assert.match(source, /className="bbv2-sequence-reaction"/);
+    assert.match(source, /data-reaction=\{reactionKind\}/);
+    assert.match(source, /src=\{reactionImageSrc\}/);
   }
   assert.ok(
-    scoringSource.indexOf('className="bbv2-sequence-crowd"')
+    scoringSource.indexOf('className="bbv2-sequence-reaction"')
       < scoringSource.indexOf('className="bbv2-scoring-sequence__effect"'),
-    "득점 관중 img는 효과·문구보다 먼저 렌더링되는 배경 레이어여야 함",
+    "득점 반응 img는 효과·문구보다 먼저 렌더링되는 배경 레이어여야 함",
   );
   assert.ok(
-    homeRunSource.indexOf('className="bbv2-sequence-crowd"')
+    homeRunSource.indexOf('className="bbv2-sequence-reaction"')
       < homeRunSource.indexOf('className="bbv2-home-run-sequence__copy"'),
-    "홈런 관중 img는 copy보다 먼저 렌더링되는 배경 레이어여야 함",
+    "홈런 반응 img는 copy보다 먼저 렌더링되는 배경 레이어여야 함",
   );
 
   for (const component of ["BaseballSoloGameV2.tsx", "BaseballOnlineGameV2.tsx"]) {
@@ -176,19 +186,23 @@ test("일반·환호 관중은 경기 소개와 득점·홈런 단계에 배경 
     assert.match(source, /BASEBALL_V2_CROWD_SOURCES/);
     assert.match(source, /crowdSrc=\{BASEBALL_V2_CROWD_SOURCES\.normal\}/);
     assert.match(source, /crowdImageSrc=\{BASEBALL_V2_CROWD_SOURCES\.cheering\}/);
+    assert.match(
+      source,
+      /dugoutImageSrc=\{visualBattingTeam === 0[\s\S]*?dugoutAway[\s\S]*?:[\s\S]*?dugoutHome\}/,
+    );
   }
 
   assert.match(
     styleSource,
-    /\.bbv2-scoring-sequence > \.bbv2-sequence-crowd,[\s\S]*?position: absolute;[\s\S]*?z-index: 0;[\s\S]*?inset: 0;[\s\S]*?object-fit: cover;/,
+    /\.bbv2-scoring-sequence > \.bbv2-sequence-reaction,[\s\S]*?position: absolute;[\s\S]*?z-index: 0;[\s\S]*?inset: 0;[\s\S]*?object-fit: cover;/,
   );
   assert.match(styleSource, /opacity: var\(--bbv2-sequence-crowd-opacity\);/);
   assert.match(styleSource, /pointer-events: none;[\s\S]*?transform: scale\(1\);/);
   assert.match(
     styleSource,
-    /\.bbv2-scoring-sequence > :not\(\.bbv2-sequence-crowd\),[\s\S]*?z-index: 1;/,
+    /\.bbv2-scoring-sequence > :not\(\.bbv2-sequence-reaction\),[\s\S]*?z-index: 1;/,
   );
-  assert.match(styleSource, /@keyframes bbv2-sequence-crowd-enter/);
+  assert.match(styleSource, /@keyframes bbv2-sequence-reaction-enter/);
   assert.match(styleSource, /from \{ opacity: 0; transform: scale\(1\.035\); \}/);
   assert.match(
     styleSource,
@@ -196,4 +210,5 @@ test("일반·환호 관중은 경기 소개와 득점·홈런 단계에 배경 
   );
   const reducedMotionBlock = styleSource.slice(styleSource.indexOf("@media (prefers-reduced-motion: reduce)"));
   assert.match(reducedMotionBlock, /\.bbv2-sequence-crowd/);
+  assert.match(reducedMotionBlock, /\.bbv2-sequence-reaction/);
 });

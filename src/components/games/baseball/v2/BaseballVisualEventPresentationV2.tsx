@@ -23,6 +23,7 @@ import {
 import {
   createBaseballVisualEventCopyV2,
 } from "./BaseballPlayPresentationV2.ts";
+import { BaseballContactFeedbackV2 } from "./BaseballContactFeedbackV2.tsx";
 import { BaseballScoringSequenceV2 } from "./BaseballScoringSequenceV2.tsx";
 
 export interface BaseballVisualEventOverlayV2Props {
@@ -35,6 +36,7 @@ export interface BaseballVisualEventOverlayV2Props {
   onSkipSequence?: () => void;
   homeRunImageSrc?: string;
   crowdImageSrc?: string;
+  dugoutImageSrc?: string;
   resultEffectSources?: BaseballV2ResultEffectSources;
   transitionBackgroundSrc?: string;
   playerPortraits?: BaseballV2PlayerPortraitSources;
@@ -68,6 +70,7 @@ export function BaseballVisualEventOverlayV2({
   onSkipSequence,
   homeRunImageSrc,
   crowdImageSrc,
+  dugoutImageSrc,
   resultEffectSources,
   transitionBackgroundSrc,
   playerPortraits,
@@ -112,6 +115,7 @@ export function BaseballVisualEventOverlayV2({
         eventProgress={eventProgress}
         imageSrc={resultEffectSources?.homeRun ?? homeRunImageSrc}
         crowdImageSrc={crowdImageSrc}
+        dugoutImageSrc={dugoutImageSrc}
         onSkipSequence={onSkipSequence}
       />
     );
@@ -126,11 +130,13 @@ export function BaseballVisualEventOverlayV2({
         imageSrc={effectSrc}
         imageAlt={effectAlt}
         crowdImageSrc={crowdImageSrc}
+        dugoutImageSrc={dugoutImageSrc}
       />
     );
   }
 
-  if (event.kind === "CONTACT" || event.kind === "BALL_FLIGHT") return null;
+  if (event.kind === "CONTACT") return <BaseballContactFeedbackV2 event={event} />;
+  if (event.kind === "BALL_FLIGHT") return null;
   const copy = createBaseballVisualEventCopyV2(event, official, game);
 
   if (LIVE_CALLOUT_KINDS.has(event.kind)) {
