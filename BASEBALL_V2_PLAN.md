@@ -65,7 +65,7 @@
 - [ ] 타격/투구/접촉/내야/좌·중·우 외야/파울/주루/홈인/더그아웃/홈런/리플레이 카메라 구현 (모든 모드 명시 선택 완료, 전용 더그아웃·관중 장면 제작 대기)
 - [x] 실제 타구 좌표를 쓰는 `BattedBallLayer` 구현
 - [x] 수비수 접근·포구·송구와 OUT/SAFE 장면 구현
-- [ ] 주자 sprint/slide/score 보간 애니메이션 구현 (sprint/score/OUT 종착은 완료, slide 동작은 남음)
+- [x] 주자 idle/sprint/slide/score 보간 애니메이션 구현 (authoritative 도착 시각 기준 마지막 22%·최대 320ms 슬라이드)
 - [x] 홈을 밟는 시점에 presentation 점수 갱신
 - [x] 홈런 2~4초 전용 시퀀스와 스킵 구현
 

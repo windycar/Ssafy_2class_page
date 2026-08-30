@@ -135,6 +135,31 @@ test("스테이지는 동일한 공 이미지로 본체 1개와 이전 위치 �
   );
 });
 
+test("주자 idle/sprint/slide/score 동작은 정적·RAF 레이어와 CSS에 모두 연결된다", () => {
+  const stageSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballStageV2.tsx"),
+    "utf8",
+  );
+  const animatedLayerSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballAnimatedStageLayersV2.tsx"),
+    "utf8",
+  );
+  const styleSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "styles/baseball-v2.css"),
+    "utf8",
+  );
+
+  assert.match(stageSource, /data-motion=\{runner\.motion \?\? "IDLE"\}/);
+  assert.match(animatedLayerSource, /data-motion=\{runner\.motion \?\? "IDLE"\}/);
+  assert.match(animatedLayerSource, /element\.dataset\.motion !== motion/);
+  assert.match(animatedLayerSource, /element\.dataset\.motion = motion/);
+  for (const motion of ["IDLE", "SPRINT", "SLIDE", "SCORE"]) {
+    assert.match(styleSource, new RegExp(`data-motion="${motion}"`));
+  }
+  assert.match(styleSource, /@keyframes bbv2-runner-slide/);
+  assert.doesNotMatch(styleSource, /data-status="RUNNING"[^}]*animation:/s);
+});
+
 test("포수 액션과 투명 미트는 실제 런타임 자산이며 투구 목표에 연결된다", () => {
   const catcher = pngDimensions("baseball-catcher-actions-red.png");
   const mitt = pngDimensions("baseball-catcher-mitt-v2.png");

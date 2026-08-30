@@ -176,6 +176,8 @@ export function AnimatedRunnerLayerV2({
         if (!runner) continue;
         applyPointStyle(element, runner.point);
         element.dataset.status = runner.status ?? "WAITING";
+        const motion = runner.motion ?? "IDLE";
+        if (element.dataset.motion !== motion) element.dataset.motion = motion;
         element.dataset.facing = runner.facing ?? "RIGHT";
         const label = labelRefs.current.get(playerId);
         if (label) label.textContent = runner.baseLabel ?? runner.name;
@@ -197,6 +199,7 @@ export function AnimatedRunnerLayerV2({
           style={pointStyle(runner.point)}
           data-player-id={runner.playerId}
           data-status={runner.status ?? "WAITING"}
+          data-motion={runner.motion ?? "IDLE"}
           data-facing={runner.facing ?? "RIGHT"}
           key={runner.playerId}
         >

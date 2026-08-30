@@ -35,8 +35,14 @@ export interface BaseballRunnerPresentationV2 {
   assetSrc?: string;
   baseLabel?: string;
   status?: RunnerPresentationStatus;
+  motion?: BaseballRunnerMotionV2;
   facing?: "LEFT" | "RIGHT";
 }
+
+export type BaseballRunnerMotionV2 = "IDLE" | "SPRINT" | "SLIDE" | "SCORE";
+
+export const BASEBALL_RUNNER_SLIDE_FRACTION_V2 = 0.22;
+export const BASEBALL_RUNNER_SLIDE_MAX_MS_V2 = 320;
 
 export type BaseballFielderPhaseV2 =
   | "APPROACH"
@@ -299,6 +305,7 @@ function staticRunnerPresentations(
     assetSrc: runnerAssetSrc,
     baseLabel: label,
     status: "SAFE" as const,
+    motion: "IDLE" as const,
   }] : []);
 }
 
@@ -357,6 +364,7 @@ function preAdvanceRunnerPresentations(
       assetSrc: runnerAssetSrc,
       baseLabel: `${advance.fromBase}루`,
       status: "WAITING" as const,
+      motion: "IDLE" as const,
     }];
   });
   return [...settled, ...sourceRunners];
@@ -406,6 +414,29 @@ function runnerFacing(
     return advance.toBase === 2 || advance.toBase === 3 ? "LEFT" : "RIGHT";
   }
   return after.xPercent < before.xPercent ? "LEFT" : "RIGHT";
+}
+
+/** Selects a deterministic body action from the authoritative runner timeline. */
+export function baseballRunnerMotionV2(
+  advance: RunnerAdvance,
+  elapsedMs: number,
+  status: RunnerPresentationStatus,
+): BaseballRunnerMotionV2 {
+  if (status === "WAITING") return "IDLE";
+  if (status === "SCORE") return "SCORE";
+  if (advance.result !== "SCORE" && (status === "SAFE" || status === "OUT")) {
+    return "SLIDE";
+  }
+  if (status !== "RUNNING") return "IDLE";
+  if (advance.result === "SCORE") return "SPRINT";
+
+  const terminalTimeMs = runnerAdvanceTerminalTimeMs(advance);
+  const activeDurationMs = Math.max(0, terminalTimeMs - advance.startedAtMs);
+  const slideWindowMs = Math.min(
+    BASEBALL_RUNNER_SLIDE_MAX_MS_V2,
+    activeDurationMs * BASEBALL_RUNNER_SLIDE_FRACTION_V2,
+  );
+  return elapsedMs >= terminalTimeMs - slideWindowMs ? "SLIDE" : "SPRINT";
 }
 
 export interface CreateBaseballRunnerPresentationsV2Input {
@@ -468,6 +499,7 @@ export function createBaseballRunnerPresentationsV2({
       assetSrc: runnerAssetSrc,
       baseLabel: runnerStatusLabel(sample),
       status: sample.status,
+      motion: baseballRunnerMotionV2(advance, runnerElapsedMs, sample.status),
       facing: runnerFacing(advance, runnerElapsedMs, event.camera),
     };
   });

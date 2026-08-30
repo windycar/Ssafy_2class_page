@@ -284,6 +284,7 @@ function RunnerLayerV2({ runners }: { runners: readonly BaseballRunnerPresentati
           style={pointStyle(runner.point)}
           data-player-id={runner.playerId}
           data-status={runner.status ?? "WAITING"}
+          data-motion={runner.motion ?? "IDLE"}
           data-facing={runner.facing ?? "RIGHT"}
           key={runner.playerId}
         >

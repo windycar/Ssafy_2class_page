@@ -166,7 +166,29 @@ test("shared 주루 빌더는 event duration이 아니라 authoritative 종착 �
   });
   assert.equal(runners[0].assetSrc, "runner-blue.png");
   assert.match(runners[0].baseLabel ?? "", /세이프/);
+  assert.equal(runners[0].motion, "SLIDE");
   assert.equal(runners[0].facing, "LEFT");
+});
+
+test("비득점 주자는 초반에 전력질주하고 실제 종착 직전에 슬라이드한다", () => {
+  const safeAdvance = advance();
+  const game = gameWithPlay(runnerResolution([safeAdvance]));
+  const event = visualEvent("RUNNER_ADVANCE", "FIRST_BASE_LINE");
+  const atProgress = (eventProgress: number) => createBaseballRunnerPresentationsV2({
+    authoritativeGame: game,
+    presentationGame: game,
+    event,
+    eventProgress,
+    cameraMode: "FIRST_BASE_LINE",
+  })[0];
+
+  const sprinting = atProgress(0.4);
+  assert.equal(sprinting.status, "RUNNING");
+  assert.equal(sprinting.motion, "SPRINT");
+
+  const sliding = atProgress(0.95);
+  assert.equal(sliding.status, "RUNNING");
+  assert.equal(sliding.motion, "SLIDE");
 });
 
 test("주자 이미지는 베이스 경로의 실제 좌우 이동 방향을 바라본다", () => {
@@ -209,6 +231,7 @@ test("shared 주루 빌더는 OUT을 outAtMs 위치에 고정하고 득점 컷�
     cameraMode: "FIRST_BASE_LINE",
   })[0];
   assert.equal(outRunner.status, "OUT");
+  assert.equal(outRunner.motion, "SLIDE");
   assert.ok(outRunner.point.x > FIRST_BASE_LINE_RUNNER_LAYOUT.first.xPercent);
   assert.ok(outRunner.point.x < FIRST_BASE_LINE_RUNNER_LAYOUT.home.xPercent);
 
@@ -229,6 +252,7 @@ test("shared 주루 빌더는 OUT을 outAtMs 위치에 고정하고 득점 컷�
     cameraMode: "RUN_SCORED",
   })[0];
   assert.equal(scoreStart.status, "RUNNING");
+  assert.equal(scoreStart.motion, "SPRINT");
   assert.notDeepEqual(
     { x: scoreStart.point.x, y: scoreStart.point.y },
     { x: RUN_SCORED_RUNNER_LAYOUT.home.xPercent, y: RUN_SCORED_RUNNER_LAYOUT.home.yPercent },
@@ -242,6 +266,7 @@ test("shared 주루 빌더는 OUT을 outAtMs 위치에 고정하고 득점 컷�
     cameraMode: "RUN_SCORED",
   })[0];
   assert.equal(scoreRunner.status, "SCORE");
+  assert.equal(scoreRunner.motion, "SCORE");
   assert.equal(scoreRunner.point.x, RUN_SCORED_RUNNER_LAYOUT.home.xPercent);
   assert.equal(scoreRunner.point.y, RUN_SCORED_RUNNER_LAYOUT.home.yPercent);
 });
@@ -289,6 +314,7 @@ test("복수 득점 주자는 연출 중 겹침을 피한 뒤 마지막 프레�
   assert.equal(finishedRunners.length, 2);
   for (const runner of finishedRunners) {
     assert.equal(runner.status, "SCORE");
+    assert.equal(runner.motion, "SCORE");
     assert.equal(runner.point.x, RUN_SCORED_RUNNER_LAYOUT.home.xPercent);
     assert.equal(runner.point.y, RUN_SCORED_RUNNER_LAYOUT.home.yPercent);
   }
@@ -323,6 +349,28 @@ test("타구·수비 재생 중에는 resolved 다음 루가 아니라 플레이
   assert.deepEqual(runners.map((runner) => runner.playerId), [originalThird.runnerId]);
   assert.equal(runners[0].baseLabel, "3루");
   assert.equal(runners[0].status, "WAITING");
+  assert.equal(runners[0].motion, "IDLE");
+});
+
+test("플레이가 없는 베이스 주자는 SAFE 상태에서도 정지 동작을 유지한다", () => {
+  const game = gameWithPlay(null);
+  const playerId = game.teams[0].lineupPlayerIds[0];
+  game.bases.first = {
+    playerId,
+    name: "정지 주자",
+    speed: 72,
+    currentBase: 1,
+  };
+
+  const runner = createBaseballRunnerPresentationsV2({
+    authoritativeGame: game,
+    presentationGame: game,
+    event: null,
+    eventProgress: 0,
+    cameraMode: "INFIELD",
+  })[0];
+  assert.equal(runner.status, "SAFE");
+  assert.equal(runner.motion, "IDLE");
 });
 
 test("수비 연출은 접근→포구→송구→정지와 실패 동작을 판정별로 구분한다", () => {
