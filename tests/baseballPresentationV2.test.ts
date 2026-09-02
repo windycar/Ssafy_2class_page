@@ -121,6 +121,12 @@ test("투구 프레임은 공 본체 하나와 이전 진행률 잔상 10개만 
   assert.ok(frame.trails.every((trail) => trail.progress < frame.body.progress));
   assert.ok(frame.trails.every((trail, index) => index === 0 || trail.progress <= frame.trails[index - 1].progress));
   assert.ok(frame.trails.every((trail) => trail.opacity < 1));
+  assert.ok(frame.trails.every((trail) => trail.opacity <= 0.13));
+  assert.ok(
+    createPitchVisualFrame(FOUR_SEAM_TRAJECTORY, 0.02).trails
+      .every((trail) => trail.opacity === 0),
+    "비행 초반에 같은 release 위치로 clamp된 10개 잔상이 별도 공처럼 겹치면 안 됨",
+  );
   assert.deepEqual(frame, createPitchVisualFrame(FOUR_SEAM_TRAJECTORY, 0.72));
 });
 

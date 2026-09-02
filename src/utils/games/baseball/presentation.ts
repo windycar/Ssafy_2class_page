@@ -190,7 +190,8 @@ export function createPitchVisualFrame(
     projection,
   );
   const trails = Array.from({ length: PITCH_TRAIL_COUNT }, (_, index) => {
-    const trailProgress = Math.max(0, normalized - gap * (index + 1));
+    const unclampedProgress = normalized - gap * (index + 1);
+    const trailProgress = Math.max(0, unclampedProgress);
     const projected = projectPitchFlightSample(
       samplePitchFlight(trajectory, trailProgress),
       projection,
@@ -198,8 +199,10 @@ export function createPitchVisualFrame(
     const age = (index + 1) / PITCH_TRAIL_COUNT;
     return {
       ...projected,
-      scale: round(projected.scale * lerp(0.9, 0.55, age)),
-      opacity: round(lerp(0.48, 0.07, age), 3),
+      scale: round(projected.scale * lerp(0.78, 0.45, age)),
+      opacity: unclampedProgress > 0
+        ? round(lerp(0.13, 0.015, age), 3)
+        : 0,
     };
   });
 

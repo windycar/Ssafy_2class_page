@@ -404,6 +404,7 @@ test("인플레이 득점은 접촉부터 다음 타자까지 정해진 순서�
     "RUN_SCORED",
     "BATTER",
   ]);
+  assert.ok(events[0].durationMs >= 700 && events[0].durationMs <= 900);
   assert.deepEqual(input, snapshot, "큐 생성은 authoritative 입력을 수정하지 않아야 한다");
 });
 
@@ -447,6 +448,7 @@ test("홈런은 수비 결과를 생략하고 홈런 전용 흐름을 만든다"
   ]);
   assert.equal(events[1].camera, "HOME_RUN");
   assert.equal(events[5].camera, "HOME_RUN");
+  assert.ok(events[0].durationMs >= 550 && events[0].durationMs <= 700);
   assert.ok(events[1].durationMs >= 700 && events[1].durationMs <= 800);
   const sequenceDuration = events.reduce(
     (total, event) => total + event.durationMs + baseballVisualEventTerminalHoldMs(event),

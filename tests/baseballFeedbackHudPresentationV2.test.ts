@@ -62,6 +62,12 @@ test("타격 피드백은 실제 CONTACT payload를 표시하고 일반 타구 �
   assert.match(style, /@keyframes bbv2-perfect-contact-impact/);
   assert.match(style, /@keyframes bbv2-home-run-camera-impact/);
   assert.match(style, /@keyframes bbv2-grand-slam-camera-impact/);
+  assert.match(style, /\.bbv2-contact-feedback\s*\{[\s\S]*?opacity:\s*1/);
+  const contactEnterKeyframes = style.slice(
+    style.indexOf("@keyframes bbv2-contact-feedback-enter"),
+    style.indexOf("@keyframes bbv2-scoring-enter"),
+  );
+  assert.doesNotMatch(contactEnterKeyframes, /opacity:\s*0/);
   const reducedMotion = style.slice(style.indexOf("@media (prefers-reduced-motion: reduce)"));
   assert.match(reducedMotion, /\.bbv2-contact-feedback/);
   assert.match(reducedMotion, /\.bbv2-stage--impact-perfect/);

@@ -41,6 +41,11 @@ test("RAF TICK은 상위 React state 대신 공유 신호와 DOM 레이어를 �
 
   assert.match(playback, /action\.type !== "TICK" && mountedRef\.current/);
   assert.match(playback, /progressSource\.setProgress\(transition\.state\.eventProgress\)/);
+  assert.match(
+    soloController,
+    /currentEventProgressSource: currentVisualEventProgressSource/,
+    "공통 재생기의 진행률 신호는 솔로 컨트롤러 공개 필드 이름으로 명시적으로 별칭 처리해야 함",
+  );
   assert.doesNotMatch(soloController, /setPitchProgress|setPitchPulseProgress/);
   assert.doesNotMatch(onlineGame, /setPitchProgress|setPitchPulseProgress/);
   assert.match(animatedLayers, /progressSource\.subscribe\(renderFrame\)/);

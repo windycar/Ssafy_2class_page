@@ -207,7 +207,7 @@ export function useBaseballSoloController(
 
   const {
     currentEvent: playbackCurrentEvent,
-    currentEventProgressSource,
+    currentEventProgressSource: currentVisualEventProgressSource,
     start: startVisualPlayback,
     skip: skipVisualPlayback,
     seek: seekVisualPlayback,

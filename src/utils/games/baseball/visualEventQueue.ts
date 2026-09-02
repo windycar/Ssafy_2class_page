@@ -119,7 +119,7 @@ export function buildPlayVisualEvents(
     drafts.push({
       kind: "CONTACT",
       camera: "CONTACT",
-      durationMs: homeRun ? 150 : 420,
+      durationMs: homeRun ? 620 : 780,
       payload: {
         contact: contact ? jsonCopy(contact) : null,
         batterId: official.batterId,

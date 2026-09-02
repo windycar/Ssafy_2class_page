@@ -123,7 +123,13 @@ test("스테이지는 동일한 공 이미지로 본체 1개와 이전 위치 �
   const blurValues = [...trailStyleSource.matchAll(/blur\(([\d.]+)px\)/g)]
     .map((match) => Number(match[1]));
   assert.ok(blurValues.length >= 5);
-  assert.ok(blurValues.every((value) => value <= 1.25), "잔상 블러는 약하게 유지해야 한다");
+  assert.ok(
+    blurValues.every((value) => value >= 1.2 && value <= 2.8),
+    "잔상은 또 하나의 야구공이 아니라 짧은 모션 블러로 보여야 한다",
+  );
+  assert.match(trailStyleSource, /opacity:\s*0\.32/);
+  assert.match(trailStyleSource, /saturate\(0\.22\)/);
+  assert.match(trailStyleSource, /scaleX\(1\.65\)/);
 
   const pitchToneOpacity = [...styleSource.matchAll(
     /--bbv2-pitch-tone:\s*rgb\([^)]*\/\s*(\d+)%\)/g,

@@ -502,8 +502,8 @@
 
   z-index: 28;
   display: block;
-  width: clamp(20px, 3.2vw, 50px);
-  aspect-ratio: 1;
+  width: clamp(8px, 1.35vw, 20px);
+  aspect-ratio: 2.2 / 1;
 }
 
 .bbv2-ball-trail-point img {
@@ -511,21 +511,21 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  opacity: 1;
-  filter: drop-shadow(0 0 3px var(--bbv2-pitch-tone));
-  transform: rotate(var(--bbv2-point-rotation));
+  opacity: 0.32;
+  filter: saturate(0.22) brightness(1.18) drop-shadow(0 0 2px var(--bbv2-pitch-tone));
+  transform: rotate(var(--bbv2-point-rotation)) scaleX(1.65);
 }
 
 .bbv2-ball-trail-point:nth-child(1),
-.bbv2-ball-trail-point:nth-child(2) { filter: blur(0.25px); }
+.bbv2-ball-trail-point:nth-child(2) { filter: blur(1.2px); }
 .bbv2-ball-trail-point:nth-child(3),
-.bbv2-ball-trail-point:nth-child(4) { filter: blur(0.45px); }
+.bbv2-ball-trail-point:nth-child(4) { filter: blur(1.6px); }
 .bbv2-ball-trail-point:nth-child(5),
-.bbv2-ball-trail-point:nth-child(6) { filter: blur(0.65px); }
+.bbv2-ball-trail-point:nth-child(6) { filter: blur(2px); }
 .bbv2-ball-trail-point:nth-child(7),
-.bbv2-ball-trail-point:nth-child(8) { filter: blur(0.9px); }
+.bbv2-ball-trail-point:nth-child(8) { filter: blur(2.4px); }
 .bbv2-ball-trail-point:nth-child(9),
-.bbv2-ball-trail-point:nth-child(10) { filter: blur(1.15px); }
+.bbv2-ball-trail-point:nth-child(10) { filter: blur(2.8px); }
 
 .bbv2-ball-body {
   --bbv2-pitch-tone: rgb(255 255 255 / 18%);
@@ -556,7 +556,7 @@
 }
 
 .bbv2-flight-layer--throw .bbv2-ball-trail-point {
-  width: clamp(13px, 2vw, 28px);
+  width: clamp(7px, 1vw, 14px);
 }
 
 .bbv2-ball--fourSeam { --bbv2-pitch-tone: rgb(248 113 113 / 26%); }
@@ -803,6 +803,8 @@
   background: rgb(3 20 38 / 87%);
   box-shadow: 0 14px 34px rgb(0 0 0 / 36%);
   pointer-events: none;
+  z-index: 2;
+  opacity: 1;
   transform: translateX(-50%);
   text-align: center;
   backdrop-filter: blur(10px);
@@ -1091,8 +1093,8 @@
 }
 
 @keyframes bbv2-contact-feedback-enter {
-  from { opacity: 0; transform: translateX(-50%) scale(0.92); }
-  to { opacity: 1; transform: translateX(-50%) scale(1); }
+  from { transform: translateX(-50%) scale(0.94); }
+  to { transform: translateX(-50%) scale(1); }
 }
 
 @keyframes bbv2-scoring-enter {
