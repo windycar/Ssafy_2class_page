@@ -122,10 +122,55 @@ export interface BaseballFinalHighlight {
   detail: string;
 }
 
+export interface BaseballFinalBatterLine {
+  playerId: string;
+  name: string;
+  number: number;
+  position: string;
+  battingOrder: number;
+  pa: number;
+  ab: number;
+  h: number;
+  doubles: number;
+  triples: number;
+  hr: number;
+  rbi: number;
+  r: number;
+  bb: number;
+  so: number;
+}
+
+export interface BaseballFinalPitcherLine {
+  playerId: string;
+  name: string;
+  number: number;
+  position: string;
+  outsRecorded: number;
+  inningsPitched: string;
+  pitches: number;
+  hitsAllowed: number;
+  runsAllowed: number;
+  earnedRuns: number;
+  walks: number;
+  strikeouts: number;
+}
+
+export interface BaseballFinalTeamBoxScore {
+  teamIndex: TeamIndex;
+  teamId: string;
+  teamName: string;
+  shortName: string;
+  themeColor: string;
+  accentColor: string;
+  batters: BaseballFinalBatterLine[];
+  pitchers: BaseballFinalPitcherLine[];
+}
+
 export interface BaseballFinalResult {
   lineScore: BaseballFinalLineScore;
   mvp: BaseballFinalMvp;
   highlights: BaseballFinalHighlight[];
+  boxScore: [BaseballFinalTeamBoxScore, BaseballFinalTeamBoxScore];
 }
 
 interface MvpCandidate extends BaseballFinalMvp {
@@ -185,7 +230,7 @@ export function formatBaseballPitcherPrimaryLine(stats: PitcherGameStats) {
 export function formatBaseballPitcherSecondaryLine(stats: PitcherGameStats) {
   return [
     `${boundedInteger(stats.hitsAllowed)}피안타`,
-    `${boundedInteger(stats.runsAllowed)}실점`,
+    `R ${boundedInteger(stats.runsAllowed)} / ER ${boundedInteger(stats.earnedRuns)}`,
     `${boundedInteger(stats.pitches)}구`,
   ].join(" · ");
 }
@@ -212,11 +257,15 @@ function batterImpact(stats: BatterGameStats) {
 }
 
 function pitcherImpact(stats: PitcherGameStats) {
+  const runsAllowed = boundedInteger(stats.runsAllowed);
+  const earnedRuns = Math.min(runsAllowed, boundedInteger(stats.earnedRuns));
+  const unearnedRuns = runsAllowed - earnedRuns;
   return (
     stats.outsRecorded * 3
     + stats.strikeouts * 4
     - stats.hitsAllowed * 2
-    - stats.runsAllowed * 7
+    - earnedRuns * 7
+    - unearnedRuns * 2
     - stats.walks * 2
   );
 }
@@ -330,6 +379,72 @@ export function createBaseballFinalLineScore(game: BaseballGameState): BaseballF
     isWinner: game.winner === teamIndex,
   })) as [BaseballFinalLineScoreRow, BaseballFinalLineScoreRow];
   return { innings, rows };
+}
+
+/** Build complete, presentation-safe batting and pitching lines for both clubs. */
+export function createBaseballFinalBoxScore(
+  game: BaseballGameState,
+): [BaseballFinalTeamBoxScore, BaseballFinalTeamBoxScore] {
+  return game.teams.map((team, rawTeamIndex) => {
+    const teamIndex = rawTeamIndex as TeamIndex;
+    const batters = team.lineupPlayerIds.map((playerId, lineupIndex) => {
+      const player = getBaseballPlayer(playerId);
+      const stats = team.batterStats[playerId];
+      return {
+        playerId,
+        name: player?.name ?? playerId,
+        number: boundedInteger(player?.number ?? 0),
+        position: player?.position ?? "DH",
+        battingOrder: lineupIndex + 1,
+        pa: boundedInteger(stats?.pa ?? 0),
+        ab: boundedInteger(stats?.ab ?? 0),
+        h: boundedInteger(stats?.h ?? 0),
+        doubles: boundedInteger(stats?.doubles ?? 0),
+        triples: boundedInteger(stats?.triples ?? 0),
+        hr: boundedInteger(stats?.hr ?? 0),
+        rbi: boundedInteger(stats?.rbi ?? 0),
+        r: boundedInteger(stats?.r ?? 0),
+        bb: boundedInteger(stats?.bb ?? 0),
+        so: boundedInteger(stats?.so ?? 0),
+      } satisfies BaseballFinalBatterLine;
+    });
+
+    const pitcherIds = [
+      team.pitcher.playerId,
+      ...Object.keys(team.pitcherStats).filter((playerId) => playerId !== team.pitcher.playerId).sort(),
+    ];
+    const pitchers = pitcherIds.map((playerId) => {
+      const player = getBaseballPlayer(playerId);
+      const stats = team.pitcherStats[playerId];
+      const outsRecorded = boundedInteger(stats?.outsRecorded ?? 0);
+      const runsAllowed = boundedInteger(stats?.runsAllowed ?? 0);
+      return {
+        playerId,
+        name: player?.name ?? playerId,
+        number: boundedInteger(player?.number ?? 0),
+        position: player?.position ?? "P",
+        outsRecorded,
+        inningsPitched: formatBaseballInningsPitched(outsRecorded),
+        pitches: boundedInteger(stats?.pitches ?? 0),
+        hitsAllowed: boundedInteger(stats?.hitsAllowed ?? 0),
+        runsAllowed,
+        earnedRuns: Math.min(runsAllowed, boundedInteger(stats?.earnedRuns ?? 0)),
+        walks: boundedInteger(stats?.walks ?? 0),
+        strikeouts: boundedInteger(stats?.strikeouts ?? 0),
+      } satisfies BaseballFinalPitcherLine;
+    });
+
+    return {
+      teamIndex,
+      teamId: team.id,
+      teamName: team.name,
+      shortName: team.shortName,
+      themeColor: team.themeColor,
+      accentColor: team.accentColor,
+      batters,
+      pitchers,
+    } satisfies BaseballFinalTeamBoxScore;
+  }) as [BaseballFinalTeamBoxScore, BaseballFinalTeamBoxScore];
 }
 
 function scoreLeader(scores: readonly [number, number]): TeamIndex | null {
@@ -525,5 +640,6 @@ export function createBaseballFinalResult(game: BaseballGameState): BaseballFina
     lineScore: createBaseballFinalLineScore(game),
     mvp: selectBaseballFinalMvp(game),
     highlights: selectBaseballFinalHighlights(game),
+    boxScore: createBaseballFinalBoxScore(game),
   };
 }

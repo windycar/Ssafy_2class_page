@@ -28,6 +28,7 @@ export type {
 } from "./baseball/battingEngine.ts";
 export * from "./baseball/ballInPlayEngine.ts";
 export * from "./baseball/baseRunningEngine.ts";
+export * from "./baseball/earnedRunEngine.ts";
 export * from "./baseball/cpuPitchingAI.ts";
 export * from "./baseball/cpuBattingAI.ts";
 export * from "./baseball/cameraDirector.ts";

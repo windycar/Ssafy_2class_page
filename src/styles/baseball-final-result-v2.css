@@ -5,7 +5,7 @@
 }
 
 .bbv2-overlay--final.bbv2-final-result .bbv2-overlay__content {
-  width: min(94%, 980px);
+  width: min(96%, 1120px);
   max-height: calc(100% - 1.25rem);
   padding: clamp(0.7rem, 1.7vw, 1.2rem);
   border-color: rgb(255 255 255 / 32%);
@@ -391,6 +391,209 @@
   white-space: nowrap;
 }
 
+.bbv2-final-boxscore {
+  margin-top: 0.72rem;
+  padding: 0.68rem;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 0.78rem;
+  background: rgb(0 0 0 / 18%);
+  text-align: left;
+}
+
+.bbv2-final-boxscore__heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.7rem;
+  margin-bottom: 0.52rem;
+}
+
+.bbv2-final-boxscore__heading h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 1000;
+}
+
+.bbv2-final-boxscore__teams {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.62rem;
+}
+
+.bbv2-final-boxscore__team {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 0.68rem;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--bbv2-result-team) 12%, transparent), transparent 42%),
+    #061526;
+}
+
+.bbv2-final-boxscore__team > header {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.42rem;
+  padding: 0.48rem 0.58rem;
+  border-bottom: 1px solid rgb(255 255 255 / 11%);
+}
+
+.bbv2-final-boxscore__team > header i {
+  width: 8px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--bbv2-result-team);
+  box-shadow: 0 0 9px var(--bbv2-result-team);
+}
+
+.bbv2-final-boxscore__team > header h4 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 1000;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bbv2-final-boxscore__team > header span {
+  color: var(--bbv2-yellow);
+  font-size: 0.7rem;
+  font-weight: 1000;
+  letter-spacing: 0.08em;
+}
+
+.bbv2-final-stat-table {
+  width: 100%;
+  overflow-x: auto;
+  background: rgb(0 0 0 / 12%);
+  scrollbar-width: thin;
+  scrollbar-color: rgb(148 163 184 / 55%) transparent;
+}
+
+.bbv2-final-stat-table + .bbv2-final-stat-table {
+  border-top: 1px solid rgb(255 255 255 / 12%);
+}
+
+.bbv2-final-stat-table:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: -2px;
+}
+
+.bbv2-final-stat-table table {
+  width: 100%;
+  min-width: 660px;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: rgb(241 245 249 / 88%);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bbv2-final-stat-table--pitchers table {
+  min-width: 420px;
+}
+
+.bbv2-final-stat-table caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.bbv2-final-stat-table th,
+.bbv2-final-stat-table td {
+  min-width: 28px;
+  padding: 0.34rem 0.3rem;
+  border-right: 1px solid rgb(255 255 255 / 7%);
+  border-bottom: 1px solid rgb(255 255 255 / 7%);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.bbv2-final-stat-table tr > :last-child {
+  border-right: 0;
+}
+
+.bbv2-final-stat-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.bbv2-final-stat-table thead th {
+  color: rgb(255 255 255 / 62%);
+  background: #0b2035;
+  font-weight: 950;
+}
+
+.bbv2-final-stat-table abbr {
+  text-decoration: none;
+}
+
+.bbv2-final-stat-table tbody tr:nth-child(even) {
+  background: rgb(255 255 255 / 2.5%);
+}
+
+.bbv2-final-stat-table tbody th {
+  min-width: 94px;
+  color: white;
+  background: #081a2d;
+  font-weight: 900;
+  text-align: left;
+}
+
+.bbv2-final-stat-table tbody th small {
+  margin-right: 0.32rem;
+  color: color-mix(in srgb, var(--bbv2-result-team) 72%, white);
+  font-size: 0.7rem;
+  font-weight: 1000;
+}
+
+.bbv2-final-stat-table tbody th strong {
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.bbv2-final-stat-table--batters thead th:first-child,
+.bbv2-final-stat-table--batters tbody td:first-child {
+  position: sticky;
+  z-index: 2;
+  left: 0;
+  min-width: 34px;
+  background: #0b2035;
+}
+
+.bbv2-final-stat-table--batters tbody td:first-child {
+  background: #081a2d;
+}
+
+.bbv2-final-stat-table--batters thead th:nth-child(2),
+.bbv2-final-stat-table--batters tbody th {
+  position: sticky;
+  z-index: 2;
+  left: 34px;
+}
+
+.bbv2-final-stat-table--pitchers thead th:first-child,
+.bbv2-final-stat-table--pitchers tbody th {
+  position: sticky;
+  z-index: 2;
+  left: 0;
+}
+
+.bbv2-final-stat-table .is-emphasis {
+  color: #bfdbfe;
+  font-weight: 1000;
+}
+
+.bbv2-final-stat-table .is-impact {
+  color: var(--bbv2-yellow);
+  font-weight: 1000;
+}
+
 .bbv2-final-result > .bbv2-overlay__content > .bbv2-overlay__actions {
   margin-top: 0.65rem;
 }
@@ -410,6 +613,10 @@
 
   .bbv2-final-mvp__portrait--character {
     min-height: 100px;
+  }
+
+  .bbv2-final-boxscore__teams {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -439,8 +646,17 @@
   }
 
   .bbv2-final-mvp,
-  .bbv2-final-highlights {
+  .bbv2-final-highlights,
+  .bbv2-final-boxscore {
     padding: 0.5rem;
+  }
+
+  .bbv2-final-stat-table table {
+    min-width: 620px;
+  }
+
+  .bbv2-final-stat-table--pitchers table {
+    min-width: 400px;
   }
 
   .bbv2-final-mvp__copy h3 {

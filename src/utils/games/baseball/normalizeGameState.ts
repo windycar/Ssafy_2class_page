@@ -276,6 +276,8 @@ function isV2Runner(value: unknown, currentBase: BaseNumber): value is BaseRunne
     || !isNonEmptyString(value.name)
     || !isFiniteInRange(value.speed, 0, 100)
     || value.currentBase !== currentBase) return false;
+  if (value.earnedRunEligible !== undefined
+    && typeof value.earnedRunEligible !== "boolean") return false;
   if (value.targetBase !== undefined
     && (!isSafeIntegerInRange(value.targetBase, currentBase + 1, 4))) return false;
   if (value.progress !== undefined

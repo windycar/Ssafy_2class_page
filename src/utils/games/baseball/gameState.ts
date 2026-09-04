@@ -193,6 +193,7 @@ export function createRunner(player: BaseballPlayer, currentBase: BaseNumber): B
     name: player.name,
     speed: player.speed,
     currentBase,
+    earnedRunEligible: true,
   };
 }
 

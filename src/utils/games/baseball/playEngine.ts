@@ -24,6 +24,10 @@ import {
 import { resolvePitch } from "./pitchEngine.ts";
 import { createBaseballPlayByPlayEntryV2 } from "./playByPlay.ts";
 import { deriveSeed } from "./random.ts";
+import {
+  earnedRunsForPlay,
+  recordBatterRunnerEligibility,
+} from "./earnedRunEngine.ts";
 import type {
   BaseRunner,
   BaseballGameState,
@@ -263,10 +267,10 @@ function makeWalkAdvance(
 
 function settledRunner(runner: BaseRunner, currentBase: 1 | 2 | 3): BaseRunner {
   return {
-    playerId: runner.playerId,
-    name: runner.name,
-    speed: runner.speed,
+    ...runner,
     currentBase,
+    targetBase: undefined,
+    progress: undefined,
   };
 }
 
@@ -623,6 +627,7 @@ function applyPlateStats(
   state: BaseballGameState,
   battingTeamIndex: TeamIndex,
   official: OfficialPlayResult,
+  earnedRuns: number,
 ) {
   if (!official.plateAppearanceEnded) return;
   const batting = state.teams[battingTeamIndex];
@@ -659,7 +664,7 @@ function applyPlateStats(
 
   pitcherStats.outsRecorded += official.outsRecorded;
   pitcherStats.runsAllowed += official.runsScored;
-  if (official.code !== "ERROR") pitcherStats.earnedRuns += official.runsScored;
+  pitcherStats.earnedRuns += earnedRuns;
   if (official.errorFielderId) fielding.errors += 1;
 }
 
@@ -835,8 +840,10 @@ export function executeBatterAction(
   const next = cloneGameState(state);
   const battingTeamIndex = state.battingTeam;
   const fieldingTeamIndex: TeamIndex = battingTeamIndex === 0 ? 1 : 0;
+  const earnedRuns = earnedRunsForPlay(state, official);
   applyRunsAndBases(next, battingTeamIndex, official, pipeline.runners);
-  applyPlateStats(next, battingTeamIndex, official);
+  recordBatterRunnerEligibility(next.bases, state, official);
+  applyPlateStats(next, battingTeamIndex, official, earnedRuns);
   applyPitcherConfidence(next, fieldingTeamIndex, official);
 
   if (!official.plateAppearanceEnded) {

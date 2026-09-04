@@ -245,6 +245,8 @@ export interface BaseRunner {
   name: string;
   speed: number;
   currentBase: BaseNumber;
+  /** False when this runner reached after a fielding error and cannot become an earned run. */
+  earnedRunEligible?: boolean;
   targetBase?: RunnerDestination;
   progress?: number;
 }
