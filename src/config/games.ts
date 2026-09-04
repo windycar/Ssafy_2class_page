@@ -1,6 +1,6 @@
 import type { GameDefinition } from "../types/game";
 import bangHubArt from "../assets/games/bang-hub-art.png";
-import baseballArena from "../assets/games/baseball-arena-facing.png";
+import baseballArena from "../assets/games/baseball-arena-facing.webp";
 
 export const GAMES: GameDefinition[] = [
   {

@@ -9,8 +9,8 @@ import {
   type ReactNode,
 } from "react";
 
-import baseballArenaFacing from "../../../../assets/games/baseball-arena-facing.png";
-import baseballArenaSwingFacing from "../../../../assets/games/baseball-arena-swing-facing.png";
+import baseballArenaFacing from "../../../../assets/games/baseball-arena-facing.webp";
+import baseballArenaSwingFacing from "../../../../assets/games/baseball-arena-swing-facing.webp";
 import {
   BASEBALL_V2_BALL_SOURCE,
   BASEBALL_V2_BATTER_ACTION_SOURCES,

@@ -33,6 +33,35 @@ function pngDimensions(name: string) {
   };
 }
 
+function webpDimensions(name: string) {
+  const bytes = readFileSync(new URL(name, ASSET_DIRECTORY));
+  assert.equal(bytes.toString("ascii", 0, 4), "RIFF", `${name} RIFF signature 누락`);
+  assert.equal(bytes.toString("ascii", 8, 12), "WEBP", `${name} WEBP signature 누락`);
+  const chunkType = bytes.toString("ascii", 12, 16);
+  const readUInt24LE = (offset: number) => (
+    bytes[offset] | (bytes[offset + 1] << 8) | (bytes[offset + 2] << 16)
+  );
+
+  if (chunkType === "VP8X") {
+    return {
+      width: readUInt24LE(24) + 1,
+      height: readUInt24LE(27) + 1,
+      hasAlpha: (bytes[20] & 0x10) !== 0,
+      size: bytes.byteLength,
+    };
+  }
+  if (chunkType === "VP8 ") {
+    assert.deepEqual([...bytes.subarray(23, 26)], [0x9d, 0x01, 0x2a], `${name} VP8 frame header 오류`);
+    return {
+      width: bytes.readUInt16LE(26) & 0x3fff,
+      height: bytes.readUInt16LE(28) & 0x3fff,
+      hasAlpha: false,
+      size: bytes.byteLength,
+    };
+  }
+  throw new Error(`${name} 지원하지 않는 WebP chunk ${chunkType}`);
+}
+
 function paethPredictor(left: number, above: number, upperLeft: number) {
   const estimate = left + above - upperLeft;
   const leftDistance = Math.abs(estimate - left);
@@ -242,7 +271,7 @@ test("주자 idle/sprint/slide/score 동작은 정적·RAF 레이어와 CSS에 �
 
 test("포수 액션과 투명 미트는 실제 런타임 자산이며 투구 목표에 연결된다", () => {
   const catcher = pngDimensions("baseball-catcher-actions-red-chibi-v5.png");
-  const mitt = pngDimensions("baseball-catcher-mitt-v2.png");
+  const mitt = webpDimensions("baseball-catcher-mitt-v2.webp");
   const stageSource = readFileSync(
     path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballStageV2.tsx"),
     "utf8",
@@ -259,7 +288,8 @@ test("포수 액션과 투명 미트는 실제 런타임 자산이며 투구 목
   assert.equal(catcher.width / catcher.height, 2048 / 768);
   assert.equal(catcher.colorType, 6);
   assert.ok(mitt.width >= 512 && mitt.height >= 512);
-  assert.equal(mitt.colorType, 6);
+  assert.equal(mitt.hasAlpha, true);
+  assert.ok(mitt.size >= 300_000 && mitt.size <= 800_000);
   assert.match(stageSource, /motion !== "CATCH"/);
   assert.match(stageSource, /sprite\.progressSource\.subscribe\(renderFrame\)/);
   assert.match(animatedLayerSource, /className="bbv2-catcher-mitt"/);
@@ -267,19 +297,19 @@ test("포수 액션과 투명 미트는 실제 런타임 자산이며 투구 목
   assert.match(playPresentationSource, /caught: progress >= 0\.92/);
 });
 
-test("9명 타자와 양 팀 선발투수 초상은 RGBA 자산이며 소개·HUD·MVP에 실제 연결된다", () => {
+test("9명 타자와 양 팀 선발투수 초상은 투명 WebP이며 소개·HUD·MVP에 실제 연결된다", () => {
   const portraitNames = [
-    "baseball-portrait-kia-01-v2.png",
-    "baseball-portrait-kia-16-v2.png",
-    "baseball-portrait-kia-05-v2.png",
-    "baseball-portrait-kia-34-v2.png",
-    "baseball-portrait-kia-47-v2.png",
-    "baseball-portrait-kia-03-v2.png",
-    "baseball-portrait-kia-25-v2.png",
-    "baseball-portrait-kia-42-v2.png",
-    "baseball-portrait-kia-66-v2.png",
-    "baseball-portrait-kia-54-v2.png",
-    "baseball-portrait-cpu-21-v2.png",
+    "baseball-portrait-kia-01-v2.webp",
+    "baseball-portrait-kia-16-v2.webp",
+    "baseball-portrait-kia-05-v2.webp",
+    "baseball-portrait-kia-34-v2.webp",
+    "baseball-portrait-kia-47-v2.webp",
+    "baseball-portrait-kia-03-v2.webp",
+    "baseball-portrait-kia-25-v2.webp",
+    "baseball-portrait-kia-42-v2.webp",
+    "baseball-portrait-kia-66-v2.webp",
+    "baseball-portrait-kia-54-v2.webp",
+    "baseball-portrait-cpu-21-v2.webp",
   ] as const;
   const assetsSource = readFileSync(
     path.join(SOURCE_DIRECTORY, "config/baseballV2Assets.ts"),
@@ -299,11 +329,12 @@ test("9명 타자와 양 팀 선발투수 초상은 RGBA 자산이며 소개·HU
   );
 
   for (const name of portraitNames) {
-    const portrait = pngDimensions(name);
+    const portrait = webpDimensions(name);
     assert.ok(portrait.width >= 1_000, `${name} 가로 해상도가 너무 작음`);
     assert.ok(portrait.height >= 1_000, `${name} 세로 해상도가 너무 작음`);
-    assert.equal(portrait.colorType, 6, `${name}은 실제 alpha가 있는 RGBA PNG여야 한다`);
-    assert.ok(portrait.size >= 1_000_000, `${name}이 빈 placeholder처럼 너무 작음`);
+    assert.equal(portrait.hasAlpha, true, `${name}은 실제 alpha가 있는 WebP여야 한다`);
+    assert.ok(portrait.size >= 150_000, `${name}이 빈 placeholder처럼 너무 작음`);
+    assert.ok(portrait.size <= 600_000, `${name} WebP 최적화가 풀림`);
     assert.match(assetsSource, new RegExp(name.replaceAll(".", "\\.")), `${name} manifest 연결 누락`);
   }
 
@@ -333,16 +364,16 @@ test("9명 타자와 양 팀 선발투수 초상은 RGBA 자산이며 소개·HU
   }
 });
 
-test("검수 완료된 결과 컷은 투명 RGBA이고 Solo·Online의 공식 판정 단계에 실제 연결된다", () => {
+test("검수 완료된 결과 컷은 투명 WebP이고 Solo·Online의 공식 판정 단계에 실제 연결된다", () => {
   const effectNames = [
-    "baseball-effect-hit-v2.png",
-    "baseball-effect-double-v2.png",
-    "baseball-effect-triple-v2.png",
-    "baseball-effect-home-run-v2.png",
-    "baseball-effect-strikeout-v2.png",
-    "baseball-effect-score-v2.png",
-    "baseball-effect-safe-v2.png",
-    "baseball-effect-out-v2.png",
+    "baseball-effect-hit-v2.webp",
+    "baseball-effect-double-v2.webp",
+    "baseball-effect-triple-v2.webp",
+    "baseball-effect-home-run-v2.webp",
+    "baseball-effect-strikeout-v2.webp",
+    "baseball-effect-score-v2.webp",
+    "baseball-effect-safe-v2.webp",
+    "baseball-effect-out-v2.webp",
   ] as const;
   const effectIds = [
     "effect-hit",
@@ -368,11 +399,12 @@ test("검수 완료된 결과 컷은 투명 RGBA이고 Solo·Online의 공식 �
   );
 
   for (const name of effectNames) {
-    const effect = pngDimensions(name);
+    const effect = webpDimensions(name);
     assert.ok(effect.width >= 1_000, `${name} 가로 해상도가 너무 작음`);
     assert.ok(effect.height >= 1_000, `${name} 세로 해상도가 너무 작음`);
-    assert.equal(effect.colorType, 6, `${name}은 RGBA PNG여야 한다`);
-    assert.ok(effect.size >= 1_000_000, `${name}이 빈 placeholder처럼 너무 작음`);
+    assert.equal(effect.hasAlpha, true, `${name}은 alpha가 있는 WebP여야 한다`);
+    assert.ok(effect.size >= 200_000, `${name}이 빈 placeholder처럼 너무 작음`);
+    assert.ok(effect.size <= 700_000, `${name} WebP 최적화가 풀림`);
     assert.match(assetsSource, new RegExp(name.replaceAll(".", "\\.")));
   }
 
@@ -395,14 +427,14 @@ test("검수 완료된 결과 컷은 투명 RGBA이고 Solo·Online의 공식 �
   }
 });
 
-test("동일 경기장 컨텍스트 6종은 고해상도 원본이며 camera·crowd map과 manifest에 실제 연결된다", () => {
+test("동일 경기장 컨텍스트 6종은 고해상도 WebP이며 camera·crowd map과 manifest에 실제 연결된다", () => {
   const sceneNames = [
-    "baseball-camera-pitcher-empty-v2.png",
-    "baseball-camera-home-run-v2.png",
-    "baseball-camera-dugout-home-v2.png",
-    "baseball-camera-dugout-away-v2.png",
-    "baseball-camera-crowd-normal-v2.png",
-    "baseball-camera-crowd-cheering-v2.png",
+    "baseball-camera-pitcher-empty-v2.webp",
+    "baseball-camera-home-run-v2.webp",
+    "baseball-camera-dugout-home-v2.webp",
+    "baseball-camera-dugout-away-v2.webp",
+    "baseball-camera-crowd-normal-v2.webp",
+    "baseball-camera-crowd-cheering-v2.webp",
   ] as const;
   const manifestIds = [
     "pitcher-camera",
@@ -426,11 +458,11 @@ test("동일 경기장 컨텍스트 6종은 고해상도 원본이며 camera·cr
   );
 
   for (const name of sceneNames) {
-    const scene = pngDimensions(name);
+    const scene = webpDimensions(name);
     assert.ok(scene.width >= 1_600, `${name} 가로 해상도가 너무 작음`);
     assert.ok(scene.height >= 900, `${name} 세로 해상도가 너무 작음`);
-    assert.ok([2, 6].includes(scene.colorType), `${name}은 정상 RGB/RGBA PNG여야 함`);
-    assert.ok(scene.size >= 1_000_000, `${name}이 빈 placeholder처럼 너무 작음`);
+    assert.ok(scene.size >= 150_000, `${name}이 빈 placeholder처럼 너무 작음`);
+    assert.ok(scene.size <= 600_000, `${name} WebP 최적화가 풀림`);
     assert.match(assetsSource, new RegExp(name.replaceAll(".", "\\.")), `${name} config import 누락`);
   }
 
@@ -450,10 +482,32 @@ test("동일 경기장 컨텍스트 6종은 고해상도 원본이며 camera·cr
   assert.doesNotMatch(assetsSource, /from "\.\.\/assets\/games\/baseball-camera-home-run\.png"/);
 });
 
-test("야구 화면은 실제 사용하는 경기장·카메라·캐릭터·공 이미지 묶음만 유지한다", () => {
+test("야구 화면은 48개 실사용 자산만 유지하고 정적 이미지 예산을 지킨다", () => {
   const names = readdirSync(ASSET_DIRECTORY)
-    .filter((name) => name.startsWith("baseball-") && name.endsWith(".png"));
-  assert.ok(names.length >= 19);
+    .filter((name) => name.startsWith("baseball-") && /\.(?:png|webp)$/.test(name));
+  assert.equal(names.length, 48);
+
+  const losslessPngNames = [
+    "baseball-ball-clean-v3.png",
+    "baseball-batter-actions-blue-chibi-v5.png",
+    "baseball-batter-actions-red-chibi-v5.png",
+    "baseball-catcher-actions-red-chibi-v5.png",
+    "baseball-fielder-blue-chibi-v3.png",
+    "baseball-fielder-red-chibi-v4.png",
+    "baseball-pitcher-actions-red-chibi-v5.png",
+    "baseball-runner-blue-chibi-v3.png",
+    "baseball-runner-red-chibi-v3.png",
+  ];
+  assert.deepEqual(
+    names.filter((name) => name.endsWith(".png")).sort(),
+    [...losslessPngNames].sort(),
+    "공과 프레임 시트 외 정적 이미지는 WebP여야 한다",
+  );
+  const totalBytes = names.reduce(
+    (sum, name) => sum + statSync(new URL(name, ASSET_DIRECTORY)).size,
+    0,
+  );
+  assert.ok(totalBytes <= 30 * 1024 * 1024, `야구 자산 예산 30MB 초과: ${totalBytes}`);
 
   const required = [
     "baseball-ball-clean-v3.png",
@@ -465,19 +519,24 @@ test("야구 화면은 실제 사용하는 경기장·카메라·캐릭터·공 
     "baseball-fielder-blue-chibi-v3.png",
     "baseball-fielder-red-chibi-v4.png",
     "baseball-catcher-actions-red-chibi-v5.png",
-    "baseball-camera-pitcher-empty-v2.png",
-    "baseball-camera-infield-wide-v3.png",
-    "baseball-camera-home-run-v2.png",
-    "baseball-camera-run-scored-v4.png",
-    "baseball-camera-left-field-v5.png",
-    "baseball-camera-left-center-v5.png",
-    "baseball-camera-center-field-v5.png",
-    "baseball-camera-right-center-v5.png",
-    "baseball-camera-right-field-v5.png",
+    "baseball-camera-pitcher-empty-v2.webp",
+    "baseball-camera-infield-wide-v3.webp",
+    "baseball-camera-home-run-v2.webp",
+    "baseball-camera-run-scored-v4.webp",
+    "baseball-camera-left-field-v5.webp",
+    "baseball-camera-left-center-v5.webp",
+    "baseball-camera-center-field-v5.webp",
+    "baseball-camera-right-center-v5.webp",
+    "baseball-camera-right-field-v5.webp",
   ];
   for (const name of required) {
     assert.ok(names.includes(name), `${name} 누락`);
     assert.ok(statSync(new URL(name, ASSET_DIRECTORY)).size >= 100_000);
+  }
+
+  for (const name of names.filter((assetName) => assetName.endsWith(".webp"))) {
+    const asset = webpDimensions(name);
+    assert.ok(asset.width >= 1_000 && asset.height >= 900, `${name} 해상도가 너무 작음`);
   }
 
   const superseded = [
@@ -570,12 +629,12 @@ test("동적 주자·수비수는 투명 RGBA이고 clean-v5 외야 배경은 �
     "utf8",
   );
   for (const name of [
-    "baseball-camera-left-field-v5.png",
-    "baseball-camera-left-center-v5.png",
-    "baseball-camera-center-field-v5.png",
-    "baseball-camera-right-center-v5.png",
-    "baseball-camera-right-field-v5.png",
-    "baseball-camera-run-scored-v4.png",
+    "baseball-camera-left-field-v5.webp",
+    "baseball-camera-left-center-v5.webp",
+    "baseball-camera-center-field-v5.webp",
+    "baseball-camera-right-center-v5.webp",
+    "baseball-camera-right-field-v5.webp",
+    "baseball-camera-run-scored-v4.webp",
     "baseball-runner-blue-chibi-v3.png",
     "baseball-runner-red-chibi-v3.png",
     "baseball-fielder-blue-chibi-v3.png",
@@ -590,9 +649,9 @@ test("동적 주자·수비수는 투명 RGBA이고 clean-v5 외야 배경은 �
   }
   assert.doesNotMatch(
     assetsSource,
-    /baseball-camera-(?:left-field|left-center|center-field|right-center|right-field)-v4\.png/,
+    /baseball-camera-(?:left-field|left-center|center-field|right-center|right-field)-v4\.(?:png|webp)/,
   );
-  assert.doesNotMatch(assetsSource, /baseball-camera-run-scored-v3\.png/);
+  assert.doesNotMatch(assetsSource, /baseball-camera-run-scored-v3\.(?:png|webp)/);
 
   for (const component of ["BaseballSoloGameV2.tsx", "BaseballOnlineGameV2.tsx"]) {
     const source = readFileSync(

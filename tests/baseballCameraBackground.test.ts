@@ -13,25 +13,25 @@ const SOURCE_DIRECTORY = fileURLToPath(new URL("../src/", import.meta.url));
 const ASSET_DIRECTORY = new URL("../src/assets/games/", import.meta.url);
 
 const SOURCES = {
-  batter: "baseball-batting-field-v4.png",
-  pitcher: "baseball-camera-pitcher-empty-v2.png",
-  contact: "baseball-batting-field-v4.png",
-  infieldWide: "baseball-camera-infield-wide-v3.png",
-  leftField: "baseball-camera-left-field-v5.png",
-  leftCenter: "baseball-camera-left-center-v5.png",
-  centerField: "baseball-camera-center-field-v5.png",
-  rightCenter: "baseball-camera-right-center-v5.png",
-  rightField: "baseball-camera-right-field-v5.png",
-  firstBaseLine: "baseball-camera-first-base-line-v4.png",
-  thirdBaseLine: "baseball-camera-third-base-line-v4.png",
-  foulLeft: "baseball-camera-third-base-line-v4.png",
-  foulRight: "baseball-camera-first-base-line-v4.png",
-  baseRunning: "baseball-camera-infield-wide-v3.png",
-  homePlate: "baseball-camera-run-scored-v4.png",
-  dugoutHome: "baseball-camera-dugout-home-v2.png",
-  dugoutAway: "baseball-camera-dugout-away-v2.png",
-  homeRun: "baseball-camera-home-run-v2.png",
-  replay: "baseball-camera-scoreboard-wide-v3.png",
+  batter: "baseball-batting-field-v4.webp",
+  pitcher: "baseball-camera-pitcher-empty-v2.webp",
+  contact: "baseball-batting-field-v4.webp",
+  infieldWide: "baseball-camera-infield-wide-v3.webp",
+  leftField: "baseball-camera-left-field-v5.webp",
+  leftCenter: "baseball-camera-left-center-v5.webp",
+  centerField: "baseball-camera-center-field-v5.webp",
+  rightCenter: "baseball-camera-right-center-v5.webp",
+  rightField: "baseball-camera-right-field-v5.webp",
+  firstBaseLine: "baseball-camera-first-base-line-v4.webp",
+  thirdBaseLine: "baseball-camera-third-base-line-v4.webp",
+  foulLeft: "baseball-camera-third-base-line-v4.webp",
+  foulRight: "baseball-camera-first-base-line-v4.webp",
+  baseRunning: "baseball-camera-infield-wide-v3.webp",
+  homePlate: "baseball-camera-run-scored-v4.webp",
+  dugoutHome: "baseball-camera-dugout-home-v2.webp",
+  dugoutAway: "baseball-camera-dugout-away-v2.webp",
+  homeRun: "baseball-camera-home-run-v2.webp",
+  replay: "baseball-camera-scoreboard-wide-v3.webp",
 } as const satisfies BaseballCameraBackgroundSources;
 
 test("카메라 모드는 각 상황에 맞는 실제 배경 자산으로 해석된다", () => {
@@ -114,26 +114,26 @@ test("Solo와 Online은 공통 카메라 resolver와 clean-v3 공을 사용한�
     "utf8",
   );
   assert.match(assetsSource, /baseball-ball-clean-v3\.png/);
-  assert.match(assetsSource, /baseball-camera-run-scored-v4\.png/);
-  assert.match(assetsSource, /baseball-camera-left-center-v5\.png/);
-  assert.match(assetsSource, /baseball-camera-right-center-v5\.png/);
-  assert.match(assetsSource, /baseball-camera-first-base-line-v4\.png/);
-  assert.match(assetsSource, /baseball-camera-third-base-line-v4\.png/);
-  assert.match(assetsSource, /baseball-camera-pitcher-empty-v2\.png/);
-  assert.match(assetsSource, /baseball-camera-home-run-v2\.png/);
-  assert.match(assetsSource, /baseball-camera-dugout-home-v2\.png/);
-  assert.match(assetsSource, /baseball-camera-dugout-away-v2\.png/);
-  assert.match(assetsSource, /baseball-camera-crowd-normal-v2\.png/);
-  assert.match(assetsSource, /baseball-camera-crowd-cheering-v2\.png/);
+  assert.match(assetsSource, /baseball-camera-run-scored-v4\.webp/);
+  assert.match(assetsSource, /baseball-camera-left-center-v5\.webp/);
+  assert.match(assetsSource, /baseball-camera-right-center-v5\.webp/);
+  assert.match(assetsSource, /baseball-camera-first-base-line-v4\.webp/);
+  assert.match(assetsSource, /baseball-camera-third-base-line-v4\.webp/);
+  assert.match(assetsSource, /baseball-camera-pitcher-empty-v2\.webp/);
+  assert.match(assetsSource, /baseball-camera-home-run-v2\.webp/);
+  assert.match(assetsSource, /baseball-camera-dugout-home-v2\.webp/);
+  assert.match(assetsSource, /baseball-camera-dugout-away-v2\.webp/);
+  assert.match(assetsSource, /baseball-camera-crowd-normal-v2\.webp/);
+  assert.match(assetsSource, /baseball-camera-crowd-cheering-v2\.webp/);
   assert.match(
     assetsSource,
     /BASEBALL_V2_CROWD_SOURCES[\s\S]*?normal: baseballCameraCrowdNormal,[\s\S]*?cheering: baseballCameraCrowdCheering/,
   );
-  assert.match(assetsSource, /baseball-batting-field-v4\.png/);
+  assert.match(assetsSource, /baseball-batting-field-v4\.webp/);
   assert.equal((assetsSource.match(/dynamicBallOnly: true/g) ?? []).length, 9);
-  assert.doesNotMatch(assetsSource, /baseball-camera-(?:left-field|left-center|center-field|right-center|right-field)-v[34]\.png/);
+  assert.doesNotMatch(assetsSource, /baseball-camera-(?:left-field|left-center|center-field|right-center|right-field)-v[34]\.(?:png|webp)/);
   assert.doesNotMatch(assetsSource, /baseball-batting-field\.png/);
-  assert.match(assetsSource, /baseball-camera-scoreboard-wide-v3\.png/);
+  assert.match(assetsSource, /baseball-camera-scoreboard-wide-v3\.webp/);
   assert.match(assetsSource, /id: "run-scored-camera"/);
   assert.match(assetsSource, /id: "scoreboard-wide-camera"/);
   assert.doesNotMatch(assetsSource, /baseball-camera-pitcher-empty\.png/);

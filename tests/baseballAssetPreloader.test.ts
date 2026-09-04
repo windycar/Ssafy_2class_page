@@ -303,14 +303,14 @@ test("V2 manifest는 critical/lazy를 모두 제공하고 깨진 투구 atlas를
   assert.match(manifestSource, /group: "lazy"/);
   assert.match(manifestSource, /BASEBALL_V2_ASSET_REGISTRY/);
   assert.match(manifestSource, /baseball-ball-clean-v3\.png/);
-  assert.match(manifestSource, /baseball-camera-infield-wide-v3\.png/);
+  assert.match(manifestSource, /baseball-camera-infield-wide-v3\.webp/);
   for (const camera of ["left-field", "left-center", "center-field", "right-center", "right-field"]) {
-    assert.match(manifestSource, new RegExp(`baseball-camera-${camera}-v5\\.png`));
-    assert.doesNotMatch(manifestSource, new RegExp(`baseball-camera-${camera}-v4\\.png`));
+    assert.match(manifestSource, new RegExp(`baseball-camera-${camera}-v5\\.webp`));
+    assert.doesNotMatch(manifestSource, new RegExp(`baseball-camera-${camera}-v4\\.(?:png|webp)`));
   }
-  assert.match(manifestSource, /baseball-camera-run-scored-v4\.png/);
-  assert.match(manifestSource, /baseball-camera-first-base-line-v4\.png/);
-  assert.match(manifestSource, /baseball-camera-third-base-line-v4\.png/);
+  assert.match(manifestSource, /baseball-camera-run-scored-v4\.webp/);
+  assert.match(manifestSource, /baseball-camera-first-base-line-v4\.webp/);
+  assert.match(manifestSource, /baseball-camera-third-base-line-v4\.webp/);
   for (const camera of [
     "pitcher-empty-v2",
     "home-run-v2",
@@ -319,7 +319,7 @@ test("V2 manifest는 critical/lazy를 모두 제공하고 깨진 투구 atlas를
     "crowd-normal-v2",
     "crowd-cheering-v2",
   ]) {
-    assert.match(manifestSource, new RegExp(`baseball-camera-${camera}\\.png`));
+    assert.match(manifestSource, new RegExp(`baseball-camera-${camera}\\.webp`));
   }
   assert.match(manifestSource, /id: "first-base-line-camera"/);
   assert.match(manifestSource, /id: "third-base-line-camera"/);
@@ -344,7 +344,7 @@ test("V2 manifest는 critical/lazy를 모두 제공하고 깨진 투구 atlas를
     assert.match(manifestSource, new RegExp(`id: "${id}"`));
   }
   assert.match(manifestSource, /baseball-catcher-actions-red-chibi-v5\.png/);
-  assert.match(manifestSource, /baseball-catcher-mitt-v2\.png/);
+  assert.match(manifestSource, /baseball-catcher-mitt-v2\.webp/);
   assert.match(manifestSource, /baseball-batter-actions-blue-chibi-v5\.png/);
   assert.match(manifestSource, /baseball-batter-actions-red-chibi-v5\.png/);
   assert.match(manifestSource, /baseball-pitcher-actions-red-chibi-v5\.png/);

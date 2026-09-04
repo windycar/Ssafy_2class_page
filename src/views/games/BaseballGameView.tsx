@@ -3,7 +3,7 @@ import { ArrowLeft, Bot, ChevronRight, Sparkles, Users, Zap } from "lucide-react
 import { Link, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 
-import baseballArena from "../../assets/games/baseball-arena-facing.png";
+import baseballArena from "../../assets/games/baseball-arena-facing.webp";
 import { GameAssetPreloader } from "../../components/games/baseball/v2/GameAssetPreloader";
 import { BaseballOnlineGameV2 } from "../../components/games/baseball/v2/BaseballOnlineGameV2";
 import { BaseballSoloGameV2 } from "../../components/games/baseball/v2/BaseballSoloGameV2";
