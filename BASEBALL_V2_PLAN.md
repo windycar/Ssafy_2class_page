@@ -87,6 +87,7 @@
 - [x] hit/double/triple/homeRun/strikeout/score/safe/out 효과 또는 상황 컷 제작 및 공식 판정에 연결
 - [x] 전체 야구 전용 에셋 40개 이상을 실제 화면과 프리로더에 연결
 - [x] 생성된 공·주자·수비수·포수·미트·초상을 직접 열어 잘림·배경·가장자리·스타일·공 중복 검사
+- [x] 최종 자산으로 대체된 구형 생성 이미지 13개와 미사용 구형 공 컴포넌트 제거
 - [x] critical/lazy 그룹을 가진 `GameAssetPreloader` 구현
 - [x] requestAnimationFrame 또는 CSS 변수 기반 공/타구/주자 애니메이션으로 전체 View의 60FPS setState 방지
 

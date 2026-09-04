@@ -450,7 +450,7 @@ test("동일 경기장 컨텍스트 6종은 고해상도 원본이며 camera·cr
   assert.doesNotMatch(assetsSource, /from "\.\.\/assets\/games\/baseball-camera-home-run\.png"/);
 });
 
-test("야구 화면은 경기장·카메라·캐릭터·공을 포함한 실제 이미지 묶음을 유지한다", () => {
+test("야구 화면은 실제 사용하는 경기장·카메라·캐릭터·공 이미지 묶음만 유지한다", () => {
   const names = readdirSync(ASSET_DIRECTORY)
     .filter((name) => name.startsWith("baseball-") && name.endsWith(".png"));
   assert.ok(names.length >= 19);
@@ -465,9 +465,9 @@ test("야구 화면은 경기장·카메라·캐릭터·공을 포함한 실제 
     "baseball-fielder-blue-chibi-v3.png",
     "baseball-fielder-red-chibi-v4.png",
     "baseball-catcher-actions-red-chibi-v5.png",
-    "baseball-camera-pitcher-empty.png",
-    "baseball-camera-infield.png",
-    "baseball-camera-home-run.png",
+    "baseball-camera-pitcher-empty-v2.png",
+    "baseball-camera-infield-wide-v3.png",
+    "baseball-camera-home-run-v2.png",
     "baseball-camera-run-scored-v4.png",
     "baseball-camera-left-field-v5.png",
     "baseball-camera-left-center-v5.png",
@@ -478,6 +478,25 @@ test("야구 화면은 경기장·카메라·캐릭터·공을 포함한 실제 
   for (const name of required) {
     assert.ok(names.includes(name), `${name} 누락`);
     assert.ok(statSync(new URL(name, ASSET_DIRECTORY)).size >= 100_000);
+  }
+
+  const superseded = [
+    "baseball-arena.png",
+    "baseball-arena-swing.png",
+    "baseball-ball-body-v2.png",
+    "baseball-batter-actions-blue.png",
+    "baseball-batter-actions-red-v2.png",
+    "baseball-batter-sprite.png",
+    "baseball-batting-field.png",
+    "baseball-camera-home-run.png",
+    "baseball-camera-infield.png",
+    "baseball-camera-pitcher-empty.png",
+    "baseball-catcher-actions-red.png",
+    "baseball-pitcher-actions-red.png",
+    "baseball-pitching-field.png",
+  ];
+  for (const name of superseded) {
+    assert.ok(!names.includes(name), `${name} 구형 생성 자산이 남아 있음`);
   }
 });
 
