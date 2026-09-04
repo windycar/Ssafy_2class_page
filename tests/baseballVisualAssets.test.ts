@@ -3,6 +3,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
+import { inflateSync } from "node:zlib";
 
 const ASSET_DIRECTORY = new URL("../src/assets/games/", import.meta.url);
 const SOURCE_DIRECTORY = fileURLToPath(new URL("../src/", import.meta.url));
@@ -30,6 +31,68 @@ function pngDimensions(name: string) {
     colorType: bytes.readUInt8(25),
     size: bytes.byteLength,
   };
+}
+
+function paethPredictor(left: number, above: number, upperLeft: number) {
+  const estimate = left + above - upperLeft;
+  const leftDistance = Math.abs(estimate - left);
+  const aboveDistance = Math.abs(estimate - above);
+  const upperLeftDistance = Math.abs(estimate - upperLeft);
+  if (leftDistance <= aboveDistance && leftDistance <= upperLeftDistance) return left;
+  return aboveDistance <= upperLeftDistance ? above : upperLeft;
+}
+
+function decodeRgbaPng(name: string) {
+  const bytes = readFileSync(new URL(name, ASSET_DIRECTORY));
+  const width = bytes.readUInt32BE(16);
+  const height = bytes.readUInt32BE(20);
+  assert.equal(bytes.readUInt8(24), 8, `${name}은 8-bit PNG여야 한다`);
+  assert.equal(bytes.readUInt8(25), 6, `${name}은 RGBA PNG여야 한다`);
+  assert.equal(bytes.readUInt8(28), 0, `${name}은 interlace PNG이면 안 된다`);
+
+  const idatChunks: Buffer[] = [];
+  let offset = 8;
+  while (offset < bytes.length) {
+    const length = bytes.readUInt32BE(offset);
+    const type = bytes.toString("ascii", offset + 4, offset + 8);
+    if (type === "IDAT") idatChunks.push(bytes.subarray(offset + 8, offset + 8 + length));
+    offset += 12 + length;
+    if (type === "IEND") break;
+  }
+
+  const scanlines = inflateSync(Buffer.concat(idatChunks));
+  const bytesPerPixel = 4;
+  const stride = width * bytesPerPixel;
+  assert.equal(scanlines.length, (stride + 1) * height, `${name} scanline 길이 오류`);
+  const rgba = Buffer.allocUnsafe(stride * height);
+
+  for (let y = 0; y < height; y += 1) {
+    const filter = scanlines[y * (stride + 1)];
+    const sourceStart = y * (stride + 1) + 1;
+    const targetStart = y * stride;
+    for (let x = 0; x < stride; x += 1) {
+      const raw = scanlines[sourceStart + x];
+      const left = x >= bytesPerPixel ? rgba[targetStart + x - bytesPerPixel] : 0;
+      const above = y > 0 ? rgba[targetStart - stride + x] : 0;
+      const upperLeft = y > 0 && x >= bytesPerPixel
+        ? rgba[targetStart - stride + x - bytesPerPixel]
+        : 0;
+      const predictor = filter === 0
+        ? 0
+        : filter === 1
+          ? left
+          : filter === 2
+            ? above
+            : filter === 3
+              ? Math.floor((left + above) / 2)
+              : filter === 4
+                ? paethPredictor(left, above, upperLeft)
+                : Number.NaN;
+      assert.ok(Number.isFinite(predictor), `${name} 알 수 없는 PNG filter ${filter}`);
+      rgba[targetStart + x] = (raw + predictor) & 0xff;
+    }
+  }
+  return { width, height, rgba };
 }
 
 test("잘린 10프레임 공 atlas는 저장소와 런타임에서 완전히 제거된다", () => {
@@ -104,13 +167,23 @@ test("스테이지는 동일한 공 이미지로 본체 1개와 이전 위치 �
   assert.match(stageSource, /\{activeFlight \? \(/);
   assert.equal(
     stageSource.match(/<img src=\{ballSrc\}/g)?.length,
-    2,
-    "정적 레이어의 잔상과 본체는 동일한 ballSrc만 사용해야 한다",
+    1,
+    "정적 레이어는 실제 야구공 본체 하나만 렌더링해야 한다",
   );
   assert.equal(
     animatedLayerSource.match(/<img src=\{ballSrc\}/g)?.length,
-    2,
-    "RAF 레이어의 잔상과 본체도 동일한 ballSrc만 사용해야 한다",
+    1,
+    "RAF 레이어도 실제 야구공 본체 하나만 렌더링해야 한다",
+  );
+  assert.doesNotMatch(
+    stageSource,
+    /bbv2-ball-trail-point[\s\S]{0,300}<img src=\{ballSrc\}/,
+    "정적 잔상에 실밥이 있는 야구공 이미지를 다시 사용하면 안 된다",
+  );
+  assert.doesNotMatch(
+    animatedLayerSource,
+    /bbv2-ball-trail-point[\s\S]{0,300}<img src=\{ballSrc\}/,
+    "RAF 잔상에 실밥이 있는 야구공 이미지를 다시 사용하면 안 된다",
   );
   assert.ok(ballPresentationContract, "공 프레젠테이션 계약 누락");
   assert.doesNotMatch(ballPresentationContract, /assetSrc/);
@@ -127,9 +200,10 @@ test("스테이지는 동일한 공 이미지로 본체 1개와 이전 위치 �
     blurValues.every((value) => value >= 1.2 && value <= 2.8),
     "잔상은 또 하나의 야구공이 아니라 짧은 모션 블러로 보여야 한다",
   );
-  assert.match(trailStyleSource, /opacity:\s*0\.32/);
-  assert.match(trailStyleSource, /saturate\(0\.22\)/);
-  assert.match(trailStyleSource, /scaleX\(1\.65\)/);
+  assert.match(trailStyleSource, /\.bbv2-ball-trail-point::before/);
+  assert.match(trailStyleSource, /linear-gradient/);
+  assert.match(trailStyleSource, /aspect-ratio:\s*3\.4\s*\/\s*1/);
+  assert.match(trailStyleSource, /scaleX\(1\.35\)/);
 
   const pitchToneOpacity = [...styleSource.matchAll(
     /--bbv2-pitch-tone:\s*rgb\([^)]*\/\s*(\d+)%\)/g,
@@ -167,7 +241,7 @@ test("주자 idle/sprint/slide/score 동작은 정적·RAF 레이어와 CSS에 �
 });
 
 test("포수 액션과 투명 미트는 실제 런타임 자산이며 투구 목표에 연결된다", () => {
-  const catcher = pngDimensions("baseball-catcher-actions-red.png");
+  const catcher = pngDimensions("baseball-catcher-actions-red-chibi-v5.png");
   const mitt = pngDimensions("baseball-catcher-mitt-v2.png");
   const stageSource = readFileSync(
     path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballStageV2.tsx"),
@@ -383,14 +457,14 @@ test("야구 화면은 경기장·카메라·캐릭터·공을 포함한 실제 
 
   const required = [
     "baseball-ball-clean-v3.png",
-    "baseball-batter-actions-blue.png",
-    "baseball-batter-actions-red-v2.png",
-    "baseball-pitcher-actions-red.png",
+    "baseball-batter-actions-blue-chibi-v5.png",
+    "baseball-batter-actions-red-chibi-v5.png",
+    "baseball-pitcher-actions-red-chibi-v5.png",
     "baseball-runner-blue-chibi-v3.png",
     "baseball-runner-red-chibi-v3.png",
     "baseball-fielder-blue-chibi-v3.png",
     "baseball-fielder-red-chibi-v4.png",
-    "baseball-catcher-actions-red.png",
+    "baseball-catcher-actions-red-chibi-v5.png",
     "baseball-camera-pitcher-empty.png",
     "baseball-camera-infield.png",
     "baseball-camera-home-run.png",
@@ -420,11 +494,57 @@ test("동적 주자·수비수는 투명 RGBA이고 clean-v5 외야 배경은 �
     assert.equal(sprite.colorType, 6, `${name}은 alpha가 있는 RGBA PNG여야 한다`);
   }
 
-  const redBatter = pngDimensions("baseball-batter-actions-red-v2.png");
-  assert.equal(redBatter.width, 1_672);
-  assert.equal(redBatter.height, 941);
-  assert.equal(redBatter.colorType, 6);
-  assert.ok(redBatter.size >= 1_000_000);
+  for (const name of [
+    "baseball-batter-actions-blue-chibi-v5.png",
+    "baseball-batter-actions-red-chibi-v5.png",
+    "baseball-pitcher-actions-red-chibi-v5.png",
+    "baseball-catcher-actions-red-chibi-v5.png",
+  ]) {
+    const actionSheet = pngDimensions(name);
+    assert.equal(actionSheet.width, 2_048, `${name}은 4×512px 시트여야 한다`);
+    assert.equal(actionSheet.height, 768, `${name}은 2:3 캐릭터 비율이어야 한다`);
+    assert.equal(actionSheet.colorType, 6, `${name}은 alpha가 있는 RGBA PNG여야 한다`);
+    assert.ok(actionSheet.size >= 500_000, `${name} 해상도가 너무 작음`);
+
+    const decoded = decodeRgbaPng(name);
+    const frameCoverage = [0, 0, 0, 0];
+    let greenSpill = 0;
+    for (let y = 0; y < decoded.height; y += 1) {
+      for (let x = 0; x < decoded.width; x += 1) {
+        const pixelOffset = (y * decoded.width + x) * 4;
+        const alpha = decoded.rgba[pixelOffset + 3];
+        if (alpha <= 8) continue;
+        frameCoverage[Math.floor(x / 512)] += 1;
+        if (
+          decoded.rgba[pixelOffset + 1]
+          > Math.max(decoded.rgba[pixelOffset], decoded.rgba[pixelOffset + 2]) + 25
+        ) {
+          greenSpill += 1;
+        }
+      }
+    }
+    assert.deepEqual(
+      [
+        decoded.rgba[3],
+        decoded.rgba[(decoded.width - 1) * 4 + 3],
+        decoded.rgba[((decoded.height - 1) * decoded.width) * 4 + 3],
+        decoded.rgba[(decoded.width * decoded.height - 1) * 4 + 3],
+      ],
+      [0, 0, 0, 0],
+      `${name} 모서리 배경은 완전 투명이어야 한다`,
+    );
+    for (const boundaryX of [0, 511, 512, 1023, 1024, 1535, 1536, 2047]) {
+      assert.equal(
+        Array.from({ length: decoded.height }, (_, y) =>
+          decoded.rgba[(y * decoded.width + boundaryX) * 4 + 3],
+        ).some((alpha) => alpha > 8),
+        false,
+        `${name} 프레임 경계 ${boundaryX}px에 캐릭터가 걸리면 안 된다`,
+      );
+    }
+    assert.ok(frameCoverage.every((coverage) => coverage >= 15_000), `${name} 빈 프레임 발견`);
+    assert.equal(greenSpill, 0, `${name}에 크로마키 초록 번짐이 남아 있음`);
+  }
 
   const assetsSource = readFileSync(
     path.join(SOURCE_DIRECTORY, "config/baseballV2Assets.ts"),
@@ -441,7 +561,10 @@ test("동적 주자·수비수는 투명 RGBA이고 clean-v5 외야 배경은 �
     "baseball-runner-red-chibi-v3.png",
     "baseball-fielder-blue-chibi-v3.png",
     "baseball-fielder-red-chibi-v4.png",
-    "baseball-batter-actions-red-v2.png",
+    "baseball-batter-actions-blue-chibi-v5.png",
+    "baseball-batter-actions-red-chibi-v5.png",
+    "baseball-pitcher-actions-red-chibi-v5.png",
+    "baseball-catcher-actions-red-chibi-v5.png",
   ]) {
     assert.match(assetsSource, new RegExp(name.replaceAll(".", "\\.")), `${name} manifest 연결 누락`);
     assert.ok(statSync(new URL(name, ASSET_DIRECTORY)).size >= 100_000);
@@ -460,9 +583,24 @@ test("동적 주자·수비수는 투명 RGBA이고 clean-v5 외야 배경은 �
     assert.match(source, /BASEBALL_V2_RUNNER_SOURCES\[visualBattingTeam\]/);
     assert.match(source, /BASEBALL_V2_FIELDER_SOURCES\[visualFieldingTeam\]/);
     assert.match(source, /BASEBALL_V2_BATTER_ACTION_SOURCES\[visualBattingTeam\]/);
+    assert.match(source, /src: BASEBALL_V2_PITCHER_ACTION_SOURCE/);
+    assert.match(source, /pitcherSprite:[\s\S]*?frameCount: 4/);
     assert.match(source, /createBaseballRunnerPresentationsV2\(/);
     assert.match(source, /createBaseballFielderPresentationsV2\(/);
     assert.match(source, /fielders=\{fielders\}/);
     assert.doesNotMatch(source, /baseball-fielder-actions-red\.png/);
+    assert.doesNotMatch(source, /baseball-(?:batter-actions-blue|batter-actions-red-v2|pitcher-actions-red|catcher-actions-red)\.png/);
   }
+
+  const styleSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "styles/baseball-v2.css"),
+    "utf8",
+  );
+  assert.match(styleSource, /\.bbv2-character-sprite\s*\{[\s\S]*?aspect-ratio: 2 \/ 3;[\s\S]*?height: auto;/);
+  assert.match(styleSource, /bbv2-pitcher-motion 560ms steps\(3, end\)/);
+  const soloSource = readFileSync(
+    path.join(SOURCE_DIRECTORY, "components/games/baseball/v2/BaseballSoloGameV2.tsx"),
+    "utf8",
+  );
+  assert.match(soloSource, /frameIndex: presentation === "PITCH_FLIGHT" \? 3 : 0/);
 });

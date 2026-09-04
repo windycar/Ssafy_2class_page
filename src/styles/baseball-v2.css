@@ -140,20 +140,28 @@
 }
 
 .bbv2-character-sprite {
+  aspect-ratio: 2 / 3;
+  height: auto;
   background-repeat: no-repeat;
   filter: drop-shadow(0 14px 10px rgb(0 0 0 / 38%));
 }
 
 .bbv2-character-sprite.bbv2-character--pitcher {
   width: min(17%, 190px);
+  height: auto;
 }
 
 .bbv2-character-sprite.bbv2-character--batter {
   width: min(21%, 230px);
+  height: auto;
+}
+
+.bbv2-character-sprite.bbv2-character--catcher {
+  height: auto;
 }
 
 .bbv2-character-sprite[data-motion="PITCH"] {
-  animation: bbv2-pitcher-motion 560ms steps(4, end) both;
+  animation: bbv2-pitcher-motion 560ms steps(3, end) both;
 }
 
 .bbv2-character-sprite[data-motion="SWING"] {
@@ -203,11 +211,16 @@
 .bbv2-stage[data-perspective="PITCHING"] .bbv2-character-sprite.bbv2-character--pitcher {
   left: 24%;
   width: min(25%, 270px);
+  height: auto;
 }
 
 .bbv2-stage[data-perspective="PITCHING"] .bbv2-character--catcher {
   bottom: 37%;
   height: 22%;
+}
+
+.bbv2-stage[data-perspective="PITCHING"] .bbv2-character-sprite.bbv2-character--catcher {
+  height: auto;
 }
 
 .bbv2-stage[data-perspective="PITCHING"] .bbv2-character--batter {
@@ -220,6 +233,7 @@
 .bbv2-stage[data-perspective="PITCHING"] .bbv2-character-sprite.bbv2-character--batter {
   right: 37%;
   width: min(10%, 112px);
+  height: auto;
 }
 
 .bbv2-stage__runners {
@@ -446,9 +460,9 @@
   width: clamp(118px, 14vw, 190px);
   grid-template: repeat(3, 1fr) / repeat(3, 1fr);
   aspect-ratio: 0.82;
-  border: 3px solid rgb(255 255 255 / 90%);
-  background: rgb(255 255 255 / 3%);
-  box-shadow: 0 0 0 1px rgb(2 12 27 / 65%), 0 0 25px rgb(2 12 27 / 28%);
+  border: 1px solid rgb(255 255 255 / 48%);
+  background: rgb(255 255 255 / 1.5%);
+  box-shadow: 0 0 0 1px rgb(2 12 27 / 28%), 0 8px 24px rgb(2 12 27 / 12%);
   transform: translateX(-50%);
 }
 
@@ -463,7 +477,7 @@
 }
 
 .bbv2-strike-zone > span {
-  border: 1px solid rgb(255 255 255 / 26%);
+  border: 1px solid rgb(255 255 255 / 12%);
 }
 
 .bbv2-strike-zone.is-interactive {
@@ -476,13 +490,33 @@
   position: absolute;
   top: var(--bbv2-zone-y);
   left: var(--bbv2-zone-x);
-  width: 28%;
-  aspect-ratio: 1;
-  border: 2px solid var(--bbv2-yellow);
+  width: var(--bbv2-pci-width, 28%);
+  height: var(--bbv2-pci-height, 28%);
+  border: 1.5px solid rgb(253 224 71 / 82%);
   border-radius: 50%;
-  background: rgb(253 224 71 / 12%);
-  box-shadow: 0 0 15px rgb(253 224 71 / 72%);
+  background: rgb(253 224 71 / 5%);
+  box-shadow: 0 0 8px rgb(253 224 71 / 38%);
   transform: translate(-50%, -50%);
+}
+
+.bbv2-strike-zone__target::before,
+.bbv2-strike-zone__target::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: rgb(254 240 138 / 74%);
+  transform: translate(-50%, -50%);
+}
+
+.bbv2-strike-zone__target::before {
+  width: 28%;
+  height: 1px;
+}
+
+.bbv2-strike-zone__target::after {
+  width: 1px;
+  height: 28%;
 }
 
 .bbv2-flight-layer {
@@ -502,18 +536,25 @@
 
   z-index: 28;
   display: block;
-  width: clamp(8px, 1.35vw, 20px);
-  aspect-ratio: 2.2 / 1;
+  width: clamp(10px, 1.7vw, 26px);
+  aspect-ratio: 3.4 / 1;
 }
 
-.bbv2-ball-trail-point img {
+.bbv2-ball-trail-point::before {
+  content: "";
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  opacity: 0.32;
-  filter: saturate(0.22) brightness(1.18) drop-shadow(0 0 2px var(--bbv2-pitch-tone));
-  transform: rotate(var(--bbv2-point-rotation)) scaleX(1.65);
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(255 255 255 / 8%) 24%,
+    rgb(255 255 255 / 48%) 76%,
+    rgb(255 255 255 / 10%) 100%
+  );
+  box-shadow: 0 0 4px var(--bbv2-pitch-tone);
+  transform: rotate(-8deg) scaleX(1.35);
 }
 
 .bbv2-ball-trail-point:nth-child(1),
@@ -556,7 +597,7 @@
 }
 
 .bbv2-flight-layer--throw .bbv2-ball-trail-point {
-  width: clamp(7px, 1vw, 14px);
+  width: clamp(8px, 1.2vw, 18px);
 }
 
 .bbv2-ball--fourSeam { --bbv2-pitch-tone: rgb(248 113 113 / 26%); }

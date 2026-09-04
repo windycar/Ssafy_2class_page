@@ -11,7 +11,6 @@ import {
 
 import baseballArenaFacing from "../../../../assets/games/baseball-arena-facing.png";
 import baseballArenaSwingFacing from "../../../../assets/games/baseball-arena-swing-facing.png";
-import baseballPitcherActionsRed from "../../../../assets/games/baseball-pitcher-actions-red.png";
 import {
   BASEBALL_V2_BALL_SOURCE,
   BASEBALL_V2_BATTER_ACTION_SOURCES,
@@ -21,6 +20,7 @@ import {
   BASEBALL_V2_CATCHER_MITT_SOURCE,
   BASEBALL_V2_FIELDER_SOURCES,
   BASEBALL_V2_PLAYER_PORTRAIT_SOURCES,
+  BASEBALL_V2_PITCHER_ACTION_SOURCE,
   BASEBALL_V2_RESULT_EFFECT_SOURCES,
   BASEBALL_V2_RUNNER_SOURCES,
   BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE,
@@ -30,12 +30,16 @@ import { useBaseballVisualPlayback } from "../../../../hooks/useBaseballVisualPl
 import type { BaseballRoom } from "../../../../types/baseballRoom.ts";
 import { resolveBaseballCameraBackground } from "../../../../utils/games/baseball/cameraBackground.ts";
 import { baseballStageImpactClassV2 } from "../../../../utils/games/baseball/contactFeedback.ts";
+import { createBaseballPciPreviewRadius } from "../../../../utils/games/baseball/battingEngine.ts";
 import {
   baseballPitchQualityAtMeterProgress,
   createBaseballAnimationProgressSource,
 } from "../../../../utils/games/baseball/animationProgress.ts";
 import { isBaseballHomeRunCinematicSkippablePhaseV2 } from "../../../../utils/games/baseball/scoringPresentation.ts";
-import { cloneGameState } from "../../../../utils/games/baseball/gameState.ts";
+import {
+  cloneGameState,
+  getCurrentBatter,
+} from "../../../../utils/games/baseball/gameState.ts";
 import {
   createPitchVisualFrame,
   DEFAULT_PITCH_STAGE_PROJECTION,
@@ -666,6 +670,13 @@ export function BaseballOnlineGameV2({
   }, [canAim, canBatNow, canPitchNow, gameIntroBlocking, handlePrimaryAction, playbackBlocking, setAim]);
 
   const localIsBatting = presentationGame !== null && actorSeat === presentationGame.battingTeam;
+  const strikeZoneReticleRadius = presentationGame && localIsBatting
+    ? createBaseballPciPreviewRadius(
+        getCurrentBatter(presentationGame),
+        presentationGame.count,
+        swingType,
+      )
+    : null;
   const localIsPitching = presentationGame !== null
     && actorSeat !== null
     && actorSeat !== presentationGame.battingTeam;
@@ -1096,8 +1107,8 @@ export function BaseballOnlineGameV2({
             animationKey: activePlayKey,
           },
           pitcherSprite: perspective === "PITCHING" ? {
-            src: baseballPitcherActionsRed,
-            frameCount: 5,
+            src: BASEBALL_V2_PITCHER_ACTION_SOURCE,
+            frameCount: 4,
             frameIndex: 0,
             motion: localIsPitching && activePitch ? "PITCH" : "IDLE",
             animationKey: activePlayKey,
@@ -1122,6 +1133,7 @@ export function BaseballOnlineGameV2({
         animation={stageAnimation}
         showStrikeZone={showStrikeZone}
         strikeZoneTarget={canAim ? aim : null}
+        strikeZoneReticleRadius={strikeZoneReticleRadius}
         aimEnabled={canAim}
         onAimChange={canAim ? handleAimChange : undefined}
         hud={presentationGame ? (

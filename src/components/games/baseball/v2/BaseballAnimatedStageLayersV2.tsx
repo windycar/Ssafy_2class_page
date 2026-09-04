@@ -121,9 +121,7 @@ export function AnimatedBaseballFlightLayerV2({
             className={joinClassNames("bbv2-ball-trail-point", pitchClass)}
             style={pointStyle(point)}
             key={`animated-trail-${index}`}
-          >
-            <img src={ballSrc} alt="" draggable={false} />
-          </span>
+          />
         ))}
       </div>
       <span

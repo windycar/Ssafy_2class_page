@@ -343,8 +343,11 @@ test("V2 manifest는 critical/lazy를 모두 제공하고 깨진 투구 atlas를
   ]) {
     assert.match(manifestSource, new RegExp(`id: "${id}"`));
   }
-  assert.match(manifestSource, /baseball-catcher-actions-red\.png/);
+  assert.match(manifestSource, /baseball-catcher-actions-red-chibi-v5\.png/);
   assert.match(manifestSource, /baseball-catcher-mitt-v2\.png/);
+  assert.match(manifestSource, /baseball-batter-actions-blue-chibi-v5\.png/);
+  assert.match(manifestSource, /baseball-batter-actions-red-chibi-v5\.png/);
+  assert.match(manifestSource, /baseball-pitcher-actions-red-chibi-v5\.png/);
   for (const unusedAsset of [
     "baseball-arena.png",
     "baseball-arena-swing.png",

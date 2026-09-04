@@ -74,3 +74,21 @@ test("타격 피드백은 실제 CONTACT payload를 표시하고 일반 타구 �
   assert.match(reducedMotion, /\.bbv2-stage--impact-home-run/);
   assert.match(reducedMotion, /\.bbv2-stage--impact-grand-slam/);
 });
+
+test("스트라이크존은 얇고 반투명하며 타자 PCI 반경을 실제 타원 크기로 받는다", async () => {
+  const [stage, solo, online, style] = await Promise.all([
+    readComponent("BaseballStageV2.tsx"),
+    readComponent("BaseballSoloGameV2.tsx"),
+    readComponent("BaseballOnlineGameV2.tsx"),
+    readFile(baseballStyle, "utf8"),
+  ]);
+
+  assert.match(stage, /strikeZoneReticleRadius\?: Vec2 \| null/);
+  assert.match(stage, /--bbv2-pci-width/);
+  assert.match(stage, /--bbv2-pci-height/);
+  assert.match(solo, /createBaseballPciPreviewRadius\(getCurrentBatter\(game\), game\.count, swingType\)/);
+  assert.match(online, /createBaseballPciPreviewRadius\([\s\S]*?getCurrentBatter\(presentationGame\)/);
+  assert.match(style, /\.bbv2-strike-zone\s*\{[\s\S]*?border:\s*1px solid rgb\(255 255 255 \/ 48%\)/);
+  assert.match(style, /width:\s*var\(--bbv2-pci-width, 28%\)/);
+  assert.match(style, /height:\s*var\(--bbv2-pci-height, 28%\)/);
+});

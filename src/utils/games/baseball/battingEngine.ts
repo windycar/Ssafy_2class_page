@@ -126,6 +126,36 @@ function assertCount(count: BaseballCount) {
   }
 }
 
+function pciSkillScale(
+  batter: Pick<BaseballPlayer, "contact" | "eye">,
+  count: BaseballCount,
+) {
+  const skillFactor = 0.76 + clamp(batter.contact, 0, 100) * 0.0042;
+  const recognitionFactor = 0.93 + clamp(batter.eye, 0, 100) * 0.0014;
+  const twoStrikeFactor = count.strikes === 2 ? 1.055 : 1;
+  return skillFactor * recognitionFactor * twoStrikeFactor;
+}
+
+/**
+ * Returns the PCI shown before contact is resolved. Pitch quality and movement
+ * remain hidden until the swing calculation, while player skill, count and the
+ * selected swing type are represented exactly in the visible reticle size.
+ */
+export function createBaseballPciPreviewRadius(
+  batter: Pick<BaseballPlayer, "contact" | "eye">,
+  count: BaseballCount,
+  swingType: SwingType,
+): Vec2 {
+  assertCount(count);
+  const profile = SWING_PROFILES[swingType];
+  if (!profile) throw new RangeError(`Unknown swing type: ${String(swingType)}`);
+  const scale = pciSkillScale(batter, count);
+  return {
+    x: round(profile.pciRadius.x * scale),
+    y: round(profile.pciRadius.y * scale),
+  };
+}
+
 export function isPitchInStrikeZone(point: Vec2): boolean {
   assertFinitePoint(point, "pitch location");
   return point.x >= STRIKE_ZONE.left
@@ -199,18 +229,11 @@ function resolveSwing(input: {
   const difficulty = pitchDifficulty(pitch);
   const side = effectiveBattingSide(batter, pitcher);
   const platoonFactor = side === pitcher.throws ? 0.96 : 1.025;
-  const twoStrikeFactor = count.strikes === 2 ? 1.055 : 1;
-  const skillFactor = 0.76 + clamp(batter.contact, 0, 100) * 0.0042;
-  const recognitionFactor = 0.93 + clamp(batter.eye, 0, 100) * 0.0014;
+  const previewRadius = createBaseballPciPreviewRadius(batter, count, swing.swingType);
   const pciDifficultyFactor = 1 - difficulty * 0.16;
-  const pciScale = skillFactor
-    * recognitionFactor
-    * platoonFactor
-    * twoStrikeFactor
-    * pciDifficultyFactor;
   const pciRadius = {
-    x: round(profile.pciRadius.x * pciScale),
-    y: round(profile.pciRadius.y * pciScale),
+    x: round(previewRadius.x * platoonFactor * pciDifficultyFactor),
+    y: round(previewRadius.y * platoonFactor * pciDifficultyFactor),
   };
 
   const locationOffset = {

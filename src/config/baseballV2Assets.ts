@@ -1,8 +1,8 @@
 import baseballArenaFacing from "../assets/games/baseball-arena-facing.png";
 import baseballArenaSwingFacing from "../assets/games/baseball-arena-swing-facing.png";
 import baseballBallBody from "../assets/games/baseball-ball-clean-v3.png";
-import baseballBatterActionsBlue from "../assets/games/baseball-batter-actions-blue.png";
-import baseballBatterActionsRed from "../assets/games/baseball-batter-actions-red-v2.png";
+import baseballBatterActionsBlue from "../assets/games/baseball-batter-actions-blue-chibi-v5.png";
+import baseballBatterActionsRed from "../assets/games/baseball-batter-actions-red-chibi-v5.png";
 import baseballBattingField from "../assets/games/baseball-batting-field-v4.png";
 import baseballCameraCenterField from "../assets/games/baseball-camera-center-field-v5.png";
 import baseballCameraCrowdCheering from "../assets/games/baseball-camera-crowd-cheering-v2.png";
@@ -20,7 +20,7 @@ import baseballCameraRightField from "../assets/games/baseball-camera-right-fiel
 import baseballCameraRunScored from "../assets/games/baseball-camera-run-scored-v4.png";
 import baseballCameraScoreboardWide from "../assets/games/baseball-camera-scoreboard-wide-v3.png";
 import baseballCameraThirdBaseLine from "../assets/games/baseball-camera-third-base-line-v4.png";
-import baseballCatcherActionsRed from "../assets/games/baseball-catcher-actions-red.png";
+import baseballCatcherActionsRed from "../assets/games/baseball-catcher-actions-red-chibi-v5.png";
 import baseballCatcherMitt from "../assets/games/baseball-catcher-mitt-v2.png";
 import baseballFielderBlue from "../assets/games/baseball-fielder-blue-chibi-v3.png";
 import baseballFielderRed from "../assets/games/baseball-fielder-red-chibi-v4.png";
@@ -32,7 +32,7 @@ import baseballEffectSafe from "../assets/games/baseball-effect-safe-v2.png";
 import baseballEffectScore from "../assets/games/baseball-effect-score-v2.png";
 import baseballEffectStrikeout from "../assets/games/baseball-effect-strikeout-v2.png";
 import baseballEffectTriple from "../assets/games/baseball-effect-triple-v2.png";
-import baseballPitcherActions from "../assets/games/baseball-pitcher-actions-red.png";
+import baseballPitcherActions from "../assets/games/baseball-pitcher-actions-red-chibi-v5.png";
 import baseballPortraitCpu21 from "../assets/games/baseball-portrait-cpu-21-v2.png";
 import baseballPortraitKia01 from "../assets/games/baseball-portrait-kia-01-v2.png";
 import baseballPortraitKia03 from "../assets/games/baseball-portrait-kia-03-v2.png";
@@ -69,6 +69,7 @@ export interface BaseballV2AssetDefinition {
 export const BASEBALL_V2_BALL_SOURCE = baseballBallBody;
 export const BASEBALL_V2_CATCHER_ACTION_SOURCE = baseballCatcherActionsRed;
 export const BASEBALL_V2_CATCHER_MITT_SOURCE = baseballCatcherMitt;
+export const BASEBALL_V2_PITCHER_ACTION_SOURCE = baseballPitcherActions;
 export const BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE = baseballCameraScoreboardWide;
 export const BASEBALL_V2_CROWD_SOURCES = Object.freeze({
   normal: baseballCameraCrowdNormal,

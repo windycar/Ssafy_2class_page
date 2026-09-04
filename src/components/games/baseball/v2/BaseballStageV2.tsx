@@ -102,6 +102,7 @@ export interface BaseballStageV2Props {
   runners?: readonly BaseballRunnerPresentationV2[];
   showStrikeZone?: boolean;
   strikeZoneTarget?: Vec2 | null;
+  strikeZoneReticleRadius?: Vec2 | null;
   hud?: ReactNode;
   overlay?: ReactNode;
   effects?: ReactNode;
@@ -123,6 +124,8 @@ type PointStyle = CSSProperties & {
 type StrikeTargetStyle = CSSProperties & {
   "--bbv2-zone-x": string;
   "--bbv2-zone-y": string;
+  "--bbv2-pci-width": string;
+  "--bbv2-pci-height": string;
 };
 
 type CharacterSpriteStyle = CSSProperties & {
@@ -148,10 +151,14 @@ function pointStyle(point: BaseballPresentationPointV2): PointStyle {
   };
 }
 
-function strikeTargetStyle(point: Vec2): StrikeTargetStyle {
+function strikeTargetStyle(point: Vec2, radius?: Vec2 | null): StrikeTargetStyle {
+  const width = radius ? Math.min(62, Math.max(18, radius.x * 200)) : 28;
+  const height = radius ? Math.min(70, Math.max(22, radius.y * 200)) : 28;
   return {
     "--bbv2-zone-x": `${Math.min(1, Math.max(0, point.x)) * 100}%`,
     "--bbv2-zone-y": `${Math.min(1, Math.max(0, point.y)) * 100}%`,
+    "--bbv2-pci-width": `${width}%`,
+    "--bbv2-pci-height": `${height}%`,
   };
 }
 
@@ -260,9 +267,7 @@ function BaseballFlightLayerV2({
             className={joinClassNames("bbv2-ball-trail-point", pitchClass)}
             style={pointStyle(point)}
             key={`trail-${index}`}
-          >
-            <img src={ballSrc} alt="" draggable={false} />
-          </span>
+          />
         ))}
       </div>
       <span
@@ -337,12 +342,14 @@ function HomePlateAndZoneV2({
   homePlateSrc,
   showStrikeZone,
   target,
+  reticleRadius,
   aimEnabled,
   onAimChange,
 }: {
   homePlateSrc?: string;
   showStrikeZone: boolean;
   target?: Vec2 | null;
+  reticleRadius?: Vec2 | null;
   aimEnabled: boolean;
   onAimChange?: (point: Vec2) => void;
 }) {
@@ -377,7 +384,10 @@ function HomePlateAndZoneV2({
             <span key={`zone-cell-${index}`} />
           ))}
           {target ? (
-            <i className="bbv2-strike-zone__target" style={strikeTargetStyle(target)} />
+            <i
+              className="bbv2-strike-zone__target"
+              style={strikeTargetStyle(target, reticleRadius)}
+            />
           ) : null}
         </div>
       ) : null}
@@ -403,6 +413,7 @@ export function BaseballStageV2({
   runners = EMPTY_RUNNERS,
   showStrikeZone = true,
   strikeZoneTarget,
+  strikeZoneReticleRadius,
   hud,
   overlay,
   effects,
@@ -473,6 +484,7 @@ export function BaseballStageV2({
         homePlateSrc={assets.homePlateSrc}
         showStrikeZone={showStrikeZone}
         target={strikeZoneTarget}
+        reticleRadius={strikeZoneReticleRadius}
         aimEnabled={aimEnabled}
         onAimChange={onAimChange}
       />

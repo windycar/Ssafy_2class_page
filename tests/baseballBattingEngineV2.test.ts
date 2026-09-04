@@ -7,6 +7,7 @@ import {
   OPPONENT_PITCHERS,
 } from "../src/data/games/baseball/players.ts";
 import {
+  createBaseballPciPreviewRadius,
   IDEAL_SWING_PROGRESS,
   resolveBatterAction,
   STRIKE_ZONE,
@@ -163,6 +164,25 @@ test("CONTACT, NORMAL, POWER 순으로 PCI와 접촉 허용 폭이 좁아진다"
   assert.ok(normal.contact.pciRadius.x > power.contact.pciRadius.x);
   assert.ok(contact.contact.contactScore > normal.contact.contactScore);
   assert.ok(normal.contact.contactScore > power.contact.contactScore);
+});
+
+test("화면 PCI도 타자 능력치·카운트·스윙 타입에 맞춰 같은 순서로 변한다", () => {
+  const weakBatter = { ...BATTER, contact: 40, eye: 40 };
+  const strongBatter = { ...BATTER, contact: 95, eye: 95 };
+  const contact = createBaseballPciPreviewRadius(strongBatter, COUNT, "CONTACT");
+  const normal = createBaseballPciPreviewRadius(strongBatter, COUNT, "NORMAL");
+  const power = createBaseballPciPreviewRadius(strongBatter, COUNT, "POWER");
+  const weak = createBaseballPciPreviewRadius(weakBatter, COUNT, "NORMAL");
+  const twoStrike = createBaseballPciPreviewRadius(
+    strongBatter,
+    { ...COUNT, strikes: 2 },
+    "NORMAL",
+  );
+
+  assert.ok(contact.x > normal.x && normal.x > power.x);
+  assert.ok(contact.y > normal.y && normal.y > power.y);
+  assert.ok(normal.x > weak.x && normal.y > weak.y);
+  assert.ok(twoStrike.x > normal.x && twoStrike.y > normal.y);
 });
 
 test("contact와 eye가 높은 타자는 같은 공과 조작에서 더 큰 PCI와 높은 접촉 점수를 갖는다", () => {

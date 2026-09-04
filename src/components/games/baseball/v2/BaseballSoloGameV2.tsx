@@ -11,7 +11,6 @@ import {
 
 import baseballArenaFacing from "../../../../assets/games/baseball-arena-facing.png";
 import baseballArenaSwingFacing from "../../../../assets/games/baseball-arena-swing-facing.png";
-import baseballPitcherActionsRed from "../../../../assets/games/baseball-pitcher-actions-red.png";
 import {
   BASEBALL_V2_BALL_SOURCE,
   BASEBALL_V2_BATTER_ACTION_SOURCES,
@@ -21,6 +20,7 @@ import {
   BASEBALL_V2_CATCHER_MITT_SOURCE,
   BASEBALL_V2_FIELDER_SOURCES,
   BASEBALL_V2_PLAYER_PORTRAIT_SOURCES,
+  BASEBALL_V2_PITCHER_ACTION_SOURCE,
   BASEBALL_V2_RESULT_EFFECT_SOURCES,
   BASEBALL_V2_RUNNER_SOURCES,
   BASEBALL_V2_SCOREBOARD_BACKGROUND_SOURCE,
@@ -28,8 +28,10 @@ import {
 import { useBaseballSoloController } from "../../../../hooks/useBaseballSoloController.ts";
 import { resolveBaseballCameraBackground } from "../../../../utils/games/baseball/cameraBackground.ts";
 import { baseballStageImpactClassV2 } from "../../../../utils/games/baseball/contactFeedback.ts";
+import { createBaseballPciPreviewRadius } from "../../../../utils/games/baseball/battingEngine.ts";
 import { isBaseballHomeRunCinematicSkippablePhaseV2 } from "../../../../utils/games/baseball/scoringPresentation.ts";
 import {
+  getCurrentBatter,
   getCurrentPitcher,
 } from "../../../../utils/games/baseball/gameState.ts";
 import {
@@ -528,6 +530,9 @@ export function BaseballSoloGameV2({
     || (userPitching && presentation === "PITCH_WINDUP")
       ? aim
       : null;
+  const strikeZoneReticleRadius = userBatting
+    ? createBaseballPciPreviewRadius(getCurrentBatter(game), game.count, swingType)
+    : null;
   const batterIsSwinging = presentation === "EVENT_PLAYBACK"
     && currentVisualEvent?.sequence === 0
     && officialResult !== null
@@ -685,9 +690,9 @@ export function BaseballSoloGameV2({
               animationKey: activePlayKey,
             },
             pitcherSprite: perspective === "PITCHING" ? {
-              src: baseballPitcherActionsRed,
-              frameCount: 5,
-              frameIndex: presentation === "PITCH_FLIGHT" ? 4 : 0,
+              src: BASEBALL_V2_PITCHER_ACTION_SOURCE,
+              frameCount: 4,
+              frameIndex: presentation === "PITCH_FLIGHT" ? 3 : 0,
               motion: pitcherIsThrowing ? "PITCH" : "IDLE",
               animationKey: activePlayKey,
             } : undefined,
@@ -709,6 +714,7 @@ export function BaseballSoloGameV2({
           animation={stageAnimation}
           showStrikeZone={showStrikeZone}
           strikeZoneTarget={strikeZoneTarget}
+          strikeZoneReticleRadius={strikeZoneReticleRadius}
           aimEnabled={canAim && showStrikeZone}
           onAimChange={(point) => setAim({
             x: clamp(point.x, 0.03, 0.97),
