@@ -31,6 +31,7 @@ import type { BaseballRoom } from "../../../../types/baseballRoom.ts";
 import { resolveBaseballCameraBackground } from "../../../../utils/games/baseball/cameraBackground.ts";
 import { baseballStageImpactClassV2 } from "../../../../utils/games/baseball/contactFeedback.ts";
 import { createBaseballPciPreviewRadius } from "../../../../utils/games/baseball/battingEngine.ts";
+import { resolveBaseballKeyboardInput } from "../../../../utils/games/baseball/keyboardInput.ts";
 import {
   baseballPitchQualityAtMeterProgress,
   createBaseballAnimationProgressSource,
@@ -630,39 +631,30 @@ export function BaseballOnlineGameV2({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.repeat
-        || event.isComposing
-        || event.altKey
-        || event.ctrlKey
-        || event.metaKey
-        || event.shiftKey
-        || isInteractiveTarget(event.target)
-      ) return;
+      const resolution = resolveBaseballKeyboardInput({
+        code: event.code,
+        key: event.key,
+        repeat: event.repeat,
+        isComposing: event.isComposing,
+        altKey: event.altKey,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey,
+        interactiveTarget: isInteractiveTarget(event.target),
+        primaryEnabled: gameIntroBlocking || playbackBlocking || canPitchNow || canBatNow,
+        aimEnabled: canAim,
+      });
 
-      if (event.code === "Space" || event.key === " ") {
-        if (gameIntroBlocking) {
-          event.preventDefault();
-          handlePrimaryAction();
-          return;
-        }
-        if (playbackBlocking) {
-          event.preventDefault();
-          handlePrimaryAction();
-          return;
-        }
-        if (!canPitchNow && !canBatNow) return;
-        event.preventDefault();
+      if (resolution.preventDefault) event.preventDefault();
+      if (resolution.action === "PRIMARY") {
         handlePrimaryAction();
         return;
       }
-      if (!canAim || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
-        return;
-      }
-      event.preventDefault();
+
+      if (!resolution.action?.startsWith("AIM_")) return;
       setAim((current) => ({
-        x: current.x + (event.key === "ArrowLeft" ? -AIM_KEY_STEP : event.key === "ArrowRight" ? AIM_KEY_STEP : 0),
-        y: current.y + (event.key === "ArrowUp" ? -AIM_KEY_STEP : event.key === "ArrowDown" ? AIM_KEY_STEP : 0),
+        x: current.x + (resolution.action === "AIM_LEFT" ? -AIM_KEY_STEP : resolution.action === "AIM_RIGHT" ? AIM_KEY_STEP : 0),
+        y: current.y + (resolution.action === "AIM_UP" ? -AIM_KEY_STEP : resolution.action === "AIM_DOWN" ? AIM_KEY_STEP : 0),
       }));
     };
     window.addEventListener("keydown", handleKeyDown);

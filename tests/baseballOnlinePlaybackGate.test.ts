@@ -173,9 +173,13 @@ test("재생 시작 전 대기 프레임부터 투구·타격·조준·TAKE 서�
   const keyboardStart = source.indexOf("const handleKeyDown");
   const keyboardEnd = source.indexOf("window.addEventListener", keyboardStart);
   const keyboardBody = source.slice(keyboardStart, keyboardEnd);
-  assert.ok(keyboardBody.indexOf("if (playbackBlocking)") >= 0);
-  assert.ok(keyboardBody.indexOf("if (playbackBlocking)") < keyboardBody.indexOf("canPitchNow"));
-  assert.ok(keyboardBody.indexOf("if (playbackBlocking)") < keyboardBody.indexOf("canBatNow"));
+  assert.match(keyboardBody, /resolveBaseballKeyboardInput\(\{/);
+  assert.match(
+    keyboardBody,
+    /primaryEnabled: gameIntroBlocking \|\| playbackBlocking \|\| canPitchNow \|\| canBatNow/,
+  );
+  assert.match(keyboardBody, /aimEnabled: canAim/);
+  assert.match(keyboardBody, /if \(resolution\.action === "PRIMARY"\)/);
 });
 
 test("온라인 재생 중에는 현재 이벤트 카메라·진행률을 쓰고 최종 결과를 먼저 띄우지 않는다", async () => {
