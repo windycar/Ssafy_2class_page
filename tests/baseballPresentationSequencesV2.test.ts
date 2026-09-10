@@ -1,0 +1,214 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import test from "node:test";
+
+import { createGameState } from "../src/utils/games/baseball/gameState.ts";
+import {
+  BASEBALL_GAME_INTRO_DURATION_MS,
+  BASEBALL_HALF_INNING_DURATION_MS,
+  BASEBALL_PLAYER_INTRO_DURATION_MS,
+  baseballGameIntroPhaseV2,
+  baseballHalfInningPhaseV2,
+  createBaseballGameIntroModelV2,
+  createBaseballHalfInningModelV2,
+  createBaseballPlayerIntroModelV2,
+} from "../src/utils/games/baseball/presentationSequences.ts";
+
+test("경기 시작 연출은 3초 안에서 요구된 7단계를 순서대로 선택한다", () => {
+  assert.ok(BASEBALL_GAME_INTRO_DURATION_MS >= 2_000);
+  assert.ok(BASEBALL_GAME_INTRO_DURATION_MS <= 4_000);
+  assert.deepEqual(
+    [0, 0.14, 0.30, 0.44, 0.58, 0.76, 0.90].map(baseballGameIntroPhaseV2),
+    ["MATCH_INTRO", "STADIUM", "MATCHUP", "STARTERS", "LINEUP", "PLAY_BALL", "FIRST_BATTER"],
+  );
+
+  const model = createBaseballGameIntroModelV2(createGameState("원정", "홈", 91));
+  assert.match(model.matchup, /VS/);
+  assert.equal(model.lineupNames[0].length, 9);
+  assert.equal(model.lineupNames[1].length, 9);
+  assert.equal(model.lineups[0].length, 9);
+  assert.equal(model.lineups[1].length, 9);
+  assert.equal(new Set(model.lineups[1].map((player) => player.portraitAssetId)).size, 9);
+  assert.ok(model.starters[0].pitching);
+  assert.ok(model.starters[1].pitching);
+  assert.ok(model.starters[0].portraitAssetId);
+  assert.ok(model.starters[1].portraitAssetId);
+});
+
+test("타자 소개는 0.7~1초이며 실제 능력치와 TODAY 기록을 만든다", () => {
+  assert.ok(BASEBALL_PLAYER_INTRO_DURATION_MS >= 700);
+  assert.ok(BASEBALL_PLAYER_INTRO_DURATION_MS <= 1_000);
+  const game = createGameState("원정", "홈", 92);
+  const batterId = game.teams[0].lineupPlayerIds[0];
+  game.teams[0].batterStats[batterId] = {
+    pa: 2,
+    ab: 2,
+    h: 1,
+    doubles: 0,
+    triples: 0,
+    hr: 1,
+    rbi: 2,
+    r: 1,
+    bb: 0,
+    so: 0,
+  };
+  const model = createBaseballPlayerIntroModelV2(game);
+
+  assert.equal(model.player.id, batterId);
+  assert.ok(model.player.contact > 0);
+  assert.ok(model.player.power > 0);
+  assert.ok(model.player.speed > 0);
+  assert.equal(model.today, "1 FOR 2 · 1 HR · 2 RBI");
+});
+
+test("공수교대는 3 OUT부터 다음 공격팀까지 5단계를 canonical 상태로 만든다", () => {
+  assert.equal(BASEBALL_HALF_INNING_DURATION_MS, 2_400);
+  assert.deepEqual(
+    [0, 0.20, 0.40, 0.70, 0.88].map(baseballHalfInningPhaseV2),
+    ["THREE_OUT", "INNING_COMPLETE", "LINE_SCORE", "WIDE_SHOT", "NEXT_ATTACK"],
+  );
+  const game = createGameState("원정", "홈", 93);
+  game.half = "bottom";
+  game.battingTeam = 1;
+  game.teams[0].runs = 1;
+  game.teams[0].inningRuns[0] = 1;
+  game.playByPlay.push({
+    id: "third-out",
+    playId: "play-third-out",
+    inning: 1,
+    half: "top",
+    battingTeam: 0,
+    batterId: game.teams[0].lineupPlayerIds[0],
+    result: "STRIKEOUT_LOOKING",
+    message: "삼진",
+    runsScored: 0,
+    createdAt: "2026-08-24T00:00:00.000Z",
+  });
+  const model = createBaseballHalfInningModelV2(game);
+
+  assert.equal(model.completedInning, 1);
+  assert.equal(model.completedHalf, "top");
+  assert.equal(model.nextBattingTeam, 1);
+  assert.equal(model.score[0], 1);
+  assert.equal(model.inningRuns[0][0], 1);
+  assert.equal(model.inningCount, 3);
+});
+
+test("연장 라인스코어는 실제 이닝 수만큼 열을 확장하고 짧은 팀 행을 안전하게 유지한다", () => {
+  const game = createGameState("원정", "홈", 94);
+  game.inning = 7;
+  game.teams[0].inningRuns = [0, 1, 0, 0, 2, 0, 1];
+  game.teams[1].inningRuns = [0, 0, 1, 0, 2, 0];
+
+  const model = createBaseballHalfInningModelV2(game);
+
+  assert.equal(model.inningCount, 7);
+  assert.equal(model.inningRuns[0].length, 7);
+  assert.equal(model.inningRuns[1].length, 6);
+
+  const component = readFileSync(path.join(
+    process.cwd(),
+    "src/components/games/baseball/v2/BaseballPresentationSequencesV2.tsx",
+  ), "utf8");
+  const css = readFileSync(path.join(
+    process.cwd(),
+    "src/styles/baseball-presentation-sequences-v2.css",
+  ), "utf8");
+  const halfSequence = component.slice(component.indexOf("export function BaseballHalfInningSequenceV2"));
+  assert.match(halfSequence, /"--bbv2-linescore-innings": model\.inningCount/);
+  assert.match(halfSequence, /Array\.from\(\{ length: model\.inningCount \}/);
+  assert.match(css, /repeat\(var\(--bbv2-linescore-innings, 3\), minmax\(24px, 1fr\)\)/);
+});
+
+test("일반·환호 관중과 공격팀 더그아웃은 경기 소개·득점·홈런 단계에 실제 연결된다", () => {
+  const componentDirectory = path.join(
+    process.cwd(),
+    "src/components/games/baseball/v2",
+  );
+  const introSource = readFileSync(
+    path.join(componentDirectory, "BaseballPresentationSequencesV2.tsx"),
+    "utf8",
+  );
+  const visualEventSource = readFileSync(
+    path.join(componentDirectory, "BaseballVisualEventPresentationV2.tsx"),
+    "utf8",
+  );
+  const scoringSource = readFileSync(
+    path.join(componentDirectory, "BaseballScoringSequenceV2.tsx"),
+    "utf8",
+  );
+  const homeRunSource = readFileSync(
+    path.join(componentDirectory, "BaseballHomeRunSequenceV2.tsx"),
+    "utf8",
+  );
+  const styleSource = readFileSync(
+    path.join(process.cwd(), "src/styles/baseball-v2.css"),
+    "utf8",
+  );
+
+  assert.match(introSource, /crowdSrc\?: string/);
+  assert.match(introSource, /className="bbv2-sequence-crowd"/);
+  assert.match(visualEventSource, /crowdImageSrc\?: string/);
+  assert.match(visualEventSource, /dugoutImageSrc\?: string/);
+  assert.equal(
+    visualEventSource.match(/crowdImageSrc=\{crowdImageSrc\}/g)?.length,
+    2,
+    "환호 관중은 득점과 홈런 시퀀스 모두에 전달되어야 함",
+  );
+  assert.equal(
+    visualEventSource.match(/dugoutImageSrc=\{dugoutImageSrc\}/g)?.length,
+    2,
+    "공격팀 더그아웃은 득점과 홈런 시퀀스 모두에 전달되어야 함",
+  );
+  for (const source of [scoringSource, homeRunSource]) {
+    assert.match(source, /crowdImageSrc\?: string/);
+    assert.match(source, /dugoutImageSrc\?: string/);
+    assert.match(source, /event\.kind === "PLAY_RESULT"[\s\S]*?dugoutImageSrc/);
+    assert.match(source, /event\.kind === "SCOREBOARD_UPDATE"[\s\S]*?crowdImageSrc/);
+    assert.match(source, /className="bbv2-sequence-reaction"/);
+    assert.match(source, /data-reaction=\{reactionKind\}/);
+    assert.match(source, /src=\{reactionImageSrc\}/);
+  }
+  assert.ok(
+    scoringSource.indexOf('className="bbv2-sequence-reaction"')
+      < scoringSource.indexOf('className="bbv2-scoring-sequence__effect"'),
+    "득점 반응 img는 효과·문구보다 먼저 렌더링되는 배경 레이어여야 함",
+  );
+  assert.ok(
+    homeRunSource.indexOf('className="bbv2-sequence-reaction"')
+      < homeRunSource.indexOf('className="bbv2-home-run-sequence__copy"'),
+    "홈런 반응 img는 copy보다 먼저 렌더링되는 배경 레이어여야 함",
+  );
+
+  for (const component of ["BaseballSoloGameV2.tsx", "BaseballOnlineGameV2.tsx"]) {
+    const source = readFileSync(path.join(componentDirectory, component), "utf8");
+    assert.match(source, /BASEBALL_V2_CROWD_SOURCES/);
+    assert.match(source, /crowdSrc=\{BASEBALL_V2_CROWD_SOURCES\.normal\}/);
+    assert.match(source, /crowdImageSrc=\{BASEBALL_V2_CROWD_SOURCES\.cheering\}/);
+    assert.match(
+      source,
+      /dugoutImageSrc=\{visualBattingTeam === 0[\s\S]*?dugoutAway[\s\S]*?:[\s\S]*?dugoutHome\}/,
+    );
+  }
+
+  assert.match(
+    styleSource,
+    /\.bbv2-scoring-sequence > \.bbv2-sequence-reaction,[\s\S]*?position: absolute;[\s\S]*?z-index: 0;[\s\S]*?inset: 0;[\s\S]*?object-fit: cover;/,
+  );
+  assert.match(styleSource, /opacity: var\(--bbv2-sequence-crowd-opacity\);/);
+  assert.match(styleSource, /pointer-events: none;[\s\S]*?transform: scale\(1\);/);
+  assert.match(
+    styleSource,
+    /\.bbv2-scoring-sequence > :not\(\.bbv2-sequence-reaction\),[\s\S]*?z-index: 1;/,
+  );
+  assert.match(styleSource, /@keyframes bbv2-sequence-reaction-enter/);
+  assert.match(styleSource, /from \{ opacity: 0; transform: scale\(1\.035\); \}/);
+  assert.match(
+    styleSource,
+    /to \{ opacity: var\(--bbv2-sequence-crowd-opacity\); transform: scale\(1\); \}/,
+  );
+  const reducedMotionBlock = styleSource.slice(styleSource.indexOf("@media (prefers-reduced-motion: reduce)"));
+  assert.match(reducedMotionBlock, /\.bbv2-sequence-crowd/);
+  assert.match(reducedMotionBlock, /\.bbv2-sequence-reaction/);
+});

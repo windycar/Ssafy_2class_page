@@ -1,0 +1,97 @@
+import type { CSSProperties } from "react";
+
+import type { BaseballScoringPresentationV2 } from "../../../../utils/games/baseball/scoringPresentation.ts";
+import type { VisualEvent } from "../../../../utils/games/baseball/types.ts";
+
+export interface BaseballScoringSequenceV2Props {
+  event: VisualEvent;
+  model: BaseballScoringPresentationV2;
+  eventProgress: number;
+  imageSrc?: string;
+  imageAlt?: string;
+  crowdImageSrc?: string;
+  dugoutImageSrc?: string;
+}
+
+type SequenceProgressStyle = CSSProperties & {
+  "--bbv2-sequence-progress": number;
+};
+
+export function BaseballScoringSequenceV2({
+  event,
+  model,
+  eventProgress,
+  imageSrc,
+  imageAlt = "",
+  crowdImageSrc,
+  dugoutImageSrc,
+}: BaseballScoringSequenceV2Props) {
+  const style: SequenceProgressStyle = {
+    "--bbv2-sequence-progress": Math.min(1, Math.max(0, eventProgress)),
+  };
+  const title = model.momentLabel ?? model.scoringLabel;
+  const scorerCopy = model.scorerNames.length > 0
+    ? model.scorerNames.map((name) => `${name} SCORE!`).join(" · ")
+    : `${model.battingTeamName} 득점`;
+  const reactionImageSrc = event.kind === "PLAY_RESULT"
+    ? dugoutImageSrc
+    : event.kind === "SCOREBOARD_UPDATE"
+      ? crowdImageSrc
+      : undefined;
+  const reactionKind = event.kind === "PLAY_RESULT" ? "dugout" : "crowd";
+
+  return (
+    <aside
+      className={`bbv2-scoring-sequence is-${model.moment.toLowerCase().replaceAll("_", "-")}`}
+      data-event-kind={event.kind}
+      data-runs-scored={model.runsScored}
+      style={style}
+      role="status"
+      aria-live="assertive"
+    >
+      {reactionImageSrc ? (
+        <img
+          className="bbv2-sequence-reaction"
+          data-reaction={reactionKind}
+          src={reactionImageSrc}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+        />
+      ) : null}
+      {imageSrc ? (
+        <img
+          className="bbv2-scoring-sequence__effect"
+          src={imageSrc}
+          alt={imageAlt}
+          draggable={false}
+        />
+      ) : null}
+      {event.kind === "RUN_SCORE" ? (
+        <small className="bbv2-scoring-sequence__ruling">HOME PLATE · SAFE</small>
+      ) : null}
+      <span className="bbv2-scoring-sequence__eyebrow">{title}</span>
+      <h2>{scorerCopy}</h2>
+      <div className="bbv2-scoring-sequence__score" aria-label="득점 후 스코어">
+        <span>{model.scoreAfter[0]}</span>
+        <i>:</i>
+        <span>{model.scoreAfter[1]}</span>
+      </div>
+      <p>
+        {model.rbi > 0 ? (
+          <>
+            <strong>RBI · {model.batterName}</strong>
+            <span>{model.rbi}타점</span>
+          </>
+        ) : (
+          <>
+            <strong>타점 없음</strong>
+            <span>수비 판정 득점</span>
+          </>
+        )}
+      </p>
+    </aside>
+  );
+}
+
+export default BaseballScoringSequenceV2;

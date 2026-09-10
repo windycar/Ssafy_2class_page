@@ -8,6 +8,7 @@
     "build": "vite build",
     "dev": "vite",
     "test:bang": "node --experimental-strip-types --test tests/bangResponseRules.test.ts",
+    "test:baseball": "node --experimental-strip-types --test \"tests/baseball*.test.ts\"",
     "test:study-reset": "node --experimental-strip-types --test tests/studyProgressReset.test.ts",
     "test:admin-study": "node --experimental-strip-types --test tests/adminStudyProgress.test.ts",
     "test:special-mock": "node --experimental-strip-types --test tests/specialMockExam.test.ts",

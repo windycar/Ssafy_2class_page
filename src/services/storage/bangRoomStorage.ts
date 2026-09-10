@@ -59,6 +59,7 @@ export const bangRoomStorage = {
     const { data, error } = await supabase
       .from(TABLE)
       .select("id, room_data")
+      .like("id", "bang-%")
       .order("updated_at", { ascending: false });
 
     if (error) {

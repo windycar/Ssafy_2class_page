@@ -56,12 +56,14 @@ export default function GameHubView() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {GAMES.map((game) => (
           <div key={game.id} className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden hover:-translate-y-1 transition-transform">
-            {/* Card header with western theme */}
-            <div className="relative h-36 flex items-center justify-center overflow-hidden" style={{ background: "linear-gradient(135deg, #78350f 0%, #b45309 60%, #d97706 100%)" }}>
+            <div
+              className="relative flex h-36 items-center justify-center overflow-hidden"
+              style={{ background: `linear-gradient(135deg, ${game.themeColor}, #0f172a)` }}
+            >
               {game.image ? (
                 <>
-                  <img src={game.image} alt={`${game.name} 서부 테이블 게임 일러스트`} className="absolute inset-0 h-full w-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-amber-950/75 via-transparent to-black/20" />
+                  <img src={game.image} alt={`${game.name} 게임 일러스트`} className="absolute inset-0 h-full w-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/20" />
                 </>
               ) : (
                 <span className="text-5xl">{game.icon}</span>
@@ -73,7 +75,9 @@ export default function GameHubView() {
               </div>
               <div className="absolute bottom-3 left-4 text-white">
                 <p className="text-lg font-black drop-shadow-lg">{game.name}</p>
-                <p className="text-[10px] text-amber-100 font-semibold">서부 테이블 카드 게임</p>
+                <p className="text-[10px] font-semibold text-white/80">
+                  {game.id === "bang" ? "서부 테이블 카드 게임" : "1인 챌린지 · 로컬 2인 대결"}
+                </p>
               </div>
             </div>
             <div className="p-4 space-y-3">
@@ -86,12 +90,18 @@ export default function GameHubView() {
                 <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" />{game.estimatedMinutes}분</span>
               </div>
               <div className="flex gap-2">
-                <Link to={game.route} className="flex-1 text-center py-2 rounded-xl text-sm font-semibold bg-amber-700 text-white hover:bg-amber-800 transition-colors">
-                  게임방 보기
+                <Link
+                  to={game.route}
+                  className="flex-1 rounded-xl py-2 text-center text-sm font-semibold text-white transition-all hover:brightness-90"
+                  style={{ backgroundColor: game.themeColor }}
+                >
+                  {game.id === "bang" ? "게임방 보기" : "게임 시작"}
                 </Link>
-                <Link to={game.route} state={{ openCreate: true }} className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors">
-                  <Plus className="w-3.5 h-3.5" />새 방
-                </Link>
+                {game.id === "bang" && (
+                  <Link to={game.route} state={{ openCreate: true }} className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors">
+                    <Plus className="w-3.5 h-3.5" />새 방
+                  </Link>
+                )}
               </div>
             </div>
           </div>
