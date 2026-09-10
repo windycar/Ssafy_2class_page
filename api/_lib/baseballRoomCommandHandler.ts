@@ -127,7 +127,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function validString(value: unknown, minimumLength = 1, maximumLength = 128) {
+function validString(
+  value: unknown,
+  minimumLength = 1,
+  maximumLength = 128,
+): value is string {
   return typeof value === "string"
     && value.length >= minimumLength
     && value.length <= maximumLength;

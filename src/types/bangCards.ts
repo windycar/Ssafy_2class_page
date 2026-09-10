@@ -1,4 +1,4 @@
-import type { BangCharacterId } from "./bangCharacters";
+import type { BangCharacterId } from "./bangCharacters.ts";
 
 export type CardSuit = "S" | "H" | "D" | "C"; // Spades Hearts Diamonds Clubs
 export type CardRank = "2"|"3"|"4"|"5"|"6"|"7"|"8"|"9"|"10"|"J"|"Q"|"K"|"A";

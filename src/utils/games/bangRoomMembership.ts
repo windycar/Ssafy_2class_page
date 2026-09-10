@@ -1,5 +1,5 @@
-import type { BangRoom } from "../../types/bang";
-import type { PendingAction } from "../../types/bangCards";
+import type { BangRoom } from "../../types/bang.ts";
+import type { PendingAction } from "../../types/bangCards.ts";
 
 function cleanPending(
   pending: PendingAction | undefined,

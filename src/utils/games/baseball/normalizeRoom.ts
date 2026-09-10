@@ -86,11 +86,14 @@ function normalizePresentationGate(
   if (!isIsoTimestamp(raw.openedAt) || !isIsoTimestamp(raw.expiresAt)) {
     return failure("INVALID_FIELD", "$.presentationGate.expiresAt");
   }
-  if (!Array.isArray(raw.acknowledgedSeats)
-    || raw.acknowledgedSeats.some((seat) => seat !== 0 && seat !== 1)
-    || new Set(raw.acknowledgedSeats).size !== raw.acknowledgedSeats.length
-    || raw.acknowledgedSeats.some((seat, index) => index > 0
-      && Number(raw.acknowledgedSeats[index - 1]) >= Number(seat))) {
+  if (!Array.isArray(raw.acknowledgedSeats)) {
+    return failure("INVALID_FIELD", "$.presentationGate.acknowledgedSeats");
+  }
+  const acknowledgedSeats = raw.acknowledgedSeats;
+  if (acknowledgedSeats.some((seat) => seat !== 0 && seat !== 1)
+    || new Set(acknowledgedSeats).size !== acknowledgedSeats.length
+    || acknowledgedSeats.some((seat, index) => index > 0
+      && Number(acknowledgedSeats[index - 1]) >= Number(seat))) {
     return failure("INVALID_FIELD", "$.presentationGate.acknowledgedSeats");
   }
   const openedAtMs = Date.parse(raw.openedAt);
@@ -400,19 +403,19 @@ export function normalizeBaseballRoom(
   const room: BaseballRoom = {
     schemaVersion: BASEBALL_ROOM_SCHEMA_VERSION,
     revision: sourceVersion === 1 ? 0 : raw.revision as number,
-    id: raw.id,
-    title: raw.title,
-    description: raw.description,
-    hostStudentId: raw.hostStudentId,
+    id: raw.id as string,
+    title: raw.title as string,
+    description: raw.description as string,
+    hostStudentId: raw.hostStudentId as number,
     maxPlayers: 2,
-    isPublic: raw.isPublic,
-    status: raw.status,
+    isPublic: raw.isPublic as boolean,
+    status: raw.status as GameRoomStatus,
     players,
     activityLogs,
-    createdAt: raw.createdAt,
-    ...(raw.startedAt === undefined ? {} : { startedAt: raw.startedAt }),
-    ...(raw.finishedAt === undefined ? {} : { finishedAt: raw.finishedAt }),
-    ...(raw.matchId === undefined ? {} : { matchId: raw.matchId }),
+    createdAt: raw.createdAt as string,
+    ...(raw.startedAt === undefined ? {} : { startedAt: raw.startedAt as string }),
+    ...(raw.finishedAt === undefined ? {} : { finishedAt: raw.finishedAt as string }),
+    ...(raw.matchId === undefined ? {} : { matchId: raw.matchId as string }),
     ...(gameState === undefined ? {} : { gameState }),
     ...(presentationGate === undefined ? {} : { presentationGate }),
   };

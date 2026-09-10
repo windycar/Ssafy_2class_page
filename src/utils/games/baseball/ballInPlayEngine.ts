@@ -544,7 +544,7 @@ export function resolveDefenseOpportunity(input: {
 
   return {
     primaryFielderId: player.id,
-    primaryPosition: player.position,
+    primaryPosition: player.position as FieldingPosition,
     ballArrivalTimeMs,
     fielderArrivalTimeMs,
     secureTimeMs,

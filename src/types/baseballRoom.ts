@@ -1,5 +1,5 @@
-import type { BaseballGameState, TeamIndex } from "../utils/games/baseballEngine";
-import type { GameRoomStatus } from "./game";
+import type { BaseballGameState, TeamIndex } from "../utils/games/baseballEngine.ts";
+import type { GameRoomStatus } from "./game.ts";
 
 export const BASEBALL_ROOM_SCHEMA_VERSION = 2 as const;
 

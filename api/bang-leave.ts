@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import type { BangRoom } from "../src/types/bang";
-import { removeBangPlayer } from "../src/utils/games/bangRoomMembership";
+import type { BangRoom } from "../src/types/bang.ts";
+import { removeBangPlayer } from "../src/utils/games/bangRoomMembership.ts";
 
 type LeaveRequest = {
   roomId?: string;

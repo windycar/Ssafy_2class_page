@@ -9,9 +9,11 @@ import {
   BASEBALL_GAME_STATE_VERSION,
   type BaseNumber,
   type BaseRunner,
+  type BatterGameStats,
   type BaseballGameState,
   type BaseballTeamState,
   type BasesState,
+  type PitcherGameStats,
 } from "./types.ts";
 
 export type BaseballStateNormalizeFailureCode =
@@ -235,7 +237,7 @@ function hasExactlyKeys(value: UnknownRecord, keys: readonly string[]) {
   return actual.length === keys.length && keys.every((key) => Object.hasOwn(value, key));
 }
 
-function isKnownPlayerId(value: unknown) {
+function isKnownPlayerId(value: unknown): value is string {
   return isNonEmptyString(value) && getBaseballPlayer(value) !== undefined;
 }
 
@@ -251,7 +253,7 @@ function isPoint(value: unknown) {
     && Number.isFinite(value.y);
 }
 
-function isBatterStats(value: unknown) {
+function isBatterStats(value: unknown): value is BatterGameStats {
   if (!isRecord(value) || !hasExactlyKeys(value, BATTER_STAT_KEYS)) return false;
   if (!BATTER_STAT_KEYS.every((key) => isNonNegativeSafeInteger(value[key]))) return false;
   const pa = value.pa as number;
@@ -262,7 +264,7 @@ function isBatterStats(value: unknown) {
     && ab + (value.bb as number) <= pa;
 }
 
-function isPitcherStats(value: unknown) {
+function isPitcherStats(value: unknown): value is PitcherGameStats {
   if (!isRecord(value) || !hasExactlyKeys(value, PITCHER_STAT_KEYS)) return false;
   if (!PITCHER_STAT_KEYS.every((key) => isNonNegativeSafeInteger(value[key]))) return false;
   return (value.earnedRuns as number) <= (value.runsAllowed as number)
@@ -343,20 +345,25 @@ function isV2Team(value: unknown): value is BaseballTeamState {
     || !isRecord(value.batterStats)
     || !isRecord(value.pitcherStats)) return false;
 
-  const batterStatIds = Object.keys(value.batterStats);
+  const batterStats = value.batterStats as Record<string, unknown>;
+  const pitcherStats = value.pitcherStats as Record<string, unknown>;
+  const lineupPlayerIds = value.lineupPlayerIds as string[];
+  const pitcher = value.pitcher as UnknownRecord;
+  const batterStatIds = Object.keys(batterStats);
   if (batterStatIds.length !== value.lineupPlayerIds.length
-    || value.lineupPlayerIds.some((playerId) => (
-      !Object.hasOwn(value.batterStats, playerId) || !isBatterStats(value.batterStats[playerId])
+    || lineupPlayerIds.some((playerId) => (
+      !Object.hasOwn(batterStats, playerId) || !isBatterStats(batterStats[playerId])
     ))) return false;
 
-  const pitcherStatIds = Object.keys(value.pitcherStats);
-  if (!Object.hasOwn(value.pitcherStats, value.pitcher.playerId)
+  const pitcherStatIds = Object.keys(pitcherStats);
+  if (!Object.hasOwn(pitcherStats, pitcher.playerId as string)
     || pitcherStatIds.length === 0
     || pitcherStatIds.some((playerId) => (
-      !getBaseballPlayer(playerId)?.pitching || !isPitcherStats(value.pitcherStats[playerId])
+      !getBaseballPlayer(playerId)?.pitching || !isPitcherStats(pitcherStats[playerId])
     ))) return false;
 
-  return value.pitcherStats[value.pitcher.playerId].pitches === value.pitcher.pitchCount;
+  return (pitcherStats[pitcher.playerId as string] as PitcherGameStats).pitches
+    === pitcher.pitchCount;
 }
 
 function isPitchFlightState(value: unknown) {
@@ -515,7 +522,7 @@ function isActivePlay(value: unknown) {
     || (value.defense !== null && !isDefenseResolution(value.defense))
     || (value.runners !== null && !isRunnerResolution(value.runners))
     || !Array.isArray(value.visualEvents)
-    || !value.visualEvents.every((event) => isVisualEvent(event, value.playId))) return false;
+    || !value.visualEvents.every((event) => isVisualEvent(event, value.playId as string))) return false;
   if (value.pitch !== null && (value.pitch as UnknownRecord).pitcherId !== value.pitcherId) return false;
   if (value.contact !== null && (
     (value.contact as UnknownRecord).batterId !== value.batterId

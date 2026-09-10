@@ -1,6 +1,6 @@
-import type { BangCardGameState } from "./bangCards";
-import type { BangCharacterId } from "./bangCharacters";
-import type { GameRoomStatus } from "./game";
+import type { BangCardGameState } from "./bangCards.ts";
+import type { BangCharacterId } from "./bangCharacters.ts";
+import type { GameRoomStatus } from "./game.ts";
 
 export type BangRole = "sheriff" | "deputy" | "outlaw" | "renegade";
 

@@ -360,7 +360,8 @@ export function resolveBatterAction(input: {
 
   const action = input.action as BatterAction | null | undefined;
   if (!action || (action.kind !== "TAKE" && action.kind !== "SWING")) {
-    throw new RangeError(`Unknown batter action: ${String(action?.kind)}`);
+    const receivedKind = (input.action as { kind?: unknown } | null | undefined)?.kind;
+    throw new RangeError(`Unknown batter action: ${String(receivedKind)}`);
   }
 
   if (action.kind === "TAKE") {
