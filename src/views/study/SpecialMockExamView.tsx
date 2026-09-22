@@ -35,6 +35,9 @@ import {
 } from "../../utils/studyProgressStats";
 
 const HERO_IMAGE = "/images/study-tracks/special-mock-exam-hero-v2.png";
+const ITTA_SSAFY_IMAGE = "/images/study-tracks/itta-ssafy-assessment-4.png";
+
+type SelectedAssessmentRound = SpecialMockExamAvailableAssessmentRound | 4;
 
 const ROUND_STYLES = {
   1: {
@@ -88,14 +91,16 @@ export default function SpecialMockExamView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedAssessmentRound = searchParams.get("assessment") ?? undefined;
   const [selectedAssessmentRound, setSelectedAssessmentRound] =
-    useState<SpecialMockExamAvailableAssessmentRound>(() =>
-      isSpecialMockExamAssessmentRound(requestedAssessmentRound)
-        ? (Number(
-            requestedAssessmentRound,
-          ) as SpecialMockExamAvailableAssessmentRound)
-        : 2,
-    );
-  const collection = getSpecialMockExamCollection(selectedAssessmentRound);
+    useState<SelectedAssessmentRound>(() => {
+      if (requestedAssessmentRound === "4") return 4;
+      if (isSpecialMockExamAssessmentRound(requestedAssessmentRound)) {
+        return Number(requestedAssessmentRound) as SpecialMockExamAvailableAssessmentRound;
+      }
+      return 2;
+    });
+  const collection = selectedAssessmentRound === 4
+    ? null
+    : getSpecialMockExamCollection(selectedAssessmentRound);
 
   const resetRound = async (
     assessmentRound: SpecialMockExamAvailableAssessmentRound,
@@ -192,7 +197,7 @@ export default function SpecialMockExamView() {
             </h2>
           </div>
           <p className="text-xs font-bold text-slate-500">
-            현재 2·3·5회차 이용 가능 · 나머지 회차 순차 공개
+            2·3·5회차 모의고사 · 4회차 일타싸피
           </p>
         </div>
 
@@ -202,9 +207,11 @@ export default function SpecialMockExamView() {
           className="grid grid-cols-3 gap-2 p-5 sm:grid-cols-5 sm:p-7 lg:grid-cols-9"
         >
           {SPECIAL_MOCK_EXAM_ASSESSMENT_ROUNDS.map((round) => {
-            const available = SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.some(
-              (availableRound) => availableRound === round,
-            );
+            const available =
+              round === 4 ||
+              SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.some(
+                (availableRound) => availableRound === round,
+              );
             const selected = selectedAssessmentRound === round;
             return (
               <button
@@ -214,8 +221,7 @@ export default function SpecialMockExamView() {
                 aria-selected={selected}
                 disabled={!available}
                 onClick={() => {
-                  const availableRound =
-                    round as SpecialMockExamAvailableAssessmentRound;
+                  const availableRound = round as SelectedAssessmentRound;
                   setSelectedAssessmentRound(availableRound);
                   setSearchParams(
                     { assessment: String(availableRound) },
@@ -243,7 +249,7 @@ export default function SpecialMockExamView() {
                       : "bg-slate-100 text-slate-400"
                   }`}
                 >
-                  {available ? "OPEN" : "준비 중"}
+                  {round === 4 ? "일타싸피" : available ? "OPEN" : "준비 중"}
                 </span>
               </button>
             );
@@ -251,6 +257,20 @@ export default function SpecialMockExamView() {
         </div>
       </section>
 
+      {selectedAssessmentRound === 4 ? (
+        <section role="tabpanel" aria-label="과목평가 4회차 일타싸피">
+          <h2 className="sr-only">
+            일타싸피
+          </h2>
+          <img
+            src={ITTA_SSAFY_IMAGE}
+            alt="당구대 위 흰 공에서 목적구와 포켓으로 이어지는 경로를 그린 일타싸피 그림"
+            className="w-full rounded-[1.75rem] border border-slate-200 object-cover shadow-[0_16px_48px_rgba(35,45,90,0.14)]"
+            decoding="async"
+          />
+        </section>
+      ) : collection ? (
+      <div className="space-y-8">
       <section
         role="tabpanel"
         aria-label={`과목평가 ${selectedAssessmentRound}회차 모의고사`}
@@ -463,8 +483,8 @@ export default function SpecialMockExamView() {
       <section className="grid gap-3 sm:grid-cols-3">
         <InfoCard
           icon={<FileCheck2 className="h-5 w-5" />}
-          title={`실전형 ${collection.questionsPerRound}문제`}
-          description={`과목평가 ${selectedAssessmentRound}회차 핵심 개념을 확인하는 객관식 ${collection.questionsPerRound}문제로 구성됩니다.`}
+          title={`세트당 ${collection.questionsPerRound}문제`}
+          description={`과목평가 ${selectedAssessmentRound}회차 핵심 개념을 확인하는 문제로 구성됩니다.`}
         />
         <InfoCard
           icon={<RotateCcw className="h-5 w-5" />}
@@ -474,9 +494,11 @@ export default function SpecialMockExamView() {
         <InfoCard
           icon={<Hourglass className="h-5 w-5" />}
           title="다음 과목평가 준비 중"
-          description="과목평가 4~10회차는 준비되는 대로 순차 공개됩니다."
+          description="남은 과목평가 회차는 준비되는 대로 순차 공개됩니다."
         />
       </section>
+      </div>
+      ) : null}
     </div>
   );
 }
