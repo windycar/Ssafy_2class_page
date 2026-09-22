@@ -19,6 +19,17 @@ function compact(value: string) {
   return normalize(value).replace(/\s+/g, "").toLowerCase();
 }
 
+function matchesRubricKeyword(response: string, keyword: string) {
+  const alternatives = keyword.match(/^(.*?)\s*\(또는\s+(.+)\)$/);
+  const terms = alternatives
+    ? [alternatives[1], ...alternatives[2].split("/")]
+    : [keyword];
+  return terms.some((term) => {
+    if (term === "일관성" && response.includes("일관")) return true;
+    return term.split(/\s+/).every((word) => response.includes(compact(word)));
+  });
+}
+
 export function hasSpecialMockExamResponse(
   response: number | string | null | undefined,
 ) {
@@ -71,18 +82,22 @@ export function gradeSpecialMockExamResponse(
   const expectedMatched = acceptedAnswers.some((answer) =>
     compactResponse.includes(compact(answer)),
   );
-  const matchedKeywords = (question.rubricKeywords ?? []).filter((keyword) =>
-    normalizedResponse.toLowerCase().includes(keyword.toLowerCase()),
+  const rubricKeywords = question.rubricKeywords ?? [];
+  const matchedKeywords = rubricKeywords.filter((keyword) =>
+    matchesRubricKeyword(compactResponse, keyword),
   );
+  const essayExpectedMatched = acceptedAnswers.length
+    ? expectedMatched
+    : rubricKeywords.length > 0 && matchedKeywords.length === rubricKeywords.length;
   const minimumLength = question.minLength ?? ESSAY_MIN_LENGTH;
 
   return {
     correct:
       normalizedResponse.length >= minimumLength &&
-      expectedMatched &&
+      essayExpectedMatched &&
       matchedKeywords.length >= 1,
     responseLength: normalizedResponse.length,
-    expectedMatched,
+    expectedMatched: essayExpectedMatched,
     matchedKeywords,
   };
 }

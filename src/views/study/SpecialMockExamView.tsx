@@ -148,7 +148,7 @@ export default function SpecialMockExamView() {
             </span>
           </h1>
           <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-slate-200/80 sm:text-base">
-            과목평가 2·3회차 핵심 범위를 실전 문제로 점검합니다. 문제 순서는
+            과목평가 2·3·5회차 핵심 범위를 실전 문제로 점검합니다. 문제 순서는
             매번 바뀌며, 60점 이상이면 통과입니다.
           </p>
 
@@ -192,7 +192,7 @@ export default function SpecialMockExamView() {
             </h2>
           </div>
           <p className="text-xs font-bold text-slate-500">
-            현재 2·3회차 이용 가능 · 4~10회차 순차 공개
+            현재 2·3·5회차 이용 가능 · 나머지 회차 순차 공개
           </p>
         </div>
 

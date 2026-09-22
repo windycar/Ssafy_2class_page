@@ -5,7 +5,7 @@ export const SPECIAL_MOCK_EXAM_ASSESSMENT_ROUNDS = [
 export type SpecialMockExamAssessmentRound =
   (typeof SPECIAL_MOCK_EXAM_ASSESSMENT_ROUNDS)[number];
 
-export const SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS = [2, 3] as const;
+export const SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS = [2, 3, 5] as const;
 
 export type SpecialMockExamAvailableAssessmentRound =
   (typeof SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS)[number];
@@ -18,6 +18,7 @@ export const SPECIAL_MOCK_EXAM_ROUNDS = [1, 2, 3, 4, 5] as const satisfies
 export const SPECIAL_MOCK_EXAM_QUESTIONS_PER_ASSESSMENT = {
   2: 32,
   3: 60,
+  5: 32,
 } as const satisfies Record<SpecialMockExamAvailableAssessmentRound, number>;
 
 export const SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT =
@@ -38,6 +39,13 @@ export const SPECIAL_MOCK_EXAM_BANK_VERSIONS = {
     5: "v3",
   },
   3: {
+    1: "v1",
+    2: "v1",
+    3: "v1",
+    4: "v1",
+    5: "v1",
+  },
+  5: {
     1: "v1",
     2: "v1",
     3: "v1",

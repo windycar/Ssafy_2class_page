@@ -10,6 +10,10 @@ import {
   SPECIAL_MOCK_EXAM_BANKS as ASSESSMENT_3_BANKS,
   SPECIAL_MOCK_EXAM_META as ASSESSMENT_3_META,
 } from "../src/data/모의고사/3회차/index.ts";
+import {
+  SPECIAL_MOCK_EXAM_BANKS as ASSESSMENT_5_BANKS,
+  SPECIAL_MOCK_EXAM_META as ASSESSMENT_5_META,
+} from "../src/data/모의고사/5회차/index.ts";
 import { SPECIAL_MOCK_EXAM_COLLECTIONS } from "../src/data/모의고사/index.ts";
 import { STUDY_REVIEW_TRACKS } from "../src/config/studyReviewTracks.ts";
 import {
@@ -27,7 +31,10 @@ import type {
   SpecialMockExamAvailableAssessmentRound,
   SpecialMockExamRound,
 } from "../src/types/specialMockExam.ts";
-import { getSpecialMockExamAttemptIdPrefix } from "../src/types/specialMockExam.ts";
+import {
+  getSpecialMockExamAttemptIdPrefix,
+  isSpecialMockExamAssessmentRound,
+} from "../src/types/specialMockExam.ts";
 import { SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT } from "../src/types/specialMockExam.ts";
 import {
   countUnresolvedMistakes,
@@ -158,6 +165,7 @@ test("특별 모의고사는 승인된 회원과 관리자만 접근한다", () 
     canAccessSpecialMockExam({
       role: "member",
       canAccessSpecialMockExam: false,
+      studentId: 1,
     }),
     false,
   );
@@ -165,6 +173,7 @@ test("특별 모의고사는 승인된 회원과 관리자만 접근한다", () 
     canAccessSpecialMockExam({
       role: "member",
       canAccessSpecialMockExam: true,
+      studentId: 1,
     }),
     true,
   );
@@ -172,8 +181,17 @@ test("특별 모의고사는 승인된 회원과 관리자만 접근한다", () 
     canAccessSpecialMockExam({
       role: "admin",
       canAccessSpecialMockExam: false,
+      studentId: 1,
     }),
     true,
+  );
+  assert.equal(
+    canAccessSpecialMockExam({
+      role: "admin",
+      canAccessSpecialMockExam: true,
+      studentId: null,
+    }),
+    false,
   );
 });
 
@@ -202,6 +220,20 @@ test("특별 모의고사 서버 기록도 활성 계정과 승인 권한을 함
     "utf8",
   );
   assert.match(assessmentRoundMigration, /assessment_round in \(2, 3\)/);
+  const fifthRoundMigration = readFileSync(
+    new URL(
+      "../supabase/migrations/20260922090000_special_mock_exam_assessment_round_5.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(fifthRoundMigration, /assessment_round in \(2, 3, 5\)/);
+  assert.doesNotMatch(fifthRoundMigration, /to anon|auth_user_id is null/);
+  assert.equal(
+    fifthRoundMigration.match(/m\.student_id::bigint = special_mock_exam_attempts\.student_id/g)?.length,
+    3,
+  );
+  assert.doesNotMatch(fifthRoundMigration, /coalesce\(m\.student_id/);
 });
 
 test("과목평가 2회차에는 서로 충돌하지 않는 32문제짜리 모의고사 5세트가 있다", () => {
@@ -237,7 +269,7 @@ test("과목평가 3회차에는 서로 충돌하지 않는 60문제짜리 모�
   assert.equal(new Set(allIds).size, 300);
   assert.equal(ASSESSMENT_3_META[5].label, "모의고사 5회차");
   assert.equal(ASSESSMENT_3_BANKS[1][0].sourceId, "mock-001-regression-error");
-  assert.equal(SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT, 460);
+  assert.equal(SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT, 620);
   assert.equal(
     getSpecialMockExamAttemptIdPrefix(2, 1),
     "special-mock-a2-r1-v3-",
@@ -252,7 +284,28 @@ test("과목평가 3회차에는 서로 충돌하지 않는 60문제짜리 모�
         questions.map(({ id }) => id),
       ),
   );
-  assert.equal(new Set(everyQuestionId).size, 460);
+  assert.equal(new Set(everyQuestionId).size, 620);
+});
+
+test("과목평가 5회차에는 원본 Web 문제 32개씩 5세트가 있다", () => {
+  assert.equal(isSpecialMockExamAssessmentRound("4"), false);
+  assert.equal(isSpecialMockExamAssessmentRound("5"), true);
+  const allIds = Object.values(ASSESSMENT_5_BANKS).flatMap((questions, index) => {
+    assert.equal(questions.length, 32);
+    assert.equal(new Set(questions.map(({ id }) => id)).size, 32);
+    assert.equal(questions[0].sourceId.startsWith(`mock${index + 1}-001-`), true);
+    assert.deepEqual(
+      ["multiple-choice", "short-answer", "essay"].map(
+        (type) => questions.filter(({ questionType }) => questionType === type).length,
+      ),
+      [24, 5, 3],
+    );
+    return questions.map(({ id }) => id);
+  });
+  assert.equal(new Set(allIds).size, 160);
+  assert.equal(SPECIAL_MOCK_EXAM_COLLECTIONS[5].totalQuestionCount, 160);
+  assert.equal(ASSESSMENT_5_META[5].label, "모의고사 5회차");
+  assert.equal(getSpecialMockExamAttemptIdPrefix(5, 1), "special-mock-a5-r1-v1-");
 });
 
 test("모든 문제에는 다시 보기에서 표시할 정답과 해설이 있다", () => {
@@ -309,23 +362,52 @@ test("풀이 기록 다시 보기는 최신 답안과 미답변을 포함해 32�
   });
 });
 
-test("특별 모의고사 문제은행은 모두 4지선다 객관식으로 구성된다", () => {
+test("2·3회차 문제는 4지선다, 5회차 문제는 객관식·단답형·서술형으로 구성된다", () => {
   const questions = Object.values(SPECIAL_MOCK_EXAM_COLLECTIONS).flatMap(
     (collection) => Object.values(collection.banks).flat(),
   );
   assert.equal(
     questions.filter(({ questionType }) => questionType === "multiple-choice")
       .length,
-    460,
+    580,
   );
   assert.equal(
-    questions.filter(({ questionType }) => questionType !== "multiple-choice")
+    questions.filter(({ questionType }) => questionType === "short-answer")
       .length,
-    0,
+    25,
   );
+  assert.equal(questions.filter(({ questionType }) => questionType === "essay").length, 15);
   questions.forEach((question) => {
-    assert.equal(typeof question.answer, "number", `${question.id}: 정답 누락`);
-    assert.equal(question.options.length, 4, `${question.id}: 보기 수 오류`);
+    if (question.questionType === "multiple-choice") {
+      assert.equal(typeof question.answer, "number", `${question.id}: 정답 누락`);
+      assert.equal(question.options.length, 4, `${question.id}: 보기 수 오류`);
+    } else {
+      assert.equal(question.answer, null);
+      assert.equal(question.options.length, 0);
+    }
+  });
+});
+
+test("5회차 단답형 정답과 서술형 모범 답안은 채점된다", () => {
+  Object.values(ASSESSMENT_5_BANKS).flat().forEach((question) => {
+    if (question.questionType === "short-answer") {
+      assert.equal(
+        gradeSpecialMockExamResponse(question, question.acceptedAnswers?.[0] ?? "").correct,
+        true,
+        `${question.id}: 단답형 정답 채점 실패`,
+      );
+    }
+    if (question.questionType === "essay") {
+      assert.equal(
+        gradeSpecialMockExamResponse(question, question.modelAnswer ?? "").correct,
+        true,
+        `${question.id}: 서술형 모범 답안 채점 실패`,
+      );
+      assert.equal(
+        gradeSpecialMockExamResponse(question, "틀린 설명을 30자 이상 길게 적어도 정답은 아닙니다.").correct,
+        false,
+      );
+    }
   });
 });
 
@@ -392,7 +474,7 @@ test("모의고사 문제 순서는 응시 시작 시 무작위 순서로 복사
   );
 });
 
-test("특별 모의고사 10세트가 오답 선택 화면에 모두 등록된다", () => {
+test("특별 모의고사 15세트가 오답 선택 화면에 모두 등록된다", () => {
   const tracks = STUDY_REVIEW_TRACKS.filter(
     (track) => track.source === "special-mock-exam",
   );
@@ -409,6 +491,11 @@ test("특별 모의고사 10세트가 오답 선택 화면에 모두 등록된�
       [3, 3],
       [3, 4],
       [3, 5],
+      [5, 1],
+      [5, 2],
+      [5, 3],
+      [5, 4],
+      [5, 5],
     ],
   );
   tracks.forEach((track) => assert.match(track.href, /mode=wrong/));
@@ -506,6 +593,42 @@ test("같은 모의고사 회차라도 과목평가별 기록과 초기화 범�
       .attempts.map(({ id }) => id),
     [assessment2.id],
   );
+});
+
+test("5회차 풀이 저장·오답 재풀이·세트별 초기화가 분리된다", () => {
+  const userId = 58;
+  const otherUserId = 59;
+  const questionId = ASSESSMENT_5_BANKS[1][0].id;
+  const otherRoundQuestionId = ASSESSMENT_5_BANKS[2][0].id;
+  const wrong = attempt("wrong", 1, questionId, false, "2026-09-22T00:00:00.000Z", 5);
+  const right = attempt("right", 1, questionId, true, "2026-09-22T00:01:00.000Z", 5);
+  const otherRound = attempt("other", 2, otherRoundQuestionId, false, "2026-09-22T00:02:00.000Z", 5);
+
+  specialMockExamProgressStorage.addMany(userId, [wrong, otherRound]);
+  specialMockExamProgressStorage.add(otherUserId, wrong);
+  assert.deepEqual(specialMockExamProgressStorage.getPendingIds(userId), [wrong.id, otherRound.id]);
+  assert.equal(countUnresolvedMistakes([wrong]), 1);
+
+  specialMockExamProgressStorage.add(userId, right);
+  assert.equal(
+    countUnresolvedMistakes(
+      specialMockExamProgressStorage.get(userId).attempts.filter(
+        (entry) => entry.assessmentRound === 5 && entry.mockRound === 1,
+      ),
+    ),
+    0,
+  );
+
+  const resetIds = getSpecialMockExamResetAttemptIds(
+    specialMockExamProgressStorage.get(userId), 5, 1,
+  );
+  assert.deepEqual(resetIds, [wrong.id, right.id]);
+  assert.deepEqual(
+    specialMockExamProgressStorage.remove(userId, resetIds).attempts.map(({ id }) => id),
+    [otherRound.id],
+  );
+  assert.deepEqual(specialMockExamProgressStorage.getPendingIds(userId), [otherRound.id]);
+  assert.deepEqual(specialMockExamProgressStorage.get(otherUserId).attempts.map(({ id }) => id), [wrong.id]);
 });
 
 test("미답변은 채점만 하고 완료 기록과 오답 기록에는 저장하지 않는다", () => {

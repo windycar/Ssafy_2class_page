@@ -7,6 +7,10 @@ import {
   SPECIAL_MOCK_EXAM_META as ASSESSMENT_3_META,
 } from "./3회차/index.ts";
 import {
+  SPECIAL_MOCK_EXAM_BANKS as ASSESSMENT_5_BANKS,
+  SPECIAL_MOCK_EXAM_META as ASSESSMENT_5_META,
+} from "./5회차/index.ts";
+import {
   SPECIAL_MOCK_EXAM_QUESTIONS_PER_ASSESSMENT,
   SPECIAL_MOCK_EXAM_ROUNDS,
   type SpecialMockExamAvailableAssessmentRound,
@@ -29,6 +33,14 @@ export const SPECIAL_MOCK_EXAM_COLLECTIONS = {
     totalQuestionCount:
       SPECIAL_MOCK_EXAM_ROUNDS.length *
       SPECIAL_MOCK_EXAM_QUESTIONS_PER_ASSESSMENT[3],
+  },
+  5: {
+    banks: ASSESSMENT_5_BANKS,
+    meta: ASSESSMENT_5_META,
+    questionsPerRound: SPECIAL_MOCK_EXAM_QUESTIONS_PER_ASSESSMENT[5],
+    totalQuestionCount:
+      SPECIAL_MOCK_EXAM_ROUNDS.length *
+      SPECIAL_MOCK_EXAM_QUESTIONS_PER_ASSESSMENT[5],
   },
 } as const;
 

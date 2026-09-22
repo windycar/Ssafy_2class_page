@@ -644,7 +644,7 @@ create table if not exists public.special_mock_exam_attempts (
   id text primary key,
   student_id integer not null check (student_id > 0),
   auth_user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
-  assessment_round smallint not null check (assessment_round in (2, 3)),
+  assessment_round smallint not null check (assessment_round in (2, 3, 5)),
   mock_round smallint not null check (mock_round between 1 and 5),
   question_id text not null,
   difficulty text not null check (difficulty in ('easy', 'medium', 'hard', 'extreme')),
@@ -680,7 +680,7 @@ create policy special_mock_exam_attempts_select_self
       where m.auth_user_id = (select auth.uid())
         and m.is_active = true
         and (m.role = 'admin' or m.can_access_special_mock_exam = true)
-        and coalesce(m.student_id::bigint, 900000000 + m.id)
+        and m.student_id::bigint
           = special_mock_exam_attempts.student_id
     )
   );
@@ -699,7 +699,7 @@ create policy special_mock_exam_attempts_insert_self
       where m.auth_user_id = (select auth.uid())
         and m.is_active = true
         and (m.role = 'admin' or m.can_access_special_mock_exam = true)
-        and coalesce(m.student_id::bigint, 900000000 + m.id)
+        and m.student_id::bigint
           = special_mock_exam_attempts.student_id
     )
   );
@@ -718,7 +718,7 @@ create policy special_mock_exam_attempts_delete_self
       where m.auth_user_id = (select auth.uid())
         and m.is_active = true
         and (m.role = 'admin' or m.can_access_special_mock_exam = true)
-        and coalesce(m.student_id::bigint, 900000000 + m.id)
+        and m.student_id::bigint
           = special_mock_exam_attempts.student_id
     )
   );
