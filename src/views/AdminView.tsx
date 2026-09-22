@@ -754,6 +754,24 @@ export default function AdminView() {
       }
     };
 
+  const deleteMember = async (member: AdminMember) => {
+    if (member.role !== "member") return;
+    if (!window.confirm(
+      `${member.name} (@${member.login_id}) 계정을 영구 삭제할까요? 로그인 계정과 풀이 기록이 삭제됩니다. 게시글 작성자 정보나 게임 기록이 연결된 계정은 삭제할 수 없습니다.`,
+    )) return;
+
+    setWorkingId(`delete-${member.id}`);
+    try {
+      await request("members.delete", { id: member.id });
+      setMembers((list) => list.filter((item) => item.id !== member.id));
+      toast.success(`${member.name} 계정을 삭제했습니다.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "계정을 삭제하지 못했습니다.");
+    } finally {
+      setWorkingId(null);
+    }
+  };
+
   /**
    * =========================================================
    * 게시글 수정
@@ -1595,6 +1613,16 @@ export default function AdminView() {
                         {member.is_active
                           ? "비활성화"
                           : "활성화"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => void deleteMember(member)}
+                        disabled={workingId !== null}
+                        className="inline-flex items-center gap-1 rounded-lg border border-red-300 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        계정 삭제
                       </button>
 
                     </div>

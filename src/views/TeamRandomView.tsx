@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Shuffle,
   ChevronUp,
@@ -34,6 +34,8 @@ import { StudentChip } from "../components/team/StudentChip";
 import { EmptyTeamResult } from "../components/team/EmptyTeamResult";
 
 import { teamClassRosterStorage } from "../services/storage/teamClassRosterStorage";
+import { getActiveTeamRosterMembers } from "../services/memberTeamRosterService";
+import { buildMemberTeamRosters } from "../utils/memberTeamRosters";
 
 import {
   parseClassRoster,
@@ -51,6 +53,8 @@ const DEFAULT_CLASS_ROSTER: TeamClassRoster = {
   name: "광주 2반",
   students: STUDENTS,
 };
+
+const FILE_ROSTERS = [DEFAULT_CLASS_ROSTER, ...ADDITIONAL_TEAM_CLASS_ROSTERS];
 
 /**
  * 랜덤 팀 모션에서 학생 카드들이 이동할 위치
@@ -163,15 +167,13 @@ function Checkbox({
 }
 
 export default function TeamRandomView() {
+  const [memberRosters, setMemberRosters] = useState<TeamClassRoster[] | null>(null);
   const [customRosters, setCustomRosters] =
     useState<TeamClassRoster[]>(() =>
       teamClassRosterStorage.getRosters(),
     );
 
-  const fileRosters = [
-    DEFAULT_CLASS_ROSTER,
-    ...ADDITIONAL_TEAM_CLASS_ROSTERS,
-  ];
+  const fileRosters = memberRosters ?? FILE_ROSTERS;
 
   const visibleCustomRosters = customRosters.filter(
     (customRoster) =>
@@ -288,6 +290,58 @@ export default function TeamRandomView() {
     useState("");
 
   const lastKey = useRef("");
+
+  useEffect(() => {
+    let cancelled = false;
+    let requestId = 0;
+    let warned = false;
+    const refresh = async () => {
+      const currentRequest = ++requestId;
+      try {
+        const members = await getActiveTeamRosterMembers();
+        if (cancelled || currentRequest !== requestId) return;
+        const next = buildMemberTeamRosters(FILE_ROSTERS, members);
+        setMemberRosters((current) =>
+          JSON.stringify(current) === JSON.stringify(next) ? current : next,
+        );
+      } catch (error) {
+        if (cancelled || warned) return;
+        warned = true;
+        toast.error(error instanceof Error ? error.message : "반 명단을 불러오지 못했습니다.");
+      }
+    };
+    void refresh();
+    window.addEventListener("focus", refresh);
+    window.addEventListener("online", refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", refresh);
+      window.removeEventListener("online", refresh);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!memberRosters) return;
+    const savedClassId = teamClassRosterStorage.getSelectedClassId();
+    if (savedClassId && memberRosters.some((roster) => roster.id === savedClassId)) {
+      setSelectedClassId((current) => current === DEFAULT_CLASS_ID ? savedClassId : current);
+    }
+  }, [memberRosters]);
+
+  useEffect(() => {
+    const roster = memberRosters?.find((item) => item.id === selectedClassId);
+    if (!roster) return;
+    setStudents((current) => {
+      const includedById = new Map(current.map((student) => [student.id, student.included]));
+      return roster.students.map((student) => ({
+        ...student,
+        included: includedById.get(student.id) ?? true,
+      }));
+    });
+    setTeams(null);
+    setRandomPickedStudents([]);
+    lastKey.current = "";
+  }, [memberRosters, selectedClassId]);
 
   const included = students.filter(
     (student) => student.included,
@@ -508,7 +562,7 @@ export default function TeamRandomView() {
     );
 
     activateRoster(
-      DEFAULT_CLASS_ROSTER,
+      fileRosters[0],
     );
 
     toast.success(

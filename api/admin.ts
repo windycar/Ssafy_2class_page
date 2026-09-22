@@ -323,6 +323,83 @@ export async function handleAdminRequest(request: Request) {
     return error ? jsonError(error.message, 400) : Response.json({ ok: true });
   }
 
+  if (body.action === "members.delete") {
+    const memberId = Number(body.id);
+    if (!Number.isSafeInteger(memberId) || memberId <= 0) {
+      return jsonError("회원 번호가 올바르지 않습니다.", 400);
+    }
+    if (memberId === verified.admin.id) {
+      return jsonError("현재 관리자 계정은 삭제할 수 없습니다.", 403);
+    }
+
+    const { data: member, error: findError } = await client
+      .from("members")
+      .select("id, role, student_id, auth_user_id")
+      .eq("id", memberId)
+      .maybeSingle();
+    if (findError) return jsonError(findError.message, 500);
+    if (!member) return jsonError("회원을 찾을 수 없습니다.", 404);
+    if (member.role !== "member") {
+      return jsonError("관리자 계정은 삭제할 수 없습니다.", 403);
+    }
+
+    const { count: authoredPosts, error: authorsError } = await client
+      .from("anonymous_post_authors")
+      .select("post_id", { count: "exact", head: true })
+      .eq("member_id", memberId);
+    if (authorsError) return jsonError("연결된 게시글을 확인하지 못했습니다.", 500);
+
+    let gameRecords = 0;
+    if (member.auth_user_id) {
+      for (const table of ["baseball_room_command_log", "baseball_command_log"] as const) {
+        const { count, error } = await client
+          .from(table)
+          .select("actor_auth_id", { count: "exact", head: true })
+          .eq("actor_auth_id", member.auth_user_id);
+        if (error) return jsonError("연결된 게임 기록을 확인하지 못했습니다.", 500);
+        gameRecords += count ?? 0;
+      }
+    }
+    if ((authoredPosts ?? 0) > 0 || gameRecords > 0) {
+      return jsonError(
+        "익명 게시글 작성자 정보나 게임 감사 기록이 연결된 계정은 삭제할 수 없습니다. 대신 비활성화하세요.",
+        409,
+      );
+    }
+
+    if (member.auth_user_id) {
+      const { error: authError } = await client.auth.admin.deleteUser(member.auth_user_id);
+      if (authError) {
+        console.error("회원 Auth 삭제 실패:", authError);
+        return jsonError("인증 계정을 삭제하지 못했습니다. 다시 시도하세요.", 500);
+      }
+    }
+
+    const ownerStudentId = member.student_id ?? 900_000_000 + member.id;
+    for (const table of ATTEMPT_TABLES) {
+      const { error } = await client.from(table).delete().eq("student_id", ownerStudentId);
+      if (error) {
+        console.error(`${table} 기록 삭제 실패:`, error);
+        return jsonError("인증 계정은 삭제했지만 풀이 기록 정리에 실패했습니다. 다시 시도하세요.", 500);
+      }
+    }
+
+    const { data: deleted, error: deleteError } = await client
+      .from("members")
+      .delete()
+      .eq("id", memberId)
+      .eq("role", "member")
+      .is("auth_user_id", null)
+      .select("id")
+      .maybeSingle();
+    if (deleteError) {
+      console.error("회원 삭제 실패:", deleteError);
+      return jsonError("인증 계정은 삭제했지만 회원 정보 정리에 실패했습니다. 다시 시도하세요.", 500);
+    }
+    if (!deleted) return jsonError("회원 상태가 변경되었습니다. 새로고침 후 다시 시도하세요.", 409);
+    return Response.json({ ok: true });
+  }
+
   if (body.action === "board.list") {
     const [{ data: posts, error: postsError }, { data: authors, error: authorsError }] = await Promise.all([
       client.from("anonymous_posts").select("id, title, content, created_at, updated_at").order("created_at", { ascending: false }),

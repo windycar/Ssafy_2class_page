@@ -20,7 +20,7 @@ type MemberRow = {
 };
 
 type AuthRequestBody = {
-  action?: "login" | "profile" | "change-password";
+  action?: "login" | "profile" | "change-password" | "team-rosters";
   loginId?: string;
   password?: string;
   currentPassword?: string;
@@ -629,6 +629,22 @@ export async function handleAuthRequest(request: Request) {
   // ==========================================================
   // PROFILE
   // ==========================================================
+
+  if (body.action === "team-rosters") {
+    const verified = await verifiedMember(adminClient, request);
+    if ("error" in verified) return verified.error;
+
+    const { data, error } = await adminClient
+      .from("members")
+      .select("id, student_id, name, username, class_name")
+      .eq("role", "member")
+      .eq("is_active", true)
+      .order("class_name", { ascending: true })
+      .order("name", { ascending: true });
+
+    if (error) return jsonError("반 명단을 불러오지 못했습니다.", 500);
+    return Response.json({ members: data ?? [] });
+  }
 
   if (body.action === "profile") {
     const verified =
