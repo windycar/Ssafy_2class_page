@@ -1,7 +1,7 @@
 import type { TeamClassRoster } from "../../types/classRoster";
 
 const ROSTERS_KEY = "ssafy-team-class-rosters-v1";
-const SELECTED_CLASS_KEY = "ssafy-team-selected-class-v1";
+const SELECTED_CLASS_KEY = "ssafy-team-selected-class-v2";
 
 function isTeamClassRoster(value: unknown): value is TeamClassRoster {
   if (!value || typeof value !== "object") return false;

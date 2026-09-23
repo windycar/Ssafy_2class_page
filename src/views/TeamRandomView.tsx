@@ -36,6 +36,7 @@ import { EmptyTeamResult } from "../components/team/EmptyTeamResult";
 import { teamClassRosterStorage } from "../services/storage/teamClassRosterStorage";
 import { getActiveTeamRosterMembers } from "../services/memberTeamRosterService";
 import { buildMemberTeamRosters } from "../utils/memberTeamRosters";
+import { combineTeamClassRosters } from "../utils/combineTeamClassRosters";
 
 import {
   parseClassRoster,
@@ -47,6 +48,7 @@ import type { StudentEntry } from "../types/student";
 import type { Team } from "../types/team";
 
 const DEFAULT_CLASS_ID = "gwangju-class-2";
+const ALL_CLASSES_ID = "gwangju-classes-1-to-5";
 
 const DEFAULT_CLASS_ROSTER: TeamClassRoster = {
   id: DEFAULT_CLASS_ID,
@@ -168,12 +170,28 @@ function Checkbox({
 
 export default function TeamRandomView() {
   const [memberRosters, setMemberRosters] = useState<TeamClassRoster[] | null>(null);
+  const [rosterRefreshKey, setRosterRefreshKey] = useState(0);
+  const [isLoadingRosters, setIsLoadingRosters] = useState(true);
+  const [rosterError, setRosterError] = useState<string | null>(null);
   const [customRosters, setCustomRosters] =
     useState<TeamClassRoster[]>(() =>
       teamClassRosterStorage.getRosters(),
     );
 
-  const fileRosters = memberRosters ?? FILE_ROSTERS;
+  const fileRosters = memberRosters ?? FILE_ROSTERS.map((roster) => ({
+    ...roster,
+    students: [],
+  }));
+  const orderedFileRosters = [...fileRosters].sort((a, b) =>
+    a.name.localeCompare(b.name, "ko"),
+  );
+  const allClassesRoster: TeamClassRoster = {
+    ...combineTeamClassRosters(
+      orderedFileRosters.filter((roster) => /^광주 [1-5]반$/.test(roster.name)),
+    ),
+    id: ALL_CLASSES_ID,
+    name: "광주 1~5반 전체",
+  };
 
   const visibleCustomRosters = customRosters.filter(
     (customRoster) =>
@@ -185,7 +203,8 @@ export default function TeamRandomView() {
   );
 
   const classRosters = [
-    ...fileRosters,
+    allClassesRoster,
+    ...orderedFileRosters,
     ...visibleCustomRosters,
   ];
 
@@ -194,18 +213,14 @@ export default function TeamRandomView() {
       const savedClassId =
         teamClassRosterStorage.getSelectedClassId();
 
-      return classRosters.some(
-        (roster) => roster.id === savedClassId,
-      )
-        ? savedClassId!
-        : DEFAULT_CLASS_ID;
+      return savedClassId ?? ALL_CLASSES_ID;
     },
   );
 
   const selectedClassRoster =
     classRosters.find(
       (roster) => roster.id === selectedClassId,
-    ) ?? DEFAULT_CLASS_ROSTER;
+    ) ?? allClassesRoster;
 
   const selectedClassIsCustom =
     visibleCustomRosters.some(
@@ -290,6 +305,7 @@ export default function TeamRandomView() {
     useState("");
 
   const lastKey = useRef("");
+  const hasLoadedMemberRoster = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -297,6 +313,7 @@ export default function TeamRandomView() {
     let warned = false;
     const refresh = async () => {
       const currentRequest = ++requestId;
+      setIsLoadingRosters(true);
       try {
         const members = await getActiveTeamRosterMembers();
         if (cancelled || currentRequest !== requestId) return;
@@ -304,10 +321,20 @@ export default function TeamRandomView() {
         setMemberRosters((current) =>
           JSON.stringify(current) === JSON.stringify(next) ? current : next,
         );
+        setRosterError(null);
       } catch (error) {
-        if (cancelled || warned) return;
-        warned = true;
-        toast.error(error instanceof Error ? error.message : "반 명단을 불러오지 못했습니다.");
+        if (cancelled || currentRequest !== requestId) return;
+        const message = error instanceof Error ? error.message : "반 명단을 불러오지 못했습니다.";
+        setMemberRosters(null);
+        setStudents([]);
+        setTeams(null);
+        setRosterError(message);
+        if (!warned) {
+          warned = true;
+          toast.error(message);
+        }
+      } finally {
+        if (!cancelled && currentRequest === requestId) setIsLoadingRosters(false);
       }
     };
     void refresh();
@@ -318,19 +345,15 @@ export default function TeamRandomView() {
       window.removeEventListener("focus", refresh);
       window.removeEventListener("online", refresh);
     };
-  }, []);
+  }, [rosterRefreshKey]);
 
   useEffect(() => {
     if (!memberRosters) return;
-    const savedClassId = teamClassRosterStorage.getSelectedClassId();
-    if (savedClassId && memberRosters.some((roster) => roster.id === savedClassId)) {
-      setSelectedClassId((current) => current === DEFAULT_CLASS_ID ? savedClassId : current);
+    const roster = classRosters.find((item) => item.id === selectedClassId);
+    if (!roster) {
+      activateRoster(allClassesRoster);
+      return;
     }
-  }, [memberRosters]);
-
-  useEffect(() => {
-    const roster = memberRosters?.find((item) => item.id === selectedClassId);
-    if (!roster) return;
     setStudents((current) => {
       const includedById = new Map(current.map((student) => [student.id, student.included]));
       return roster.students.map((student) => ({
@@ -341,7 +364,12 @@ export default function TeamRandomView() {
     setTeams(null);
     setRandomPickedStudents([]);
     lastKey.current = "";
-  }, [memberRosters, selectedClassId]);
+    if (!hasLoadedMemberRoster.current) {
+      setTeamCount(Math.min(5, Math.max(1, roster.students.length)));
+      setMembersPerTeam(Math.min(3, Math.max(1, roster.students.length)));
+      hasLoadedMemberRoster.current = true;
+    }
+  }, [memberRosters]);
 
   const included = students.filter(
     (student) => student.included,
@@ -562,7 +590,7 @@ export default function TeamRandomView() {
     );
 
     activateRoster(
-      fileRosters[0],
+      allClassesRoster,
     );
 
     toast.success(
@@ -1031,19 +1059,27 @@ export default function TeamRandomView() {
             </select>
 
             <p className="mt-2 text-xs font-medium text-[#1259AA]">
-              현재{" "}
-              {
-                selectedClassRoster.name
-              }{" "}
-              명단만 사용합니다.
-              2반을 제외한 다른 반을
-              선택하면 2반 학생은
-              편성 후보에 포함되지
-              않습니다.
+              {selectedClassId === ALL_CLASSES_ID
+                ? "광주 1~5반의 활성 계정을 합쳐서 팀을 편성합니다."
+                : `${selectedClassRoster.name} 교육생만 팀에 포함합니다.`}
             </p>
+            {rosterError && (
+              <p role="alert" className="mt-2 text-xs font-semibold text-red-600">
+                관리자 명단을 불러오지 못했습니다: {rosterError}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setRosterRefreshKey((current) => current + 1)}
+              disabled={isLoadingRosters}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#1259AA]/20 bg-white px-4 py-2.5 text-sm font-bold text-[#1259AA] shadow-sm transition hover:bg-blue-50 disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoadingRosters ? "animate-spin" : ""}`} />
+              {isLoadingRosters ? "명단 불러오는 중" : "관리자 명단 새로고침"}
+            </button>
             <button
               type="button"
               onClick={
