@@ -83,7 +83,10 @@ export default function SpecialMockExamQuizView() {
   const assessmentRound = validAssessmentRound
     ? (Number(assessmentRoundParam) as SpecialMockExamAvailableAssessmentRound)
     : null;
-  const validRound = isSpecialMockExamRound(mockRoundParam);
+  const validRound = isSpecialMockExamRound(
+    mockRoundParam,
+    assessmentRound ?? undefined,
+  );
   const mockRound = validRound
     ? (Number(mockRoundParam) as SpecialMockExamRound)
     : null;
@@ -140,7 +143,9 @@ export default function SpecialMockExamQuizView() {
           (question): question is SpecialMockExamQuestion => Boolean(question),
         );
     } else {
-      questions = [...collection.banks[mockRound]];
+      questions = [...(collection.banks as Partial<
+        Record<SpecialMockExamRound, SpecialMockExamQuestion[]>
+      >)[mockRound]!];
     }
 
     const sessionQuestions = isSavedReview
@@ -266,7 +271,9 @@ export default function SpecialMockExamQuizView() {
             <RotateCcw className="mx-auto h-14 w-14" />
           )}
           <p className="mt-5 text-xs font-black tracking-[0.16em] text-white/70">
-            과목평가 {assessmentRound}회차 · {collection.meta[mockRound].label} ·{` `}
+            과목평가 {assessmentRound}회차 · {(collection.meta as Partial<
+              Record<SpecialMockExamRound, { label: string }>
+            >)[mockRound]?.label} ·{` `}
             {mode === "wrong" ? "오답 복습" : "실전 모의고사"} 채점 완료
           </p>
           <h1 className="mt-2 text-3xl font-black">

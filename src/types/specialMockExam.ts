@@ -10,10 +10,26 @@ export const SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS = [2, 3, 5] as const;
 export type SpecialMockExamAvailableAssessmentRound =
   (typeof SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS)[number];
 
-export type SpecialMockExamRound = 1 | 2 | 3 | 4 | 5;
+export type SpecialMockExamRound = 1 | 2 | 3 | 4 | 5 | 6;
 
 export const SPECIAL_MOCK_EXAM_ROUNDS = [1, 2, 3, 4, 5] as const satisfies
   readonly SpecialMockExamRound[];
+
+export const SPECIAL_MOCK_EXAM_ROUNDS_BY_ASSESSMENT = {
+  2: SPECIAL_MOCK_EXAM_ROUNDS,
+  3: SPECIAL_MOCK_EXAM_ROUNDS,
+  5: [1, 2, 3, 4, 5, 6],
+} as const satisfies Record<
+  SpecialMockExamAvailableAssessmentRound,
+  readonly SpecialMockExamRound[]
+>;
+
+export const SPECIAL_MOCK_EXAM_TOTAL_SET_COUNT =
+  SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.reduce(
+    (total, assessmentRound) =>
+      total + SPECIAL_MOCK_EXAM_ROUNDS_BY_ASSESSMENT[assessmentRound].length,
+    0,
+  );
 
 export const SPECIAL_MOCK_EXAM_QUESTIONS_PER_ASSESSMENT = {
   2: 32,
@@ -25,7 +41,7 @@ export const SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT =
   SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.reduce(
     (total, assessmentRound) =>
       total +
-      SPECIAL_MOCK_EXAM_ROUNDS.length *
+      SPECIAL_MOCK_EXAM_ROUNDS_BY_ASSESSMENT[assessmentRound].length *
         SPECIAL_MOCK_EXAM_QUESTIONS_PER_ASSESSMENT[assessmentRound],
     0,
   );
@@ -51,17 +67,24 @@ export const SPECIAL_MOCK_EXAM_BANK_VERSIONS = {
     3: "v1",
     4: "v1",
     5: "v1",
+    6: "v1",
   },
 } as const satisfies Record<
   SpecialMockExamAvailableAssessmentRound,
-  Record<SpecialMockExamRound, string>
+  Partial<Record<SpecialMockExamRound, string>>
 >;
 
 export function getSpecialMockExamAttemptIdPrefix(
   assessmentRound: SpecialMockExamAvailableAssessmentRound,
   mockRound: SpecialMockExamRound,
 ) {
-  return `special-mock-a${assessmentRound}-r${mockRound}-${SPECIAL_MOCK_EXAM_BANK_VERSIONS[assessmentRound][mockRound]}-`;
+  const version = (
+    SPECIAL_MOCK_EXAM_BANK_VERSIONS[assessmentRound] as Partial<
+      Record<SpecialMockExamRound, string>
+    >
+  )[mockRound];
+  if (!version) throw new Error("존재하지 않는 모의고사 회차입니다.");
+  return `special-mock-a${assessmentRound}-r${mockRound}-${version}-`;
 }
 
 export type SpecialMockExamDifficulty =
@@ -121,7 +144,10 @@ export function isCurrentSpecialMockExamAttempt(
   if (
     !SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.includes(
       attempt.assessmentRound,
-    )
+    ) ||
+    !(
+      SPECIAL_MOCK_EXAM_ROUNDS_BY_ASSESSMENT[attempt.assessmentRound] as readonly number[]
+    ).includes(attempt.mockRound)
   ) {
     return false;
   }
@@ -143,6 +169,11 @@ export function isSpecialMockExamAssessmentRound(
 
 export function isSpecialMockExamRound(
   value: string | undefined,
+  assessmentRound?: SpecialMockExamAvailableAssessmentRound,
 ): value is `${SpecialMockExamRound}` {
-  return SPECIAL_MOCK_EXAM_ROUNDS.some((round) => String(round) === value);
+  return (
+    assessmentRound
+      ? SPECIAL_MOCK_EXAM_ROUNDS_BY_ASSESSMENT[assessmentRound]
+      : SPECIAL_MOCK_EXAM_ROUNDS_BY_ASSESSMENT[5]
+  ).some((round) => String(round) === value);
 }

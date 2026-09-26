@@ -8,7 +8,7 @@ export function buildSpecialMockExamAttemptFilter<
   MockRound extends number,
 >(
   assessmentRounds: readonly AssessmentRound[],
-  mockRounds: readonly MockRound[],
+  mockRoundsByAssessment: Record<AssessmentRound, readonly MockRound[]>,
   getAttemptIdPrefix: (
     assessmentRound: AssessmentRound,
     mockRound: MockRound,
@@ -16,7 +16,7 @@ export function buildSpecialMockExamAttemptFilter<
 ) {
   return assessmentRounds
     .flatMap((assessmentRound) =>
-      mockRounds.map(
+      mockRoundsByAssessment[assessmentRound].map(
         (mockRound) =>
           `and(assessment_round.eq.${assessmentRound},mock_round.eq.${mockRound},id.like.${getAttemptIdPrefix(assessmentRound, mockRound)}%)`,
       ),

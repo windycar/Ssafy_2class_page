@@ -34,6 +34,7 @@ import type {
 import {
   getSpecialMockExamAttemptIdPrefix,
   isSpecialMockExamAssessmentRound,
+  isSpecialMockExamRound,
 } from "../src/types/specialMockExam.ts";
 import { SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT } from "../src/types/specialMockExam.ts";
 import {
@@ -234,6 +235,15 @@ test("특별 모의고사 서버 기록도 활성 계정과 승인 권한을 함
     3,
   );
   assert.doesNotMatch(fifthRoundMigration, /coalesce\(m\.student_id/);
+  const sixthRoundMigration = readFileSync(
+    new URL(
+      "../supabase/migrations/20260926185000_special_mock_exam_assessment_5_round_6.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  assert.match(sixthRoundMigration, /assessment_round = 5 and mock_round between 1 and 6/);
+  assert.match(sixthRoundMigration, /assessment_round in \(2, 3\) and mock_round between 1 and 5/);
 });
 
 test("과목평가 2회차에는 서로 충돌하지 않는 32문제짜리 모의고사 5세트가 있다", () => {
@@ -269,7 +279,7 @@ test("과목평가 3회차에는 서로 충돌하지 않는 60문제짜리 모�
   assert.equal(new Set(allIds).size, 300);
   assert.equal(ASSESSMENT_3_META[5].label, "모의고사 5회차");
   assert.equal(ASSESSMENT_3_BANKS[1][0].sourceId, "mock-001-regression-error");
-  assert.equal(SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT, 620);
+  assert.equal(SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT, 652);
   assert.equal(
     getSpecialMockExamAttemptIdPrefix(2, 1),
     "special-mock-a2-r1-v3-",
@@ -284,16 +294,24 @@ test("과목평가 3회차에는 서로 충돌하지 않는 60문제짜리 모�
         questions.map(({ id }) => id),
       ),
   );
-  assert.equal(new Set(everyQuestionId).size, 620);
+  assert.equal(new Set(everyQuestionId).size, 652);
 });
 
-test("과목평가 5회차에는 원본 Web 문제 32개씩 5세트가 있다", () => {
+test("과목평가 5회차에는 원본 Web 문제 32개씩 6세트가 있다", () => {
   assert.equal(isSpecialMockExamAssessmentRound("4"), false);
   assert.equal(isSpecialMockExamAssessmentRound("5"), true);
+  assert.equal(isSpecialMockExamRound("6", 5), true);
+  assert.equal(isSpecialMockExamRound("6", 2), false);
+  assert.equal(isSpecialMockExamRound("6", 3), false);
   const allIds = Object.values(ASSESSMENT_5_BANKS).flatMap((questions, index) => {
     assert.equal(questions.length, 32);
     assert.equal(new Set(questions.map(({ id }) => id)).size, 32);
-    assert.equal(questions[0].sourceId.startsWith(`mock${index + 1}-001-`), true);
+    assert.equal(
+      questions[0].sourceId.startsWith(
+        index === 5 ? "mock-basic-001-" : `mock${index + 1}-001-`,
+      ),
+      true,
+    );
     assert.deepEqual(
       ["multiple-choice", "short-answer", "essay"].map(
         (type) => questions.filter(({ questionType }) => questionType === type).length,
@@ -302,10 +320,12 @@ test("과목평가 5회차에는 원본 Web 문제 32개씩 5세트가 있다", 
     );
     return questions.map(({ id }) => id);
   });
-  assert.equal(new Set(allIds).size, 160);
-  assert.equal(SPECIAL_MOCK_EXAM_COLLECTIONS[5].totalQuestionCount, 160);
+  assert.equal(new Set(allIds).size, 192);
+  assert.equal(SPECIAL_MOCK_EXAM_COLLECTIONS[5].totalQuestionCount, 192);
   assert.equal(ASSESSMENT_5_META[5].label, "모의고사 5회차");
+  assert.equal(ASSESSMENT_5_META[6].label, "모의고사 6회차");
   assert.equal(getSpecialMockExamAttemptIdPrefix(5, 1), "special-mock-a5-r1-v1-");
+  assert.equal(getSpecialMockExamAttemptIdPrefix(5, 6), "special-mock-a5-r6-v1-");
 });
 
 test("모든 문제에는 다시 보기에서 표시할 정답과 해설이 있다", () => {
@@ -369,14 +389,14 @@ test("2·3회차 문제는 4지선다, 5회차 문제는 객관식·단답형·�
   assert.equal(
     questions.filter(({ questionType }) => questionType === "multiple-choice")
       .length,
-    580,
+    604,
   );
   assert.equal(
     questions.filter(({ questionType }) => questionType === "short-answer")
       .length,
-    25,
+    30,
   );
-  assert.equal(questions.filter(({ questionType }) => questionType === "essay").length, 15);
+  assert.equal(questions.filter(({ questionType }) => questionType === "essay").length, 18);
   questions.forEach((question) => {
     if (question.questionType === "multiple-choice") {
       assert.equal(typeof question.answer, "number", `${question.id}: 정답 누락`);
@@ -474,7 +494,7 @@ test("모의고사 문제 순서는 응시 시작 시 무작위 순서로 복사
   );
 });
 
-test("특별 모의고사 15세트가 오답 선택 화면에 모두 등록된다", () => {
+test("특별 모의고사 16세트가 오답 선택 화면에 모두 등록된다", () => {
   const tracks = STUDY_REVIEW_TRACKS.filter(
     (track) => track.source === "special-mock-exam",
   );
@@ -496,6 +516,7 @@ test("특별 모의고사 15세트가 오답 선택 화면에 모두 등록된�
       [5, 3],
       [5, 4],
       [5, 5],
+      [5, 6],
     ],
   );
   tracks.forEach((track) => assert.match(track.href, /mode=wrong/));
@@ -595,14 +616,14 @@ test("같은 모의고사 회차라도 과목평가별 기록과 초기화 범�
   );
 });
 
-test("5회차 풀이 저장·오답 재풀이·세트별 초기화가 분리된다", () => {
+test("5회차 모의고사 6회차의 저장·오답 재풀이·초기화가 분리된다", () => {
   const userId = 58;
   const otherUserId = 59;
-  const questionId = ASSESSMENT_5_BANKS[1][0].id;
-  const otherRoundQuestionId = ASSESSMENT_5_BANKS[2][0].id;
-  const wrong = attempt("wrong", 1, questionId, false, "2026-09-22T00:00:00.000Z", 5);
-  const right = attempt("right", 1, questionId, true, "2026-09-22T00:01:00.000Z", 5);
-  const otherRound = attempt("other", 2, otherRoundQuestionId, false, "2026-09-22T00:02:00.000Z", 5);
+  const questionId = ASSESSMENT_5_BANKS[6][0].id;
+  const otherRoundQuestionId = ASSESSMENT_5_BANKS[1][0].id;
+  const wrong = attempt("wrong", 6, questionId, false, "2026-09-22T00:00:00.000Z", 5);
+  const right = attempt("right", 6, questionId, true, "2026-09-22T00:01:00.000Z", 5);
+  const otherRound = attempt("other", 1, otherRoundQuestionId, false, "2026-09-22T00:02:00.000Z", 5);
 
   specialMockExamProgressStorage.addMany(userId, [wrong, otherRound]);
   specialMockExamProgressStorage.add(otherUserId, wrong);
@@ -613,14 +634,14 @@ test("5회차 풀이 저장·오답 재풀이·세트별 초기화가 분리된�
   assert.equal(
     countUnresolvedMistakes(
       specialMockExamProgressStorage.get(userId).attempts.filter(
-        (entry) => entry.assessmentRound === 5 && entry.mockRound === 1,
+        (entry) => entry.assessmentRound === 5 && entry.mockRound === 6,
       ),
     ),
     0,
   );
 
   const resetIds = getSpecialMockExamResetAttemptIds(
-    specialMockExamProgressStorage.get(userId), 5, 1,
+    specialMockExamProgressStorage.get(userId), 5, 6,
   );
   assert.deepEqual(resetIds, [wrong.id, right.id]);
   assert.deepEqual(

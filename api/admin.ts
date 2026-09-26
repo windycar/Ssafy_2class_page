@@ -9,7 +9,7 @@ import { getAiPythonWeekAttemptIdPrefix } from "../src/types/aiPythonWeekStudy.j
 import {
   getSpecialMockExamAttemptIdPrefix,
   SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS,
-  SPECIAL_MOCK_EXAM_ROUNDS,
+  SPECIAL_MOCK_EXAM_ROUNDS_BY_ASSESSMENT,
 } from "../src/types/specialMockExam.js";
 type AdminRequest = {
   action?: string;
@@ -88,7 +88,7 @@ async function loadAttemptQuestionRows(
       query = query.or(
         buildSpecialMockExamAttemptFilter(
           SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS,
-          SPECIAL_MOCK_EXAM_ROUNDS,
+          SPECIAL_MOCK_EXAM_ROUNDS_BY_ASSESSMENT,
           getSpecialMockExamAttemptIdPrefix,
         ),
       );

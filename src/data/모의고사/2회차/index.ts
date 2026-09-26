@@ -29,7 +29,7 @@ export const SPECIAL_MOCK_EXAM_BANKS = {
   3: scopeQuestionIds(3, ROUND_3_SOURCE),
   4: scopeQuestionIds(4, ROUND_4_SOURCE),
   5: scopeQuestionIds(5, ROUND_5_SOURCE),
-} as const satisfies Record<SpecialMockExamRound, SpecialMockExamQuestion[]>;
+} as const satisfies Partial<Record<SpecialMockExamRound, SpecialMockExamQuestion[]>>;
 
 export const SPECIAL_MOCK_EXAM_META = {
   1: { label: "모의고사 1회차", description: "이미지·멀티모달 핵심 키워드 쉬운 점검" },
@@ -37,16 +37,16 @@ export const SPECIAL_MOCK_EXAM_META = {
   3: { label: "모의고사 3회차", description: "트랜스포머·생성·평가 키워드 쉬운 점검" },
   4: { label: "모의고사 4회차", description: "LLM·VLM·멀티모달 키워드 쉬운 점검" },
   5: { label: "모의고사 5회차", description: "딥러닝·정렬·파인튜닝 키워드 쉬운 점검" },
-} as const satisfies Record<
+} as const satisfies Partial<Record<
   SpecialMockExamRound,
   { label: string; description: string }
->;
+>>;
 
 export function getSpecialMockExamQuestion(
   round: SpecialMockExamRound,
   questionId: string,
 ) {
-  return SPECIAL_MOCK_EXAM_BANKS[round].find(
+  return (SPECIAL_MOCK_EXAM_BANKS as Partial<Record<SpecialMockExamRound, SpecialMockExamQuestion[]>>)[round]?.find(
     (question) => question.id === questionId,
   );
 }

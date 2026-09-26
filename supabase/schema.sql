@@ -645,7 +645,10 @@ create table if not exists public.special_mock_exam_attempts (
   student_id integer not null check (student_id > 0),
   auth_user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
   assessment_round smallint not null check (assessment_round in (2, 3, 5)),
-  mock_round smallint not null check (mock_round between 1 and 5),
+  mock_round smallint not null check (
+    (assessment_round in (2, 3) and mock_round between 1 and 5)
+    or (assessment_round = 5 and mock_round between 1 and 6)
+  ),
   question_id text not null,
   difficulty text not null check (difficulty in ('easy', 'medium', 'hard', 'extreme')),
   category text not null,

@@ -32,6 +32,7 @@ test("모든 학습 문제 세트가 오답 복습 설정에 등록된다", () =
       "special-mock-a5-r3",
       "special-mock-a5-r4",
       "special-mock-a5-r5",
+      "special-mock-a5-r6",
     ],
   );
   assert.equal(

@@ -21,11 +21,12 @@ import { useSpecialMockExamProgress } from "../../hooks/useSpecialMockExamProgre
 import {
   SPECIAL_MOCK_EXAM_ASSESSMENT_ROUNDS,
   SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS,
-  SPECIAL_MOCK_EXAM_ROUNDS,
+  SPECIAL_MOCK_EXAM_TOTAL_SET_COUNT,
   SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT,
   isSpecialMockExamAssessmentRound,
   type SpecialMockExamAvailableAssessmentRound,
   type SpecialMockExamRound,
+  type SpecialMockExamQuestion,
 } from "../../types/specialMockExam";
 import { isAnsweredSpecialMockExamAttempt } from "../../utils/specialMockExamGrading";
 import { hasPassedSpecialMockExam } from "../../utils/specialMockExamResult";
@@ -74,6 +75,13 @@ const ROUND_STYLES = {
     soft: "bg-amber-50",
     border: "border-amber-100",
     progress: "bg-amber-600",
+  },
+  6: {
+    gradient: "from-[#0a4b53] via-[#0b8490] to-[#59c4c5]",
+    accent: "text-cyan-800",
+    soft: "bg-cyan-50",
+    border: "border-cyan-100",
+    progress: "bg-cyan-600",
   },
 } as const satisfies Record<
   SpecialMockExamRound,
@@ -159,7 +167,7 @@ export default function SpecialMockExamView() {
 
           <div className="mt-7 grid max-w-xl grid-cols-3 gap-2.5">
             <HeroStat
-              value={`${SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.length * SPECIAL_MOCK_EXAM_ROUNDS.length}세트`}
+              value={`${SPECIAL_MOCK_EXAM_TOTAL_SET_COUNT}세트`}
               label="실전 모의고사"
             />
             <HeroStat
@@ -282,7 +290,7 @@ export default function SpecialMockExamView() {
               EXAM COLLECTION
             </p>
             <h2 className="mt-1 text-3xl font-black tracking-tight text-slate-950">
-              모의고사 1~5회차
+              모의고사 1~{collection.rounds.at(-1)}회차
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
               원하는 세트를 선택해 응시하거나, 저장된 답안과 해설을 다시
@@ -295,8 +303,10 @@ export default function SpecialMockExamView() {
         </div>
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {SPECIAL_MOCK_EXAM_ROUNDS.map((round) => {
-            const questions = collection.banks[round];
+          {collection.rounds.map((round) => {
+            const questions = (collection.banks as Partial<
+              Record<SpecialMockExamRound, SpecialMockExamQuestion[]>
+            >)[round]!;
             const attempts = progress.attempts.filter(
               (attempt) =>
                 attempt.assessmentRound === selectedAssessmentRound &&
@@ -374,7 +384,9 @@ export default function SpecialMockExamView() {
 
                 <div className="p-5">
                   <p className="min-h-11 text-sm font-medium leading-6 text-slate-600">
-                    {collection.meta[round].description}
+                    {(collection.meta as Partial<
+                      Record<SpecialMockExamRound, { description: string }>
+                    >)[round]?.description}
                   </p>
 
                   <div className="mt-4">
