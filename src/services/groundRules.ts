@@ -36,6 +36,32 @@ function toGroundRule(row: GroundRuleRow, currentUserId: string): GroundRule {
   };
 }
 
+type PublicGroundRuleRow = Pick<GroundRuleRow,
+  "id" | "content" | "author_name" | "category" | "seed_likes" | "is_pinned" | "tags" | "created_at" | "updated_at"
+>;
+
+export async function getPublicGroundRules(): Promise<GroundRule[]> {
+  const { data, error } = await requireSupabase()
+    .from("ground_rules")
+    .select("id, content, author_name, category, seed_likes, is_pinned, tags, created_at, updated_at")
+    .order("is_pinned", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as PublicGroundRuleRow[]).map((row) => ({
+    id: row.id,
+    content: row.content,
+    author: row.author_name,
+    category: row.category,
+    likes: row.seed_likes,
+    likedBy: [],
+    isPinned: row.is_pinned,
+    tags: row.tags ?? [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    isLiked: false,
+  }));
+}
+
 export async function getGroundRules(currentUserId: string) {
   const { data, error } = await requireSupabase()
     .from("ground_rules")

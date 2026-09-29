@@ -54,7 +54,7 @@ export default function GalleryView() {
       return;
     }
 
-    getGalleryPhotos()
+    getGalleryPhotos(isDemo)
       .then((loaded) => setPhotos(isDemo && loaded.length === 0 ? DEMO_PHOTOS : loaded))
       .catch(() => {
         if (isDemo) setPhotos(DEMO_PHOTOS);
@@ -284,6 +284,9 @@ export default function GalleryView() {
         <span className="font-semibold text-gray-700">{filtered.length}장</span>
         {search && <span>"{search}" 검색 결과</span>}
       </div>
+      {isDemo && photos.length > 0 && !photos[0].id.startsWith("demo-gallery-") && (
+        <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-800">실제 등록된 사진을 읽기 전용으로 보고 있습니다. 사진을 선택하면 크게 볼 수 있습니다.</p>
+      )}
       {isDemo && photos[0]?.id.startsWith("demo-gallery-") && (
         <p className="rounded-xl bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">현재 연결된 사진이 없어 체험용 예시 이미지를 표시합니다.</p>
       )}

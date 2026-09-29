@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { GROUND_RULE_CATEGORIES } from "../config/constants";
 import { useAdmin } from "../context/AdminContext";
 import { useAuth } from "../hooks/useAuth";
-import { createGroundRule, deleteGroundRule, getGroundRules, setGroundRuleLike, updateGroundRule } from "../services/groundRules";
+import { createGroundRule, deleteGroundRule, getGroundRules, getPublicGroundRules, setGroundRuleLike, updateGroundRule } from "../services/groundRules";
 import type { SortOrder } from "../types/common";
 import type { GroundRule, GroundRuleCategory } from "../types/groundRule";
 import { createId } from "../utils/createId";
@@ -29,6 +29,7 @@ export default function GroundRulesView() {
   const { currentUser, isDemo } = useAuth();
   const { isAdmin } = useAdmin();
   const [rules, setRules] = useState<GroundRule[]>([]);
+  const [demoFallback, setDemoFallback] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<GroundRuleCategory | "all">("all");
   const [sort, setSort] = useState<SortOrder>("latest");
@@ -42,8 +43,16 @@ export default function GroundRulesView() {
   useEffect(() => {
     if (!currentUser) return;
     if (isDemo) {
-      setRules(DEMO_RULES);
-      setLoading(false);
+      getPublicGroundRules()
+        .then((loaded) => {
+          setDemoFallback(loaded.length === 0);
+          setRules(loaded.length > 0 ? loaded : DEMO_RULES);
+        })
+        .catch(() => {
+          setDemoFallback(true);
+          setRules(DEMO_RULES);
+        })
+        .finally(() => setLoading(false));
       return;
     }
     getGroundRules(currentUser.authId)
@@ -149,7 +158,7 @@ export default function GroundRulesView() {
         <div className="relative max-w-xl">
           <div className="mb-3 flex items-center gap-2"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15"><Shield className="h-5 w-5" /></div><span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold">광주 2반, 함께 지키는 약속</span></div>
           <h1 className="text-2xl font-black sm:text-3xl">광주 2반 그라운드 룰</h1>
-          <p className="mt-2 text-sm text-violet-200">{isDemo ? "체험용 예시 규칙입니다. 검색과 분류를 직접 사용해 보세요." : "제안과 공감이 계정에 연결되어 안전하게 저장됩니다."}</p>
+          <p className="mt-2 text-sm text-violet-200">{isDemo ? demoFallback ? "연결된 규칙을 불러오지 못해 체험용 예시를 표시합니다." : "광주 2반의 실제 공개 규칙을 읽기 전용으로 보고 있습니다." : "제안과 공감이 계정에 연결되어 안전하게 저장됩니다."}</p>
           <p className="mt-4 text-sm text-white/70">총 <b className="text-white">{rules.length}개</b> 규칙</p>
         </div>
       </section>

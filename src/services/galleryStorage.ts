@@ -6,13 +6,13 @@ type PhotoRow = {
   title: string;
   description: string;
   image_url: string;
-  storage_path: string | null;
-  batch_id: string | null;
+  storage_path?: string | null;
+  batch_id?: string | null;
   taken_at: string;
   uploaded_by: string;
   category: Exclude<PhotoCategory, "all">;
   likes: number;
-  liked_by: string[];
+  liked_by?: string[];
   created_at: string;
 };
 
@@ -47,22 +47,29 @@ const toPhoto = (photo: PhotoRow, comments: PhotoComment[]): Photo => ({
   createdAt: photo.created_at,
 });
 
-export async function getGalleryPhotos(): Promise<Photo[]> {
+export async function getGalleryPhotos(publicPreview = false): Promise<Photo[]> {
   const client = requireSupabase();
-  const { data: photoRows, error: photoError } = await client
-    .from("gallery_photos")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const { data: photoRows, error: photoError } = publicPreview
+    ? await client.from("gallery_photos")
+      .select("id, title, description, image_url, batch_id, taken_at, uploaded_by, category, likes, created_at")
+      .order("created_at", { ascending: false })
+    : await client.from("gallery_photos")
+      .select("*")
+      .order("created_at", { ascending: false });
 
   if (photoError) throw photoError;
   if (!photoRows?.length) return [];
 
   const photoIds = photoRows.map((photo) => photo.id);
-  const { data: commentRows, error: commentError } = await client
-    .from("gallery_comments")
-    .select("*")
-    .in("photo_id", photoIds)
-    .order("created_at", { ascending: true });
+  const { data: commentRows, error: commentError } = publicPreview
+    ? await client.from("gallery_comments")
+      .select("id, photo_id, author, content, created_at")
+      .in("photo_id", photoIds)
+      .order("created_at", { ascending: true })
+    : await client.from("gallery_comments")
+      .select("*")
+      .in("photo_id", photoIds)
+      .order("created_at", { ascending: true });
 
   if (commentError) throw commentError;
 
