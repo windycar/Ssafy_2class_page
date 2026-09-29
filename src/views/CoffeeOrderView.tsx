@@ -103,7 +103,7 @@ const EMPTY_ORDER: OrderFormState = {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function CoffeeOrderView() {
-  const { currentUser } = useAuth();
+  const { currentUser, isDemo } = useAuth();
   const { isAdmin } = useAdmin();
   const [order, setOrder] = useState<CoffeeOrder | null>(null);
   const [items, setItems] = useState<CoffeeMenuItem[]>([]);
@@ -115,6 +115,21 @@ export default function CoffeeOrderView() {
   const [showAccount, setShowAccount] = useState(false);
 
   useEffect(() => {
+    if (isDemo) {
+      const demoOrder: CoffeeOrder = {
+        id: "demo-order", title: "체험용 커피 공동 주문", category: "coffee",
+        storeName: "예시 카페", storeLink: "", deadline: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        minOrderAmount: 10000, deliveryFee: 3000, notice: "체험 화면의 예시 주문입니다.",
+        accountBank: "", accountNumber: "", accountHolder: "", createdAt: new Date().toISOString(),
+        isActive: true, creatorName: "체험 관리자",
+      };
+      setOrder(demoOrder);
+      setItems([
+        { id: "demo-item-1", orderId: demoOrder.id, participantName: "체험 학생 1", menuName: "아이스 아메리카노", options: "", quantity: 1, price: 2500, note: "", paymentStatus: "paid" },
+        { id: "demo-item-2", orderId: demoOrder.id, participantName: "체험 학생 2", menuName: "카페라테", options: "따뜻하게", quantity: 1, price: 3500, note: "", paymentStatus: "unpaid" },
+      ]);
+      return;
+    }
     if (!supabase) return;
 
     getActiveCoffeeOrder()
@@ -123,9 +138,10 @@ export default function CoffeeOrderView() {
         setItems(activeItems);
       })
       .catch(() => toast.error("공동구매 정보를 불러오지 못했습니다."));
-  }, []);
+  }, [isDemo]);
 
   const ensureSupabase = () => {
+    if (isDemo) return false;
     if (supabase) return true;
     toast.error("Supabase 설정이 필요합니다.");
     return false;
@@ -135,9 +151,9 @@ export default function CoffeeOrderView() {
   const deliveryShare = order ? calcDeliveryPerPerson(order.deliveryFee, items.length) : 0;
   const grandTotal = order ? calcGrandTotal(items, order.deliveryFee) : 0;
   const paidCount = items.filter((i) => i.paymentStatus !== "unpaid").length;
-  const canManageOrder = Boolean(order && currentUser && (isAdmin || order.createdBy === currentUser.authId));
+  const canManageOrder = Boolean(!isDemo && order && currentUser && (isAdmin || order.createdBy === currentUser.authId));
   const canManageItem = (item: CoffeeMenuItem) => Boolean(
-    currentUser && (isAdmin || item.participantUserId === currentUser.authId || order?.createdBy === currentUser.authId),
+    !isDemo && currentUser && (isAdmin || item.participantUserId === currentUser.authId || order?.createdBy === currentUser.authId),
   );
 
   const resolvedBank =
@@ -146,6 +162,7 @@ export default function CoffeeOrderView() {
   // ── Order actions ──────────────────────────────────────────
 
   const handleStartOrder = async () => {
+    if (isDemo) return;
     if (!orderForm.title.trim()) { toast.error("공구 제목을 입력해 주세요."); return; }
     if (!orderForm.storeName.trim()) { toast.error("매장/상품명을 입력해 주세요."); return; }
     const newOrder: CoffeeOrder = {
@@ -184,6 +201,7 @@ export default function CoffeeOrderView() {
   // ── Menu actions ───────────────────────────────────────────
 
   const handleAddMenu = async () => {
+    if (isDemo) return;
     if (!currentUser) { toast.error("로그인이 필요합니다."); return; }
     if (!menuForm.menuName.trim()) { toast.error("상품/메뉴명을 입력해 주세요."); return; }
     if (!menuForm.price || parseInt(menuForm.price) <= 0) { toast.error("금액을 입력해 주세요."); return; }
@@ -363,6 +381,8 @@ export default function CoffeeOrderView() {
         </div>
       </div>
 
+      {isDemo && <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">예시 주문으로 금액 계산과 주문 명단을 살펴볼 수 있습니다.</p>}
+
       {/* ── No active order ── */}
       {!order ? (
         <div className="bg-white rounded-2xl border border-border shadow-sm">
@@ -376,13 +396,13 @@ export default function CoffeeOrderView() {
               </h3>
               <p className="text-sm text-gray-300 mb-6">새로운 공구를 시작해 보세요.</p>
               <p className="mb-4 rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">{currentUser?.name} 계정으로 개설됩니다.</p>
-              <button
+              {!isDemo && <button
                 onClick={() => setShowOrderForm(true)}
                 className="flex items-center gap-2 bg-amber-500 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-amber-600 transition-colors text-sm"
               >
                 <Plus className="w-4 h-4" />
                 공구 시작하기
-              </button>
+              </button>}
             </div>
           ) : (
             /* ── New order form ── */
@@ -643,13 +663,13 @@ export default function CoffeeOrderView() {
                 주문 명단
                 <span className="text-sm font-semibold text-gray-400 ml-2">({items.length}명)</span>
               </h2>
-              <button
+              {!isDemo && <button
                 onClick={() => { setMenuForm({ ...EMPTY_MENU, participantName: currentUser?.name ?? "" }); setEditingItemId(null); setShowMenuForm(true); }}
                 className="flex items-center gap-2 bg-amber-500 text-white font-semibold px-3.5 py-2 rounded-xl hover:bg-amber-600 transition-colors text-sm"
               >
                 <Plus className="w-4 h-4" />
                 항목 추가
-              </button>
+              </button>}
             </div>
 
             {/* Add / edit menu form */}

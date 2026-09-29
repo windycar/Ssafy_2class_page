@@ -35,6 +35,7 @@ import { EmptyTeamResult } from "../components/team/EmptyTeamResult";
 
 import { teamClassRosterStorage } from "../services/storage/teamClassRosterStorage";
 import { getActiveTeamRosterMembers } from "../services/memberTeamRosterService";
+import { useAuth } from "../hooks/useAuth";
 import { buildMemberTeamRosters } from "../utils/memberTeamRosters";
 import { combineTeamClassRosters } from "../utils/combineTeamClassRosters";
 
@@ -57,6 +58,15 @@ const DEFAULT_CLASS_ROSTER: TeamClassRoster = {
 };
 
 const FILE_ROSTERS = [DEFAULT_CLASS_ROSTER, ...ADDITIONAL_TEAM_CLASS_ROSTERS];
+const DEMO_ROSTERS: TeamClassRoster[] = FILE_ROSTERS.map((roster) => ({
+  ...roster,
+  students: Array.from({ length: roster.id === DEFAULT_CLASS_ID ? 20 : 8 }, (_, index) => ({
+    id: Number(roster.id.match(/\d+$/)?.[0] ?? 2) * 1000 + index + 1,
+    name: `체험 학생 ${index + 1}`,
+    username: `@demo${index + 1}`,
+    class: roster.name.replace(" ", "_"),
+  })),
+}));
 
 /**
  * 랜덤 팀 모션에서 학생 카드들이 이동할 위치
@@ -169,13 +179,14 @@ function Checkbox({
 }
 
 export default function TeamRandomView() {
-  const [memberRosters, setMemberRosters] = useState<TeamClassRoster[] | null>(null);
+  const { isDemo } = useAuth();
+  const [memberRosters, setMemberRosters] = useState<TeamClassRoster[] | null>(isDemo ? DEMO_ROSTERS : null);
   const [rosterRefreshKey, setRosterRefreshKey] = useState(0);
   const [isLoadingRosters, setIsLoadingRosters] = useState(true);
   const [rosterError, setRosterError] = useState<string | null>(null);
   const [customRosters, setCustomRosters] =
     useState<TeamClassRoster[]>(() =>
-      teamClassRosterStorage.getRosters(),
+      isDemo ? [] : teamClassRosterStorage.getRosters(),
     );
 
   const fileRosters = memberRosters ?? FILE_ROSTERS.map((roster) => ({
@@ -213,7 +224,7 @@ export default function TeamRandomView() {
       const savedClassId =
         teamClassRosterStorage.getSelectedClassId();
 
-      return savedClassId ?? ALL_CLASSES_ID;
+      return isDemo ? DEFAULT_CLASS_ID : savedClassId ?? ALL_CLASSES_ID;
     },
   );
 
@@ -308,6 +319,12 @@ export default function TeamRandomView() {
   const hasLoadedMemberRoster = useRef(false);
 
   useEffect(() => {
+    if (isDemo) {
+      setMemberRosters(DEMO_ROSTERS);
+      setRosterError(null);
+      setIsLoadingRosters(false);
+      return;
+    }
     let cancelled = false;
     let requestId = 0;
     let warned = false;
@@ -345,7 +362,7 @@ export default function TeamRandomView() {
       window.removeEventListener("focus", refresh);
       window.removeEventListener("online", refresh);
     };
-  }, [rosterRefreshKey]);
+  }, [rosterRefreshKey, isDemo]);
 
   useEffect(() => {
     if (!memberRosters) return;
@@ -414,9 +431,7 @@ export default function TeamRandomView() {
   ) => {
     setSelectedClassId(roster.id);
 
-    teamClassRosterStorage.setSelectedClassId(
-      roster.id,
-    );
+    if (!isDemo) teamClassRosterStorage.setSelectedClassId(roster.id);
 
     setStudents(
       withParticipation(roster.students),
@@ -1063,7 +1078,7 @@ export default function TeamRandomView() {
                 ? "광주 1~5반의 활성 계정을 합쳐서 팀을 편성합니다."
                 : `${selectedClassRoster.name} 교육생만 팀에 포함합니다.`}
             </p>
-            {rosterError && (
+            {rosterError && !isDemo && (
               <p role="alert" className="mt-2 text-xs font-semibold text-red-600">
                 관리자 명단을 불러오지 못했습니다: {rosterError}
               </p>
@@ -1071,7 +1086,7 @@ export default function TeamRandomView() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button
+            {!isDemo && <button
               type="button"
               onClick={() => setRosterRefreshKey((current) => current + 1)}
               disabled={isLoadingRosters}
@@ -1079,8 +1094,8 @@ export default function TeamRandomView() {
             >
               <RefreshCw className={`h-4 w-4 ${isLoadingRosters ? "animate-spin" : ""}`} />
               {isLoadingRosters ? "명단 불러오는 중" : "관리자 명단 새로고침"}
-            </button>
-            <button
+            </button>}
+            {!isDemo && <button
               type="button"
               onClick={
                 openNewRosterEditor
@@ -1089,9 +1104,9 @@ export default function TeamRandomView() {
             >
               <Plus className="h-4 w-4" />
               다른 반 추가
-            </button>
+            </button>}
 
-            {selectedClassIsCustom && (
+            {!isDemo && selectedClassIsCustom && (
               <>
                 <button
                   type="button"

@@ -20,10 +20,9 @@ export default function ProtectedRoute() {
 
   if (isDemo) {
     if (location.pathname === "/admin") return <Navigate to="/" replace />;
-    if (location.pathname === "/" || location.pathname === "/gallery" || location.pathname === "/board" || location.pathname.startsWith("/study")) {
-      return <DemoPreviewView><Outlet /></DemoPreviewView>;
-    }
-    return <DemoPreviewView />;
+    if (/^\/games\/bang\/[^/]+/.test(location.pathname)) return <Navigate to="/games/bang" replace />;
+    if (/^\/games\/baseball\/rooms\/[^/]+/.test(location.pathname)) return <Navigate to="/games/baseball/rooms" replace />;
+    return <DemoPreviewView><Outlet /></DemoPreviewView>;
   }
 
   if (currentUser?.mustChangePassword && location.pathname !== "/me") {

@@ -34,20 +34,31 @@ const TABS = [
   { key: "finished", label: "종료된 게임" },
 ] as const;
 
+const DEMO_ROOM: BangRoom = {
+  id: "demo-bang-room", title: "체험용 뱅 게임방", description: "게임방 목록이 표시되는 예시입니다.",
+  hostStudentId: -1, maxPlayers: 6, location: "광주 2반",
+  scheduledAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+  recruitmentDeadline: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+  isPublic: true, hostAutoJoin: false, status: "recruiting", players: [
+    { studentId: -1, name: "체험 학생 1", username: "@demo1", isHost: true, isReady: false, status: "waiting", life: DEFAULT_LIFE, joinedAt: new Date().toISOString() },
+  ], turnOrder: [], turnIndex: 0, activityLogs: [], createdAt: new Date().toISOString(),
+};
+
 export default function BangGameView() {
-  const { rooms, createRoom } = useBangRooms();
-  const { currentUser } = useAuth();
+  const { currentUser, isDemo } = useAuth();
+  const { rooms, createRoom } = useBangRooms(!isDemo);
+  const visibleRooms = isDemo ? [DEMO_ROOM] : rooms;
   const location = useLocation();
   const [tab, setTab] = useState<string>("recruiting");
-  const [showCreate, setShowCreate] = useState(!!(location.state as { openCreate?: boolean })?.openCreate);
+  const [showCreate, setShowCreate] = useState(!isDemo && !!(location.state as { openCreate?: boolean })?.openCreate);
 
-  const filtered = rooms.filter((r) => {
+  const filtered = visibleRooms.filter((r) => {
     if (tab === "finished") return r.status === "finished" || r.status === "cancelled";
     return r.status === tab;
   });
 
   const handleCreate = (data: Omit<BangRoom, "id" | "createdAt" | "players" | "turnOrder" | "turnIndex" | "activityLogs" | "status" | "currentTurnStudentId">) => {
-    if (!currentUser) return;
+    if (!currentUser || isDemo) return;
     const newRoom: BangRoom = {
       ...data,
       id: createId("bang"),
@@ -88,12 +99,12 @@ export default function BangGameView() {
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">참여자를 모집하고 역할과 턴을 관리해 보세요.</p>
         </div>
-        <button
+        {!isDemo && <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-2 bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl hover:bg-amber-800 transition-colors text-sm shadow-sm"
         >
           <Plus className="w-4 h-4" />새 게임방 만들기
-        </button>
+        </button>}
       </div>
 
       {/* Tabs */}
@@ -111,7 +122,7 @@ export default function BangGameView() {
             {t.label}
             {t.key !== "finished" && (
               <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${tab === t.key ? "bg-amber-700 text-white" : "bg-gray-100 text-gray-500"}`}>
-                {rooms.filter((r) => r.status === t.key).length}
+                {visibleRooms.filter((r) => r.status === t.key).length}
               </span>
             )}
           </button>
@@ -130,22 +141,22 @@ export default function BangGameView() {
 
       {/* Room list */}
       {tab === "mine" ? (
-        <RoomList rooms={rooms.filter((r) => r.players.some((p) => p.studentId === currentUser?.id))} currentUserId={currentUser?.id} />
+        <RoomList rooms={visibleRooms.filter((r) => r.players.some((p) => p.studentId === currentUser?.id))} currentUserId={currentUser?.id} isDemo={isDemo} />
       ) : filtered.length === 0 ? (
         <div className="bg-white rounded-2xl border border-border p-14 flex flex-col items-center text-center gap-4">
           <span className="text-5xl">🤠</span>
           <div>
             <p className="text-sm font-bold text-gray-400">아직 만들어진 뱅 게임방이 없습니다.</p>
           </div>
-          <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-amber-800">
+          {!isDemo && <button onClick={() => setShowCreate(true)} className="flex items-center gap-2 bg-amber-700 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-amber-800">
             <Plus className="w-4 h-4" />첫 번째 게임방 만들기
-          </button>
+          </button>}
         </div>
       ) : (
-        <RoomList rooms={filtered} currentUserId={currentUser?.id} />
+        <RoomList rooms={filtered} currentUserId={currentUser?.id} isDemo={isDemo} />
       )}
 
-      {showCreate && currentUser && (
+      {showCreate && currentUser && !isDemo && (
         <BangRoomCreateModal
           hostName={currentUser.name}
           hostStudentId={currentUser.id}
@@ -157,20 +168,20 @@ export default function BangGameView() {
   );
 }
 
-function RoomList({ rooms, currentUserId }: { rooms: BangRoom[]; currentUserId?: number }) {
+function RoomList({ rooms, currentUserId, isDemo }: { rooms: BangRoom[]; currentUserId?: number; isDemo: boolean }) {
   if (rooms.length === 0) {
     return <p className="text-sm text-center text-gray-400 py-10">해당하는 게임방이 없습니다.</p>;
   }
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {rooms.map((room) => (
-        <RoomCard key={room.id} room={room} currentUserId={currentUserId} />
+        <RoomCard key={room.id} room={room} currentUserId={currentUserId} isDemo={isDemo} />
       ))}
     </div>
   );
 }
 
-function RoomCard({ room, currentUserId }: { room: BangRoom; currentUserId?: number }) {
+function RoomCard({ room, currentUserId, isDemo }: { room: BangRoom; currentUserId?: number; isDemo: boolean }) {
   const isHost = room.hostStudentId === currentUserId;
   const isJoined = room.players.some((p) => p.studentId === currentUserId);
   const readyCount = room.players.filter((p) => p.isReady).length;
@@ -208,9 +219,9 @@ function RoomCard({ room, currentUserId }: { room: BangRoom; currentUserId?: num
         <div className="flex gap-2 items-center">
           {isHost && <span className="text-xs font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">방장</span>}
           {isJoined && !isHost && <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">참여 중</span>}
-          <Link to={`/games/bang/${room.id}`} className="ml-auto text-xs font-bold text-amber-700 hover:text-amber-800 underline underline-offset-2">
+          {isDemo ? <span className="ml-auto text-xs font-bold text-amber-700">체험용 예시</span> : <Link to={`/games/bang/${room.id}`} className="ml-auto text-xs font-bold text-amber-700 hover:text-amber-800 underline underline-offset-2">
             상세 보기 →
-          </Link>
+          </Link>}
         </div>
       </div>
     </div>

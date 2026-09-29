@@ -2,8 +2,8 @@ import { useState, useCallback, useEffect } from "react";
 import { bangRoomStorage } from "../services/storage/bangRoomStorage";
 import type { BangRoom } from "../types/bang";
 
-export function useBangRooms() {
-  const [rooms, setRooms] = useState<BangRoom[]>(() => bangRoomStorage.getRooms());
+export function useBangRooms(enabled = true) {
+  const [rooms, setRooms] = useState<BangRoom[]>(() => enabled ? bangRoomStorage.getRooms() : []);
 
   const refresh = useCallback(() => {
     setRooms(bangRoomStorage.getRooms());
@@ -11,10 +11,11 @@ export function useBangRooms() {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
     refresh();
     const timer = window.setInterval(refresh, 1500);
     return () => window.clearInterval(timer);
-  }, [refresh]);
+  }, [refresh, enabled]);
 
   const createRoom = useCallback((room: BangRoom) => {
     bangRoomStorage.createRoom(room);

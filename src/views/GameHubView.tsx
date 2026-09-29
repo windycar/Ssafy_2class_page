@@ -2,11 +2,13 @@ import { Link } from "react-router";
 import { Gamepad2, Clock, Users, Plus, Lock } from "lucide-react";
 import { GAMES } from "../config/games";
 import { useBangRooms } from "../hooks/useBangRooms";
+import { useAuth } from "../hooks/useAuth";
 import bangHubArt from "../assets/games/bang-hub-art.png";
 
 export default function GameHubView() {
-  const { rooms } = useBangRooms();
-  const recruiting = rooms.filter((r) => r.status === "recruiting").length;
+  const { isDemo } = useAuth();
+  const { rooms } = useBangRooms(!isDemo);
+  const recruiting = isDemo ? 1 : rooms.filter((r) => r.status === "recruiting").length;
   const playing = rooms.filter((r) => r.status === "playing").length;
 
   return (
@@ -97,7 +99,7 @@ export default function GameHubView() {
                 >
                   {game.id === "bang" ? "게임방 보기" : "게임 시작"}
                 </Link>
-                {game.id === "bang" && (
+                {game.id === "bang" && !isDemo && (
                   <Link to={game.route} state={{ openCreate: true }} className="flex items-center gap-1 px-3 py-2 rounded-xl text-sm font-semibold border border-amber-300 text-amber-700 hover:bg-amber-50 transition-colors">
                     <Plus className="w-3.5 h-3.5" />새 방
                   </Link>

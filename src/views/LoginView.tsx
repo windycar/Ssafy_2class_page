@@ -155,7 +155,7 @@ export default function LoginView() {
             >
               <Sparkles className="h-4 w-4" /> 체험 계정으로 둘러보기
             </button>
-            <p className="mt-2 text-center text-xs leading-5 text-gray-500">로그인 없이 사진첩을 보고 일반 문제와 특별 모의고사를 풀어볼 수 있습니다. 체험 중 작성·풀이 기록은 저장되지 않습니다.</p>
+            <p className="mt-2 text-center text-xs leading-5 text-gray-500">로그인 없이 모든 일반 메뉴를 직접 둘러보고, 학습 문제와 특별 모의고사도 풀어볼 수 있습니다. 체험 중 회원 데이터와 풀이 기록은 저장되지 않습니다.</p>
 
             <div className="mt-5 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
               <b>첫 로그인 비밀번호는 1234</b>입니다. 아이디는 기존 명단의 <b>@ 뒤 문자열</b>이며, 첫 로그인 후 내정보에서 새 비밀번호로 바꿔야 합니다.

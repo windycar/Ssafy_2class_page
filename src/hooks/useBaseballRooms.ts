@@ -14,8 +14,8 @@ export interface CreateBaseballRoomInput {
   isPublic: boolean;
 }
 
-export function useBaseballRooms() {
-  const [rooms, setRooms] = useState<BaseballRoom[]>(() => baseballRoomStorage.getRooms());
+export function useBaseballRooms(enabled = true) {
+  const [rooms, setRooms] = useState<BaseballRoom[]>(() => enabled ? baseballRoomStorage.getRooms() : []);
   const refreshInFlightRef = useRef(false);
   const createInFlightRef = useRef(false);
 
@@ -31,10 +31,11 @@ export function useBaseballRooms() {
   }, []);
 
   useEffect(() => {
+    if (!enabled) return;
     refresh();
     const timer = window.setInterval(refresh, 1500);
     return () => window.clearInterval(timer);
-  }, [refresh]);
+  }, [refresh, enabled]);
 
   const createRoom = useCallback(async (
     input: CreateBaseballRoomInput,

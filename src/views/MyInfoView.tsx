@@ -11,7 +11,7 @@ function formatDate(value: string | null) {
 }
 
 export default function MyInfoView() {
-  const { currentUser, changePassword } = useAuth();
+  const { currentUser, changePassword, isDemo } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const firstLogin = Boolean((location.state as { firstLogin?: boolean } | null)?.firstLogin) || currentUser?.mustChangePassword;
@@ -51,7 +51,7 @@ export default function MyInfoView() {
         <div className="relative max-w-xl">
           <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/15"><UserRound className="h-5 w-5" /></div>
           <h1 className="text-2xl font-black">내정보</h1>
-          <p className="mt-2 text-sm leading-6 text-blue-100">계정 정보와 접속 기록을 확인하고 비밀번호를 안전하게 관리하세요.</p>
+          <p className="mt-2 text-sm leading-6 text-blue-100">{isDemo ? "현재 체험 방문자로 둘러보고 있습니다." : "계정 정보와 접속 기록을 확인하고 비밀번호를 안전하게 관리하세요."}</p>
         </div>
       </div>
 
@@ -71,12 +71,12 @@ export default function MyInfoView() {
           <dl className="space-y-4 text-sm">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3"><dt className="text-gray-400">로그인 아이디</dt><dd className="font-bold text-gray-800">{currentUser.loginId}</dd></div>
             <div className="flex items-center justify-between border-b border-gray-100 pb-3"><dt className="text-gray-400">소속</dt><dd className="font-bold text-gray-800">{currentUser.className.replace("_", " ")}</dd></div>
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3"><dt className="text-gray-400">계정 권한</dt><dd className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-extrabold text-emerald-700"><BadgeCheck className="h-3.5 w-3.5" />{currentUser.role === "admin" ? "관리자" : "회원"}</dd></div>
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3"><dt className="text-gray-400">계정 권한</dt><dd className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-extrabold text-emerald-700"><BadgeCheck className="h-3.5 w-3.5" />{isDemo ? "체험 방문자" : currentUser.role === "admin" ? "관리자" : "회원"}</dd></div>
             <div className="flex items-start justify-between gap-4"><dt className="inline-flex items-center gap-1 text-gray-400"><CalendarClock className="h-4 w-4" />최근 로그인</dt><dd className="text-right text-xs font-semibold text-gray-600">{formatDate(currentUser.lastLoginAt)}</dd></div>
           </dl>
         </section>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        {isDemo ? <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6 shadow-sm"><h2 className="font-black text-blue-900">체험 이용 안내</h2><p className="mt-3 text-sm leading-6 text-blue-800">메뉴와 학습 문제를 직접 둘러볼 수 있습니다. 회원 데이터 변경과 풀이 기록 저장은 정식 계정에서 이용할 수 있습니다.</p></section> : <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="mb-5"><h2 className="flex items-center gap-2 font-black text-gray-900"><LockKeyhole className="h-5 w-5 text-[#1259AA]" />비밀번호 변경</h2><p className="mt-1 text-xs text-gray-400">4자 이상이며 초기 비밀번호 1234는 사용할 수 없습니다.</p></div>
           <form onSubmit={submit} className="space-y-4">
             {[
@@ -99,7 +99,7 @@ export default function MyInfoView() {
               <button disabled={pending} className="rounded-xl bg-[#1259AA] px-5 py-2.5 text-sm font-extrabold text-white hover:bg-[#0d4a8f] disabled:opacity-60">{pending ? "변경 중..." : "비밀번호 변경"}</button>
             </div>
           </form>
-        </section>
+        </section>}
       </div>
     </div>
   );

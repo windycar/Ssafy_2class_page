@@ -35,11 +35,11 @@ const TABS = [
 const ROOM_SEATS = [0, 1] as const;
 
 export default function BaseballRoomsView() {
-  const { rooms, createRoom } = useBaseballRooms();
-  const { currentUser } = useAuth();
+  const { currentUser, isDemo } = useAuth();
+  const { rooms, createRoom } = useBaseballRooms(!isDemo);
   const location = useLocation();
   const [tab, setTab] = useState<string>("recruiting");
-  const [showCreate, setShowCreate] = useState(Boolean((location.state as { openCreate?: boolean })?.openCreate));
+  const [showCreate, setShowCreate] = useState(!isDemo && Boolean((location.state as { openCreate?: boolean })?.openCreate));
   const [isCreating, setIsCreating] = useState(false);
   const createInFlightRef = useRef(false);
 
@@ -52,7 +52,7 @@ export default function BaseballRoomsView() {
   });
 
   const handleCreate = async (data: { title: string; description: string; isPublic: boolean }) => {
-    if (!currentUser || createInFlightRef.current) return;
+    if (!currentUser || isDemo || createInFlightRef.current) return;
     createInFlightRef.current = true;
     setIsCreating(true);
     try {
@@ -86,9 +86,9 @@ export default function BaseballRoomsView() {
           <h1 className="flex items-center gap-2 text-2xl font-extrabold text-gray-900"><span>⚾</span> 야구 게임방</h1>
           <p className="mt-0.5 text-sm text-gray-500">방을 만들고 한 명을 초대해 2인 경기를 시작하세요.</p>
         </div>
-        <button type="button" onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">
+        {!isDemo && <button type="button" onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-blue-800">
           <Plus className="h-4 w-4" />새 게임방 만들기
-        </button>
+        </button>}
       </div>
 
       <div className="flex gap-1.5 border-b border-border">
@@ -106,9 +106,9 @@ export default function BaseballRoomsView() {
         <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-white p-14 text-center">
           <span className="text-5xl">⚾</span>
           <p className="text-sm font-bold text-gray-400">해당하는 야구 게임방이 없습니다.</p>
-          <button type="button" onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800">
+          {!isDemo && <button type="button" onClick={() => setShowCreate(true)} className="flex items-center gap-2 rounded-xl bg-blue-700 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800">
             <Plus className="h-4 w-4" />첫 번째 게임방 만들기
-          </button>
+          </button>}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -145,7 +145,7 @@ export default function BaseballRoomsView() {
         </div>
       )}
 
-      {showCreate && currentUser && (
+      {showCreate && currentUser && !isDemo && (
         <BaseballRoomCreateModal
           hostName={currentUser.name}
           isSubmitting={isCreating}
