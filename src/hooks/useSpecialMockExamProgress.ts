@@ -24,7 +24,7 @@ import type { StudySyncState } from "./useStudyProgress";
 import { canAccessSpecialMockExam } from "../utils/specialMockExamAccess";
 
 export function useSpecialMockExamProgress() {
-  const { currentUser } = useAuth();
+  const { currentUser, isDemo } = useAuth();
   const hasAccess = canAccessSpecialMockExam(currentUser);
   const [progress, setProgress] = useState<SpecialMockExamProgress>({
     attempts: [],
@@ -36,7 +36,7 @@ export function useSpecialMockExamProgress() {
     let cancelled = false;
     let refreshInFlight = false;
 
-    if (!currentUser || !hasAccess) {
+    if (!currentUser || !hasAccess || isDemo) {
       setProgress({ attempts: [] });
       setSyncState("local");
       return () => {
@@ -74,7 +74,7 @@ export function useSpecialMockExamProgress() {
       cancelled = true;
       unsubscribe();
     };
-  }, [currentUser, hasAccess]);
+  }, [currentUser, hasAccess, isDemo]);
 
   const recordAnswers = (
     assessmentRound: SpecialMockExamAvailableAssessmentRound,
@@ -89,7 +89,7 @@ export function useSpecialMockExamProgress() {
       response,
       correct: gradeSpecialMockExamResponse(question, response).correct,
     }));
-    if (!currentUser || !hasAccess) return graded;
+    if (!currentUser || !hasAccess || isDemo) return graded;
     const submittedAnswers = graded.filter(({ response }) =>
       hasSpecialMockExamResponse(response),
     );
@@ -138,6 +138,7 @@ export function useSpecialMockExamProgress() {
     if (
       !currentUser ||
       !hasAccess ||
+      isDemo ||
       syncState === "loading" ||
       resetInFlight.current
     ) {

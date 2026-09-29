@@ -21,18 +21,18 @@ const EMPTY_CATEGORY_SUMMARY: Record<WebCategory, { total: number; correct: numb
 };
 
 export function useWebStudyProgress() {
-  const { currentUser } = useAuth();
+  const { currentUser, isDemo } = useAuth();
   const userId = currentUser?.id ?? 0;
-  const [progress, setProgress] = useState(() => webStudyProgressStorage.get(userId));
+  const [progress, setProgress] = useState(() => isDemo ? { attempts: [] } : webStudyProgressStorage.get(userId));
   const [syncState, setSyncState] = useState<StudySyncState>("loading");
   const resetInFlight = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     let refreshInFlight = false;
-    setProgress(webStudyProgressStorage.get(userId));
+    setProgress(isDemo ? { attempts: [] } : webStudyProgressStorage.get(userId));
 
-    if (!currentUser) {
+    if (!currentUser || isDemo) {
       setSyncState("local");
       return () => {
         cancelled = true;
@@ -68,11 +68,11 @@ export function useWebStudyProgress() {
       cancelled = true;
       unsubscribe();
     };
-  }, [currentUser, userId]);
+  }, [currentUser, isDemo, userId]);
 
   const recordAnswer = (question: WebQuestion, response: number | string) => {
     const grade = gradeWebResponse(question, response);
-    if (!currentUser) return grade.correct;
+    if (!currentUser || isDemo) return grade.correct;
     const attempt: WebStudyAttempt = {
       id: `${Date.now()}-${question.id}-${Math.random().toString(36).slice(2, 7)}`,
       questionId: question.id,
@@ -96,7 +96,7 @@ export function useWebStudyProgress() {
     difficulty: WebQuestion["difficulty"],
     categories: WebCategory[],
   ) => {
-    if (!currentUser || !categories.length || syncState === "loading" || resetInFlight.current) {
+    if (!currentUser || isDemo || !categories.length || syncState === "loading" || resetInFlight.current) {
       return false;
     }
 

@@ -29,6 +29,43 @@ type AuthApiResponse = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+const DEMO_SESSION_KEY = "ssafy-g2-demo-session";
+
+const DEMO_USER: AuthUser = {
+  id: 0,
+  memberId: 0,
+  studentId: null,
+  authId: "",
+  name: "체험 방문자",
+  username: "@demo",
+  loginId: "demo",
+  class: "체험",
+  className: "체험",
+  role: "member",
+  isActive: false,
+  isDemo: true,
+  canAccessSpecialMockExam: false,
+  mustChangePassword: false,
+  passwordChangedAt: null,
+  lastLoginAt: null,
+};
+
+function hasDemoSession() {
+  try {
+    return sessionStorage.getItem(DEMO_SESSION_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function setDemoSession(active: boolean) {
+  try {
+    if (active) sessionStorage.setItem(DEMO_SESSION_KEY, "1");
+    else sessionStorage.removeItem(DEMO_SESSION_KEY);
+  } catch {
+    // Browsers can disable session storage. The current tab still works.
+  }
+}
 
 function toAuthUser(profile: ServerProfile): AuthUser {
   return {
@@ -73,17 +110,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshProfile = useCallback(async () => {
     if (!supabase) {
-      setCurrentUser(null);
+      const demo = hasDemoSession() ? DEMO_USER : null;
+      setCurrentUser(demo);
       setIsLoading(false);
-      return null;
+      return demo;
     }
     const { data } = await supabase.auth.getSession();
     const accessToken = data.session?.access_token;
     if (!accessToken) {
-      setCurrentUser(null);
+      const demo = hasDemoSession() ? DEMO_USER : null;
+      setCurrentUser(demo);
       setIsLoading(false);
-      return null;
+      return demo;
     }
+    setDemoSession(false);
     try {
       const response = await authRequest({ action: "profile" }, accessToken);
       if (!response.profile) throw new Error("회원 정보를 받지 못했습니다.");
@@ -115,7 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session || event === "SIGNED_OUT") {
         if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
-        setCurrentUser(null);
+        setCurrentUser(hasDemoSession() ? DEMO_USER : null);
         setIsLoading(false);
         return;
       }
@@ -147,12 +187,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error("로그인 계정과 회원 정보가 일치하지 않습니다.");
     }
     const user = toAuthUser(response.profile);
+    setDemoSession(false);
     setCurrentUser(user);
     setIsLoading(false);
     return user;
   }, []);
 
+  const startDemo = useCallback(async () => {
+    if (supabase) {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    }
+    setDemoSession(true);
+    setCurrentUser(DEMO_USER);
+    setIsLoading(false);
+  }, []);
+
   const logout = useCallback(async () => {
+    setDemoSession(false);
     setCurrentUser(null);
     if (supabase) await supabase.auth.signOut().catch(() => undefined);
   }, []);
@@ -160,6 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const changeUser = logout;
 
   const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    if (hasDemoSession()) throw new Error("체험 계정에서는 비밀번호를 변경할 수 없습니다.");
     if (!supabase) throw new Error("Supabase 연결 설정이 필요합니다.");
     const { data } = await supabase.auth.getSession();
     if (!data.session?.access_token) throw new Error("로그인이 필요합니다.");
@@ -174,13 +227,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo<AuthContextValue>(() => ({
     currentUser,
     isAuthenticated: Boolean(currentUser),
+    isDemo: currentUser?.isDemo === true,
     isLoading,
     login,
+    startDemo,
     logout,
     changeUser,
     changePassword,
     refreshProfile,
-  }), [changePassword, changeUser, currentUser, isLoading, login, logout, refreshProfile]);
+  }), [changePassword, changeUser, currentUser, isLoading, login, logout, refreshProfile, startDemo]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

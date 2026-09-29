@@ -26,10 +26,10 @@ const EMPTY_CATEGORY_SUMMARY: Record<
 };
 
 export function useAiPythonStudyProgress() {
-  const { currentUser } = useAuth();
+  const { currentUser, isDemo } = useAuth();
   const userId = currentUser?.id ?? 0;
   const [progress, setProgress] = useState(() =>
-    aiPythonStudyProgressStorage.get(userId),
+    isDemo ? { attempts: [] } : aiPythonStudyProgressStorage.get(userId),
   );
   const [syncState, setSyncState] = useState<StudySyncState>("loading");
   const resetInFlight = useRef(false);
@@ -37,9 +37,9 @@ export function useAiPythonStudyProgress() {
   useEffect(() => {
     let cancelled = false;
     let refreshInFlight = false;
-    setProgress(aiPythonStudyProgressStorage.get(userId));
+    setProgress(isDemo ? { attempts: [] } : aiPythonStudyProgressStorage.get(userId));
 
-    if (!currentUser) {
+    if (!currentUser || isDemo) {
       setSyncState("local");
       return () => {
         cancelled = true;
@@ -75,11 +75,11 @@ export function useAiPythonStudyProgress() {
       cancelled = true;
       unsubscribe();
     };
-  }, [currentUser, userId]);
+  }, [currentUser, isDemo, userId]);
 
   const recordAnswer = (question: AiPythonQuestion, selectedAnswer: number) => {
     const correct = question.answer === selectedAnswer;
-    if (!currentUser) return correct;
+    if (!currentUser || isDemo) return correct;
 
     const attempt: AiPythonStudyAttempt = {
       id: `${Date.now()}-${question.id}-${Math.random().toString(36).slice(2, 7)}`,
@@ -98,7 +98,7 @@ export function useAiPythonStudyProgress() {
   };
 
   const resetProgress = async (categories: AiPythonCategory[]) => {
-    if (!currentUser || !categories.length || syncState === "loading" || resetInFlight.current) {
+    if (!currentUser || isDemo || !categories.length || syncState === "loading" || resetInFlight.current) {
       return false;
     }
 

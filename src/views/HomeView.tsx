@@ -51,7 +51,7 @@ const QUICK_MENU = [
     description: "광주 2반의 활동과 추억을 기록해요.",
     imageSrc: galleryQuickMenuArt,
     path: "/gallery",
-    badge: "사진 5장",
+    badge: "사진첩 보기",
     buttonLabel: "사진 보기",
     colorBg: "bg-emerald-50",
     colorBorder: "border-emerald-200",

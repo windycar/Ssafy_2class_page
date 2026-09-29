@@ -20,7 +20,7 @@ import { canAccessSpecialMockExam } from "../../utils/specialMockExamAccess";
 import pythonHero from "../../assets/study/python-study-hero.png";
 
 export default function StudyHubView() {
-  const { currentUser } = useAuth();
+  const { currentUser, isDemo } = useAuth();
   const hasSpecialMockExamAccess = canAccessSpecialMockExam(currentUser);
   const { progress: pythonProgress, summary: pythonSummary } = useStudyProgress();
   const { progress: webProgress, summary: webSummary } = useWebStudyProgress();
@@ -77,7 +77,7 @@ export default function StudyHubView() {
           </h1>
           <p className="mt-4 max-w-md text-sm leading-6 text-blue-100/75 sm:text-base">
             객관식·단답형·서술형을 실제 시험처럼 풀어보세요. 제출 즉시 정답과 해설을 확인하고,
-            틀린 문제는 자동으로 오답 복습에 모입니다.
+            {isDemo ? "체험 답안은 이 화면을 벗어나면 저장되지 않습니다." : "틀린 문제는 자동으로 오답 복습에 모입니다."}
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-4">
             <Link
@@ -111,7 +111,7 @@ export default function StudyHubView() {
           icon={<BookOpenCheck className="h-5 w-5" />}
           label="누적 풀이"
           value={`${total}문제`}
-          helper="내 학습 기록"
+          helper={isDemo ? "체험 기록은 저장되지 않음" : "내 학습 기록"}
           tone="blue"
         />
         <StatCard
@@ -125,7 +125,7 @@ export default function StudyHubView() {
           icon={<CheckCircle2 className="h-5 w-5" />}
           label="복습 필요"
           value={`${reviewCount}문제`}
-          helper="오답 노트에 자동 저장"
+          helper={isDemo ? "체험 오답은 저장되지 않음" : "오답 노트에 자동 저장"}
           tone="mint"
         />
       </section>
@@ -147,7 +147,7 @@ export default function StudyHubView() {
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[10px] font-black tracking-[0.12em] text-amber-50">
                 <ShieldCheck className="h-3 w-3" />
-                ADMIN APPROVED
+                {isDemo ? "DEMO ACCESS" : "ADMIN APPROVED"}
               </span>
              
             </div>
@@ -155,7 +155,7 @@ export default function StudyHubView() {
               특별 모의고사
             </h2>
             <p className="mt-1.5 text-xs leading-5 text-amber-50/80 sm:text-sm">
-              선택을 받은 학습자만 이용할 수 있는 과목평가 실전 모의고사입니다.
+              {isDemo ? "체험 계정에서도 실제 모의고사 문제를 풀어볼 수 있습니다." : "선택을 받은 학습자만 이용할 수 있는 과목평가 실전 모의고사입니다."}
             </p>
             <span className="mt-4 inline-flex items-center gap-2 text-sm font-extrabold">
               모의고사 입장

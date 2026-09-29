@@ -3,6 +3,7 @@ import { Camera, Heart, MessageCircle, Plus, X, ChevronLeft, ChevronRight, Searc
 import { toast } from "sonner";
 import { STUDENTS } from "../data/students";
 import { useModal } from "../hooks/useModal";
+import { useAuth } from "../hooks/useAuth";
 import { PHOTO_CATEGORIES } from "../config/constants";
 import { formatDate, formatRelative } from "../utils/formatDate";
 import { createId } from "../utils/createId";
@@ -17,7 +18,25 @@ import {
   uploadImage,
 } from "../services/galleryStorage";
 
+const DEMO_PHOTOS: Photo[] = [
+  {
+    id: "demo-gallery-class", title: "함께 공부하는 하루 · 체험 예시",
+    description: "실제 등록된 사진이 없을 때 표시하는 체험용 예시 이미지입니다.",
+    imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=900&h=700&fit=crop&auto=format",
+    takenAt: "2026-01-01", uploadedBy: "체험용 예시", category: "class", likes: 0,
+    likedBy: [], comments: [], createdAt: "2026-01-01T00:00:00Z",
+  },
+  {
+    id: "demo-gallery-project", title: "프로젝트 활동 · 체험 예시",
+    description: "실제 등록된 사진이 없을 때 표시하는 체험용 예시 이미지입니다.",
+    imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=900&h=700&fit=crop&auto=format",
+    takenAt: "2026-01-02", uploadedBy: "체험용 예시", category: "project", likes: 0,
+    likedBy: [], comments: [], createdAt: "2026-01-02T00:00:00Z",
+  },
+];
+
 export default function GalleryView() {
+  const { isDemo } = useAuth();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<PhotoCategory>("all");
   const [search, setSearch] = useState("");
@@ -30,12 +49,18 @@ export default function GalleryView() {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) {
+      if (isDemo) setPhotos(DEMO_PHOTOS);
+      return;
+    }
 
     getGalleryPhotos()
-      .then(setPhotos)
-      .catch(() => toast.error("사진 목록을 불러오지 못했습니다."));
-  }, []);
+      .then((loaded) => setPhotos(isDemo && loaded.length === 0 ? DEMO_PHOTOS : loaded))
+      .catch(() => {
+        if (isDemo) setPhotos(DEMO_PHOTOS);
+        else toast.error("사진 목록을 불러오지 못했습니다.");
+      });
+  }, [isDemo]);
 
   const ensureSupabase = () => {
     if (supabase) return true;
@@ -58,6 +83,7 @@ export default function GalleryView() {
   const displayPhotos = filtered.filter((photo, index) => filtered.findIndex((item) => albumKey(item) === albumKey(photo)) === index);
 
   const handleLike = async (id: string) => {
+    if (isDemo) return;
     const photo = photos.find((item) => item.id === id);
     if (!photo || !ensureSupabase()) return;
     await updateGalleryLikes(id, photo.likes + 1);
@@ -65,6 +91,7 @@ export default function GalleryView() {
   };
 
   const handleAddComment = async (photoId: string) => {
+    if (isDemo) return;
     if (!commentAuthor) { toast.error("작성자를 선택해 주세요."); return; }
     if (!commentText.trim()) { toast.error("댓글을 입력해 주세요."); return; }
     const comment: PhotoComment = { id: createId("c"), author: commentAuthor, content: commentText, createdAt: new Date().toISOString() };
@@ -76,6 +103,7 @@ export default function GalleryView() {
   };
 
   const handleDeletePhoto = async (id: string) => {
+    if (isDemo) return;
     if (!window.confirm("사진을 삭제할까요?")) return;
     const photo = photos.find((item) => item.id === id);
     if (!photo || !ensureSupabase()) return;
@@ -96,6 +124,7 @@ export default function GalleryView() {
   };
 
   const handleUpload = async () => {
+    if (isDemo) return;
     if (!uploadForm.title.trim()) { toast.error("제목을 입력해 주세요."); return; }
     if (!uploadForm.uploadedBy) { toast.error("등록자를 선택해 주세요."); return; }
     const newPhoto: Photo = {
@@ -230,9 +259,9 @@ export default function GalleryView() {
           <h1 className="text-xl font-extrabold text-gray-900">광주 2반 사진첩</h1>
           <p className="text-sm text-gray-500">수업, 프로젝트, 행사에서 만든 우리 반의 추억을 기록해요.</p>
         </div>
-        <button onClick={uploadModal.open} className="ml-auto flex items-center gap-2 bg-emerald-600 text-white font-semibold px-4 py-2 rounded-xl hover:bg-emerald-700 transition-colors text-sm shadow-sm">
+        {!isDemo && <button onClick={uploadModal.open} className="ml-auto flex items-center gap-2 bg-emerald-600 text-white font-semibold px-4 py-2 rounded-xl hover:bg-emerald-700 transition-colors text-sm shadow-sm">
           <Plus className="w-4 h-4" />사진 추가
-        </button>
+        </button>}
       </div>
 
       {/* Filter + Search */}
@@ -255,6 +284,9 @@ export default function GalleryView() {
         <span className="font-semibold text-gray-700">{filtered.length}장</span>
         {search && <span>"{search}" 검색 결과</span>}
       </div>
+      {isDemo && photos[0]?.id.startsWith("demo-gallery-") && (
+        <p className="rounded-xl bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">현재 연결된 사진이 없어 체험용 예시 이미지를 표시합니다.</p>
+      )}
 
       {/* Grid */}
       {filtered.length === 0 ? (
@@ -278,7 +310,7 @@ export default function GalleryView() {
               {/* Category badge */}
               <span className="absolute top-2 left-2 text-xs font-semibold bg-black/40 text-white px-2 py-0.5 rounded-full">{catLabel(photo.category)}</span>
               {/* Menu */}
-              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+              {!isDemo && <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                 <button onClick={() => setOpenMenuId(openMenuId === photo.id ? null : photo.id)} className="w-7 h-7 bg-black/40 text-white rounded-full flex items-center justify-center hover:bg-black/60 transition-colors">
                   <MoreVertical className="w-3.5 h-3.5" />
                 </button>
@@ -289,7 +321,7 @@ export default function GalleryView() {
                     </button>
                   </div>
                 )}
-              </div>
+              </div>}
             </div>
           ))}
         </div>
@@ -318,9 +350,9 @@ export default function GalleryView() {
                   <span>등록자: {detailPhoto.uploadedBy}</span>
                   <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-medium">{catLabel(detailPhoto.category)}</span>
                 </div>
-                <button onClick={() => handleLike(detailPhoto.id)} className="flex items-center gap-1.5 mt-3 text-sm font-semibold text-rose-500 hover:text-rose-600 transition-colors">
+                {isDemo ? <span className="flex items-center gap-1.5 mt-3 text-sm font-semibold text-rose-500"><Heart className="w-4 h-4" />{detailPhoto.likes}</span> : <button onClick={() => handleLike(detailPhoto.id)} className="flex items-center gap-1.5 mt-3 text-sm font-semibold text-rose-500 hover:text-rose-600 transition-colors">
                   <Heart className="w-4 h-4" />{detailPhoto.likes}
-                </button>
+                </button>}
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-2">
                 {detailPhoto.comments.map((c) => (
@@ -333,7 +365,7 @@ export default function GalleryView() {
                   </div>
                 ))}
               </div>
-              <div className="p-4 border-t border-border space-y-2">
+              {!isDemo && <div className="p-4 border-t border-border space-y-2">
                 <select value={commentAuthor} onChange={(e) => setCommentAuthor(e.target.value)} className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300">
                   <option value="">작성자 선택</option>
                   {STUDENTS.map((s) => <option key={s.id} value={s.name}>{s.name}</option>)}
@@ -342,14 +374,14 @@ export default function GalleryView() {
                   <input value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAddComment(detailPhoto.id)} className="flex-1 border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-300" placeholder="댓글을 입력하세요..." />
                   <button onClick={() => handleAddComment(detailPhoto.id)} className="bg-emerald-600 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition-colors">등록</button>
                 </div>
-              </div>
+              </div>}
             </div>
           </div>
         </div>
       )}
 
       {/* Upload Modal */}
-      {uploadModal.isOpen && (
+      {!isDemo && uploadModal.isOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={uploadModal.close}>
           <div className="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">

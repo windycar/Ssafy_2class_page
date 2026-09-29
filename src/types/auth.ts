@@ -3,6 +3,7 @@ import type { Student } from "./student";
 export type MemberRole = "member" | "admin";
 
 export interface AuthUser extends Student {
+  isDemo?: boolean;
   memberId: number;
   studentId: number | null;
   authId: string;
@@ -19,8 +20,10 @@ export interface AuthUser extends Student {
 export interface AuthContextValue {
   currentUser: AuthUser | null;
   isAuthenticated: boolean;
+  isDemo: boolean;
   isLoading: boolean;
   login: (loginId: string, password: string) => Promise<AuthUser>;
+  startDemo: () => Promise<void>;
   logout: () => Promise<void>;
   changeUser: () => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;

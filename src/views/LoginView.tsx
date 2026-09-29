@@ -1,13 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
-import { Eye, EyeOff, KeyRound, LockKeyhole, LogIn, ShieldCheck, UsersRound } from "lucide-react";
+import { Eye, EyeOff, KeyRound, LockKeyhole, LogIn, ShieldCheck, Sparkles, UsersRound } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import teamImage from "../assets/home/quick-menu/team.png";
 import coffeeImage from "../assets/home/quick-menu/coffee.png";
 import galleryImage from "../assets/home/quick-menu/gallery.png";
 
 export default function LoginView() {
-  const { login, isAuthenticated, isLoading, currentUser } = useAuth();
+  const { login, startDemo, isAuthenticated, isLoading, currentUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/";
@@ -37,6 +37,19 @@ export default function LoginView() {
       });
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : "로그인하지 못했습니다.");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const enterDemo = async () => {
+    setPending(true);
+    setError("");
+    try {
+      await startDemo();
+      navigate("/", { replace: true });
+    } catch {
+      setError("체험 화면을 열지 못했습니다. 다시 시도해 주세요.");
     } finally {
       setPending(false);
     }
@@ -130,6 +143,19 @@ export default function LoginView() {
                 <LogIn className="h-4 w-4" /> {pending ? "확인 중..." : "사이트 입장"}
               </button>
             </form>
+
+            <div className="my-5 flex items-center gap-3 text-xs font-bold text-gray-400">
+              <span className="h-px flex-1 bg-gray-200" />또는<span className="h-px flex-1 bg-gray-200" />
+            </div>
+            <button
+              type="button"
+              onClick={() => void enterDemo()}
+              disabled={pending || isLoading}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#1259AA]/25 bg-blue-50 px-4 py-3 text-sm font-extrabold text-[#1259AA] transition hover:bg-blue-100 disabled:cursor-wait disabled:opacity-60"
+            >
+              <Sparkles className="h-4 w-4" /> 체험 계정으로 둘러보기
+            </button>
+            <p className="mt-2 text-center text-xs leading-5 text-gray-500">로그인 없이 사진첩을 보고 일반 문제와 특별 모의고사를 풀어볼 수 있습니다. 체험 중 작성·풀이 기록은 저장되지 않습니다.</p>
 
             <div className="mt-5 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">
               <b>첫 로그인 비밀번호는 1234</b>입니다. 아이디는 기존 명단의 <b>@ 뒤 문자열</b>이며, 첫 로그인 후 내정보에서 새 비밀번호로 바꿔야 합니다.

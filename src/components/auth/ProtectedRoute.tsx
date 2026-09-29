@@ -1,8 +1,9 @@
 import { Navigate, Outlet, useLocation } from "react-router";
 import { useAuth } from "../../hooks/useAuth";
+import DemoPreviewView from "../../views/DemoPreviewView";
 
 export default function ProtectedRoute() {
-  const { isAuthenticated, isLoading, currentUser } = useAuth();
+  const { isAuthenticated, isDemo, isLoading, currentUser } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -15,6 +16,14 @@ export default function ProtectedRoute() {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: `${location.pathname}${location.search}` }} replace />;
+  }
+
+  if (isDemo) {
+    if (location.pathname === "/admin") return <Navigate to="/" replace />;
+    if (location.pathname === "/" || location.pathname === "/gallery" || location.pathname === "/board" || location.pathname.startsWith("/study")) {
+      return <DemoPreviewView><Outlet /></DemoPreviewView>;
+    }
+    return <DemoPreviewView />;
   }
 
   if (currentUser?.mustChangePassword && location.pathname !== "/me") {

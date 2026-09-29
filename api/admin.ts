@@ -19,9 +19,7 @@ type AdminRequest = {
   description?: string;
   name?: string;
   loginId?: string;
-  username?: string;
   className?: string;
-  studentId?: number | null;
   isActive?: boolean;
   canAccessSpecialMockExam?: boolean;
 };
@@ -223,8 +221,7 @@ export async function handleAdminRequest(request: Request) {
   if (body.action === "members.create") {
     const name = (body.name ?? "").trim();
     const loginId = normalizeLoginId(body.loginId ?? "");
-    const className = (body.className ?? "광주_2반").trim();
-    const username = (body.username ?? `@${loginId}`).trim();
+    const className = (body.className ?? "광주 2반").trim().replace(/[\s_]+/g, "_");
     if (!name || !className) return jsonError("이름과 반을 입력하세요.", 400);
     if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(loginId)) {
       return jsonError("아이디는 영문 소문자와 숫자, 점, 밑줄, 하이픈으로 3~32자 입력하세요.", 400);
@@ -233,9 +230,9 @@ export async function handleAdminRequest(request: Request) {
     const { data, error } = await client
       .from("members")
       .insert({
-        student_id: Number.isInteger(body.studentId) ? body.studentId : null,
+        student_id: null,
         name,
-        username: username.startsWith("@") ? username : `@${username}`,
+        username: `@${loginId}`,
         login_id: loginId,
         class_name: className,
         role: "member",
@@ -245,7 +242,7 @@ export async function handleAdminRequest(request: Request) {
       .select("id, student_id, name, username, login_id, class_name, role, is_active, must_change_password, created_at")
       .single();
     if (error) {
-      const message = error.code === "23505" ? "이미 사용 중인 아이디 또는 교육생 번호입니다." : error.message;
+      const message = error.code === "23505" ? "이미 사용 중인 로그인 아이디입니다." : error.message;
       return jsonError(message, 409);
     }
     return Response.json({

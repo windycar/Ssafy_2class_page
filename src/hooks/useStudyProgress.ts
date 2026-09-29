@@ -13,18 +13,18 @@ import type { PythonQuestion, StudyAttempt, StudyCategory } from "../types/study
 export type StudySyncState = "loading" | "synced" | "local";
 
 export function useStudyProgress() {
-  const { currentUser } = useAuth();
+  const { currentUser, isDemo } = useAuth();
   const userId = currentUser?.id ?? 0;
-  const [progress, setProgress] = useState(() => studyProgressStorage.get(userId));
+  const [progress, setProgress] = useState(() => isDemo ? { attempts: [] } : studyProgressStorage.get(userId));
   const [syncState, setSyncState] = useState<StudySyncState>("loading");
   const resetInFlight = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
     let refreshInFlight = false;
-    setProgress(studyProgressStorage.get(userId));
+    setProgress(isDemo ? { attempts: [] } : studyProgressStorage.get(userId));
 
-    if (!currentUser) {
+    if (!currentUser || isDemo) {
       setSyncState("local");
       return () => {
         cancelled = true;
@@ -60,14 +60,14 @@ export function useStudyProgress() {
       cancelled = true;
       unsubscribe();
     };
-  }, [currentUser, userId]);
+  }, [currentUser, isDemo, userId]);
 
   const recordAnswer = (
     question: PythonQuestion,
     response: number | string,
   ) => {
     const grade = gradePythonResponse(question, response);
-    if (!currentUser) return grade.correct;
+    if (!currentUser || isDemo) return grade.correct;
     const attempt: StudyAttempt = {
       id: `${Date.now()}-${question.id}-${Math.random().toString(36).slice(2, 7)}`,
       questionId: question.id,
@@ -91,7 +91,7 @@ export function useStudyProgress() {
     difficulty: PythonQuestion["difficulty"],
     categories: StudyCategory[],
   ) => {
-    if (!currentUser || !categories.length || syncState === "loading" || resetInFlight.current) {
+    if (!currentUser || isDemo || !categories.length || syncState === "loading" || resetInFlight.current) {
       return false;
     }
 

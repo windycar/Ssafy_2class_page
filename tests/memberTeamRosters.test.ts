@@ -28,3 +28,13 @@ test("관리자에서 새로 만든 반도 선택 목록에 추가하고 빈 반
   assert.equal(rosters[0].students.length, 0);
   assert.equal(rosters[2].students[0].id, 5001);
 });
+
+test("교육생 번호 없이 광주 2반으로 등록한 회원도 기존 2반 팀 후보에 포함한다", () => {
+  const rosters = buildMemberTeamRosters(base, [
+    { id: 27, student_id: null, name: "신규 회원", username: "@newmember", class_name: "광주 2반" },
+  ]);
+
+  assert.equal(rosters.length, 2);
+  assert.deepEqual(rosters[1].students.map((student) => student.name), ["신규 회원"]);
+  assert.equal(rosters[1].students[0].id, 900_000_027);
+});

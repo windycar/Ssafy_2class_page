@@ -18,10 +18,10 @@ import { getAiPythonWeekAttemptIdPrefix } from "../types/aiPythonWeekStudy";
 import type { StudySyncState } from "./useStudyProgress";
 
 export function useAiPythonWeekProgress() {
-  const { currentUser } = useAuth();
+  const { currentUser, isDemo } = useAuth();
   const userId = currentUser?.id ?? 0;
   const [progress, setProgress] = useState(() =>
-    aiPythonWeekProgressStorage.get(userId),
+    isDemo ? { attempts: [] } : aiPythonWeekProgressStorage.get(userId),
   );
   const [syncState, setSyncState] = useState<StudySyncState>("loading");
   const resetInFlight = useRef(false);
@@ -29,9 +29,9 @@ export function useAiPythonWeekProgress() {
   useEffect(() => {
     let cancelled = false;
     let refreshInFlight = false;
-    setProgress(aiPythonWeekProgressStorage.get(userId));
+    setProgress(isDemo ? { attempts: [] } : aiPythonWeekProgressStorage.get(userId));
 
-    if (!currentUser) {
+    if (!currentUser || isDemo) {
       setSyncState("local");
       return () => {
         cancelled = true;
@@ -67,7 +67,7 @@ export function useAiPythonWeekProgress() {
       cancelled = true;
       unsubscribe();
     };
-  }, [currentUser, userId]);
+  }, [currentUser, isDemo, userId]);
 
   const recordAnswer = (
     week: AiPythonWeek,
@@ -75,7 +75,7 @@ export function useAiPythonWeekProgress() {
     response: number | string,
   ) => {
     const grade = gradeAiPythonWeekResponse(question, response);
-    if (!currentUser) return grade.correct;
+    if (!currentUser || isDemo) return grade.correct;
 
     const attempt: AiPythonWeekAttempt = {
       id: `${getAiPythonWeekAttemptIdPrefix(week)}${Date.now()}-${question.id}-${Math.random().toString(36).slice(2, 7)}`,
@@ -104,6 +104,7 @@ export function useAiPythonWeekProgress() {
   ) => {
     if (
       !currentUser ||
+      isDemo ||
       !categories.length ||
       syncState === "loading" ||
       resetInFlight.current

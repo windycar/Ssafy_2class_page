@@ -92,7 +92,7 @@ export default function SpecialMockExamQuizView() {
     : null;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { currentUser } = useAuth();
+  const { currentUser, isDemo } = useAuth();
   const { progress, recordAnswers, syncState } = useSpecialMockExamProgress();
   const mode = searchParams.get("mode");
   const isSavedReview = mode === "review";
@@ -363,7 +363,7 @@ export default function SpecialMockExamQuizView() {
       return;
     }
     submitResponse(response);
-    toast.success("답안을 저장했습니다.");
+    toast.success(isDemo ? "체험 답안을 현재 시험에 반영했습니다." : "답안을 저장했습니다.");
   };
 
   const toggleReview = () => {
@@ -438,7 +438,7 @@ export default function SpecialMockExamQuizView() {
                 {mockRound}회차 ·{` `}
                 {reviewingAnswers
                   ? isSavedReview
-                    ? "저장된 풀이 기록"
+                    ? (isDemo ? "체험 문제 미리보기" : "저장된 풀이 기록")
                     : "전체 답변 다시 보기"
                   : mode === "wrong"
                     ? "오답 복습"
@@ -634,7 +634,7 @@ export default function SpecialMockExamQuizView() {
                   }
                   className="mt-4 rounded-xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white disabled:opacity-35"
                 >
-                  {answered ? "답안 수정 저장" : "답안 저장"}
+                  {isDemo ? (answered ? "체험 답안 수정" : "체험 답안 적용") : (answered ? "답안 수정 저장" : "답안 저장")}
                 </button>
               </form>
             )}
@@ -650,7 +650,7 @@ export default function SpecialMockExamQuizView() {
                 <p className="flex items-center gap-2 text-xs font-bold text-blue-700">
                   <ListChecks className="h-4 w-4" />
                   {answered
-                    ? "답안이 저장되었습니다. 최종 채점 전까지 수정할 수 있습니다."
+                    ? (isDemo ? "현재 시험에 답안이 반영되었습니다. 최종 채점 전까지 수정할 수 있습니다." : "답안이 저장되었습니다. 최종 채점 전까지 수정할 수 있습니다.")
                     : "답안을 선택하거나 입력해 주세요. 정답은 최종 채점 후 공개됩니다."}
                 </p>
               </div>
