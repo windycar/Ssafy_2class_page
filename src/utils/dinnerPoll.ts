@@ -69,9 +69,53 @@ export function summarizeDinnerResponses(responses: DinnerResponse[]) {
 }
 
 export function rankDinnerDates(poll: DinnerPoll, responses: DinnerResponse[]) {
-  return getDinnerDates(poll.date_start, poll.date_end).map(date => ({ date,
-    count: responses.filter(r => r.status !== "absent" && r.available_dates.includes(date)).length,
-  })).sort((a, b) => b.count - a.count || a.date.localeCompare(b.date));
+  return getDinnerDateAvailability(poll, responses).map(row => ({ date: row.date, count: row.available.length }))
+    .sort((a, b) => b.count - a.count || a.date.localeCompare(b.date));
+}
+
+export interface DinnerDateAvailability {
+  date: string;
+  available: DinnerResponse[];
+  unavailable: DinnerResponse[];
+}
+
+export function getDinnerDateAvailability(poll: DinnerPoll, responses: DinnerResponse[], memberIds: readonly number[] | null = null): DinnerDateAvailability[] {
+  const selected = memberIds === null ? null : new Set(memberIds);
+  const members = responses.filter(response => response.poll_id === poll.id && (selected === null || selected.has(response.member_id)));
+  const datesByMember = new Map(members.map(response => [response.member_id, new Set(response.available_dates)]));
+  return getDinnerDates(poll.date_start, poll.date_end).map(date => {
+    const available: DinnerResponse[] = [];
+    const unavailable: DinnerResponse[] = [];
+    for (const response of members) {
+      (response.status !== "absent" && datesByMember.get(response.member_id)!.has(date) ? available : unavailable).push(response);
+    }
+    return { date, available, unavailable };
+  });
+}
+
+export function sortDinnerDateAvailability(rows: DinnerDateAvailability[], sort: "people" | "date") {
+  return [...rows].sort((a, b) => (sort === "people" ? b.available.length - a.available.length : 0) || a.date.localeCompare(b.date));
+}
+
+export function getDinnerCommonDates(rows: DinnerDateAvailability[]): string[] {
+  return rows.filter(row => row.available.length > 0 && row.unavailable.length === 0).map(row => row.date);
+}
+
+export function getDinnerMonths(start: string | null, end: string | null): string[] {
+  return [...new Set(getDinnerDates(start, end).map(date => date.slice(0, 7)))];
+}
+
+export function getDinnerMonthCells(month: string): (string | null)[] {
+  if (!isDateOnly(`${month}-01`)) return [];
+  const first = new Date(`${month}-01T00:00:00Z`);
+  const next = new Date(first);
+  next.setUTCMonth(next.getUTCMonth() + 1);
+  const length = (next.getTime() - first.getTime()) / 86400000;
+  const offset = first.getUTCDay();
+  return Array.from({ length: Math.ceil((offset + length) / 7) * 7 }, (_, index) => {
+    const day = index - offset + 1;
+    return day > 0 && day <= length ? `${month}-${String(day).padStart(2, "0")}` : null;
+  });
 }
 
 export function formatDinnerDate(date: string): string {

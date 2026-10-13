@@ -135,7 +135,7 @@ function DinnerPage({ user }: { user: AuthUser }) {
         </dl>
         {poll.notice && <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-gray-600">{poll.notice}</p>}
       </section>
-      <div className="grid items-start gap-6 xl:grid-cols-[1.1fr_1fr]"><DinnerResponseForm key={poll.id} poll={poll} response={ownResponse} open={open} isDemo={isDemo} onSave={saveResponse} onCancel={cancelResponse} /><DinnerPollResults poll={poll} responses={responses} /></div>
+      <div className="grid items-start gap-6 lg:grid-cols-[1fr_1.1fr]"><DinnerResponseForm key={poll.id} poll={poll} response={ownResponse} open={open} isDemo={isDemo} onSave={saveResponse} onCancel={cancelResponse} /><DinnerPollResults poll={poll} responses={responses} /></div>
       <p className="text-center text-xs text-gray-400">참여 현황은 30초마다 갱신됩니다. 다른 화면에서 돌아오면 자동으로 다시 확인합니다.</p>
     </>}
   </div>;

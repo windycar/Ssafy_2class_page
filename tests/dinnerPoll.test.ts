@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { DinnerPoll, DinnerResponse } from "../src/types/dinner.ts";
-import { getDinnerDates, isDateOnly, isDinnerPollOpen, rankDinnerDates, summarizeDinnerResponses, validateDinnerPoll, validateDinnerResponse } from "../src/utils/dinnerPoll.ts";
+import { getDinnerDates, isDateOnly, isDinnerPollOpen, rankDinnerDates, summarizeDinnerResponses, validateDinnerPoll, validateDinnerResponse,
+  getDinnerCommonDates, getDinnerDateAvailability, getDinnerMonthCells, getDinnerMonths, sortDinnerDateAvailability } from "../src/utils/dinnerPoll.ts";
 
 const poll: DinnerPoll = { id: "test", title: "우리 반 회식", mode: "availability", location: "장소 미정", location_url: "",
   event_date: null, event_time: "18:30", date_start: "2026-10-20", date_end: "2026-10-22", deadline: null,
@@ -65,4 +66,48 @@ test("집계에는 현재 참여와 늦참만 반영하며 동률 날짜는 날�
   assert.deepEqual(summarizeDinnerResponses(responses), { attending: 1, absent: 1, late: 1 });
   assert.deepEqual(rankDinnerDates(poll, responses), [{ date: "2026-10-21", count: 2 }, { date: "2026-10-20", count: 1 }, { date: "2026-10-22", count: 0 }]);
   assert.deepEqual(rankDinnerDates(poll, []).map(r => r.date), ["2026-10-20", "2026-10-21", "2026-10-22"]);
+});
+
+test("날짜별 명단은 참여·늦참·불참·날짜 미선택을 정확히 나눈다", () => {
+  const responses = [response(1, "attending", ["2026-10-20", "2026-10-21"]), response(2, "late", ["2026-10-21"]), response(3, "absent", [])];
+  const rows = getDinnerDateAvailability(poll, responses);
+  assert.deepEqual(rows[0].available.map(r => r.member_id), [1]);
+  assert.deepEqual(rows[0].unavailable.map(r => r.member_id), [2, 3]);
+  assert.deepEqual(rows[1].available.map(r => r.member_id), [1, 2]);
+  assert.deepEqual(rows[1].unavailable.map(r => r.member_id), [3]);
+  assert.deepEqual(getDinnerCommonDates(rows), []);
+});
+
+test("특정 회원들로 필터하면 해당 회원들만 공통 가능일 계산에 포함된다", () => {
+  const responses = [response(1, "attending", ["2026-10-20", "2026-10-21"]), response(2, "late", ["2026-10-21"]), response(3, "absent", [])];
+  assert.deepEqual(getDinnerCommonDates(getDinnerDateAvailability(poll, responses, [1, 2])), ["2026-10-21"]);
+  assert.deepEqual(getDinnerCommonDates(getDinnerDateAvailability(poll, responses, [1])), ["2026-10-20", "2026-10-21"]);
+  assert.deepEqual(getDinnerCommonDates(getDinnerDateAvailability(poll, responses, [3])), []);
+});
+
+test("빈 필터·취소된 회원·다른 투표의 응답은 모두 가능한 날로 잘못 계산하지 않는다", () => {
+  const responses = [response(1, "attending", ["2026-10-20"]), { ...response(2, "attending", ["2026-10-20"]), poll_id: "another-poll" }];
+  const emptyRows = getDinnerDateAvailability(poll, responses, []);
+  assert.ok(emptyRows.every(row => row.available.length === 0 && row.unavailable.length === 0));
+  assert.deepEqual(getDinnerCommonDates(emptyRows), []);
+  assert.deepEqual(getDinnerCommonDates(getDinnerDateAvailability(poll, responses, [999])), []);
+  assert.equal(getDinnerDateAvailability(poll, responses)[0].available.length, 1);
+});
+
+test("가능 인원순·빠른 날짜순은 원본을 변경하지 않고 동률을 날짜순으로 정렬한다", () => {
+  const rows = getDinnerDateAvailability(poll, [response(1, "attending", ["2026-10-21", "2026-10-22"])]);
+  assert.deepEqual(sortDinnerDateAvailability(rows, "people").map(row => row.date), ["2026-10-21", "2026-10-22", "2026-10-20"]);
+  assert.deepEqual(sortDinnerDateAvailability(rows, "date").map(row => row.date), ["2026-10-20", "2026-10-21", "2026-10-22"]);
+  assert.equal(rows[0].date, "2026-10-20");
+});
+
+test("달력은 월·연도 경계와 윤년을 실제 요일 위치에 맞춰 구성한다", () => {
+  assert.deepEqual(getDinnerMonths("2026-12-25", "2027-01-05"), ["2026-12", "2027-01"]);
+  const october = getDinnerMonthCells("2026-10");
+  assert.equal(october[4], "2026-10-01");
+  assert.equal(october.filter(Boolean).length, 31);
+  assert.equal(october.length % 7, 0);
+  assert.ok(getDinnerMonthCells("2028-02").includes("2028-02-29"));
+  assert.equal(getDinnerMonthCells("2026-02").filter(Boolean).length, 28);
+  assert.deepEqual(getDinnerMonthCells("2026-13"), []);
 });
