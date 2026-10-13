@@ -10,8 +10,8 @@ export const MOCK_ACTIVITIES: Activity[] = [
   },
   {
     id: "act-2",
-    type: "coffee",
-    message: "아메리카노 공동구매가 시작되었습니다. (메가MGC커피)",
+    type: "dinner",
+    message: "회식 참여 투표에서 일정과 장소를 확인해 주세요.",
     createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
   },
   {

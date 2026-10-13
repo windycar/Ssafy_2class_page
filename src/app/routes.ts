@@ -1,5 +1,6 @@
 import { createBrowserRouter } from "react-router";
-import { lazy } from "react";
+import { createElement, lazy } from "react";
+import { Navigate } from "react-router";
 import Root from "./Root";
 import ProtectedRoute from "../components/auth/ProtectedRoute";
 import SpecialMockExamRoute from "../components/auth/SpecialMockExamRoute";
@@ -8,7 +9,7 @@ import RouteErrorBoundary from "../components/common/RouteErrorBoundary";
 const LoginView = lazy(() => import("../views/LoginView"));
 const HomeView = lazy(() => import("../views/HomeView"));
 const TeamRandomView = lazy(() => import("../views/TeamRandomView"));
-const CoffeeOrderView = lazy(() => import("../views/CoffeeOrderView"));
+const DinnerVoteView = lazy(() => import("../views/DinnerVoteView"));
 const GalleryView = lazy(() => import("../views/GalleryView"));
 const GroundRulesView = lazy(() => import("../views/GroundRulesView"));
 const AnonymousBoardView = lazy(() => import("../views/AnonymousBoardView"));
@@ -58,7 +59,8 @@ export const router = createBrowserRouter([
           { index: true, Component: HomeView },
           { path: "me", Component: MyInfoView },
           { path: "teams", Component: TeamRandomView },
-          { path: "coffee", Component: CoffeeOrderView },
+          { path: "dinner", Component: DinnerVoteView },
+          { path: "coffee", element: createElement(Navigate, { to: "/dinner", replace: true }) },
           { path: "gallery", Component: GalleryView },
           { path: "ground-rules", Component: GroundRulesView },
           { path: "board", Component: AnonymousBoardView },

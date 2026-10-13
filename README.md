@@ -57,7 +57,7 @@
    ├─ React + Vite
    │   ├─ 홈
    │   ├─ 랜덤 팀
-   │   ├─ 같이 공구
+   │   ├─ 회식 투표
    │   ├─ 게임
    │   ├─ 공부 문제
    │   ├─ 사진첩
@@ -200,46 +200,31 @@ src/services/storage/teamClassRosterStorage.ts
 
 ---
 
-## 4-4. 같이 공구
+## 4-4. 회식 참여 투표
 
-경로:
+경로: `/dinner` (기존 `/coffee` 주소는 자동 이동)
 
-```text
-/coffee
-```
+관리자가 제목, 장소, 지도 링크, 회식 시간, 안내와 투표 마감을 등록합니다.
 
-커피뿐 아니라 음식, 간식, 물품 등 여러 종류의 공동 주문을 관리합니다.
+- 날짜 확정: 로그인한 회원이 참여 / 불참 / 늦참 중 선택
+- 날짜 조율: 관리자 지정 범위(최대 60일)에서 가능한 날짜 여러 개 선택
+- 늦참 도착 예정 시간과 공개 메모 입력
+- 본인 응답만 수정·취소, 회원별 응답 한 건 유지
+- 참여 인원, 응답자 목록, 날짜별 가능 인원 표시
+- 관리자 수정·마감·다시 열기, 마감 시간 및 회식 시작 후 응답 차단
+- 응답이 있는 투표는 일정 변경 차단, 변경 일정은 새 투표로 등록
+- 30초 주기 및 포커스·온라인 복귀 시 현황 갱신
+- 체험 계정은 예시 조회만 가능
 
-주요 기능:
+제공된 Google Apps Script의 가능한 날짜 선택·수정·취소 흐름을 기존 Supabase 회원 인증에 통합했습니다. 별도 Google 시트나 이름/PIN 로그인은 사용하지 않습니다.
 
-- 공구 생성
-- 카테고리 선택
-- 가게명 / 링크 등록
-- 마감 시간 설정
-- 최소 주문 금액
-- 배달비
-- 공지사항
-- 계좌 정보
-- 참가자의 메뉴 / 옵션 / 수량 / 가격 입력
-- 참가자별 메모
-- 입금 및 주문 상태 관리
-- 공구 마감
-- 공구 삭제
+테이블: `dinner_polls`, `dinner_responses`
 
-결제 상태는 다음과 같이 관리됩니다.
+변경 파일: `supabase/migrations/20261013033333_dinner_polls.sql`
 
-```text
-미입금 → 입금 완료 → 주문 완료 → 수령 완료
-```
+검증: `pnpm test:dinner`, `supabase/tests/dinner_polls.sql` (테스트 데이터는 트랜잭션 종료 시 모두 롤백)
 
-공구 생성자와 관리자는 공구를 관리할 수 있고, 참가자는 자신의 주문 항목을 관리할 수 있도록 권한이 구분되어 있습니다.
-
-Supabase 주요 테이블:
-
-```text
-coffee_orders
-coffee_order_items
-```
+기존 공구 화면과 서비스는 제거했습니다. 기존 공구 데이터는 보존합니다.
 
 ---
 
@@ -918,8 +903,8 @@ supabase/bang_chat_realtime.sql
 | `members` | 회원 / 관리자 계정 정보 |
 | `gallery_photos` | 사진첩 사진 정보 |
 | `gallery_comments` | 사진 댓글 |
-| `coffee_orders` | 공동구매 방 |
-| `coffee_order_items` | 공동구매 참가자 주문 |
+| `dinner_polls` | 회식 투표 |
+| `dinner_responses` | 회원별 회식 응답 |
 | `anonymous_posts` | 익명 게시글 |
 | `anonymous_post_authors` | 익명글 실제 작성자 감사 정보 |
 | `ground_rules` | 그라운드 룰 |
@@ -1044,7 +1029,7 @@ Ssafy_2class_page/
 | `/` | 메인 홈 |
 | `/me` | 내정보 |
 | `/teams` | 랜덤 팀 편성 |
-| `/coffee` | 같이 공구 |
+| `/dinner` | 회식 참여 투표 |
 | `/gallery` | 사진첩 |
 | `/ground-rules` | 그라운드 룰 |
 | `/board` | 익명 게시판 |

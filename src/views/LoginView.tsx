@@ -68,14 +68,14 @@ export default function LoginView() {
             함께 만든 기록을<br />이제 계정으로 안전하게.
           </h1>
           <p className="mt-5 max-w-lg text-base leading-7 text-blue-100">
-            공구, 사진, 익명 게시판, 그라운드 룰과 학습 기록을 한 계정으로 이어서 이용하세요.
+            회식 투표, 사진, 익명 게시판, 그라운드 룰과 학습 기록을 한 계정으로 이어서 이용하세요.
           </p>
         </div>
 
         <div className="relative grid grid-cols-3 gap-4">
           {[
             { image: teamImage, label: "우리 반" },
-            { image: coffeeImage, label: "같이 공구" },
+            { image: coffeeImage, label: "회식 투표" },
             { image: galleryImage, label: "사진첩" },
           ].map((item) => (
             <div key={item.label} className="rounded-3xl border border-white/15 bg-white/10 p-4 text-center backdrop-blur-sm">

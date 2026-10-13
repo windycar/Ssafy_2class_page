@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Shuffle, Coffee, ArrowRight, GitBranch, GitCommit, Terminal, HardHat } from "lucide-react";
+import { Shuffle, Utensils, ArrowRight, GitBranch, GitCommit, Terminal, HardHat } from "lucide-react";
 import { TOTAL_STUDENTS } from "../config/constants";
 import teamQuickMenuArt from "../assets/home/quick-menu/team.png";
 import coffeeQuickMenuArt from "../assets/home/quick-menu/coffee.png";
@@ -33,12 +33,12 @@ const QUICK_MENU = [
     shadowColor: "shadow-[#1259AA]/10",
   },
   {
-    title: "같이 공구",
-    description: "커피, 음식, 물품 등 뭐든 함께 주문해요.",
+    title: "회식 투표",
+    description: "회식 일정을 확인하고 참여 여부를 알려 주세요.",
     imageSrc: coffeeQuickMenuArt,
-    path: "/coffee",
-    badge: "공구 진행 중",
-    buttonLabel: "공구 참여",
+    path: "/dinner",
+    badge: "참여 · 불참 · 늦참",
+    buttonLabel: "투표 참여",
     colorBg: "bg-amber-50",
     colorBorder: "border-amber-200",
     colorIcon: "bg-amber-500",
@@ -167,7 +167,7 @@ export default function HomeView() {
               <span className="text-[#5ba3f5]">오늘도 화이팅!</span> 🔥
             </h1>
             <p className="text-white/60 text-sm sm:text-base mb-7 leading-relaxed">
-              팀 편성부터 커피 공구, 추억 기록까지<br className="hidden sm:block" />
+              팀 편성부터 회식 투표, 추억 기록까지<br className="hidden sm:block" />
               우리 반 모든 것을 한곳에서 관리해요.
             </p>
 
@@ -180,11 +180,11 @@ export default function HomeView() {
                 랜덤 팀 만들기
               </Link>
               <Link
-                to="/coffee"
+                to="/dinner"
                 className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm border border-white/20"
               >
-                <Coffee className="w-4 h-4" />
-                같이 공구 참여하기
+                <Utensils className="w-4 h-4" />
+                회식 투표 참여하기
               </Link>
             </div>
 

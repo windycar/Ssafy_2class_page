@@ -1,4 +1,4 @@
-export type ActivityType = "team" | "coffee" | "gallery" | "groundRule";
+export type ActivityType = "team" | "dinner" | "gallery" | "groundRule";
 
 export interface Activity {
   id: string;
