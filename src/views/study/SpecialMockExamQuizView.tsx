@@ -488,7 +488,7 @@ export default function SpecialMockExamQuizView() {
             </div>
 
             <h1 className="whitespace-pre-wrap text-xl font-black leading-8 tracking-tight text-slate-900 sm:text-2xl">
-              <MathText text={current.prompt} />
+              <MathText text={current.prompt} literalText={assessmentRound === 8} />
             </h1>
 
             {current.code ? (
@@ -558,7 +558,7 @@ export default function SpecialMockExamQuizView() {
                         )}
                       </span>
                       <span className="min-w-0 flex-1 whitespace-pre-wrap font-mono text-sm font-bold">
-                        <MathText text={option} />
+                        <MathText text={option} literalText={assessmentRound === 8} />
                       </span>
                     </button>
                   );
@@ -570,7 +570,7 @@ export default function SpecialMockExamQuizView() {
                 <p className="mt-2 whitespace-pre-wrap text-sm font-bold leading-7 text-slate-800">
                   {typeof currentAnswer?.response === "string" &&
                   currentAnswer.response ? (
-                    <MathText text={currentAnswer.response} />
+                    <MathText text={currentAnswer.response} literalText={assessmentRound === 8} />
                   ) : (
                     <span className="text-slate-400">미답변</span>
                   )}
@@ -644,6 +644,7 @@ export default function SpecialMockExamQuizView() {
                 question={current}
                 answer={currentAnswer}
                 status={currentReviewStatus}
+                literalText={assessmentRound === 8}
               />
             ) : (
               <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3">
@@ -749,10 +750,12 @@ function AnswerReviewFeedback({
   question,
   answer,
   status,
+  literalText = false,
 }: {
   question: SpecialMockExamQuestion;
   answer?: SessionAnswer;
   status: ReturnType<typeof getSpecialMockExamReviewStatus>;
+  literalText?: boolean;
 }) {
   const correctOptionIndex = question.answer ?? -1;
   const selectedOptionIndex =
@@ -801,6 +804,7 @@ function AnswerReviewFeedback({
             <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
               <ReviewAnswerBox
                 label="내 답안"
+                literalText={literalText}
                 text={
                   selectedOption
                     ? `${ANSWER_LABELS[selectedOptionIndex]}. ${selectedOption}`
@@ -810,6 +814,7 @@ function AnswerReviewFeedback({
               />
               <ReviewAnswerBox
                 label="정답"
+                literalText={literalText}
                 text={
                   correctOption
                     ? `${ANSWER_LABELS[correctOptionIndex]}. ${correctOption}`
@@ -827,8 +832,9 @@ function AnswerReviewFeedback({
                     : "미답변"
                 }
                 muted={typeof answer?.response !== "string"}
+                literalText={literalText}
               />
-              <ReviewAnswerBox label="모범 답안" text={modelAnswer} />
+              <ReviewAnswerBox label="모범 답안" text={modelAnswer} literalText={literalText} />
             </div>
           )}
 
@@ -837,7 +843,7 @@ function AnswerReviewFeedback({
             <div className="mt-2 space-y-2 whitespace-pre-wrap text-sm leading-7 text-slate-700">
               {question.explanation.split("\n").map((line, index) => (
                 <p key={`${question.id}-explanation-${index}`}>
-                  <MathText text={line} />
+                  <MathText text={line} literalText={literalText} />
                 </p>
               ))}
             </div>
@@ -852,10 +858,12 @@ function ReviewAnswerBox({
   label,
   text,
   muted = false,
+  literalText = false,
 }: {
   label: string;
   text: string;
   muted?: boolean;
+  literalText?: boolean;
 }) {
   return (
     <div className="rounded-xl border border-white/80 bg-white/75 px-4 py-3">
@@ -865,7 +873,7 @@ function ReviewAnswerBox({
           muted ? "text-slate-400" : "text-slate-800"
         }`}
       >
-        <MathText text={text} />
+        <MathText text={text} literalText={literalText} />
       </p>
     </div>
   );
@@ -1047,7 +1055,8 @@ function ResultStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function MathText({ text }: { text: string }) {
+function MathText({ text, literalText = false }: { text: string; literalText?: boolean }) {
+  if (literalText) return <>{text}</>;
   const normalizedText = normalizeSpecialMockExamMath(text);
 
   return (

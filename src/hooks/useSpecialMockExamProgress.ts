@@ -26,11 +26,14 @@ import { canAccessSpecialMockExam } from "../utils/specialMockExamAccess";
 export function useSpecialMockExamProgress() {
   const { currentUser, isDemo } = useAuth();
   const hasAccess = canAccessSpecialMockExam(currentUser);
+  const identity = `${currentUser?.authId ?? ""}:${currentUser?.id ?? ""}`;
+  const activeIdentity = useRef(identity);
+  activeIdentity.current = identity;
   const [progress, setProgress] = useState<SpecialMockExamProgress>({
     attempts: [],
   });
   const [syncState, setSyncState] = useState<StudySyncState>("loading");
-  const resetInFlight = useRef(false);
+  const resetInFlight = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,18 +48,19 @@ export function useSpecialMockExamProgress() {
     }
 
     const activeUserId = currentUser.id;
+    const requestIdentity = identity;
     setProgress(specialMockExamProgressStorage.get(activeUserId));
     const refresh = async (showLoading = false) => {
       if (refreshInFlight) return;
       refreshInFlight = true;
       if (showLoading) setSyncState("loading");
       try {
-        const loaded = await loadSpecialMockExamProgress(activeUserId);
-        if (cancelled) return;
+        const loaded = await loadSpecialMockExamProgress(activeUserId, currentUser.authId);
+        if (cancelled || activeIdentity.current !== requestIdentity) return;
         setProgress(loaded);
         setSyncState("synced");
       } catch {
-        if (cancelled) return;
+        if (cancelled || activeIdentity.current !== requestIdentity) return;
         setProgress(specialMockExamProgressStorage.get(activeUserId));
         setSyncState("local");
       } finally {
@@ -74,7 +78,7 @@ export function useSpecialMockExamProgress() {
       cancelled = true;
       unsubscribe();
     };
-  }, [currentUser, hasAccess, isDemo]);
+  }, [currentUser, hasAccess, identity, isDemo]);
 
   const recordAnswers = (
     assessmentRound: SpecialMockExamAvailableAssessmentRound,
@@ -89,7 +93,7 @@ export function useSpecialMockExamProgress() {
       response,
       correct: gradeSpecialMockExamResponse(question, response).correct,
     }));
-    if (!currentUser || !hasAccess || isDemo) return graded;
+    if (!currentUser || !hasAccess || isDemo || activeIdentity.current !== identity) return graded;
     const submittedAnswers = graded.filter(({ response }) =>
       hasSpecialMockExamResponse(response),
     );
@@ -114,9 +118,13 @@ export function useSpecialMockExamProgress() {
     );
     setProgress(specialMockExamProgressStorage.addMany(currentUser.id, attempts));
     setSyncState("loading");
-    saveSpecialMockExamAttempt(currentUser.id)
-      .then((saved) => setSyncState(saved ? "synced" : "local"))
-      .catch(() => setSyncState("local"));
+    saveSpecialMockExamAttempt(currentUser.id, currentUser.authId)
+      .then((saved) => {
+        if (activeIdentity.current === identity) setSyncState(saved ? "synced" : "local");
+      })
+      .catch(() => {
+        if (activeIdentity.current === identity) setSyncState("local");
+      });
     return graded;
   };
 
@@ -140,7 +148,7 @@ export function useSpecialMockExamProgress() {
       !hasAccess ||
       isDemo ||
       syncState === "loading" ||
-      resetInFlight.current
+      resetInFlight.current === identity
     ) {
       return false;
     }
@@ -155,22 +163,24 @@ export function useSpecialMockExamProgress() {
     }
 
     const previousSyncState = syncState;
-    resetInFlight.current = true;
+    resetInFlight.current = identity;
     setSyncState("loading");
     try {
       const result = await resetSpecialMockExamProgress(
         currentUser.id,
         assessmentRound,
         mockRound,
+        currentUser.authId,
       );
+      if (activeIdentity.current !== identity) return false;
       setProgress(result.progress);
       setSyncState(result.synced ? "synced" : "local");
       return true;
     } catch {
-      setSyncState(previousSyncState);
+      if (activeIdentity.current === identity) setSyncState(previousSyncState);
       return false;
     } finally {
-      resetInFlight.current = false;
+      if (resetInFlight.current === identity) resetInFlight.current = null;
     }
   };
 

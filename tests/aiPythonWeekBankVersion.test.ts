@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   getAiPythonWeekAttemptIdPrefix,
@@ -27,6 +28,10 @@ test("교체된 주차별 문제은행은 현재 버전 기록만 사용한다",
   assert.equal(
     getAiPythonWeekAttemptIdPrefix("week5-1"),
     "ai-python-week5-1-v1-",
+  );
+  assert.equal(
+    getAiPythonWeekAttemptIdPrefix("week5-2"),
+    "ai-python-week5-2-v1-",
   );
 
   assert.equal(
@@ -109,4 +114,29 @@ test("교체된 주차별 문제은행은 현재 버전 기록만 사용한다",
     }),
     true,
   );
+  assert.equal(
+    isCurrentAiPythonWeekAttempt({
+      id: "ai-python-week5-2-v1-new",
+      week: "week5-2",
+    }),
+    true,
+  );
+});
+
+test("AI Python 5-2 풀이 기록을 Supabase 허용 범위에 포함한다", () => {
+  const migration = readFileSync(
+    new URL(
+      "../supabase/migrations/20260826130117_ai_python_week5_2.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const schema = readFileSync(
+    new URL("../supabase/ai_python_week_progress.sql", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(migration, /drop constraint if exists ai_python_week_attempts_week_check/i);
+  assert.match(migration, /'week5-1', 'week5-2'/);
+  assert.match(schema, /'week5-1', 'week5-2'/);
 });

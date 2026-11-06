@@ -416,7 +416,7 @@ test("AI Python 4-1 중급 기록은 선택한 범위만 초기화한다", async
   );
 });
 
-test("AI Python 4-2와 5-1 기록은 서로 독립적으로 초기화한다", async () => {
+test("AI Python 4-2와 5-1·5-2 기록은 서로 독립적으로 초기화한다", async () => {
   const userId = 18;
   aiPythonWeekProgressStorage.add(
     userId,
@@ -436,12 +436,21 @@ test("AI Python 4-2와 5-1 기록은 서로 독립적으로 초기화한다", as
       "모델 압축 기법",
     ),
   );
+  aiPythonWeekProgressStorage.add(
+    userId,
+    aiWeekAttempt(
+      "ai-python-week5-2-v1-quantization",
+      "week5-2",
+      "easy",
+      "100% 정수연산 양자화",
+    ),
+  );
 
   const attemptIds = getAiPythonWeekResetAttemptIds(
     aiPythonWeekProgressStorage.get(userId),
-    "week5-1",
+    "week5-2",
     "easy",
-    ["모델 압축 기법"],
+    ["100% 정수연산 양자화"],
   );
   const { call, client } = createDeleteClient();
   const result = await resetScopedStudyProgress(
@@ -456,11 +465,11 @@ test("AI Python 4-2와 5-1 기록은 서로 독립적으로 초기화한다", as
   assert.deepEqual(call, {
     table: "ai_python_week_attempts",
     eq: ["student_id", userId],
-    in: ["id", ["ai-python-week5-1-v1-compression"]],
+    in: ["id", ["ai-python-week5-2-v1-quantization"]],
   });
   assert.deepEqual(
     result.progress.attempts.map(({ id }) => id),
-    ["ai-python-week4-2-v1-agent"],
+    ["ai-python-week4-2-v1-agent", "ai-python-week5-1-v1-compression"],
   );
 });
 

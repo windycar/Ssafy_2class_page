@@ -39,6 +39,11 @@ const EXPECTED_DIFFICULTY_TYPE_COUNTS = {
     medium: { "multiple-choice": 0, "short-answer": 0, essay: 0 },
     hard: { "multiple-choice": 0, "short-answer": 0, essay: 0 },
   },
+  "week5-2": {
+    easy: { "multiple-choice": 48, "short-answer": 8, essay: 4 },
+    medium: { "multiple-choice": 0, "short-answer": 0, essay: 0 },
+    hard: { "multiple-choice": 0, "short-answer": 0, essay: 0 },
+  },
 };
 const EXPECTED_QUESTIONS_PER_DIFFICULTY = {
   week1: { easy: 105, medium: 105, hard: 90 },
@@ -48,6 +53,7 @@ const EXPECTED_QUESTIONS_PER_DIFFICULTY = {
   "week4-1": { easy: 60, medium: 60, hard: 0 },
   "week4-2": { easy: 60, medium: 0, hard: 0 },
   "week5-1": { easy: 60, medium: 0, hard: 0 },
+  "week5-2": { easy: 60, medium: 0, hard: 0 },
 };
 const EXPECTED_CATEGORIES_PER_DIFFICULTY = {
   week1: { easy: 7, medium: 7, hard: 6 },
@@ -57,6 +63,7 @@ const EXPECTED_CATEGORIES_PER_DIFFICULTY = {
   "week4-1": { easy: 4, medium: 4, hard: 0 },
   "week4-2": { easy: 4, medium: 0, hard: 0 },
   "week5-1": { easy: 4, medium: 0, hard: 0 },
+  "week5-2": { easy: 4, medium: 0, hard: 0 },
 };
 
 const AI_PYTHON_WEEK_TRACKS = [
@@ -67,6 +74,7 @@ const AI_PYTHON_WEEK_TRACKS = [
   "week4-1",
   "week4-2",
   "week5-1",
+  "week5-2",
 ];
 
 const server = await createServer({

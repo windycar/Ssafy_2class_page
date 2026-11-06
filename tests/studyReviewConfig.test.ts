@@ -17,6 +17,7 @@ test("모든 학습 문제 세트가 오답 복습 설정에 등록된다", () =
       "ai-python-week4-1",
       "ai-python-week4-2",
       "ai-python-week5-1",
+      "ai-python-week5-2",
       "special-mock-a2-r1",
       "special-mock-a2-r2",
       "special-mock-a2-r3",
@@ -33,6 +34,11 @@ test("모든 학습 문제 세트가 오답 복습 설정에 등록된다", () =
       "special-mock-a5-r4",
       "special-mock-a5-r5",
       "special-mock-a5-r6",
+      "special-mock-a8-r1",
+      "special-mock-a8-r2",
+      "special-mock-a8-r3",
+      "special-mock-a8-r4",
+      "special-mock-a8-r5",
     ],
   );
   assert.equal(
@@ -75,11 +81,11 @@ test("AI Python 4번째 카드는 4-1·4-2 범위 선택 화면으로 연결한�
   assert.equal(fourthCard?.questionCount, 180);
 });
 
-test("AI Python 5번째 카드는 5-1 문제은행으로 연결한다", () => {
+test("AI Python 5번째 카드는 5-1·5-2 범위 선택 화면으로 연결한다", () => {
   const fifthCard = AI_PYTHON_WEEK_CARD_GROUPS.find((card) => card.id === "week5");
   assert.deepEqual(
     fifthCard?.links.map((link) => link.week),
     ["week5-1"],
   );
-  assert.equal(fifthCard?.questionCount, 60);
+  assert.equal(fifthCard?.questionCount, 120);
 });

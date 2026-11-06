@@ -113,6 +113,20 @@ export const AI_PYTHON_WEEK_META: Record<
     questionCount: 60,
     hasDifficultyLevels: false,
   },
+  "week5-2": {
+    weekLabel: "5번째",
+    sectionLabel: "5-2",
+    title: "AI 파이썬 5-2",
+    cardTitle: "AI 파이썬 5번째",
+    shortTitle: "온디바이스 AI · 적응형 모델",
+    description: "온디바이스 AI 하드웨어와 정수 양자화, 테스트 타임 적응, 적응적 센싱을 학습합니다.",
+    topics: "On-device AI · INT8 양자화 · TTA · Adaptive Sensing",
+    imageSrc: "/images/study-tracks/ai-python-week5.png",
+    gradient: "from-[#172554] via-[#4c1d95] to-[#0f766e]",
+    accent: "#2dd4bf",
+    questionCount: 60,
+    hasDifficultyLevels: false,
+  },
 };
 
 export const AI_PYTHON_WEEK_CARD_GROUPS = [
@@ -152,7 +166,11 @@ export const AI_PYTHON_WEEK_CARD_GROUPS = [
     ...AI_PYTHON_WEEK_META["week5-1"],
     title: "AI 파이썬 5번째",
     cardTitle: "AI 파이썬 5번째",
-    links: [{ week: "week5-1", label: "5-1 범위 선택하기" }],
+    shortTitle: "리소스 효율적 학습 · AI 모델 활용",
+    description: "5-1 리소스 효율적 학습과 5-2 온디바이스 AI 모델 활용을 함께 학습합니다.",
+    topics: "5-1 모델 압축 · LoRA · 5-2 On-device AI · TTA",
+    questionCount: 120,
+    links: [{ week: "week5-1", label: "5-1 · 5-2 범위 선택하기" }],
   },
 ] as const;
 

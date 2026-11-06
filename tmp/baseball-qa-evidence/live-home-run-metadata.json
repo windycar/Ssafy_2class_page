@@ -1,0 +1,39 @@
+{
+  "result": {
+    "attempt": 1,
+    "pitch": {
+      "presentation": "PITCH_WINDUP",
+      "pitchX": 0.232891,
+      "pitchY": 0.684879,
+      "duration": 587
+    },
+    "aim": {
+      "x": 0.232891,
+      "y": 0.684879
+    },
+    "preClickWaitMs": 118,
+    "clickLatencyMs": 307,
+    "estimatedSwingProgress": 0.7240204429301533,
+    "eventKinds": [
+      "RUNNER",
+      "HOME_RUN",
+      "BALL_FLIGHT"
+    ],
+    "captures": [
+      "runnerSituation",
+      "runnerMotion",
+      "homeRun",
+      "battedBall"
+    ],
+    "contact": null,
+    "state": {
+      "presentation": "BETWEEN_PLAYS",
+      "inning": "1회말 · KIA 공격",
+      "primaryText": "SPACE 다음 투구 / 다음 타석",
+      "primaryEnabled": true,
+      "overlayCount": 0
+    },
+    "playByPlay": "PLAY BY PLAY\n전체 20\n1회말 · KIA\n\n김도영, 슬라이더를 받아쳤습니다! 가운데 담장을 넘깁니다! · 득점! 최원준 · 김도영 · 2 RBI · CPU 2 : 2 KIA\n\n1회말 · KIA\n\n최원준, 직구를 받아쳤습니다! 내야 깊은 곳, 타자 주자가 먼저 들어갑니다!\n\n1회말 · KIA\n\n최원준, 직구를 지켜봅니다. 볼, 2볼 1스트라이크."
+  },
+  "capturedAt": "2026-09-01T12:00:53.501Z"
+}

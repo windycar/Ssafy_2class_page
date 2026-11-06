@@ -1,0 +1,7 @@
+{
+  "checkedAt": "2026-09-02T21:15:00+09:00",
+  "url": "http://127.0.0.1:4173/baseball-qa.html?scene=home-run-result",
+  "warnings": [],
+  "errors": [],
+  "note": "Deterministic engine-backed HOME_RUN_RESULT scene rendered in the in-app browser without console warnings or errors."
+}

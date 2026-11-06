@@ -39,7 +39,18 @@ import {
 const HERO_IMAGE = "/images/study-tracks/special-mock-exam-hero-v2.png";
 const ITTA_SSAFY_IMAGE = "/images/study-tracks/itta-ssafy-assessment-4.png";
 
-type SelectedAssessmentRound = SpecialMockExamAvailableAssessmentRound | 4;
+const IMAGE_ASSESSMENTS = {
+  4: { label: "일타싸피", image: ITTA_SSAFY_IMAGE, alt: "당구공의 경로를 그린 일타싸피 이미지" },
+  6: { label: "알고리즘 응용", image: "/images/study-tracks/algorithm-assessment-6.png", alt: "격자와 경로로 알고리즘 문제 해결을 표현한 이미지" },
+  7: { label: "배틀싸피", image: "/images/study-tracks/battle-ssafy-assessment-7.png", alt: "격자 전장에서 전차가 대결하는 배틀싸피 이미지" },
+} as const;
+
+type ImageAssessmentRound = keyof typeof IMAGE_ASSESSMENTS;
+type SelectedAssessmentRound = SpecialMockExamAvailableAssessmentRound | ImageAssessmentRound;
+
+function isImageAssessment(round: number): round is ImageAssessmentRound {
+  return Object.hasOwn(IMAGE_ASSESSMENTS, round);
+}
 
 const ROUND_STYLES = {
   1: {
@@ -102,13 +113,15 @@ export default function SpecialMockExamView() {
   const requestedAssessmentRound = searchParams.get("assessment") ?? undefined;
   const [selectedAssessmentRound, setSelectedAssessmentRound] =
     useState<SelectedAssessmentRound>(() => {
-      if (requestedAssessmentRound === "4") return 4;
+      if (requestedAssessmentRound && isImageAssessment(Number(requestedAssessmentRound))) {
+        return Number(requestedAssessmentRound) as ImageAssessmentRound;
+      }
       if (isSpecialMockExamAssessmentRound(requestedAssessmentRound)) {
         return Number(requestedAssessmentRound) as SpecialMockExamAvailableAssessmentRound;
       }
       return 2;
     });
-  const collection = selectedAssessmentRound === 4
+  const collection = isImageAssessment(selectedAssessmentRound)
     ? null
     : getSpecialMockExamCollection(selectedAssessmentRound);
 
@@ -163,7 +176,7 @@ export default function SpecialMockExamView() {
             </span>
           </h1>
           <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-slate-200/80 sm:text-base">
-            과목평가 2·3·5회차 핵심 범위를 실전 문제로 점검합니다. 문제 순서는
+            과목평가 2·3·5·8회차 핵심 범위를 실전 문제로 점검합니다. 문제 순서는
             매번 바뀌며, 60점 이상이면 통과입니다.
           </p>
 
@@ -207,7 +220,7 @@ export default function SpecialMockExamView() {
             </h2>
           </div>
           <p className="text-xs font-bold text-slate-500">
-            2·3·5회차 모의고사 · 4회차 일타싸피
+            2·3·5·8회차 모의고사 · 4·6·7회차 평가
           </p>
         </div>
 
@@ -218,7 +231,7 @@ export default function SpecialMockExamView() {
         >
           {SPECIAL_MOCK_EXAM_ASSESSMENT_ROUNDS.map((round) => {
             const available =
-              round === 4 ||
+              isImageAssessment(round) ||
               SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.some(
                 (availableRound) => availableRound === round,
               );
@@ -259,7 +272,7 @@ export default function SpecialMockExamView() {
                       : "bg-slate-100 text-slate-400"
                   }`}
                 >
-                  {round === 4 ? "일타싸피" : available ? "OPEN" : "준비 중"}
+                  {isImageAssessment(round) ? IMAGE_ASSESSMENTS[round].label : available ? "OPEN" : "준비 중"}
                 </span>
               </button>
             );
@@ -267,14 +280,14 @@ export default function SpecialMockExamView() {
         </div>
       </section>
 
-      {selectedAssessmentRound === 4 ? (
-        <section role="tabpanel" aria-label="과목평가 4회차 일타싸피">
+      {isImageAssessment(selectedAssessmentRound) ? (
+        <section role="tabpanel" aria-label={`과목평가 ${selectedAssessmentRound}회차 ${IMAGE_ASSESSMENTS[selectedAssessmentRound].label}`}>
           <h2 className="sr-only">
-            일타싸피
+            {IMAGE_ASSESSMENTS[selectedAssessmentRound].label}
           </h2>
           <img
-            src={ITTA_SSAFY_IMAGE}
-            alt="당구대 위 흰 공에서 목적구와 포켓으로 이어지는 경로를 그린 일타싸피 그림"
+            src={IMAGE_ASSESSMENTS[selectedAssessmentRound].image}
+            alt={IMAGE_ASSESSMENTS[selectedAssessmentRound].alt}
             className="w-full rounded-[1.75rem] border border-slate-200 object-cover shadow-[0_16px_48px_rgba(35,45,90,0.14)]"
             decoding="async"
           />

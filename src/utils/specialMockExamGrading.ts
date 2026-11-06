@@ -1,8 +1,9 @@
 import { ESSAY_MIN_LENGTH } from "../constants/study.ts";
+import { gradeDjangoMockEssay } from "./djangoMockEssayGrading.ts";
 import type {
   SpecialMockExamAttempt,
   SpecialMockExamQuestion,
-} from "../types/specialMockExam";
+} from "../types/specialMockExam.ts";
 
 export interface SpecialMockExamGradeResult {
   correct: boolean;
@@ -68,7 +69,7 @@ export function gradeSpecialMockExamResponse(
 
   if (question.questionType === "short-answer") {
     const correct = acceptedAnswers.some(
-      (answer) => compact(answer) === compact(normalizedResponse),
+      (answer) => normalize(answer) === normalizedResponse,
     );
     return {
       correct,
@@ -86,16 +87,19 @@ export function gradeSpecialMockExamResponse(
   const matchedKeywords = rubricKeywords.filter((keyword) =>
     matchesRubricKeyword(compactResponse, keyword),
   );
-  const essayExpectedMatched = acceptedAnswers.length
-    ? expectedMatched
-    : rubricKeywords.length > 0 && matchedKeywords.length === rubricKeywords.length;
+  const relationshipMatched = gradeDjangoMockEssay(question.conceptId, responseText);
+  const essayExpectedMatched = relationshipMatched ?? (
+    acceptedAnswers.length
+      ? expectedMatched
+      : rubricKeywords.length > 0 && matchedKeywords.length === rubricKeywords.length
+  );
   const minimumLength = question.minLength ?? ESSAY_MIN_LENGTH;
 
   return {
     correct:
       normalizedResponse.length >= minimumLength &&
       essayExpectedMatched &&
-      matchedKeywords.length >= 1,
+      (relationshipMatched !== undefined || matchedKeywords.length >= 1),
     responseLength: normalizedResponse.length,
     expectedMatched: essayExpectedMatched,
     matchedKeywords,

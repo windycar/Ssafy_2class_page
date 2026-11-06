@@ -19,6 +19,7 @@ import type {
 } from "../types/specialMockExam";
 import { isCurrentSpecialMockExamAttempt } from "../types/specialMockExam";
 import { isAnsweredSpecialMockExamAttempt } from "../utils/specialMockExamGrading";
+import { assertSpecialMockExamSession, requireSpecialMockExamMember } from "./specialMockExamMember";
 
 type SpecialMockExamAttemptRow = {
   id: string;
@@ -51,10 +52,11 @@ function toAttempt(row: SpecialMockExamAttemptRow): SpecialMockExamAttempt {
   };
 }
 
-function toRow(studentId: number, attempt: SpecialMockExamAttempt) {
+function toRow(studentId: number, authId: string, attempt: SpecialMockExamAttempt) {
   return {
     id: attempt.id,
     student_id: studentId,
+    auth_user_id: authId,
     assessment_round: attempt.assessmentRound,
     mock_round: attempt.mockRound,
     question_id: attempt.questionId,
@@ -80,8 +82,9 @@ function currentBankProgress(
   };
 }
 
-async function uploadPending(studentId: number) {
+async function uploadPending(studentId: number, authId: string) {
   if (!supabase) return;
+  await assertSpecialMockExamSession(supabase, authId);
   const pending = specialMockExamProgressStorage.getPending(studentId);
   const pendingIds = new Set(pending.map(({ id }) => id));
   const stalePendingIds = specialMockExamProgressStorage
@@ -94,12 +97,13 @@ async function uploadPending(studentId: number) {
 
   const { error } = await supabase
     .from("special_mock_exam_attempts")
-    .upsert(pending.map((attempt) => toRow(studentId, attempt)), {
+    .upsert(pending.map((attempt) => toRow(studentId, authId, attempt)), {
       onConflict: "id",
       ignoreDuplicates: true,
     });
 
   if (error) throw error;
+  await assertSpecialMockExamSession(supabase, authId);
   specialMockExamProgressStorage.markSynced(
     studentId,
     pending.map(({ id }) => id),
@@ -108,22 +112,28 @@ async function uploadPending(studentId: number) {
 
 export async function loadSpecialMockExamProgress(
   studentId: number,
+  expectedAuthId?: string,
 ): Promise<SpecialMockExamProgress> {
+  const authId = supabase
+    ? await requireSpecialMockExamMember(supabase, studentId, expectedAuthId)
+    : null;
   const local = currentBankProgress(
     specialMockExamProgressStorage.get(studentId),
   );
   if (!supabase) return local;
   const localIdsBeforeSync = new Set(local.attempts.map(({ id }) => id));
 
-  await uploadPending(studentId);
+  await uploadPending(studentId, authId!);
   const { data, error } = await supabase
     .from("special_mock_exam_attempts")
     .select("*")
     .eq("student_id", studentId)
+    .eq("auth_user_id", authId!)
     .order("answered_at", { ascending: false })
     .limit(3000);
 
   if (error) throw error;
+  await assertSpecialMockExamSession(supabase, authId!);
   const remote: SpecialMockExamProgress = {
     attempts: currentBankProgress({
       attempts: ((data ?? []) as SpecialMockExamAttemptRow[])
@@ -141,9 +151,10 @@ export async function loadSpecialMockExamProgress(
   );
 }
 
-export async function saveSpecialMockExamAttempt(studentId: number) {
+export async function saveSpecialMockExamAttempt(studentId: number, expectedAuthId?: string) {
   if (!supabase) return false;
-  await uploadPending(studentId);
+  const authId = await requireSpecialMockExamMember(supabase, studentId, expectedAuthId);
+  await uploadPending(studentId, authId);
   return specialMockExamProgressStorage.getPendingIds(studentId).length === 0;
 }
 
@@ -151,7 +162,11 @@ export async function resetSpecialMockExamProgress(
   studentId: number,
   assessmentRound: SpecialMockExamAvailableAssessmentRound,
   mockRound: SpecialMockExamRound,
+  expectedAuthId?: string,
 ): Promise<{ progress: SpecialMockExamProgress; synced: boolean }> {
+  const authId = supabase
+    ? await requireSpecialMockExamMember(supabase, studentId, expectedAuthId)
+    : null;
   const current = specialMockExamProgressStorage.get(studentId);
   const attemptIds = getSpecialMockExamResetAttemptIds(
     current,
@@ -160,11 +175,13 @@ export async function resetSpecialMockExamProgress(
   );
   if (!attemptIds.length) return { progress: current, synced: false };
 
-  return resetScopedStudyProgress(
+  const result = await resetScopedStudyProgress(
     supabase as unknown as ScopedStudyDeleteClient | null,
     STUDY_ATTEMPT_TABLES.specialMockExam,
     studentId,
     attemptIds,
-    () => specialMockExamProgressStorage.remove(studentId, attemptIds),
+    () => current,
   );
+  if (supabase && authId) await assertSpecialMockExamSession(supabase, authId);
+  return { ...result, progress: specialMockExamProgressStorage.remove(studentId, attemptIds) };
 }

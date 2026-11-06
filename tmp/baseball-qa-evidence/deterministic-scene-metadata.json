@@ -1,0 +1,110 @@
+{
+  "contact": {
+    "ballCount": 0,
+    "contactCount": 1,
+    "contactOpacity": "1",
+    "homeRunCount": 0,
+    "proof": "ENGINE EVENT · CONTACT · DOUBLE_CENTERseed 5555 · progress 0.50PERFECT TIMINGPERFECT CONTACTPCI OVERLAP · 85%팀123RHECPU0––000KIA–––000INNING1회초 · CPU 공격BSO2루비어 있음—3루비어 있음—1루비어 있음—9현재 타자#9 정민규CON 88 · PWR 87 · SPD 83TODAY 0 AB · 0 H · 0 HR현재 투수#54 양현종PITCHES 1 · K 0 · BB 0H 0 · R 0STAMINA94%94NEXT1한도윤#44 · DH2오세진#51 · RFPLAY BY PLAY전체 0PLAY BY PLAY최신 기록부터 표시첫 투구를 기다리는 중입니다.첫 투구를 기다리는 중입니다.",
+    "result": "DOUBLE_CENTER",
+    "runnerCount": 0,
+    "scene": "contact",
+    "scoringCount": 0,
+    "stageHeight": 470
+  },
+  "hit-flight": {
+    "ballCount": 1,
+    "contactCount": 0,
+    "contactOpacity": null,
+    "homeRunCount": 0,
+    "proof": "ENGINE EVENT · DOUBLE BALL FLIGHT · DOUBLE_CENTERseed 5555 · progress 0.58중견수타구 추적팀123RHECPU0––000KIA–––000INNING1회초 · CPU 공격BSO2루비어 있음—3루비어 있음—1루비어 있음—9현재 타자#9 정민규CON 88 · PWR 87 · SPD 83TODAY 0 AB · 0 H · 0 HR현재 투수#54 양현종PITCHES 1 · K 0 · BB 0H 0 · R 0STAMINA94%94NEXT1한도윤#44 · DH2오세진#51 · RFPLAY BY PLAY전체 0PLAY BY PLAY최신 기록부터 표시첫 투구를 기다리는 중입니다.첫 투구를 기다리는 중입니다.",
+    "result": "DOUBLE_CENTER",
+    "runnerCount": 0,
+    "scene": "hit-flight",
+    "scoringCount": 0,
+    "stageHeight": 470
+  },
+  "hit-result": {
+    "ballCount": 0,
+    "contactCount": 0,
+    "contactOpacity": null,
+    "homeRunCount": 0,
+    "proof": "ENGINE EVENT · DOUBLE RESULT · DOUBLE_CENTERseed 5555 · progress 0.602루PLAY RESULT중앙 2루타정민규, 직구를 받아쳤습니다! 중견수 키를 넘기며 2루까지 갑니다!DOUBLE_CENTER팀123RHECPU0––010KIA–––000INNING1회초 · CPU 공격SCORING POSITIONBSO2루정민규주력 833루비어 있음—1루비어 있음—44현재 타자#44 한도윤CON 85 · PWR 93 · SPD 55TODAY 0 AB · 0 H · 0 HR현재 투수#54 양현종PITCHES 1 · K 0 · BB 0H 1 · R 0STAMINA94%94NEXT1오세진#51 · RF2배현우#2 · 2BPLAY BY PLAY전체 1PLAY BY PLAY최신 기록부터 표시1회초 · CPU정민규,",
+    "result": "DOUBLE_CENTER",
+    "runnerCount": 1,
+    "scene": "hit-result",
+    "scoringCount": 0,
+    "stageHeight": 470
+  },
+  "runner": {
+    "ballCount": 0,
+    "contactCount": 0,
+    "contactOpacity": null,
+    "homeRunCount": 0,
+    "proof": "ENGINE EVENT · RUNNER ADVANCE · DOUBLE_CENTERseed 5555 · progress 0.90득점타석 → 2루RUNNER ADVANCE주자 진루주자와 송구의 도착 시각을 비교합니다.SPACE장면 건너뛰기팀123RHECPU0––000KIA–––000INNING1회초 · CPU 공격SCORING POSITIONBSO2루비어 있음—3루박준호주력 921루비어 있음—9현재 타자#9 정민규CON 88 · PWR 87 · SPD 83TODAY 0 AB · 0 H · 0 HR현재 투수#54 양현종PITCHES 1 · K 0 · BB 0H 0 · R 0STAMINA94%94NEXT1한도윤#44 · DH2오세진#51 · RFPLAY BY PLAY전체 0PLAY BY PLAY최신 기록부터 표시첫 투구를 기다리는 중입니다.첫 투구를",
+    "result": "DOUBLE_CENTER",
+    "runnerCount": 2,
+    "scene": "runner",
+    "scoringCount": 0,
+    "stageHeight": 470
+  },
+  "score": {
+    "ballCount": 0,
+    "contactCount": 0,
+    "contactOpacity": null,
+    "homeRunCount": 0,
+    "proof": "ENGINE EVENT · RUN SCORE · DOUBLE_CENTERseed 5555 · progress 0.903루 → 홈HOME PLATE · SAFEGO-AHEAD RUN!박준호 SCORE!1:0RBI · 정민규1타점팀123RHECPU0––000KIA–––000INNING1회초 · CPU 공격SCORING POSITIONBSO2루비어 있음—3루박준호주력 921루비어 있음—9현재 타자#9 정민규CON 88 · PWR 87 · SPD 83TODAY 0 AB · 0 H · 0 HR현재 투수#54 양현종PITCHES 1 · K 0 · BB 0H 0 · R 0STAMINA94%94NEXT1한도윤#44 · DH2오세진#51 · RFPLAY BY PLAY전체 0PLAY BY PLAY최신 기록부터 표시첫 투구를 기다리는 중입니다.첫 투구를 기다리는",
+    "result": "DOUBLE_CENTER",
+    "runnerCount": 1,
+    "scene": "score",
+    "scoringCount": 1,
+    "stageHeight": 470
+  },
+  "scoreboard": {
+    "ballCount": 0,
+    "contactCount": 0,
+    "contactOpacity": null,
+    "homeRunCount": 0,
+    "proof": "ENGINE EVENT · SCOREBOARD UPDATE · DOUBLE_CENTERseed 5555 · progress 0.702루GO-AHEAD RUN!박준호 SCORE!1:0RBI · 정민규1타점팀123RHECPU1––110KIA–––000INNING1회초 · CPU 공격SCORING POSITIONBSO2루정민규주력 833루비어 있음—1루비어 있음—44현재 타자#44 한도윤CON 85 · PWR 93 · SPD 55TODAY 0 AB · 0 H · 0 HR현재 투수#54 양현종PITCHES 1 · K 0 · BB 0H 1 · R 1STAMINA94%94NEXT1오세진#51 · RF2배현우#2 · 2BPLAY BY PLAY전체 1PLAY BY PLAY최신 기록부터 표시1회초 · CPU정민규, 직구를 받아쳤습니다! 중견수 키를 넘기며 2",
+    "result": "DOUBLE_CENTER",
+    "runnerCount": 1,
+    "scene": "scoreboard",
+    "scoringCount": 1,
+    "stageHeight": 470
+  },
+  "home-run-flight": {
+    "ballCount": 1,
+    "contactCount": 0,
+    "contactOpacity": null,
+    "homeRunCount": 1,
+    "proof": "ENGINE EVENT · HOME RUN FLIGHT · HOME_RUN_CENTERseed 5555 · progress 0.60DEEP FLY펜스를 향해!외야 깊숙한 타구를 추적합니다.SPACE홈런 연출 건너뛰기팀123RHECPU0––000KIA–––000INNING1회초 · CPU 공격BSO2루비어 있음—3루비어 있음—1루비어 있음—51현재 타자#51 오세진CON 82 · PWR 91 · SPD 74TODAY 0 AB · 0 H · 0 HR현재 투수#54 양현종PITCHES 1 · K 0 · BB 0H 0 · R 0STAMINA94%94NEXT1배현우#2 · 2B2송지환#28 · 1BPLAY BY PLAY전체 0PLAY BY PLAY최신 기록부터 표시첫 투구를 기다리는 중입니다.첫 투구를 기다리는 중입니다.",
+    "result": "HOME_RUN_CENTER",
+    "runnerCount": 0,
+    "scene": "home-run-flight",
+    "scoringCount": 0,
+    "stageHeight": 470
+  },
+  "home-run-score": {
+    "ballCount": 0,
+    "contactCount": 0,
+    "contactOpacity": null,
+    "homeRunCount": 1,
+    "proof": "ENGINE EVENT · HOME RUN SCORE · HOME_RUN_CENTERseed 5555 · progress 0.90타석 → 홈SOLO HOME RUNHOME RUN!HOME PLATE · SAFE · 오세진 · 1 RBI1 : 0팀123RHECPU0––000KIA–––000INNING1회초 · CPU 공격BSO2루비어 있음—3루비어 있음—1루비어 있음—51현재 타자#51 오세진CON 82 · PWR 91 · SPD 74TODAY 0 AB · 0 H · 0 HR현재 투수#54 양현종PITCHES 1 · K 0 · BB 0H 0 · R 0STAMINA94%94NEXT1배현우#2 · 2B2송지환#28 · 1BPLAY BY PLAY전체 0PLAY BY PLAY최신 기록부터 표시첫 투구를 기다리는 중입니다.첫 투구를 기다리는 중입니다.",
+    "result": "HOME_RUN_CENTER",
+    "runnerCount": 1,
+    "scene": "home-run-score",
+    "scoringCount": 0,
+    "stageHeight": 470
+  },
+  "home-run-result": {
+    "ballCount": 0,
+    "contactCount": 0,
+    "contactOpacity": null,
+    "homeRunCount": 1,
+    "proof": "ENGINE EVENT · HOME RUN RESULT · HOME_RUN_CENTERseed 5555 · progress 0.55GO-AHEAD RUN!오세진 홈런!1득점 · 1타점팀123RHECPU1––110KIA–––000INNING1회초 · CPU 공격BSO2루비어 있음—3루비어 있음—1루비어 있음—2현재 타자#2 배현우CON 89 · PWR 61 · SPD 77TODAY 0 AB · 0 H · 0 HR현재 투수#54 양현종PITCHES 1 · K 0 · BB 0H 1 · R 1STAMINA94%94NEXT1송지환#28 · 1B2장민석#32 · CPLAY BY PLAY전체 1PLAY BY PLAY최신 기록부터 표시1회초 · CPU오세진, 직구를 받아쳤습니다! 가운데 담장을 넘깁니다! · 득점! 오세진 · 1 RBI · CPU 1 : 0",
+    "result": "HOME_RUN_CENTER",
+    "runnerCount": 0,
+    "scene": "home-run-result",
+    "scoringCount": 0,
+    "stageHeight": 470
+  }
+}

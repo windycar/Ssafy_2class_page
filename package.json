@@ -11,7 +11,7 @@
     "test:baseball": "node --experimental-strip-types --test \"tests/baseball*.test.ts\"",
     "test:study-reset": "node --experimental-strip-types --test tests/studyProgressReset.test.ts",
     "test:admin-study": "node --experimental-strip-types --test tests/adminStudyProgress.test.ts",
-    "test:special-mock": "node --experimental-strip-types --test tests/specialMockExam.test.ts",
+    "test:special-mock": "node --experimental-strip-types --test tests/specialMockExam.test.ts tests/specialMockExamGrading.test.ts tests/specialMockExamAssessment8.test.ts",
     "test:auth-community": "node --experimental-strip-types --test tests/authHelpers.test.ts tests/communityServices.test.ts",
     "test:dinner": "node --experimental-strip-types --test tests/dinnerPoll.test.ts",
     "validate:study": "node scripts/validate-study-bank.mjs",

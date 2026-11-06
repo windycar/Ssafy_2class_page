@@ -1,0 +1,126 @@
+{
+  "four-seam": {
+    "bodyClass": "bbv2-ball-body bbv2-ball-body--pitch bbv2-ball--fourSeam",
+    "bodyCount": 1,
+    "bodyRect": {
+      "height": 66.8575439453125,
+      "width": 66.8575439453125,
+      "x": 491.21185302734375,
+      "y": 293.52435302734375
+    },
+    "expectedClass": "bbv2-ball--fourSeam",
+    "maxTrailOpacity": 0.119,
+    "trailCount": 10,
+    "trailRects": [
+      {
+        "height": 7.527679443359375,
+        "opacity": 0.119,
+        "width": 16.569854736328125
+      },
+      {
+        "height": 7.724639892578125,
+        "opacity": 0.107,
+        "width": 17.00341796875
+      },
+      {
+        "height": 7.9073486328125,
+        "opacity": 0.096,
+        "width": 17.40557861328125
+      }
+    ],
+    "visibleBodyCount": 1
+  },
+  "slider": {
+    "bodyClass": "bbv2-ball-body bbv2-ball-body--pitch bbv2-ball--slider",
+    "bodyCount": 1,
+    "bodyRect": {
+      "height": 72.47744750976562,
+      "width": 72.47744750976562,
+      "x": 473.6206359863281,
+      "y": 289.62066650390625
+    },
+    "expectedClass": "bbv2-ball--slider",
+    "maxTrailOpacity": 0.119,
+    "trailCount": 10,
+    "trailRects": [
+      {
+        "height": 8.09783935546875,
+        "opacity": 0.119,
+        "width": 17.824920654296875
+      },
+      {
+        "height": 8.24847412109375,
+        "opacity": 0.107,
+        "width": 18.156463623046875
+      },
+      {
+        "height": 8.3831787109375,
+        "opacity": 0.096,
+        "width": 18.4530029296875
+      }
+    ],
+    "visibleBodyCount": 1
+  },
+  "curve": {
+    "bodyClass": "bbv2-ball-body bbv2-ball-body--pitch bbv2-ball--curve",
+    "bodyCount": 1,
+    "bodyRect": {
+      "height": 73.30459594726562,
+      "width": 73.30459594726562,
+      "x": 462.4101867675781,
+      "y": 283.05084228515625
+    },
+    "expectedClass": "bbv2-ball--curve",
+    "maxTrailOpacity": 0.119,
+    "trailCount": 10,
+    "trailRects": [
+      {
+        "height": 8.180267333984375,
+        "opacity": 0.119,
+        "width": 18.00634765625
+      },
+      {
+        "height": 8.322479248046875,
+        "opacity": 0.107,
+        "width": 18.319366455078125
+      },
+      {
+        "height": 8.4483642578125,
+        "opacity": 0.096,
+        "width": 18.596527099609375
+      }
+    ],
+    "visibleBodyCount": 1
+  },
+  "changeup": {
+    "bodyClass": "bbv2-ball-body bbv2-ball-body--pitch bbv2-ball--changeup",
+    "bodyCount": 1,
+    "bodyRect": {
+      "height": 74.82977294921875,
+      "width": 74.82980346679688,
+      "x": 455.2569885253906,
+      "y": 293.8351135253906
+    },
+    "expectedClass": "bbv2-ball--changeup",
+    "maxTrailOpacity": 0.119,
+    "trailCount": 10,
+    "trailRects": [
+      {
+        "height": 8.330596923828125,
+        "opacity": 0.119,
+        "width": 18.337249755859375
+      },
+      {
+        "height": 8.455474853515625,
+        "opacity": 0.107,
+        "width": 18.612152099609375
+      },
+      {
+        "height": 8.5631103515625,
+        "opacity": 0.096,
+        "width": 18.849090576171875
+      }
+    ],
+    "visibleBodyCount": 1
+  }
+}

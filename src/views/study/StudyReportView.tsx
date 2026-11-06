@@ -77,6 +77,11 @@ export default function StudyReportView() {
         (attempt) => attempt.week === "week5-1",
       ),
     ),
+    "ai-python-week5-2": countUnresolvedMistakes(
+      aiPythonWeek.progress.attempts.filter(
+        (attempt) => attempt.week === "week5-2",
+      ),
+    ),
     ...Object.fromEntries(
       STUDY_REVIEW_TRACKS.flatMap((track) =>
         track.source === "special-mock-exam"

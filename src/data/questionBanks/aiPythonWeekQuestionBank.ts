@@ -8,6 +8,7 @@ import { QUESTION_BANK as WEEK_4_1_SOURCE_BANK } from "./week4-1Easy";
 import { QUESTION_BANK as WEEK_4_1_MEDIUM_SOURCE_BANK } from "./week4-1medium";
 import { QUESTION_BANK as WEEK_4_2_SOURCE_BANK } from "./week4-2Easy";
 import { QUESTION_BANK as WEEK_5_1_SOURCE_BANK } from "./week5-1Easy";
+import { QUESTION_BANK as WEEK_5_2_SOURCE_BANK } from "./week5-2Easy";
 import type {
   AiPythonWeek,
   AiPythonWeekDifficulty,
@@ -30,7 +31,8 @@ type WeekSourceQuestion =
   | (typeof WEEK_4_1_SOURCE_BANK.easy)[number]
   | (typeof WEEK_4_1_MEDIUM_SOURCE_BANK.medium)[number]
   | (typeof WEEK_4_2_SOURCE_BANK.easy)[number]
-  | (typeof WEEK_5_1_SOURCE_BANK.easy)[number];
+  | (typeof WEEK_5_1_SOURCE_BANK.easy)[number]
+  | (typeof WEEK_5_2_SOURCE_BANK.easy)[number];
 
 function withoutCitationMarker(value: string) {
   return value.replace(CITATION_MARKER, "").trim();
@@ -120,6 +122,12 @@ const WEEK_5_1_QUESTION_BANK = buildWeekQuestionBank(
   "week5-1-",
 );
 
+const WEEK_5_2_QUESTION_BANK = buildWeekQuestionBank(
+  WEEK_5_2_SOURCE_BANK.easy,
+  [],
+  "week5-2-",
+);
+
 export const AI_PYTHON_WEEK_QUESTION_BANKS = {
   week1: enrichAiPythonWeekQuestionBankExplanations(
     stabilizeAiPythonWeekQuestionBank(WEEK_1_QUESTION_BANK),
@@ -144,6 +152,11 @@ export const AI_PYTHON_WEEK_QUESTION_BANKS = {
   "week5-1": enrichAiPythonWeekQuestionBankExplanations(
     balanceAiPythonWeekQuestionBankOptionLengths(
       stabilizeAiPythonWeekQuestionBank(WEEK_5_1_QUESTION_BANK),
+    ),
+  ),
+  "week5-2": enrichAiPythonWeekQuestionBankExplanations(
+    balanceAiPythonWeekQuestionBankOptionLengths(
+      stabilizeAiPythonWeekQuestionBank(WEEK_5_2_QUESTION_BANK),
     ),
   ),
 } as Record<
