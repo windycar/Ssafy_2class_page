@@ -5,9 +5,9 @@ import { gradeSpecialMockExamResponse as grade } from "../src/utils/specialMockE
 import { SPECIAL_MOCK_EXAM_COLLECTIONS } from "../src/data/모의고사/index.ts";
 
 const DJANGO_MOCK_ESSAYS = Object.values(DJANGO_BANKS).flat().filter((q) => q.questionType === "essay");
-const [session, redirect, instance, signup, customUser] = DJANGO_MOCK_ESSAYS;
+const [session, redirect, instance, signup, customUser, imageUpdate] = DJANGO_MOCK_ESSAYS;
 
-test("8회차 서술형 5개의 원래 모범 답안과 30자 조건을 유지한다", () => {
+test("8회차 서술형 6개의 모범 답안과 30자 조건을 유지한다", () => {
   for (const question of DJANGO_MOCK_ESSAYS) {
     assert.equal(grade(question, question.modelAnswer!).correct, true, question.id);
     assert.equal(grade(question, "").correct, false);
@@ -106,6 +106,37 @@ test("단답형은 앞뒤 공백만 허용하며 대소문자·기호·내부 �
   assert.equal(grade(short, " request.FILES\r\n").correct, true);
   for (const response of ["request.files", "REQUEST.FILES", "requestFILES", "request. FILES", "request.FILES()"])
     assert.equal(grade(short, response).correct, false, response);
+});
+
+test("이미지 수정 서술형은 원인과 올바른 폼 바인딩을 함께 요구한다", () => {
+  for (const response of [
+    "수정 폼이 업로드 파일을 받지 못해서 기존 이미지가 유지된다. ArticleForm(data=request.POST, files=request.FILES, instance=article)로 바인딩한다.",
+    "request.FILES를 폼에 전달하지 않아서 이미지를 교체하지 못했다. ArticleForm(request.POST, files=request.FILES, instance=article)로 고친다.",
+    "파일 데이터가 누락되었기 때문이다. ArticleForm(instance=article, files=request.FILES, data=request.POST)를 사용한다.",
+    imageUpdate.modelAnswer + " request.FILES를 제거하지 말아야 한다.",
+  ]) assert.equal(grade(imageUpdate, response).correct, true, response);
+  for (const response of [
+    "파일 누락 request.POST request.FILES instance=article",
+    "파일이 누락되어 기존 이미지가 남는다. request.FILES를 전달한다.",
+    "ArticleForm(request.POST, request.FILES, instance=article)로 바인딩하면 파일 교체가 가능하다.",
+    "파일 데이터가 누락되었다. ArticleForm(request.FILES, request.POST, instance=article)로 고친다.",
+    "파일 데이터가 누락되었다. ArticleForm(files=request.FILES, request.POST, instance=article)로 고친다.",
+    "파일 데이터가 누락되었다. ArticleForm(request.POST, request.FILES)로 고친다.",
+    "파일 데이터가 누락되었다. ArticleForm(request.post, request.files, instance=article)로 고친다.",
+    imageUpdate.modelAnswer + " 그리고 request.FILES를 제거해야 한다.",
+    imageUpdate.modelAnswer + " instance=article을 생략해야 한다.",
+    imageUpdate.modelAnswer + " request.FILES를 전달하지 않아야 한다.",
+    imageUpdate.modelAnswer + " 파일 자체를 DB에 저장한다.",
+  ]) assert.equal(grade(imageUpdate, response).correct, false, response);
+});
+
+test("6회차 단답형은 코드에 실제로 들어가는 키워드와 위치 인자만 인정한다", () => {
+  const instanceQuestion = DJANGO_BANKS[6].find(q => q.sourceId.startsWith("mock6-019-"))!;
+  const passwordQuestion = DJANGO_BANKS[6].find(q => q.sourceId.startsWith("mock6-030-"))!;
+  assert.equal(grade(instanceQuestion, "instance").correct, true);
+  assert.equal(grade(instanceQuestion, "instance=article").correct, false);
+  assert.equal(grade(passwordQuestion, "request.user").correct, true);
+  assert.equal(grade(passwordQuestion, "user=request.user").correct, false);
 });
 
 test("기존 문제은행의 객관식 정답과 등록된 단답·서술형 정답은 유지된다", () => {

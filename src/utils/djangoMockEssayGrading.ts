@@ -1,7 +1,7 @@
-// These rules check the relationships requested by the five Django essays.
+// These rules check the relationships requested by the Django essays.
 // They are deliberately scoped by concept ID: a keyword match alone cannot
 // establish who stores data, which request updates it, or why ordering matters.
-type EssayRule = (clauses: string[]) => boolean;
+type EssayRule = (clauses: string[], response: string) => boolean;
 
 function clausesOf(response: string) {
   return response
@@ -164,12 +164,56 @@ const customUserRule: EssayRule = (clauses) => {
   return dependency && migrationReason && !lateSetup && !deniesDependency;
 };
 
+function isImageUpdateCall(argumentsText: string) {
+  const positionalNames = ["data", "files", "instance"];
+  const values = new Map<string, string>();
+  let hasKeywordArgument = false;
+  const args = argumentsText.split(",").filter(Boolean);
+  for (const [index, argument] of args.entries()) {
+    const parts = argument.split("=");
+    const named = parts.length === 2;
+    if (parts.length > 2 || (!named && hasKeywordArgument)) return false;
+    const name = named ? parts[0] : positionalNames[index];
+    const value = named ? parts[1] : argument;
+    if (!positionalNames.includes(name) || values.has(name)) return false;
+    values.set(name, value);
+    hasKeywordArgument ||= named;
+  }
+  return values.size === 3 && values.get("data") === "request.POST" &&
+    values.get("files") === "request.FILES" && values.get("instance") === "article";
+}
+
+const imageUpdateRule: EssayRule = (clauses, response) => {
+  const missingFiles = /(?:request\.files|파일(?:데이터)?|이미지).{0,32}(?:누락|생략|빠뜨|빠져|빠졌|전달하지|전달되지|넘기지|받지못|바인딩하지|바인딩되지|안넘겨).{0,12}(?:했|됐|되|때문|어서|므로|않|못|있|것|다)/;
+  const explainsCause = asserts(clauses, missingFiles) && !denies(clauses, missingFiles);
+  // The old constructor may be quoted while explaining the cause. Any proposed
+  // constructor containing uploaded files must bind all three inputs correctly.
+  const codeText = response.replace(/\s+|`/g, "");
+  const calls = [...codeText.matchAll(/ArticleForm\(([^()]*)\)/g)].map(match => match[1]);
+  const fileCalls = calls.filter(args => /request\.files/i.test(args));
+  const fixesBinding = fileCalls.length > 0 && fileCalls.every(isImageUpdateCall);
+  const removesInput = asserts(clauses,
+    /(?:request\.(?:files|post)|instance=article)(?:를|을)?(?:제거|삭제|빼|생략)/,
+  );
+  const wrongSource = asserts(clauses,
+    /(?:request\.get.{0,16}파일|파일.{0,16}request\.get).{0,12}(?:받|전달|읽|바인딩)/,
+  );
+  const deniesFix = clauses.some(clause =>
+    /request\.files.{0,16}(?:전달|추가|바인딩)하지(?:않아야|말아야|않도록)/.test(clause),
+  );
+  const storesBinary = asserts(clauses,
+    /(?:파일|이미지)(?:원본|바이너리|자체).{0,12}(?:db|데이터베이스).{0,10}저장/,
+  );
+  return explainsCause && fixesBinding && !removesInput && !wrongSource && !deniesFix && !storesBinary;
+};
+
 const DJANGO_ESSAY_RULES: Record<string, EssayRule> = {
   "http-stateless-cookie-session": sessionRule,
   "form-validation-post-redirect-essay": redirectRule,
   "modelform-instance-update-essay": instanceRule,
   "signup-and-login-difference-essay": signupRule,
   "custom-user-before-migrate-essay": customUserRule,
+  "media-image-update-request-files-essay": imageUpdateRule,
 };
 
 export function gradeDjangoMockEssay(conceptId: string, response: string) {
@@ -180,5 +224,5 @@ export function gradeDjangoMockEssay(conceptId: string, response: string) {
   if (clauses.some((clause) => /(?:위|앞|모든|전체).{0,12}(?:설명|내용|답).{0,10}(?:틀|잘못|오답)|(?:위|앞|모든|전체).{0,12}(?:반대|거짓)/.test(clause))) {
     return false;
   }
-  return rule(clauses);
+  return rule(clauses, response);
 }

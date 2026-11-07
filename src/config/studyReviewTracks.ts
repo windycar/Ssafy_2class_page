@@ -336,4 +336,14 @@ export const STUDY_REVIEW_TRACKS: readonly StudyReviewTrack[] = [
     assessmentRound: 8,
     round: 5,
   },
+  {
+    id: "special-mock-a8-r6",
+    label: "특별 모의고사 8-6",
+    description: "과목평가 8회차 Django · 모의고사 6회차",
+    href: "/study/special-mock/8/6/quiz?mode=wrong",
+    tone: "amber",
+    source: "special-mock-exam",
+    assessmentRound: 8,
+    round: 6,
+  },
 ] as const;

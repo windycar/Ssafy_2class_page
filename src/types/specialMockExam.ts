@@ -19,7 +19,7 @@ export const SPECIAL_MOCK_EXAM_ROUNDS_BY_ASSESSMENT = {
   2: SPECIAL_MOCK_EXAM_ROUNDS,
   3: SPECIAL_MOCK_EXAM_ROUNDS,
   5: [1, 2, 3, 4, 5, 6],
-  8: SPECIAL_MOCK_EXAM_ROUNDS,
+  8: [1, 2, 3, 4, 5, 6],
 } as const satisfies Record<
   SpecialMockExamAvailableAssessmentRound,
   readonly SpecialMockExamRound[]
@@ -77,6 +77,7 @@ export const SPECIAL_MOCK_EXAM_BANK_VERSIONS = {
     3: "v1",
     4: "v1",
     5: "v1",
+    6: "v1",
   },
 } as const satisfies Record<
   SpecialMockExamAvailableAssessmentRound,
