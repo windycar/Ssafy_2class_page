@@ -317,6 +317,39 @@ export default function SpecialMockExamView() {
           </span>
         </div>
 
+        {selectedAssessmentRound === 8 ? (
+          <aside
+            aria-label="Django 모의고사 추천 풀이 순서"
+            className="mb-6 rounded-[1.75rem] border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-blue-50 p-5 shadow-[0_12px_32px_rgba(80,65,160,0.08)] sm:p-6"
+          >
+            <div className="flex items-center gap-2 text-violet-900">
+              <Sparkles className="h-5 w-5 text-violet-600" aria-hidden="true" />
+              <h3 className="text-lg font-black">추천 풀이 순서</h3>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-violet-100 bg-white p-4">
+                <p className="text-sm font-bold text-violet-700">차근차근 준비한다면</p>
+                <p className="mt-1 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+                  1회 → 3회 → 4회 → 6회
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  전 범위를 점검하고 ORM·폼과 회원 기능을 보충한 뒤 6회로 마무리하세요.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                <p className="text-sm font-bold text-amber-800">시간이 촉박하다면</p>
+                <p className="mt-1 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+                  1회 → 6회
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  두 회차를 푼 뒤 틀린 문제의 코드를 직접 다시 써보세요.
+                </p>
+              </div>
+            </div>
+            <p className="mt-3 text-sm text-slate-600">2회와 5회는 부족한 부분을 추가로 연습할 때 풀어보세요.</p>
+          </aside>
+        ) : null}
+
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {collection.rounds.map((round) => {
             const questions = (collection.banks as Partial<
