@@ -95,6 +95,20 @@ const ROUND_STYLES = {
     border: "border-cyan-100",
     progress: "bg-cyan-600",
   },
+  7: {
+    gradient: "from-[#193f29] via-[#27834e] to-[#79c786]",
+    accent: "text-green-800",
+    soft: "bg-green-50",
+    border: "border-green-100",
+    progress: "bg-green-600",
+  },
+  8: {
+    gradient: "from-[#493166] via-[#80509d] to-[#c890c5]",
+    accent: "text-purple-800",
+    soft: "bg-purple-50",
+    border: "border-purple-100",
+    progress: "bg-purple-600",
+  },
 } as const satisfies Record<
   SpecialMockExamRound,
   {
