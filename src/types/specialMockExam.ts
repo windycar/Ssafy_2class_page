@@ -10,7 +10,7 @@ export const SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS = [2, 3, 5, 8] as con
 export type SpecialMockExamAvailableAssessmentRound =
   (typeof SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS)[number];
 
-export type SpecialMockExamRound = 1 | 2 | 3 | 4 | 5 | 6;
+export type SpecialMockExamRound = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export const SPECIAL_MOCK_EXAM_ROUNDS = [1, 2, 3, 4, 5] as const satisfies
   readonly SpecialMockExamRound[];
@@ -19,7 +19,7 @@ export const SPECIAL_MOCK_EXAM_ROUNDS_BY_ASSESSMENT = {
   2: SPECIAL_MOCK_EXAM_ROUNDS,
   3: SPECIAL_MOCK_EXAM_ROUNDS,
   5: [1, 2, 3, 4, 5, 6],
-  8: [1, 2, 3, 4, 5, 6],
+  8: [1, 2, 3, 4, 5, 6, 7, 8],
 } as const satisfies Record<
   SpecialMockExamAvailableAssessmentRound,
   readonly SpecialMockExamRound[]
@@ -78,6 +78,8 @@ export const SPECIAL_MOCK_EXAM_BANK_VERSIONS = {
     4: "v1",
     5: "v1",
     6: "v1",
+    7: "v1",
+    8: "v1",
   },
 } as const satisfies Record<
   SpecialMockExamAvailableAssessmentRound,
@@ -122,6 +124,7 @@ export interface SpecialMockExamQuestion {
   acceptedAnswers?: string[];
   modelAnswer?: string;
   rubricKeywords?: string[];
+  forbiddenKeywords?: string[];
   minLength?: number;
   explanation: string;
   hint: string;

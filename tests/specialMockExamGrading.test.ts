@@ -7,7 +7,7 @@ import { SPECIAL_MOCK_EXAM_COLLECTIONS } from "../src/data/모의고사/index.ts
 const DJANGO_MOCK_ESSAYS = Object.values(DJANGO_BANKS).flat().filter((q) => q.questionType === "essay");
 const [session, redirect, instance, signup, customUser, imageUpdate] = DJANGO_MOCK_ESSAYS;
 
-test("8회차 서술형 6개의 모범 답안과 30자 조건을 유지한다", () => {
+test("8회차 서술형 8개의 모범 답안과 30자 조건을 유지한다", () => {
   for (const question of DJANGO_MOCK_ESSAYS) {
     assert.equal(grade(question, question.modelAnswer!).correct, true, question.id);
     assert.equal(grade(question, "").correct, false);
@@ -15,6 +15,15 @@ test("8회차 서술형 6개의 모범 답안과 30자 조건을 유지한다", 
     // Even a factually complete response must still meet the original limit.
     const longerMinimum = { ...question, minLength: question.modelAnswer!.length + 1 };
     assert.equal(grade(longerMinimum, question.modelAnswer!).correct, false);
+  }
+});
+
+test("새 서술형은 핵심 관계와 금지된 오답을 확인한다", () => {
+  const [staticMedia, password] = DJANGO_MOCK_ESSAYS.slice(6);
+  for (const question of [staticMedia, password]) {
+    assert.equal(grade(question, question.modelAnswer!).correct, true);
+    assert.equal(grade(question, question.modelAnswer! + " " + question.forbiddenKeywords![0]).correct, false);
+    assert.equal(grade(question, question.rubricKeywords!.join(" ").repeat(3)).correct, false);
   }
 });
 

@@ -99,6 +99,7 @@ export function gradeSpecialMockExamResponse(
     correct:
       normalizedResponse.length >= minimumLength &&
       essayExpectedMatched &&
+      !(question.forbiddenKeywords ?? []).some((keyword) => compactResponse.includes(compact(keyword))) &&
       (relationshipMatched !== undefined || matchedKeywords.length >= 1),
     responseLength: normalizedResponse.length,
     expectedMatched: essayExpectedMatched,

@@ -4,6 +4,8 @@ import { ALL_QUESTIONS as ROUND_3_SOURCE } from "./과목평가8회차_모의고
 import { ALL_QUESTIONS as ROUND_4_SOURCE } from "./과목평가8회차_모의고사_4회차.ts";
 import { ALL_QUESTIONS as ROUND_5_SOURCE } from "./과목평가8회차_모의고사_5회차.ts";
 import { ALL_QUESTIONS as ROUND_6_SOURCE } from "./과목평가8회차_모의고사_6회차.ts";
+import { ALL_QUESTIONS as ROUND_7_SOURCE } from "../../specialMockAssessment8Round7.ts";
+import { ALL_QUESTIONS as ROUND_8_SOURCE } from "../../specialMockAssessment8Round8.ts";
 import type { SpecialMockExamQuestion, SpecialMockExamRound } from "../../../types/specialMockExam.ts";
 
 type SourceQuestion = Omit<SpecialMockExamQuestion, "sourceId" | "hint"> & { hint?: string };
@@ -24,6 +26,8 @@ export const SPECIAL_MOCK_EXAM_BANKS = {
   4: scopeQuestionIds(4, ROUND_4_SOURCE),
   5: scopeQuestionIds(5, ROUND_5_SOURCE),
   6: scopeQuestionIds(6, ROUND_6_SOURCE),
+  7: scopeQuestionIds(7, ROUND_7_SOURCE),
+  8: scopeQuestionIds(8, ROUND_8_SOURCE),
 } as const;
 
 export const SPECIAL_MOCK_EXAM_META = {
@@ -33,4 +37,6 @@ export const SPECIAL_MOCK_EXAM_META = {
   4: { label: "모의고사 4회차", description: "URL·파일 업로드·회원 기능 점검" },
   5: { label: "모의고사 5회차", description: "Django 종합 · 사용자 모델과 권한 점검" },
   6: { label: "모의고사 6회차", description: "Django 최종 점검 · 코드 실행과 업로드 수정" },
+  7: { label: "모의고사 7회차", description: "Django 종합 · 핵심 개념과 코드 점검" },
+  8: { label: "모의고사 8회차", description: "Django 종합 · 실전 응용과 인증 점검" },
 } as const;

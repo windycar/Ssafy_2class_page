@@ -33,15 +33,17 @@ function attempt(round: SpecialMockExamRound, correct = false, time = 0): Specia
   };
 }
 
-test("8회차는 32문제씩 6세트이며 원래 유형·난이도와 고유 ID를 유지한다", () => {
+test("8회차는 32문제씩 8세트이며 원래 유형·난이도와 고유 ID를 유지한다", () => {
   assert.equal(isSpecialMockExamAssessmentRound("8"), true);
   assert.equal(isSpecialMockExamRound("5", 8), true);
   assert.equal(isSpecialMockExamRound("6", 8), true);
-  assert.equal(isSpecialMockExamRound("7", 8), false);
+  assert.equal(isSpecialMockExamRound("7", 8), true);
+  assert.equal(isSpecialMockExamRound("8", 8), true);
+  assert.equal(isSpecialMockExamRound("7", 5), false);
   assert.equal(isSpecialMockExamRound("6", 2), false);
-  assert.deepEqual(getSpecialMockExamCollection(8).rounds, [1, 2, 3, 4, 5, 6]);
-  assert.equal(getSpecialMockExamCollection(8).totalQuestionCount, 192);
-  const difficulties = [[12, 12, 8], [12, 20, 0], [10, 22, 0], [6, 24, 2], [6, 23, 3], [10, 12, 10]];
+  assert.deepEqual(getSpecialMockExamCollection(8).rounds, [1, 2, 3, 4, 5, 6, 7, 8]);
+  assert.equal(getSpecialMockExamCollection(8).totalQuestionCount, 256);
+  const difficulties = [[12, 12, 8], [12, 20, 0], [10, 22, 0], [6, 24, 2], [6, 23, 3], [10, 12, 10], [18, 10, 4], [16, 12, 4]];
   for (const [index, questions] of Object.values(BANKS).entries()) {
     assert.equal(questions.length, 32);
     assert.deepEqual(["multiple-choice", "short-answer", "essay"].map(type => questions.filter(q => q.questionType === type).length), [26, 5, 1]);
@@ -51,7 +53,7 @@ test("8회차는 32문제씩 6세트이며 원래 유형·난이도와 고유 ID
       assert.equal(getSpecialMockExamQuestion(8, (index + 1) as SpecialMockExamRound, q.id), q);
     }
   }
-  assert.equal(new Set(Object.values(BANKS).flat().map(q => q.id)).size, 192);
+  assert.equal(new Set(Object.values(BANKS).flat().map(q => q.id)).size, 256);
   assert.equal(getSpecialMockExamAttemptIdPrefix(8, 5), "special-mock-a8-r5-v1-");
   assert.equal(isCurrentSpecialMockExamAttempt(attempt(5)), true);
   assert.equal(isCurrentSpecialMockExamAttempt({ ...attempt(5), id: "special-mock-a8-r5-v0-test" }), false);
@@ -62,7 +64,7 @@ test("8회차는 32문제씩 6세트이며 원래 유형·난이도와 고유 ID
 
 test("8회차 모든 세트에 약점 분석과 최신 오답 복습 경로가 연결된다", () => {
   const tracks = STUDY_REVIEW_TRACKS.filter(t => t.source === "special-mock-exam" && t.assessmentRound === 8);
-  assert.equal(tracks.length, 6);
+  assert.equal(tracks.length, 8);
   tracks.forEach((track, index) => assert.equal(track.href, `/study/special-mock/8/${index + 1}/quiz?mode=wrong`));
   const wrong = attempt(1);
   const corrected = attempt(1, true, 1);
@@ -71,6 +73,33 @@ test("8회차 모든 세트에 약점 분석과 최신 오답 복습 경로가 �
   const latestWrong = getLatestAttemptsByQuestion(storage.get(101).attempts).filter(a => !a.correct);
   assert.deepEqual(latestWrong.map(a => a.questionId), [otherRound.questionId]);
   assert.ok(getSpecialMockExamQuestion(8, 6, latestWrong[0].questionId));
+});
+
+test("7·8회차 기록은 pending, 서버 교체, 오답 정정과 초기화가 각각 분리된다", () => {
+  for (const round of [7, 8] as const) {
+    local.clear();
+    const wrong = attempt(round);
+    const corrected = attempt(round, true, 1);
+    const other = attempt(round === 7 ? 8 : 7);
+    storage.addMany(101, [wrong, other]);
+    storage.add(202, wrong);
+    const before = new Set(storage.getPendingIds(101));
+    storage.add(101, corrected);
+    const reconciled = reconcileRemoteProgress({ attempts: [wrong, other] }, storage.get(101), before);
+    storage.replace(101, reconciled);
+    assert.deepEqual(getLatestAttemptsByQuestion(reconciled.attempts).filter(a => !a.correct).map(a => a.questionId), [other.questionId]);
+    storage.remove(101, getSpecialMockExamResetAttemptIds(storage.get(101), 8, round));
+    assert.deepEqual(storage.get(101).attempts.map(a => a.id), [other.id]);
+    assert.equal(storage.get(202).attempts.length, 1);
+  }
+});
+
+test("7·8회차 DB 제약은 기존 범위와 소유권 정책을 보존한다", () => {
+  const sql = readFileSync("supabase/migrations/20261108031030_special_mock_exam_assessment_8_rounds_7_8.sql", "utf8");
+  assert.match(sql, /assessment_round in \(2, 3\) and mock_round between 1 and 5/);
+  assert.match(sql, /assessment_round = 5 and mock_round between 1 and 6/);
+  assert.match(sql, /assessment_round = 8 and mock_round between 1 and 8/);
+  assert.doesNotMatch(sql, /drop policy|disable row level|to anon|auth_user_id is null/i);
 });
 
 test("Django 6회차는 pending·서버 교체·정답 재풀이·초기화에서 다른 회차와 분리된다", () => {

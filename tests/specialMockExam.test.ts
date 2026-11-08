@@ -288,7 +288,7 @@ test("과목평가 3회차에는 서로 충돌하지 않는 60문제짜리 모�
   assert.equal(new Set(allIds).size, 300);
   assert.equal(ASSESSMENT_3_META[5].label, "모의고사 5회차");
   assert.equal(ASSESSMENT_3_BANKS[1][0].sourceId, "mock-001-regression-error");
-  assert.equal(SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT, 844);
+  assert.equal(SPECIAL_MOCK_EXAM_TOTAL_QUESTION_COUNT, 908);
   assert.equal(
     getSpecialMockExamAttemptIdPrefix(2, 1),
     "special-mock-a2-r1-v3-",
@@ -303,7 +303,7 @@ test("과목평가 3회차에는 서로 충돌하지 않는 60문제짜리 모�
         questions.map(({ id }) => id),
       ),
   );
-  assert.equal(new Set(everyQuestionId).size, 844);
+  assert.equal(new Set(everyQuestionId).size, 908);
 });
 
 test("과목평가 5회차에는 원본 Web 문제 32개씩 6세트가 있다", () => {
@@ -398,14 +398,14 @@ test("2·3회차는 4지선다, 5·8회차는 객관식·단답형·서술형으
   assert.equal(
     questions.filter(({ questionType }) => questionType === "multiple-choice")
       .length,
-    760,
+    812,
   );
   assert.equal(
     questions.filter(({ questionType }) => questionType === "short-answer")
       .length,
-    60,
+    70,
   );
-  assert.equal(questions.filter(({ questionType }) => questionType === "essay").length, 24);
+  assert.equal(questions.filter(({ questionType }) => questionType === "essay").length, 26);
   questions.forEach((question) => {
     if (question.questionType === "multiple-choice") {
       assert.equal(typeof question.answer, "number", `${question.id}: 정답 누락`);
@@ -503,7 +503,7 @@ test("모의고사 문제 순서는 응시 시작 시 무작위 순서로 복사
   );
 });
 
-test("특별 모의고사 22세트가 오답 선택 화면에 모두 등록된다", () => {
+test("특별 모의고사 24세트가 오답 선택 화면에 모두 등록된다", () => {
   const tracks = STUDY_REVIEW_TRACKS.filter(
     (track) => track.source === "special-mock-exam",
   );
@@ -532,6 +532,8 @@ test("특별 모의고사 22세트가 오답 선택 화면에 모두 등록된�
       [8, 4],
       [8, 5],
       [8, 6],
+      [8, 7],
+      [8, 8],
     ],
   );
   tracks.forEach((track) => assert.match(track.href, /mode=wrong/));

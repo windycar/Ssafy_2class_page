@@ -214,6 +214,20 @@ const DJANGO_ESSAY_RULES: Record<string, EssayRule> = {
   "signup-and-login-difference-essay": signupRule,
   "custom-user-before-migrate-essay": customUserRule,
   "media-image-update-request-files-essay": imageUpdateRule,
+  "static-vs-media-and-imagefield-db-storage-essay": (clauses) => {
+    const text = clauses.join(" ");
+    return /(?:정적파일|staticfiles|static).{0,45}(?:개발자|미리준비|고정)/.test(text) &&
+      /(?:미디어파일|mediafiles|media).{0,45}(?:사용자|업로드)/.test(text) &&
+      /(?:실제|이미지|파일).{0,45}(?:media_root|서버|폴더).{0,20}저장/.test(text) &&
+      /(?:데이터베이스|db).{0,60}(?:경로|문자열|주소).{0,15}저장/.test(text);
+  },
+  "password-change-update-session-auth-hash-essay": (clauses) => {
+    const text = clauses.join(" ");
+    return /(?:비밀번호).{0,60}(?:일치하지않|불일치|달라|무효화)/.test(text) &&
+      /(?:세션).{0,40}(?:무효화|로그아웃|끊기|풀리)/.test(text) &&
+      /update_session_auth_hash\(request,user\)/.test(text) &&
+      /(?:세션).{0,30}(?:갱신|유지|업데이트)/.test(text);
+  },
 };
 
 export function gradeDjangoMockEssay(conceptId: string, response: string) {
