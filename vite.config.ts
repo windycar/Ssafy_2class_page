@@ -98,6 +98,11 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
   return {
+    server: {
+      fs: {
+        deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "**/server/monthly-practice/**"],
+      },
+    },
     plugins: [
       figmaAssetResolver(),
       localVercelApi(env),

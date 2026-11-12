@@ -3,6 +3,9 @@
   "framework": "vite",
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/auth.ts": { "includeFiles": "server/monthly-practice/**" }
+  },
   "rewrites": [
     {
       "source": "/(.*)",

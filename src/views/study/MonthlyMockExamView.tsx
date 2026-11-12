@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight, LockKeyhole } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router";
 import { MONTHLY_ASSESSMENT_REVIEW_NOTES } from "../../data/monthlyAssessmentReviewNotes";
 import { MONTHLY_ASSESSMENT_TYPES } from "../../data/monthlyAssessmentTypes";
+import MonthlyPracticeSection from "./MonthlyPracticeSection";
 
 const ROUNDS = [1, 2, 3, 4, 5, 6] as const;
 const MONTHLY_PATH = "/study/monthly-mock";
@@ -54,6 +55,8 @@ export default function MonthlyMockExamView() {
             <h2 id="monthly-assessment-format" className="text-lg font-black text-violet-950">평가 방식</h2>
             <p className="mt-2 text-sm leading-6 text-slate-700">{summary.format}</p>
           </section>
+
+          {round && <MonthlyPracticeSection key={round} round={round} />}
 
           <section aria-labelledby="monthly-assessment-types">
             <h2 id="monthly-assessment-types" className="mb-5 text-2xl font-black text-slate-950">

@@ -1,4 +1,8 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { MONTHLY_PRACTICE_SETS } from "../src/data/monthlyPracticeSets.ts";
+import { canAccessMonthlyMockExam } from "../src/utils/specialMockExamAccess.ts";
 
 type MemberRole = "member" | "admin";
 
@@ -20,7 +24,8 @@ type MemberRow = {
 };
 
 type AuthRequestBody = {
-  action?: "login" | "profile" | "change-password" | "team-rosters";
+  action?: "login" | "profile" | "change-password" | "team-rosters" | "monthly-practice.read";
+  setId?: string;
   loginId?: string;
   password?: string;
   currentPassword?: string;
@@ -629,6 +634,25 @@ export async function handleAuthRequest(request: Request) {
   // ==========================================================
   // PROFILE
   // ==========================================================
+
+  if (body.action === "monthly-practice.read") {
+    const verified = await verifiedMember(adminClient, request);
+    if ("error" in verified) return verified.error;
+    const profile = toProfile(verified.member);
+    if (!profile.authId || !canAccessMonthlyMockExam({ ...profile, authId: profile.authId })) {
+      return jsonError("월말평가 연습 자료는 승인된 회원만 볼 수 있습니다.", 403);
+    }
+    const set = Object.values(MONTHLY_PRACTICE_SETS)
+      .flatMap((sets) => sets ?? [])
+      .find(({ id }) => id === body.setId);
+    if (!set) return jsonError("모의고사 자료를 찾을 수 없습니다.", 404);
+    try {
+      const content = await readFile(join(process.cwd(), "server", "monthly-practice", `${set.id}-question.md`), "utf8");
+      return Response.json({ content }, { headers: { "Cache-Control": "private, no-store" } });
+    } catch {
+      return jsonError("모의고사 문제를 불러오지 못했습니다.", 500);
+    }
+  }
 
   if (body.action === "team-rosters") {
     const verified = await verifiedMember(adminClient, request);
