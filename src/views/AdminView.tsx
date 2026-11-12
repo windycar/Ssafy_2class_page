@@ -29,7 +29,7 @@ import { toast } from "sonner";
 
 import { useAdmin } from "../context/AdminContext";
 
-import { TOTAL_QUESTION_COUNT } from "../data/questionBanks";
+import { QUESTION_BANK_TOTALS, TOTAL_QUESTION_COUNT } from "../data/questionBanks";
 
 import { getGalleryPhotos } from "../services/galleryStorage";
 
@@ -65,6 +65,7 @@ type AdminMember = {
   created_at: string;
   auth_provisioned: boolean;
   solved_question_count: number;
+  special_mock_solved_question_count: number;
 };
 
 type AdminPost = {
@@ -1450,9 +1451,7 @@ export default function AdminView() {
 
                   </div>
 
-                  {member.role !==
-                    "admin" && (
-                    <div className="w-full flex-none rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2 lg:w-56">
+                  <div className="w-full flex-none rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2 lg:w-56">
                       <div className="flex items-center justify-between gap-3 text-[11px]">
                         <span className="font-bold text-gray-500">
                           전체 문제 풀이
@@ -1476,8 +1475,15 @@ export default function AdminView() {
                           }}
                         />
                       </div>
-                    </div>
-                  )}
+                      <div className="mt-2 flex items-center justify-between gap-3 text-[11px]">
+                        <span className="font-bold text-gray-500">특별 모의고사</span>
+                        <b className="text-[#1259AA]">
+                          {(member.special_mock_solved_question_count ?? 0).toLocaleString()}
+                          {" / "}
+                          {QUESTION_BANK_TOTALS.specialMockExams.toLocaleString()}
+                        </b>
+                      </div>
+                  </div>
 
                   {member.role !==
                     "admin" && (

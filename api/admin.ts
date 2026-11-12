@@ -1,11 +1,11 @@
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
-import { normalizeLoginId, providerPassword } from "./auth.js";
+import { normalizeLoginId, providerPassword, studyOwnerStudentId } from "./auth.js";
 import {
   buildSpecialMockExamAttemptFilter,
   countUniqueSolvedQuestions,
   type AttemptQuestionRow,
 } from "./adminStudyProgress.js";
-import { getAiPythonWeekAttemptIdPrefix } from "../src/types/aiPythonWeekStudy.js";
+import { AI_PYTHON_WEEK_ATTEMPT_ID_PREFIXES } from "../src/types/aiPythonWeekStudy.js";
 import {
   getSpecialMockExamAttemptIdPrefix,
   SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS,
@@ -66,20 +66,19 @@ async function loadAttemptQuestionRows(
   client: SupabaseClient,
   table: (typeof ATTEMPT_TABLES)[number],
 ) {
-  const rows: AttemptQuestionRow[] = [];
+  const rows: (AttemptQuestionRow & { auth_user_id: string | null })[] = [];
   let from = 0;
 
   while (true) {
     let query = client
       .from(table)
-      .select("student_id, question_id")
+      .select("student_id, question_id, auth_user_id")
       .order("id", { ascending: true });
     if (table === "ai_python_week_attempts") {
       query = query.or(
-        [
-          `and(week.eq.week1,id.like.${getAiPythonWeekAttemptIdPrefix("week1")}%)`,
-          `and(week.eq.week2,id.like.${getAiPythonWeekAttemptIdPrefix("week2")}%)`,
-        ].join(","),
+        Object.entries(AI_PYTHON_WEEK_ATTEMPT_ID_PREFIXES)
+          .map(([week, prefix]) => `and(week.eq.${week},id.like.${prefix}%)`)
+          .join(","),
       );
     }
     if (table === "special_mock_exam_attempts") {
@@ -104,7 +103,7 @@ async function loadAttemptQuestionRows(
       return [];
     }
     if (error) throw error;
-    const page = (data ?? []) as AttemptQuestionRow[];
+    const page = data ?? [];
     rows.push(...page);
     if (page.length < ATTEMPT_PAGE_SIZE) break;
     from += ATTEMPT_PAGE_SIZE;
@@ -187,12 +186,22 @@ export async function handleAdminRequest(request: Request) {
     const { data, error } = membersResult;
     if (error) return jsonError(error.message, 400);
 
+    const ownersByStudent = new Map(
+      (data ?? []).map((member) => [studyOwnerStudentId(member), member.auth_user_id]),
+    );
     let solvedByStudent: Map<number, number>;
+    let specialMockSolvedByStudent: Map<number, number>;
     try {
       const rowsByTable = await Promise.all(
         ATTEMPT_TABLES.map((table) => loadAttemptQuestionRows(client, table)),
       );
-      solvedByStudent = countUniqueSolvedQuestions(rowsByTable);
+      const ownedRowsByTable = rowsByTable.map((rows) => rows.filter(
+        (row) => row.auth_user_id != null && ownersByStudent.get(row.student_id) === row.auth_user_id,
+      ));
+      solvedByStudent = countUniqueSolvedQuestions(ownedRowsByTable);
+      specialMockSolvedByStudent = countUniqueSolvedQuestions([
+        ownedRowsByTable[ATTEMPT_TABLES.indexOf("special_mock_exam_attempts")],
+      ]);
     } catch (attemptError) {
       const message =
         typeof attemptError === "object" &&
@@ -210,10 +219,9 @@ export async function handleAdminRequest(request: Request) {
         can_access_special_mock_exam:
           member.can_access_special_mock_exam === true,
         auth_provisioned: Boolean(auth_user_id),
-        solved_question_count:
-          solvedByStudent.get(
-            member.student_id ?? 900_000_000 + member.id,
-          ) ?? 0,
+        solved_question_count: solvedByStudent.get(studyOwnerStudentId(member)) ?? 0,
+        special_mock_solved_question_count:
+          specialMockSolvedByStudent.get(studyOwnerStudentId(member)) ?? 0,
       })),
     });
   }
