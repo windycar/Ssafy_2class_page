@@ -136,5 +136,28 @@ export const MONTHLY_ASSESSMENT_REVIEW_NOTES: Partial<Record<number, ReviewNote>
         ]
       }
     ]
-  }
+  },
+  5: {
+    source: "Notion · 5회차 월말평가 디버깅 대비 총정리",
+    sections: [
+      {
+        title: "시험 전 복습 순서",
+        points: [
+          "우선 URL → View → Template과 CRUD·ModelForm을 확인합니다.",
+          "이어서 로그인·작성자 권한, Static과 Media 경로를 확인합니다.",
+          "N:1·N:M과 SQL JOIN·집계를 복습하고, DRF Serializer와 HTTP 상태 코드는 보충합니다.",
+          "JavaScript DOM·이벤트는 같은 날 별도 과목평가 대비 항목입니다.",
+        ],
+      },
+      {
+        title: "디버깅할 때 따라갈 순서",
+        points: [
+          "프로젝트를 실행하고 문제가 나는 화면이나 요청을 재현합니다.",
+          "로그와 요청 경로를 따라 관련 파일을 좁힌 뒤 가장 작은 수정으로 원인을 확인합니다.",
+          "같은 입력을 다시 실행한 다음 비로그인, 빈 입력, 없는 항목 등 예외 상황을 점검합니다.",
+          "이전 기수 사례는 연습 방향을 잡는 참고 자료입니다. 16기 세부 범위와 배점은 회차별 공지를 기준으로 확인합니다.",
+        ],
+      },
+    ],
+  },
 };

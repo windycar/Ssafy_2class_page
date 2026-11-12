@@ -52,7 +52,9 @@ export default function MonthlyMockExamView() {
       {summary ? (
         <div className="space-y-8">
           <section aria-labelledby="monthly-assessment-format" className="rounded-2xl border border-violet-100 bg-violet-50 p-5 sm:p-6">
-            <h2 id="monthly-assessment-format" className="text-lg font-black text-violet-950">평가 방식</h2>
+            <h2 id="monthly-assessment-format" className="text-lg font-black text-violet-950">
+              {summary.preparation ? "평가 안내" : "평가 방식"}
+            </h2>
             <p className="mt-2 text-sm leading-6 text-slate-700">{summary.format}</p>
           </section>
 
@@ -60,7 +62,7 @@ export default function MonthlyMockExamView() {
 
           <section aria-labelledby="monthly-assessment-types">
             <h2 id="monthly-assessment-types" className="mb-5 text-2xl font-black text-slate-950">
-              지난 평가에 나온 유형
+              {summary.preparation ? "시험 전 복습 유형" : "지난 평가에 나온 유형"}
             </h2>
             <div className="grid gap-4">
               {summary.types.map(({ title, description, notes }) => (

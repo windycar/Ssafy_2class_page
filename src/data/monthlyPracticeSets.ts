@@ -24,4 +24,8 @@ export const MONTHLY_PRACTICE_SETS: Partial<Record<number, readonly MonthlyPract
     { id: "algo-set-3", title: "알고리즘 기본 모의고사 3세트", topics: "부분 수열, 최단 탈출, 이진트리 순회" },
     { id: "algo-extra", title: "알고리즘 기본 추가 연습 3제", topics: "문자열 처리, 회문, 날짜별 연결 영역" },
   ],
+  5: [
+    { id: "debugging-list", title: "예상문제 1 · 글 목록이 보이지 않음", topics: "Django 뷰와 템플릿의 컨텍스트" },
+    { id: "debugging-update", title: "예상문제 2 · 수정했는데 새 글이 생성됨", topics: "ModelForm의 수정 대상 연결" },
+  ],
 };
