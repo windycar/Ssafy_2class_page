@@ -16,12 +16,30 @@ import { useAiPythonWeekProgress } from "../../hooks/useAiPythonWeekProgress";
 import { useSpecialMockExamProgress } from "../../hooks/useSpecialMockExamProgress";
 import { countUnresolvedMistakes } from "../../utils/studyProgressStats";
 import { AI_PYTHON_WEEK_CARD_GROUPS } from "../../data/questionBanks/aiPythonWeekMeta";
-import { canAccessSpecialMockExam } from "../../utils/specialMockExamAccess";
+import { canAccessMonthlyMockExam, canAccessSpecialMockExam } from "../../utils/specialMockExamAccess";
 import pythonHero from "../../assets/study/python-study-hero.png";
 
 export default function StudyHubView() {
   const { currentUser, isDemo } = useAuth();
   const hasSpecialMockExamAccess = canAccessSpecialMockExam(currentUser);
+  const mockExamCards = [
+    {
+      visible: hasSpecialMockExamAccess,
+      href: "/study/special-mock",
+      title: "과목평가 모의고사",
+      action: "모의고사 입장",
+      description: isDemo
+        ? "체험 계정에서도 실제 모의고사 문제를 풀어볼 수 있습니다."
+        : "파이썬 트랙에 맞는 과목평가 실전 모의고사입니다.",
+    },
+    {
+      visible: canAccessMonthlyMockExam(currentUser),
+      href: "/study/monthly-mock",
+      title: "월말평가 문제 유형",
+      action: "문제 유형 목록 보기",
+      description: "지난 월말평가에서 어떤 유형이 나왔는지 회차별로 확인하세요.",
+    },
+  ];
   const { progress: pythonProgress, summary: pythonSummary } = useStudyProgress();
   const { progress: webProgress, summary: webSummary } = useWebStudyProgress();
   const { progress: aiPythonProgress, summary: aiPythonSummary } = useAiPythonStudyProgress();
@@ -130,9 +148,10 @@ export default function StudyHubView() {
         />
       </section>
 
-      {hasSpecialMockExamAccess && (
+      {mockExamCards.filter(({ visible }) => visible).map(({ href, title, description, action }) => (
         <Link
-          to="/study/special-mock"
+          key={href}
+          to={href}
           className="group relative flex min-h-[170px] overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-r from-[#17143f] via-[#4d35ad] to-[#b36a16] p-6 text-white shadow-[0_18px_45px_rgba(77,53,173,0.22)] transition hover:-translate-y-1 sm:p-7"
         >
           <div className="absolute -right-12 -top-24 h-56 w-56 rounded-full border-[34px] border-white/5" />
@@ -149,21 +168,20 @@ export default function StudyHubView() {
                 <ShieldCheck className="h-3 w-3" />
                 {isDemo ? "DEMO ACCESS" : "ADMIN APPROVED"}
               </span>
-             
             </div>
             <h2 className="text-2xl font-black tracking-tight sm:text-3xl">
-              특별 모의고사
+              {title}
             </h2>
             <p className="mt-1.5 text-xs leading-5 text-amber-50/80 sm:text-sm">
-              {isDemo ? "체험 계정에서도 실제 모의고사 문제를 풀어볼 수 있습니다." : "선택을 받은 학습자만 이용할 수 있는 과목평가 실전 모의고사입니다."}
+              {description}
             </p>
             <span className="mt-4 inline-flex items-center gap-2 text-sm font-extrabold">
-              모의고사 입장
+              {action}
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </span>
           </div>
         </Link>
-      )}
+      ))}
 
       <section>
         <div className="mb-4 flex items-end justify-between gap-4">

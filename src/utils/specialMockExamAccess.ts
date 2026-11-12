@@ -14,3 +14,9 @@ export function canAccessSpecialMockExam(
       (user.role === "admin" || user.canAccessSpecialMockExam === true))
   );
 }
+
+export function canAccessMonthlyMockExam(
+  user: (SpecialMockExamAccessUser & { authId: string }) | null | undefined,
+) {
+  return Boolean(user?.authId && !user.isDemo && canAccessSpecialMockExam(user));
+}

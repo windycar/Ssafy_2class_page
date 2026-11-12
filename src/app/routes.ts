@@ -42,6 +42,7 @@ const SpecialMockExamView = lazy(
 const SpecialMockExamQuizView = lazy(
   () => import("../views/study/SpecialMockExamQuizView"),
 );
+const MonthlyMockExamView = lazy(() => import("../views/study/MonthlyMockExamView"));
 const AttendanceDocumentView = lazy(() => import("../views/AttendanceDocumentView"));
 const NotFoundView = lazy(() => import("../views/NotFoundView"));
 
@@ -92,6 +93,12 @@ export const router = createBrowserRouter([
                 path: "study/special-mock/:assessmentRound/:mockRound/quiz",
                 Component: SpecialMockExamQuizView,
               },
+            ],
+          },
+          {
+            element: createElement(SpecialMockExamRoute, { monthly: true }),
+            children: [
+              { path: "study/monthly-mock/:round?", Component: MonthlyMockExamView },
             ],
           },
           { path: "attendance", Component: AttendanceDocumentView },

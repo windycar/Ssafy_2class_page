@@ -1,11 +1,14 @@
 import { Navigate, Outlet } from "react-router";
 import { useAuth } from "../../hooks/useAuth";
-import { canAccessSpecialMockExam } from "../../utils/specialMockExamAccess";
+import { canAccessMonthlyMockExam, canAccessSpecialMockExam } from "../../utils/specialMockExamAccess";
 
-export default function SpecialMockExamRoute() {
+export default function SpecialMockExamRoute({ monthly = false }: { monthly?: boolean }) {
   const { currentUser } = useAuth();
+  const hasAccess = monthly
+    ? canAccessMonthlyMockExam(currentUser)
+    : canAccessSpecialMockExam(currentUser);
 
-  if (!canAccessSpecialMockExam(currentUser)) {
+  if (!hasAccess) {
     return <Navigate to="/study" replace />;
   }
 
