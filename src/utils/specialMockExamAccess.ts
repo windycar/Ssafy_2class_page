@@ -3,6 +3,7 @@ type SpecialMockExamAccessUser = {
   canAccessSpecialMockExam: boolean;
   studentId: number | null;
   isDemo?: boolean;
+  isActive?: boolean;
 };
 
 export function canAccessSpecialMockExam(
@@ -10,8 +11,9 @@ export function canAccessSpecialMockExam(
 ) {
   return (
     user?.isDemo === true ||
-    (user?.studentId != null &&
-      (user.role === "admin" || user.canAccessSpecialMockExam === true))
+    (user != null && user.isActive !== false &&
+      (user.role === "admin" ||
+        (user.studentId != null && user.canAccessSpecialMockExam === true)))
   );
 }
 

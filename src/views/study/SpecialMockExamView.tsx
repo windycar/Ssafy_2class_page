@@ -122,7 +122,7 @@ const ROUND_STYLES = {
 
 export default function SpecialMockExamView() {
   const { isDemo } = useAuth();
-  const { progress, resetProgress, syncState } = useSpecialMockExamProgress();
+  const { progress, resetProgress, syncState, canTrackProgress } = useSpecialMockExamProgress();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedAssessmentRound = searchParams.get("assessment") ?? undefined;
   const [selectedAssessmentRound, setSelectedAssessmentRound] =
@@ -214,7 +214,7 @@ export default function SpecialMockExamView() {
             ) : (
               <CloudOff className="h-3.5 w-3.5 text-amber-300" />
             )}
-            {isDemo ? "체험 풀이 기록은 저장되지 않습니다" : syncState === "synced"
+            {!canTrackProgress ? (isDemo ? "체험 풀이 기록은 저장되지 않습니다" : "학번이 연결된 계정의 풀이 기록만 저장됩니다") : syncState === "synced"
               ? "풀이 기록 동기화됨"
               : syncState === "loading"
                 ? "풀이 기록 불러오는 중"
@@ -322,7 +322,7 @@ export default function SpecialMockExamView() {
               모의고사 1~{collection.rounds.at(-1)}회차
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              원하는 세트를 선택해 응시하거나, {isDemo ? "문제와 해설을" : "저장된 답안과 해설을"} 다시
+              원하는 세트를 선택해 응시하거나, {canTrackProgress ? "저장된 답안과 해설을" : "문제와 해설을"} 다시
               확인하세요.
             </p>
           </div>

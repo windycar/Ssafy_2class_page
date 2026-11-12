@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import {
   ArrowLeft,
@@ -25,6 +25,11 @@ import {
 } from "../../data/모의고사";
 import { useAuth } from "../../hooks/useAuth";
 import { useSpecialMockExamProgress } from "../../hooks/useSpecialMockExamProgress";
+import {
+  clearSpecialMockExamDraft,
+  loadSpecialMockExamDraft,
+  saveSpecialMockExamDraft,
+} from "../../services/storage/specialMockExamDraftStorage";
 import type {
   SpecialMockExamAvailableAssessmentRound,
   SpecialMockExamDifficulty,
@@ -33,6 +38,7 @@ import type {
   SpecialMockExamRound,
 } from "../../types/specialMockExam";
 import {
+  getSpecialMockExamAttemptIdPrefix,
   isSpecialMockExamAssessmentRound,
   isSpecialMockExamRound,
 } from "../../types/specialMockExam";
@@ -92,12 +98,17 @@ export default function SpecialMockExamQuizView() {
     : null;
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { currentUser, isDemo } = useAuth();
-  const { progress, recordAnswers, syncState } = useSpecialMockExamProgress();
+  const { currentUser } = useAuth();
+  const { progress, recordAnswers, syncState, canTrackProgress } = useSpecialMockExamProgress();
   const mode = searchParams.get("mode");
   const isSavedReview = mode === "review";
   const run = searchParams.get("run") ?? "0";
-  const sessionKey = `${currentUser?.id ?? 0}:assessment-${assessmentRound ?? "invalid"}:mock-${mockRound ?? "invalid"}:${mode ?? "standard"}:${run}`;
+  const bankKey = assessmentRound && mockRound
+    ? getSpecialMockExamAttemptIdPrefix(assessmentRound, mockRound)
+    : "invalid";
+  const sessionKey = `${currentUser?.authId ?? ""}:${currentUser?.id ?? 0}:${bankKey}:${mode ?? "standard"}:${run}`;
+  const keepDraft = canTrackProgress && !isSavedReview;
+  const submitted = useRef(false);
   const [session, setSession] = useState<QuizSession | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, SessionAnswer>>({});
@@ -148,24 +159,36 @@ export default function SpecialMockExamQuizView() {
       >)[mockRound]!];
     }
 
+    const draft = keepDraft ? loadSpecialMockExamDraft(sessionKey) : null;
+    const byId = new Map(questions.map((question) => [question.id, question]));
+    const restored = draft &&
+      draft.questionIds.length === questions.length &&
+      new Set(draft.questionIds).size === questions.length &&
+      draft.questionIds.every((id) => byId.has(id))
+      ? draft
+      : null;
     const sessionQuestions = isSavedReview
       ? questions
-      : shuffleArray(questions);
+      : restored
+        ? restored.questionIds.map((id) => byId.get(id)!)
+        : shuffleArray(questions);
+    submitted.current = false;
     setSession({ key: sessionKey, questions: sessionQuestions });
-    setCurrentIndex(0);
+    setCurrentIndex(restored ? Math.max(0, Math.min(restored.currentIndex, questions.length - 1)) : 0);
     setAnswers(
       isSavedReview
         ? buildSpecialMockExamReviewAnswers(sessionQuestions, roundAttempts)
-        : {},
+        : restored?.answers ?? {},
     );
-    setDraftAnswers({});
-    setReviewQuestionIds([]);
+    setDraftAnswers(restored?.draftAnswers ?? {});
+    setReviewQuestionIds(restored?.reviewQuestionIds ?? []);
     setFinished(isSavedReview);
     setReviewingAnswers(isSavedReview);
   }, [
     assessmentRound,
     collection,
     isSavedReview,
+    keepDraft,
     mode,
     mockRound,
     progress.attempts,
@@ -173,6 +196,18 @@ export default function SpecialMockExamQuizView() {
     sessionKey,
     syncState,
   ]);
+
+  useEffect(() => {
+    if (!keepDraft || session?.key !== sessionKey || finished || !session.questions.length) return;
+    if (!Object.keys(answers).length && !Object.keys(draftAnswers).length && !reviewQuestionIds.length && currentIndex === 0) return;
+    saveSpecialMockExamDraft(sessionKey, {
+      questionIds: session.questions.map(({ id }) => id),
+      currentIndex,
+      answers,
+      draftAnswers,
+      reviewQuestionIds,
+    });
+  }, [answers, currentIndex, draftAnswers, finished, keepDraft, reviewQuestionIds, session, sessionKey]);
 
   if (!assessmentRound || !collection || !mockRound) {
     return (
@@ -282,6 +317,13 @@ export default function SpecialMockExamQuizView() {
           <p className="mt-3 text-sm font-bold text-white/75">
             {SPECIAL_MOCK_EXAM_PASS_SCORE}점 이상 통과 · 내 점수 {score}점
           </p>
+          {canTrackProgress && sessionAnswers.some(({ response }) => response !== null) && (
+            <p role="status" className="mt-2 text-xs font-bold text-white/80">
+              {syncState === "synced" ? "풀이 기록이 서버에 저장되었습니다."
+                : syncState === "loading" ? "풀이 기록을 서버에 동기화하고 있습니다."
+                  : "이 브라우저에 저장했습니다. 연결이 복구되면 다시 동기화합니다."}
+            </p>
+          )}
           <div className="mx-auto mt-7 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-4">
             <ResultStat label="점수" value={`${score}점`} />
             <ResultStat label="정답" value={`${correctCount}`} />
@@ -335,10 +377,20 @@ export default function SpecialMockExamQuizView() {
     currentAnswer !== undefined && currentAnswer.response !== null;
   const currentReviewStatus = getSpecialMockExamReviewStatus(currentAnswer);
   const currentDraft = draftAnswers[current.id] ?? "";
-  const answeredCount = questions.filter((question) =>
-    answers[question.id] !== undefined &&
-    answers[question.id].response !== null,
-  ).length;
+  const responses = questions.map((question) => ({
+    question,
+    response: question.questionType === "multiple-choice"
+      ? answers[question.id]?.response ?? null
+      : draftAnswers[question.id]?.trim() || null,
+  }));
+  const needsMoreText = ({ question, response }: (typeof responses)[number]) =>
+    question.questionType === "essay" &&
+    typeof response === "string" &&
+    response.length < (question.minLength ?? ESSAY_MIN_LENGTH);
+  const panelAnswers = reviewingAnswers ? answers : Object.fromEntries(
+    responses.filter((item) => !needsMoreText(item)).map(({ question, response }) => [question.id, { response }]),
+  );
+  const answeredCount = Object.values(panelAnswers).filter(({ response }) => response !== null).length;
   const answerRate = Math.round((answeredCount / questions.length) * 100);
   const reviewQuestionIdSet = new Set(reviewQuestionIds);
   const isLast = currentIndex === questions.length - 1;
@@ -363,7 +415,7 @@ export default function SpecialMockExamQuizView() {
       return;
     }
     submitResponse(response);
-    toast.success(isDemo ? "체험 답안을 현재 시험에 반영했습니다." : "답안을 저장했습니다.");
+    toast.success("답안을 현재 시험에 반영했습니다.");
   };
 
   const toggleReview = () => {
@@ -375,14 +427,23 @@ export default function SpecialMockExamQuizView() {
   };
 
   const finishAndGrade = () => {
-    const graded = recordAnswers(
-      assessmentRound,
-      mockRound,
-      questions.map((question) => ({
-        question,
-        response: answers[question.id]?.response ?? null,
-      })),
-    );
+    if (submitted.current) return;
+    const incompleteEssay = responses.findIndex(needsMoreText);
+    if (incompleteEssay !== -1) {
+      setCurrentIndex(incompleteEssay);
+      toast.error("최소 글자 수를 채우거나 답안을 비운 뒤 최종 채점해 주세요.");
+      return;
+    }
+    submitted.current = true;
+    let graded: ReturnType<typeof recordAnswers>;
+    try {
+      graded = recordAnswers(assessmentRound, mockRound, responses);
+    } catch {
+      submitted.current = false;
+      toast.error("풀이 기록을 저장하지 못했습니다. 브라우저 저장 공간을 확인한 뒤 다시 시도해 주세요.");
+      return;
+    }
+    if (keepDraft) clearSpecialMockExamDraft(sessionKey);
     setAnswers(
       Object.fromEntries(
         graded.map(({ question, response, correct }) => [
@@ -438,7 +499,7 @@ export default function SpecialMockExamQuizView() {
                 {mockRound}회차 ·{` `}
                 {reviewingAnswers
                   ? isSavedReview
-                    ? (isDemo ? "체험 문제 미리보기" : "저장된 풀이 기록")
+                    ? (canTrackProgress ? "저장된 풀이 기록" : "문제 미리보기")
                     : "전체 답변 다시 보기"
                   : mode === "wrong"
                     ? "오답 복습"
@@ -634,7 +695,7 @@ export default function SpecialMockExamQuizView() {
                   }
                   className="mt-4 rounded-xl bg-slate-900 px-5 py-3 text-sm font-extrabold text-white disabled:opacity-35"
                 >
-                  {isDemo ? (answered ? "체험 답안 수정" : "체험 답안 적용") : (answered ? "답안 수정 저장" : "답안 저장")}
+                  답안 적용
                 </button>
               </form>
             )}
@@ -651,8 +712,8 @@ export default function SpecialMockExamQuizView() {
                 <p className="flex items-center gap-2 text-xs font-bold text-blue-700">
                   <ListChecks className="h-4 w-4" />
                   {answered
-                    ? (isDemo ? "현재 시험에 답안이 반영되었습니다. 최종 채점 전까지 수정할 수 있습니다." : "답안이 저장되었습니다. 최종 채점 전까지 수정할 수 있습니다.")
-                    : "답안을 선택하거나 입력해 주세요. 정답은 최종 채점 후 공개됩니다."}
+                    ? "현재 시험에 답안이 반영되었습니다. 최종 채점 전까지 수정할 수 있습니다."
+                    : "답안을 선택하거나 입력해 주세요. 작성한 답안은 최종 채점에 반영됩니다."}
                 </p>
               </div>
             )}
@@ -705,7 +766,7 @@ export default function SpecialMockExamQuizView() {
 
         <ExamAnswerPanel
           questions={questions}
-          answers={answers}
+          answers={panelAnswers}
           currentIndex={currentIndex}
           reviewQuestionIds={reviewQuestionIdSet}
           answerRate={reviewingAnswers ? score : answerRate}

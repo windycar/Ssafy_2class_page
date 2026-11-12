@@ -189,10 +189,10 @@ test("특별 모의고사는 승인된 회원과 관리자만 접근한다", () 
   assert.equal(
     canAccessSpecialMockExam({
       role: "admin",
-      canAccessSpecialMockExam: true,
+      canAccessSpecialMockExam: false,
       studentId: null,
     }),
-    false,
+    true,
   );
   assert.equal(
     canAccessSpecialMockExam({

@@ -26,6 +26,7 @@ import { canAccessSpecialMockExam } from "../utils/specialMockExamAccess";
 export function useSpecialMockExamProgress() {
   const { currentUser, isDemo } = useAuth();
   const hasAccess = canAccessSpecialMockExam(currentUser);
+  const canTrackProgress = hasAccess && !isDemo && Boolean(currentUser?.authId) && currentUser?.studentId != null;
   const identity = `${currentUser?.authId ?? ""}:${currentUser?.id ?? ""}`;
   const activeIdentity = useRef(identity);
   activeIdentity.current = identity;
@@ -39,7 +40,7 @@ export function useSpecialMockExamProgress() {
     let cancelled = false;
     let refreshInFlight = false;
 
-    if (!currentUser || !hasAccess || isDemo) {
+    if (!currentUser || !canTrackProgress) {
       setProgress({ attempts: [] });
       setSyncState("local");
       return () => {
@@ -78,7 +79,7 @@ export function useSpecialMockExamProgress() {
       cancelled = true;
       unsubscribe();
     };
-  }, [currentUser, hasAccess, identity, isDemo]);
+  }, [currentUser, canTrackProgress, identity]);
 
   const recordAnswers = (
     assessmentRound: SpecialMockExamAvailableAssessmentRound,
@@ -93,7 +94,7 @@ export function useSpecialMockExamProgress() {
       response,
       correct: gradeSpecialMockExamResponse(question, response).correct,
     }));
-    if (!currentUser || !hasAccess || isDemo || activeIdentity.current !== identity) return graded;
+    if (!currentUser || !canTrackProgress || activeIdentity.current !== identity) return graded;
     const submittedAnswers = graded.filter(({ response }) =>
       hasSpecialMockExamResponse(response),
     );
@@ -116,7 +117,14 @@ export function useSpecialMockExamProgress() {
         answeredAt,
       }),
     );
-    setProgress(specialMockExamProgressStorage.addMany(currentUser.id, attempts));
+    specialMockExamProgressStorage.addMany(currentUser.id, attempts);
+    const storedProgress = specialMockExamProgressStorage.get(currentUser.id);
+    const storedIds = new Set(storedProgress.attempts.map(({ id }) => id));
+    const pendingIds = new Set(specialMockExamProgressStorage.getPendingIds(currentUser.id));
+    if (attempts.some(({ id }) => !storedIds.has(id) || !pendingIds.has(id))) {
+      throw new Error("브라우저에 풀이 기록을 저장하지 못했습니다.");
+    }
+    setProgress(storedProgress);
     setSyncState("loading");
     saveSpecialMockExamAttempt(currentUser.id, currentUser.authId)
       .then((saved) => {
@@ -145,8 +153,7 @@ export function useSpecialMockExamProgress() {
   ) => {
     if (
       !currentUser ||
-      !hasAccess ||
-      isDemo ||
+      !canTrackProgress ||
       syncState === "loading" ||
       resetInFlight.current === identity
     ) {
@@ -199,6 +206,7 @@ export function useSpecialMockExamProgress() {
   }, [progress.attempts]);
 
   return {
+    canTrackProgress,
     progress,
     summary,
     recordAnswer,

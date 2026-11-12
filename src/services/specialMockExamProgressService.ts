@@ -36,6 +36,9 @@ type SpecialMockExamAttemptRow = {
   answered_at: string;
 };
 
+const PROGRESS_PAGE_SIZE = 500;
+const PROGRESS_LIMIT = 3000;
+
 function toAttempt(row: SpecialMockExamAttemptRow): SpecialMockExamAttempt {
   return {
     id: row.id,
@@ -124,21 +127,26 @@ export async function loadSpecialMockExamProgress(
   const localIdsBeforeSync = new Set(local.attempts.map(({ id }) => id));
 
   await uploadPending(studentId, authId!);
-  const { data, error } = await supabase
-    .from("special_mock_exam_attempts")
-    .select("*")
-    .eq("student_id", studentId)
-    .eq("auth_user_id", authId!)
-    .order("answered_at", { ascending: false })
-    .limit(3000);
+  const rows: SpecialMockExamAttemptRow[] = [];
+  for (let offset = 0; offset < PROGRESS_LIMIT; offset += PROGRESS_PAGE_SIZE) {
+    await assertSpecialMockExamSession(supabase, authId!);
+    const { data, error } = await supabase
+      .from("special_mock_exam_attempts")
+      .select("*")
+      .eq("student_id", studentId)
+      .eq("auth_user_id", authId!)
+      .order("answered_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(offset, offset + PROGRESS_PAGE_SIZE - 1);
 
-  if (error) throw error;
+    if (error) throw error;
+    rows.push(...((data ?? []) as SpecialMockExamAttemptRow[]));
+    if ((data?.length ?? 0) < PROGRESS_PAGE_SIZE) break;
+  }
   await assertSpecialMockExamSession(supabase, authId!);
   const remote: SpecialMockExamProgress = {
     attempts: currentBankProgress({
-      attempts: ((data ?? []) as SpecialMockExamAttemptRow[])
-        .map(toAttempt)
-        .reverse(),
+      attempts: rows.reverse().map(toAttempt),
     }).attempts,
   };
   return specialMockExamProgressStorage.replace(
