@@ -20,6 +20,7 @@ import { useAiPythonWeekProgress } from "../../hooks/useAiPythonWeekProgress";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
 import { useSpecialMockExamProgress } from "../../hooks/useSpecialMockExamProgress";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
+import { useJavascriptStudyProgress } from "../../hooks/useJavascriptStudyProgress";
 import { countUnresolvedMistakes } from "../../utils/studyProgressStats";
 import { canAccessSpecialMockExam } from "../../utils/specialMockExamAccess";
 
@@ -37,6 +38,7 @@ export default function StudyReportView() {
   const hasSpecialMockExamAccess = canAccessSpecialMockExam(currentUser);
   const python = useStudyProgress();
   const web = useWebStudyProgress();
+  const javascript = useJavascriptStudyProgress();
   const aiPython = useAiPythonStudyProgress();
   const aiPythonWeek = useAiPythonWeekProgress();
   const specialMockExam = useSpecialMockExamProgress();
@@ -45,6 +47,8 @@ export default function StudyReportView() {
   const wrongCounts: Record<string, number> = {
     python: countUnresolvedMistakes(python.progress.attempts),
     web: countUnresolvedMistakes(web.progress.attempts),
+    ...Object.fromEntries(STUDY_REVIEW_TRACKS.flatMap((track) => track.source === "javascript"
+      ? [[track.id, countUnresolvedMistakes(javascript.progress.attempts.filter(attempt => attempt.category === track.set))]] : [])),
     "ai-python": countUnresolvedMistakes(aiPython.progress.attempts),
     "ai-python-week1": countUnresolvedMistakes(
       aiPythonWeek.progress.attempts.filter((attempt) => attempt.week === "week1"),
@@ -121,6 +125,7 @@ export default function StudyReportView() {
   const syncStates = [
     python.syncState,
     web.syncState,
+    javascript.syncState,
     aiPython.syncState,
     aiPythonWeek.syncState,
     ...(hasSpecialMockExamAccess ? [specialMockExam.syncState] : []),

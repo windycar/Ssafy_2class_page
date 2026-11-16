@@ -11,6 +11,8 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { useStudyProgress } from "../../hooks/useStudyProgress";
 import { useWebStudyProgress } from "../../hooks/useWebStudyProgress";
+import { useJavascriptStudyProgress } from "../../hooks/useJavascriptStudyProgress";
+import { JAVASCRIPT_QUESTION_BANK } from "../../data/questionBanks/javascriptQuestionBank";
 import { useAiPythonStudyProgress } from "../../hooks/useAiPythonStudyProgress";
 import { useAiPythonWeekProgress } from "../../hooks/useAiPythonWeekProgress";
 import { useSpecialMockExamProgress } from "../../hooks/useSpecialMockExamProgress";
@@ -42,6 +44,7 @@ export default function StudyHubView() {
   ];
   const { progress: pythonProgress, summary: pythonSummary } = useStudyProgress();
   const { progress: webProgress, summary: webSummary } = useWebStudyProgress();
+  const { progress: javascriptProgress, summary: javascriptSummary } = useJavascriptStudyProgress();
   const { progress: aiPythonProgress, summary: aiPythonSummary } = useAiPythonStudyProgress();
   const { progress: aiPythonWeekProgress, summary: aiPythonWeekSummary } = useAiPythonWeekProgress();
   const {
@@ -51,12 +54,14 @@ export default function StudyHubView() {
   const total =
     pythonSummary.total +
     webSummary.total +
+    javascriptSummary.total +
     aiPythonSummary.total +
     aiPythonWeekSummary.total +
     specialMockExamSummary.total;
   const correct =
     pythonSummary.correct +
     webSummary.correct +
+    javascriptSummary.correct +
     aiPythonSummary.correct +
     aiPythonWeekSummary.correct +
     specialMockExamSummary.correct;
@@ -64,6 +69,7 @@ export default function StudyHubView() {
   const reviewCount =
     countUnresolvedMistakes(pythonProgress.attempts) +
     countUnresolvedMistakes(webProgress.attempts) +
+    countUnresolvedMistakes(javascriptProgress.attempts) +
     countUnresolvedMistakes(aiPythonProgress.attempts) +
     countUnresolvedMistakes(aiPythonWeekProgress.attempts) +
     countUnresolvedMistakes(specialMockExamProgress.attempts);
@@ -253,6 +259,22 @@ export default function StudyHubView() {
                   웹 강의실 입장
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </span>
+              </div>
+            </div>
+          </Link>
+          <Link
+            to="/study/javascript"
+            className="group relative min-h-[290px] overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-br from-[#59310d] via-[#bd6a0b] to-[#e2a51b] p-6 text-white shadow-[0_18px_45px_rgba(173,100,11,0.20)] transition hover:-translate-y-1"
+          >
+            <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full border-[28px] border-white/5" />
+            <img src="/images/study-tracks/javascript.png" alt="" aria-hidden="true" className="pointer-events-none absolute -bottom-1 right-0 h-[130px] w-[130px] object-contain drop-shadow-[0_14px_24px_rgba(59,29,3,0.3)] transition duration-300 group-hover:-translate-y-1 group-hover:scale-105 xl:h-[150px] xl:w-[150px]" />
+            <div className="relative flex h-full flex-col">
+              <div className="flex justify-end"><span className="rounded-full bg-white/20 px-3 py-1 text-[11px] font-black">{JAVASCRIPT_QUESTION_BANK.length}문제</span></div>
+              <div className="relative z-10 mt-auto max-w-[68%] lg:max-w-[62%] xl:max-w-[65%]">
+                <p className="text-xs font-black tracking-[0.18em] text-amber-100/75">NEW CLASSROOM</p>
+                <h3 className="mt-1 text-3xl font-black">JavaScript</h3>
+                <p className="mt-2 text-sm leading-6 text-amber-50/80">1~3회차는 쉬운 문제, 4~6회차는 어려운 문제입니다.</p>
+                <span className="mt-5 inline-flex items-center gap-2 text-sm font-extrabold">회차 선택하기 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
               </div>
             </div>
           </Link>

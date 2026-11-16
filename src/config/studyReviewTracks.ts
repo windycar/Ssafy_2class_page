@@ -16,6 +16,7 @@ export type StudyReviewTrack = BaseReviewTrack &
   (
     | { source: "python" }
     | { source: "web" }
+    | { source: "javascript"; set: "set1" | "set2" | "set3" | "set4" | "set5" | "set6" }
     | { source: "ai-python" }
     | { source: "ai-python-week"; week: AiPythonWeek }
     | {
@@ -30,6 +31,35 @@ export type StudyReviewTrack = BaseReviewTrack &
  * 새 문제 세트를 추가할 때 오답 저장소와 quiz?mode=wrong을 구현한 뒤 여기에 등록합니다.
  */
 export const STUDY_REVIEW_TRACKS: readonly StudyReviewTrack[] = [
+  {
+    id: "javascript-set1",
+    label: "JavaScript 1회차",
+    description: "1회차 25문제",
+    href: "/study/javascript/quiz?mode=wrong&categories=set1",
+    tone: "amber",
+    source: "javascript",
+    set: "set1",
+  },
+  {
+    id: "javascript-set2", label: "JavaScript 2회차", description: "2회차 25문제",
+    href: "/study/javascript/quiz?mode=wrong&categories=set2", tone: "amber", source: "javascript", set: "set2",
+  },
+  {
+    id: "javascript-set3", label: "JavaScript 3회차", description: "3회차 25문제",
+    href: "/study/javascript/quiz?mode=wrong&categories=set3", tone: "amber", source: "javascript", set: "set3",
+  },
+  {
+    id: "javascript-set4", label: "JavaScript 4회차", description: "어려운 버전 · 25문제",
+    href: "/study/javascript/quiz?mode=wrong&categories=set4", tone: "amber", source: "javascript", set: "set4",
+  },
+  {
+    id: "javascript-set5", label: "JavaScript 5회차", description: "어려운 버전 · 25문제",
+    href: "/study/javascript/quiz?mode=wrong&categories=set5", tone: "amber", source: "javascript", set: "set5",
+  },
+  {
+    id: "javascript-set6", label: "JavaScript 6회차", description: "어려운 버전 · 25문제",
+    href: "/study/javascript/quiz?mode=wrong&categories=set6", tone: "amber", source: "javascript", set: "set6",
+  },
   {
     id: "python",
     label: "Python 기본",

@@ -7,6 +7,12 @@ test("모든 학습 문제 세트가 오답 복습 설정에 등록된다", () =
   assert.deepEqual(
     STUDY_REVIEW_TRACKS.map((track) => track.id),
     [
+      "javascript-set1",
+      "javascript-set2",
+      "javascript-set3",
+      "javascript-set4",
+      "javascript-set5",
+      "javascript-set6",
       "python",
       "web",
       "ai-python",

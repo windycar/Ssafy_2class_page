@@ -161,6 +161,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (shouldRefreshProfileForAuthEvent(event, true)) {
+        setCurrentUser((previous) =>
+          previous && profileMatchesSession(previous.authId, session.user.id) ? previous : null,
+        );
         if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
         refreshTimer = window.setTimeout(() => {
           void refreshProfile().catch(() => undefined);
