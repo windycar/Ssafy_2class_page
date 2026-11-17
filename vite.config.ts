@@ -6,6 +6,9 @@ import { defineConfig, loadEnv, type Plugin } from "vite";
 import authFunction from "./api/auth";
 import adminFunction from "./api/admin";
 import bangLeaveFunction from "./api/bang-leave";
+import { QUESTION_BANK_TOTALS } from "./src/data/questionBanks";
+import { JAVASCRIPT_QUESTION_BANK } from "./src/data/questionBanks/javascriptQuestionBank";
+import { SPECIAL_MOCK_EXAM_COLLECTIONS } from "./src/data/모의고사";
 
 type WebHandler = (request: Request) => Promise<Response> | Response;
 
@@ -96,8 +99,18 @@ function localVercelApi(env: Record<string, string>): Plugin {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const { python, web, aiPython, aiPythonWeeks } = QUESTION_BANK_TOTALS;
+  const specialMockExamQuestionCount = Object.values(SPECIAL_MOCK_EXAM_COLLECTIONS)
+    .flatMap(({ banks }) => Object.values(banks))
+    .reduce((total, questions) => total + questions.length, 0);
+  const studyQuestionCount =
+    python + web + aiPython + aiPythonWeeks +
+    JAVASCRIPT_QUESTION_BANK.length + specialMockExamQuestionCount;
 
   return {
+    define: {
+      __STUDY_QUESTION_COUNT__: JSON.stringify(studyQuestionCount),
+    },
     server: {
       fs: {
         deny: [".env", ".env.*", "*.{crt,pem}", "**/.git/**", "**/server/monthly-practice/**"],

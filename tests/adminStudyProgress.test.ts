@@ -34,13 +34,16 @@ test("counts each solved question once per question bank", () => {
   assert.equal(counts.get(202), 1);
 });
 
-test("관리자 명단 조회는 과목평가 2·3·5·8회차의 현재 문제은행 ID만 필터링한다", () => {
+test("관리자 명단 조회는 과목평가 2·3·5·8·9회차의 현재 문제은행 ID만 필터링한다", () => {
   const filter = buildSpecialMockExamAttemptFilter(
     SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS,
     SPECIAL_MOCK_EXAM_ROUNDS_BY_ASSESSMENT,
     getSpecialMockExamAttemptIdPrefix,
   );
-  assert.equal(filter.match(/and\(/g)?.length, 24);
+  assert.equal(filter.match(/and\(/g)?.length, 29);
+  for (const round of [1, 2, 3, 4, 5]) {
+    assert.ok(filter.includes(`and(assessment_round.eq.9,mock_round.eq.${round},id.like.special-mock-a9-r${round}-v1-%)`));
+  }
   assert.match(filter, /and\(assessment_round\.eq\.8,mock_round\.eq\.8,id\.like\.special-mock-a8-r8-v1-%\)/);
   assert.match(filter, /and\(assessment_round\.eq\.8,mock_round\.eq\.5,id\.like\.special-mock-a8-r5-v1-%\)/);
   assert.match(

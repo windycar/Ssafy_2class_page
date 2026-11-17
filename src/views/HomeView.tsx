@@ -8,15 +8,9 @@ import rulesQuickMenuArt from "../assets/home/quick-menu/rules.png";
 import gameQuickMenuArt from "../assets/home/quick-menu/game.png";
 import studyQuickMenuArt from "../assets/home/quick-menu/study.png";
 import attendanceQuickMenuArt from "../assets/home/quick-menu/attendance.png";
-import { ALL_PYTHON_QUESTIONS } from "../data/questionBanks/pythonQuestionBank";
-import { ALL_WEB_QUESTIONS } from "../data/questionBanks/webQuestionBank";
-import { AI_PYTHON_QUESTION_BANK } from "../data/questionBanks/aiPythonQuestionBank";
-import { AI_PYTHON_WEEK_TOTAL_QUESTIONS } from "../data/questionBanks/aiPythonWeekMeta";
-const TOTAL_STUDY_QUESTIONS =
-  ALL_PYTHON_QUESTIONS.length +
-  ALL_WEB_QUESTIONS.length +
-  AI_PYTHON_QUESTION_BANK.length +
-  AI_PYTHON_WEEK_TOTAL_QUESTIONS;
+
+declare const __STUDY_QUESTION_COUNT__: number;
+
 const QUICK_MENU = [
   {
     title: "랜덤 팀 편성",
@@ -91,10 +85,10 @@ const QUICK_MENU = [
   },
   {
     title: "공부 문제",
-    description: "Python·Web·AI 문제를 풀고 틀린 문제만 골라 다시 풀어요.",
+    description: "Python·Web·JavaScript·AI 문제와 과목평가 모의고사를 풀어요.",
     imageSrc: studyQuickMenuArt,
     path: "/study",
-    badge: `${TOTAL_STUDY_QUESTIONS}문제`,
+    badge: `${__STUDY_QUESTION_COUNT__.toLocaleString("ko-KR")}문제`,
     buttonLabel: "학습 시작",
     colorBg: "bg-indigo-50",
     colorBorder: "border-indigo-200",

@@ -102,6 +102,7 @@ export default function SpecialMockExamQuizView() {
   const { progress, recordAnswers, syncState, canTrackProgress } = useSpecialMockExamProgress();
   const mode = searchParams.get("mode");
   const isSavedReview = mode === "review";
+  const literalText = assessmentRound === 8 || assessmentRound === 9;
   const run = searchParams.get("run") ?? "0";
   const bankKey = assessmentRound && mockRound
     ? getSpecialMockExamAttemptIdPrefix(assessmentRound, mockRound)
@@ -549,7 +550,7 @@ export default function SpecialMockExamQuizView() {
             </div>
 
             <h1 className="whitespace-pre-wrap text-xl font-black leading-8 tracking-tight text-slate-900 sm:text-2xl">
-              <MathText text={current.prompt} literalText={assessmentRound === 8} />
+              <MathText text={current.prompt} literalText={literalText} />
             </h1>
 
             {current.code ? (
@@ -619,7 +620,7 @@ export default function SpecialMockExamQuizView() {
                         )}
                       </span>
                       <span className="min-w-0 flex-1 whitespace-pre-wrap font-mono text-sm font-bold">
-                        <MathText text={option} literalText={assessmentRound === 8} />
+                        <MathText text={option} literalText={literalText} />
                       </span>
                     </button>
                   );
@@ -631,7 +632,7 @@ export default function SpecialMockExamQuizView() {
                 <p className="mt-2 whitespace-pre-wrap text-sm font-bold leading-7 text-slate-800">
                   {typeof currentAnswer?.response === "string" &&
                   currentAnswer.response ? (
-                    <MathText text={currentAnswer.response} literalText={assessmentRound === 8} />
+                    <MathText text={currentAnswer.response} literalText={literalText} />
                   ) : (
                     <span className="text-slate-400">미답변</span>
                   )}
@@ -705,7 +706,7 @@ export default function SpecialMockExamQuizView() {
                 question={current}
                 answer={currentAnswer}
                 status={currentReviewStatus}
-                literalText={assessmentRound === 8}
+                literalText={literalText}
               />
             ) : (
               <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/70 px-4 py-3">

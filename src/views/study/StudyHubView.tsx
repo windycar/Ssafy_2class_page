@@ -30,6 +30,11 @@ export default function StudyHubView() {
       href: "/study/special-mock",
       title: "과목평가 모의고사",
       action: "모의고사 입장",
+      image: "/images/study-tracks/special-mock-exam.png",
+      imageClass: "-bottom-3 right-0 size-[150px] group-hover:-translate-y-1 sm:right-7 sm:size-[185px]",
+      background: "border-amber-200 bg-gradient-to-r from-[#17143f] via-[#4d35ad] to-[#b36a16] shadow-[0_18px_45px_rgba(77,53,173,0.22)]",
+      accent: "bg-amber-200/10",
+      contentWidth: "max-w-[72%] sm:max-w-[70%]",
       description: isDemo
         ? "체험 계정에서도 실제 모의고사 문제를 풀어볼 수 있습니다."
         : "파이썬 트랙에 맞는 과목평가 실전 모의고사입니다.",
@@ -40,6 +45,11 @@ export default function StudyHubView() {
       title: "월말평가 문제 유형",
       action: "문제 유형 목록 보기",
       description: "지난 월말평가에서 어떤 유형이 나왔는지 회차별로 확인하세요.",
+      image: "/images/study-tracks/monthly-assessment-card.webp",
+      imageClass: "right-2 top-1/2 size-24 -translate-y-1/2 sm:right-7 sm:size-[185px]",
+      background: "border-teal-300/50 bg-[radial-gradient(ellipse_at_91%_50%,#208a79_0%,transparent_44%),linear-gradient(105deg,#0b2034_0%,#0e3645_58%,#116456_100%)] shadow-[0_18px_45px_rgba(13,80,74,0.22)]",
+      accent: "bg-teal-200/10",
+      contentWidth: "max-w-[calc(100%_-_5.25rem)] sm:max-w-[70%]",
     },
   ];
   const { progress: pythonProgress, summary: pythonSummary } = useStudyProgress();
@@ -154,21 +164,21 @@ export default function StudyHubView() {
         />
       </section>
 
-      {mockExamCards.filter(({ visible }) => visible).map(({ href, title, description, action }) => (
+      {mockExamCards.filter(({ visible }) => visible).map(({ href, title, description, action, image, imageClass, background, accent, contentWidth }) => (
         <Link
           key={href}
           to={href}
-          className="group relative flex min-h-[170px] overflow-hidden rounded-3xl border border-amber-200 bg-gradient-to-r from-[#17143f] via-[#4d35ad] to-[#b36a16] p-6 text-white shadow-[0_18px_45px_rgba(77,53,173,0.22)] transition hover:-translate-y-1 sm:p-7"
+          className={`group relative flex min-h-[170px] overflow-hidden rounded-3xl border p-6 text-white transition hover:-translate-y-1 sm:p-7 ${background}`}
         >
           <div className="absolute -right-12 -top-24 h-56 w-56 rounded-full border-[34px] border-white/5" />
-          <div className="absolute -bottom-20 right-28 h-44 w-44 rounded-full bg-amber-200/10 blur-3xl" />
+          <div className={`absolute -bottom-20 right-28 h-44 w-44 rounded-full blur-3xl ${accent}`} />
           <img
-            src="/images/study-tracks/special-mock-exam.png"
+            src={image}
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute -bottom-3 right-0 h-[150px] w-[150px] object-contain drop-shadow-[0_14px_24px_rgba(22,15,64,0.36)] transition duration-300 group-hover:-translate-y-1 group-hover:scale-105 sm:right-7 sm:h-[185px] sm:w-[185px]"
+            className={`pointer-events-none absolute object-contain drop-shadow-[0_14px_24px_rgba(22,15,64,0.36)] transition duration-300 group-hover:scale-105 ${imageClass}`}
           />
-          <div className="relative z-10 flex max-w-[72%] flex-1 flex-col justify-center sm:max-w-[70%]">
+          <div className={`relative z-10 flex flex-1 flex-col justify-center ${contentWidth}`}>
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[10px] font-black tracking-[0.12em] text-amber-50">
                 <ShieldCheck className="h-3 w-3" />

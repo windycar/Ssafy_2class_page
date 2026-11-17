@@ -70,7 +70,7 @@ export default function MonthlyPracticeSection({ round }: { round: number }) {
     <section aria-labelledby="monthly-practice-title">
       <h2 id="monthly-practice-title" className="mb-4 flex items-center gap-2 text-2xl font-black text-slate-950">
         <BookOpen className="h-5 w-5 text-violet-700" aria-hidden="true" />
-        {round === 5 ? "디버깅 예상문제" : "창작 모의고사"}
+        {round === 5 ? "Django 기초 보충 연습" : "창작 모의고사"}
       </h2>
       <div className="space-y-3">
         {sets.map(({ id, title, topics }) => {

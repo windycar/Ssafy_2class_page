@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from "react-router";
 import { MONTHLY_ASSESSMENT_REVIEW_NOTES } from "../../data/monthlyAssessmentReviewNotes";
 import { MONTHLY_ASSESSMENT_TYPES } from "../../data/monthlyAssessmentTypes";
 import MonthlyPracticeSection from "./MonthlyPracticeSection";
+import MonthlyRestApiGuide, { MONTHLY_REST_API_SUBJECT } from "./MonthlyRestApiGuide";
 
 const ROUNDS = [1, 2, 3, 4, 5, 6] as const;
 const MONTHLY_PATH = "/study/monthly-mock";
@@ -12,24 +13,29 @@ function roundThumbnail(round: number) {
   return `/images/study-tracks/monthly-assessment-${round}.webp`;
 }
 
+function assessmentSubject(round: number) {
+  return round === 5 ? MONTHLY_REST_API_SUBJECT : MONTHLY_ASSESSMENT_TYPES[round]?.subject;
+}
+
 export default function MonthlyMockExamView() {
   const { round: roundParam } = useParams();
   const round = ROUNDS.find((value) => String(value) === roundParam);
   const summary = round ? MONTHLY_ASSESSMENT_TYPES[round] : undefined;
   const reviewNote = round ? MONTHLY_ASSESSMENT_REVIEW_NOTES[round] : undefined;
+  const subject = round ? assessmentSubject(round) : undefined;
 
-  if (roundParam && !summary) {
+  if (roundParam && !subject) {
     return <Navigate to={MONTHLY_PATH} replace />;
   }
 
   return (
     <div className="space-y-8 pb-12">
       <Link
-        to={summary ? MONTHLY_PATH : "/study"}
+        to={subject ? MONTHLY_PATH : "/study"}
         className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-500 transition hover:text-violet-700"
       >
         <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-        {summary ? "월말평가 문제 유형 목록" : "학습 과목 목록"}
+        {subject ? "월말평가 문제 유형 목록" : "학습 과목 목록"}
       </Link>
 
       <section className="relative overflow-hidden rounded-[2rem] bg-[#101a3e] text-white shadow-xl">
@@ -41,19 +47,24 @@ export default function MonthlyMockExamView() {
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,10,30,0.98)_0%,rgba(8,15,42,0.93)_38%,rgba(16,20,54,0.55)_68%,rgba(8,12,32,0.28)_100%)]" />
         <div className="relative flex min-h-[260px] max-w-2xl flex-col justify-center px-7 py-10 sm:px-12">
           <h1 className="text-4xl font-black tracking-tight sm:text-5xl">
-            {summary ? `월말평가 ${round}회차 문제 유형` : "월말평가 문제 유형"}
+            {subject ? `월말평가 ${round}회차 문제 유형` : "월말평가 문제 유형"}
           </h1>
           <p className="mt-4 text-sm font-medium leading-7 text-slate-200 sm:text-base">
-            {summary?.subject ?? "지난 월말평가에서 어떤 유형이 나왔는지 회차별로 확인하세요."}
+            {subject ?? "지난 월말평가에서 어떤 유형이 나왔는지 회차별로 확인하세요."}
           </p>
         </div>
       </section>
 
-      {summary ? (
+      {round === 5 ? (
+        <>
+          <MonthlyRestApiGuide />
+          <MonthlyPracticeSection key={round} round={round} />
+        </>
+      ) : summary ? (
         <div className="space-y-8">
           <section aria-labelledby="monthly-assessment-format" className="rounded-2xl border border-violet-100 bg-violet-50 p-5 sm:p-6">
             <h2 id="monthly-assessment-format" className="text-lg font-black text-violet-950">
-              {summary.preparation ? "평가 안내" : "평가 방식"}
+              평가 방식
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-700">{summary.format}</p>
           </section>
@@ -62,7 +73,7 @@ export default function MonthlyMockExamView() {
 
           <section aria-labelledby="monthly-assessment-types">
             <h2 id="monthly-assessment-types" className="mb-5 text-2xl font-black text-slate-950">
-              {summary.preparation ? "시험 전 복습 유형" : "지난 평가에 나온 유형"}
+              지난 평가에 나온 유형
             </h2>
             <div className="grid gap-4">
               {summary.types.map(({ title, description, notes }) => (
@@ -115,7 +126,7 @@ export default function MonthlyMockExamView() {
           </h2>
           <ul className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {ROUNDS.map((round) => {
-              const subject = MONTHLY_ASSESSMENT_TYPES[round]?.subject;
+              const subject = assessmentSubject(round);
               return (
                 <li key={round} className="overflow-hidden rounded-[1.75rem] border border-violet-100 bg-white shadow-sm">
                   <div className="relative flex aspect-[2/1] min-h-44 items-end justify-between gap-3 overflow-hidden bg-[#142453] p-5 text-white">

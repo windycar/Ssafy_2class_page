@@ -39,6 +39,14 @@ import {
 const HERO_IMAGE = "/images/study-tracks/special-mock-exam-hero-v2.png";
 const ITTA_SSAFY_IMAGE = "/images/study-tracks/itta-ssafy-assessment-4.png";
 
+const ASSESSMENT_SUBJECTS = {
+  2: "AI",
+  3: "AI",
+  5: "Web",
+  8: "Backend(Django)",
+  9: "JavaScript",
+} as const satisfies Record<SpecialMockExamAvailableAssessmentRound, string>;
+
 const IMAGE_ASSESSMENTS = {
   4: { label: "일타싸피", image: ITTA_SSAFY_IMAGE, alt: "당구공의 경로를 그린 일타싸피 이미지" },
   6: { label: "알고리즘 응용", image: "/images/study-tracks/algorithm-assessment-6.png", alt: "격자와 경로로 알고리즘 문제 해결을 표현한 이미지" },
@@ -190,7 +198,7 @@ export default function SpecialMockExamView() {
             </span>
           </h1>
           <p className="mt-5 max-w-xl text-sm font-medium leading-7 text-slate-200/80 sm:text-base">
-            과목평가 2·3·5·8회차 핵심 범위를 실전 문제로 점검합니다. 문제 순서는
+            과목평가 2·3·5·8·9회차 핵심 범위를 실전 문제로 점검합니다. 문제 순서는
             매번 바뀌며, 60점 이상이면 통과입니다.
           </p>
 
@@ -234,7 +242,7 @@ export default function SpecialMockExamView() {
             </h2>
           </div>
           <p className="text-xs font-bold text-slate-500">
-            2·3·5·8회차 모의고사 · 4·6·7회차 평가
+            2·3·5·8·9회차 모의고사 · 4·6·7회차 평가
           </p>
         </div>
 
@@ -244,11 +252,13 @@ export default function SpecialMockExamView() {
           className="grid grid-cols-3 gap-2 p-5 sm:grid-cols-5 sm:p-7 lg:grid-cols-9"
         >
           {SPECIAL_MOCK_EXAM_ASSESSMENT_ROUNDS.map((round) => {
-            const available =
-              isImageAssessment(round) ||
-              SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.some(
-                (availableRound) => availableRound === round,
-              );
+            const mockAssessment = SPECIAL_MOCK_EXAM_AVAILABLE_ASSESSMENT_ROUNDS.find(
+              (availableRound) => availableRound === round,
+            );
+            const subject = isImageAssessment(round)
+              ? IMAGE_ASSESSMENTS[round].label
+              : mockAssessment && ASSESSMENT_SUBJECTS[mockAssessment];
+            const available = Boolean(subject);
             const selected = selectedAssessmentRound === round;
             return (
               <button
@@ -286,7 +296,7 @@ export default function SpecialMockExamView() {
                       : "bg-slate-100 text-slate-400"
                   }`}
                 >
-                  {isImageAssessment(round) ? IMAGE_ASSESSMENTS[round].label : available ? "OPEN" : "준비 중"}
+                  {subject ?? "준비 중"}
                 </span>
               </button>
             );
@@ -331,36 +341,49 @@ export default function SpecialMockExamView() {
           </span>
         </div>
 
-        {selectedAssessmentRound === 8 ? (
+        {selectedAssessmentRound === 8 || selectedAssessmentRound === 9 ? (
           <aside
-            aria-label="Django 모의고사 추천 풀이 순서"
+            aria-label={`${ASSESSMENT_SUBJECTS[selectedAssessmentRound]} 모의고사 추천 풀이 순서`}
             className="mb-6 rounded-[1.75rem] border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-blue-50 p-5 shadow-[0_12px_32px_rgba(80,65,160,0.08)] sm:p-6"
           >
             <div className="flex items-center gap-2 text-violet-900">
               <Sparkles className="h-5 w-5 text-violet-600" aria-hidden="true" />
               <h3 className="text-lg font-black">추천 풀이 순서</h3>
             </div>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-violet-100 bg-white p-4">
-                <p className="text-sm font-bold text-violet-700">완전히 개념문제들은 </p>
-                <p className="mt-1 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
-                  7회 → 8회 → 2 회 → 3회 
+            {selectedAssessmentRound === 9 ? (
+              <div className="mt-4 rounded-2xl border border-violet-100 bg-white p-4">
+                <p className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+                  {collection.rounds.map((round) => `${round}회차`).join(" → ")}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  보통 이 정도 난이도 였던거같은데 제 감 입니다 
+                  뒤로 갈수록 어려워지니 1회차부터 순서대로 풀어보세요.
                 </p>
               </div>
-              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                <p className="text-sm font-bold text-amber-800">어려운 문제들은 </p>
-                <p className="mt-1 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
-                  1회 → 6회
-                </p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  징짜 어려움 짱어려움 말도안됨 이렇게 까진 안낼거같음 
-                </p>
-              </div>
-            </div>
-            <p className="mt-3 text-sm text-slate-600">나머지는  연습할 때 풀어보세요.</p>
+            ) : (
+              <>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-violet-100 bg-white p-4">
+                    <p className="text-sm font-bold text-violet-700">완전히 개념문제들은 </p>
+                    <p className="mt-1 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+                      7회 → 8회 → 2 회 → 3회
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      보통 이 정도 난이도 였던거같은데 제 감 입니다
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                    <p className="text-sm font-bold text-amber-800">어려운 문제들은 </p>
+                    <p className="mt-1 text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+                      1회 → 6회
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      징짜 어려움 짱어려움 말도안됨 이렇게 까진 안낼거같음
+                    </p>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm text-slate-600">나머지는  연습할 때 풀어보세요.</p>
+              </>
+            )}
           </aside>
         ) : null}
 
