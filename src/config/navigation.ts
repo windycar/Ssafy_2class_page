@@ -5,6 +5,7 @@ import {
   Camera,
   Shield,
   MessageSquare,
+  TreePine,
   Gamepad2,
   BookOpenCheck,
   ClipboardCheck,
@@ -28,4 +29,5 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "사진첩", path: "/gallery", icon: Camera },
   { label: "그라운드 룰", path: "/ground-rules", icon: Shield },
   { label: "익명 게시판", path: "/board", icon: MessageSquare },
+  { label: "크리스마스 트리", path: "/christmas-tree", icon: TreePine },
 ];

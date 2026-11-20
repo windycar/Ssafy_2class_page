@@ -13,6 +13,7 @@ const DinnerVoteView = lazy(() => import("../views/DinnerVoteView"));
 const GalleryView = lazy(() => import("../views/GalleryView"));
 const GroundRulesView = lazy(() => import("../views/GroundRulesView"));
 const AnonymousBoardView = lazy(() => import("../views/AnonymousBoardView"));
+const ChristmasTreeView = lazy(() => import("../views/ChristmasTreeView"));
 const AdminView = lazy(() => import("../views/AdminView"));
 const MyInfoView = lazy(() => import("../views/MyInfoView"));
 const GameHubView = lazy(() => import("../views/GameHubView"));
@@ -67,6 +68,7 @@ export const router = createBrowserRouter([
           { path: "gallery", Component: GalleryView },
           { path: "ground-rules", Component: GroundRulesView },
           { path: "board", Component: AnonymousBoardView },
+          { path: "christmas-tree", Component: ChristmasTreeView },
           { path: "admin", Component: AdminView },
           { path: "games", Component: GameHubView },
           { path: "games/bang", Component: BangGameView },

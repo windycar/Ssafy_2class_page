@@ -43,6 +43,8 @@ const MEMBER_LIST_SELECT =
   "id, student_id, name, username, login_id, class_name, role, auth_user_id, is_active, can_access_special_mock_exam, must_change_password, password_changed_at, last_login_at, created_at";
 const LEGACY_MEMBER_LIST_SELECT =
   "id, student_id, name, username, login_id, class_name, role, auth_user_id, is_active, must_change_password, password_changed_at, last_login_at, created_at";
+const CHRISTMAS_TREE_NOTE_SELECT = "id, content, author_name, is_sample, created_at";
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type SupabaseQueryError = {
   code?: string;
@@ -427,6 +429,52 @@ export async function handleAdminRequest(request: Request) {
         return { ...post, author: memberId ? memberById.get(memberId) ?? null : null };
       }),
     });
+  }
+
+  if (body.action === "christmasTree.list") {
+    const { data, error } = await client
+      .from("christmas_tree_notes")
+      .select(CHRISTMAS_TREE_NOTE_SELECT)
+      .order("is_sample", { ascending: true })
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false });
+    if (error) return jsonError("크리스마스 트리 포스트잇을 불러오지 못했습니다.", 500);
+    return Response.json({ ok: true, notes: data ?? [] });
+  }
+
+  if (body.action === "christmasTree.authors") {
+    const { data, error } = await client
+      .from("christmas_tree_notes")
+      .select("id, author:members!christmas_tree_notes_member_id_fkey(name, login_id, class_name)")
+      .eq("is_sample", false);
+    if (error) return jsonError("실제 작성자를 불러오지 못했습니다.", 500);
+    return Response.json({ authors: data ?? [] }, { headers: { "Cache-Control": "no-store" } });
+  }
+
+  if (body.action === "christmasTree.update" || body.action === "christmasTree.delete") {
+    if (typeof body.id !== "string" || !UUID.test(body.id)) {
+      return jsonError("포스트잇 ID가 올바르지 않습니다.", 400);
+    }
+    const table = client.from("christmas_tree_notes");
+    if (body.action === "christmasTree.delete") {
+      const { data, error } = await table.delete().eq("id", body.id).select("id").maybeSingle();
+      if (error) return jsonError("포스트잇을 삭제하지 못했습니다.", 500);
+      if (!data) return jsonError("이미 삭제되었거나 찾을 수 없는 포스트잇입니다.", 404);
+      return Response.json({ ok: true });
+    }
+
+    const content = typeof body.content === "string" ? body.content.trim() : "";
+    if (!content || Array.from(content).length > 140) {
+      return jsonError("포스트잇 내용을 1자 이상 140자 이하로 입력해 주세요.", 400);
+    }
+    const { data, error } = await table
+      .update({ content })
+      .eq("id", body.id)
+      .select(CHRISTMAS_TREE_NOTE_SELECT)
+      .maybeSingle();
+    if (error) return jsonError("포스트잇을 수정하지 못했습니다.", 500);
+    if (!data) return jsonError("이미 삭제되었거나 찾을 수 없는 포스트잇입니다.", 404);
+    return Response.json({ ok: true, note: data });
   }
 
   if (body.action === "bang.rooms.list") {

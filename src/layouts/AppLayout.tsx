@@ -13,10 +13,12 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   if (isLogin) return <>{children}</>;
 
+  const contentWidth = pathname === "/christmas-tree" ? "max-w-[96rem]" : "max-w-7xl";
+
   return (
     <div className="min-h-screen bg-[linear-gradient(135deg,#edf4ef_0%,#f7f9fc_50%,#eaf0f9_100%)] flex flex-col">
       <AppHeader />
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+      <main className={`flex-1 ${contentWidth} w-full mx-auto px-4 sm:px-6 py-6`}>
         {children}
       </main>
       <AppFooter />

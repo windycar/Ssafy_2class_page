@@ -19,6 +19,7 @@ import {
   RefreshCw,
   ShieldCheck,
   Trash2,
+  TreePine,
   UserCheck,
   UserRoundCog,
   UserX,
@@ -28,6 +29,7 @@ import {
 import { toast } from "sonner";
 
 import { useAdmin } from "../context/AdminContext";
+import ChristmasTreeNotesAdmin from "../components/admin/ChristmasTreeNotesAdmin";
 
 import { QUESTION_BANK_TOTALS, TOTAL_QUESTION_COUNT } from "../data/questionBanks";
 
@@ -43,6 +45,7 @@ import teamImage from "../assets/home/quick-menu/team.png";
 type Tab =
   | "members"
   | "board"
+  | "christmasTree"
   | "rooms"
   | "gallery";
 
@@ -152,6 +155,7 @@ export default function AdminView() {
 
   const [tab, setTab] =
     useState<Tab>("members");
+  const [treeRefreshVersion, setTreeRefreshVersion] = useState(0);
 
   const [
     members,
@@ -198,20 +202,8 @@ export default function AdminView() {
     setShowMemberForm,
   ] = useState(false);
 
-  /**
-   * =========================================================
-   * 익명 게시판 실제 작성자 표시 여부
-   *
-   * 기본값 false
-   *
-   * Ctrl + Shift + G
-   * → true / false 토글
-   * =========================================================
-   */
-  const [
-    showAnonymousAuthors,
-    setShowAnonymousAuthors,
-  ] = useState(false);
+  const [authorsVisibleFor, setAuthorsVisibleFor] = useState<"board" | "christmasTree" | null>(null);
+  const showAnonymousAuthors = authorsVisibleFor === "board";
 
   const [
     memberForm,
@@ -326,91 +318,24 @@ export default function AdminView() {
     void loadAll();
   }, [loadAll]);
 
-  /**
-   * =========================================================
-   * 비밀 단축키
-   *
-   * 관리자 페이지의 익명 게시판 탭에서만
-   *
-   * Ctrl + Shift + G
-   *
-   * 실제 작성자 표시 / 숨김
-   * =========================================================
-   */
   useEffect(() => {
-    const handleSecretShortcut = (
-      event: KeyboardEvent,
-    ) => {
-      /**
-       * 익명 게시판 탭이 아니면
-       * 아무것도 하지 않음
-       */
-      if (
-        tab !== "board"
-      ) {
-        return;
-      }
+    if (!isAdmin || (tab !== "board" && tab !== "christmasTree")) return;
+    const label = tab === "board" ? "익명 게시판" : "크리스마스 트리";
 
-      /**
-       * Ctrl + Shift + G
-       */
-      if (
-        event.ctrlKey &&
-        event.shiftKey &&
-        event.key.toLowerCase() ===
-          "g"
-      ) {
-        event.preventDefault();
+    function handleAuthorShortcut(event: KeyboardEvent) {
+      const isG = event.code === "KeyG" || event.key.toLowerCase() === "g";
+      if (!event.ctrlKey || !event.shiftKey || !isG) return;
+      event.preventDefault();
+      if (event.repeat) return;
 
-        setShowAnonymousAuthors(
-          (current) => {
-            const next =
-              !current;
-
-            if (next) {
-              toast.success(
-                "익명 게시판 실제 작성자를 표시합니다.",
-              );
-            } else {
-              toast.success(
-                "익명 게시판 실제 작성자를 숨겼습니다.",
-              );
-            }
-
-            return next;
-          },
-        );
-      }
-    };
-
-    window.addEventListener(
-      "keydown",
-      handleSecretShortcut,
-    );
-
-    return () => {
-      window.removeEventListener(
-        "keydown",
-        handleSecretShortcut,
-      );
-    };
-  }, [tab]);
-
-  /**
-   * 익명 게시판을 벗어나면
-   * 다시 작성자 숨김
-   *
-   * 원하지 않으면 이 useEffect만 지워도 됨.
-   */
-  useEffect(() => {
-    if (
-      tab !== "board"
-    ) {
-      setShowAnonymousAuthors(
-        false,
-      );
+      const showing = authorsVisibleFor !== tab;
+      setAuthorsVisibleFor(showing ? tab : null);
+      toast.success(showing ? `${label} 실제 작성자를 표시합니다.` : `${label} 실제 작성자를 숨겼습니다.`);
     }
-  }, [tab]);
+
+    window.addEventListener("keydown", handleAuthorShortcut);
+    return () => window.removeEventListener("keydown", handleAuthorShortcut);
+  }, [authorsVisibleFor, isAdmin, tab]);
 
   /**
    * =========================================================
@@ -1052,7 +977,7 @@ export default function AdminView() {
   const tabs: {
     id: Tab;
     label: string;
-    count: number;
+    count?: number;
     icon: typeof UsersRound;
   }[] = [
     {
@@ -1070,6 +995,12 @@ export default function AdminView() {
       count: posts.length,
       icon:
         MessageSquareText,
+    },
+
+    {
+      id: "christmasTree",
+      label: "크리스마스 트리",
+      icon: TreePine,
     },
 
     {
@@ -1129,9 +1060,10 @@ export default function AdminView() {
           <div className="mt-5 flex gap-2">
 
             <button
-              onClick={() =>
-                void loadAll()
-              }
+              onClick={() => {
+                void loadAll();
+                setTreeRefreshVersion((value) => value + 1);
+              }}
               disabled={loading}
               className="inline-flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2 text-xs font-bold hover:bg-white/20 disabled:opacity-50"
             >
@@ -1165,7 +1097,7 @@ export default function AdminView() {
       {/* =====================================================
           탭
       ====================================================== */}
-      <nav className="grid grid-cols-2 gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm sm:grid-cols-4">
+      <nav className="grid grid-cols-2 gap-2 rounded-2xl border border-gray-200 bg-white p-2 shadow-sm sm:grid-cols-3 lg:grid-cols-5">
 
         {tabs.map(
           (item) => {
@@ -1177,11 +1109,11 @@ export default function AdminView() {
                 key={
                   item.id
                 }
-                onClick={() =>
-                  setTab(
-                    item.id,
-                  )
-                }
+                onClick={() => {
+                  if (item.id === tab) return;
+                  setAuthorsVisibleFor(null);
+                  setTab(item.id);
+                }}
                 className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-extrabold transition ${
                   tab ===
                   item.id
@@ -1195,7 +1127,7 @@ export default function AdminView() {
                   item.label
                 }
 
-                <span
+                {item.count !== undefined && <span
                   className={`rounded-full px-1.5 py-0.5 text-[10px] ${
                     tab ===
                     item.id
@@ -1206,7 +1138,7 @@ export default function AdminView() {
                   {
                     item.count
                   }
-                </span>
+                </span>}
               </button>
             );
           },
@@ -1717,6 +1649,8 @@ export default function AdminView() {
 
         </section>
 
+      ) : tab === "christmasTree" ? (
+        <ChristmasTreeNotesAdmin refreshVersion={treeRefreshVersion} showAuthors={authorsVisibleFor === "christmasTree"} />
       ) : tab ===
         "rooms" ? (
 

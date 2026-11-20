@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#040810">
+<meta name="description" content="SSAFY 광주 2반 LED 도트와 입자가 모여 만들어지는 회전하는 3D ASCII 크리스마스트리. 인터넷과 설치 없이 실행됩니다.">
+<title>SSAFY · 우리 코드로 만든 트리</title>
+<style>
+  :root{color-scheme:dark;--ice:#a9dfff;--line:#b6d9f123;--text:#edf7ff;--muted:#a0b3c6}
+  *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#040810}
+  body{font-family:"Segoe UI","Malgun Gothic",sans-serif;color:var(--text)}
+  button{font:inherit;color:inherit;cursor:pointer}button:focus-visible{outline:2px solid #a9dfff;outline-offset:5px}
+  canvas{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:grab}canvas:active{cursor:grabbing}
+  .masthead{position:absolute;top:30px;left:38px;pointer-events:none;transition:opacity .4s}
+  .eyebrow{font:12px/1.5 Consolas,monospace;letter-spacing:.26em;color:#b2c6d7}
+  .masthead strong{display:block;margin-top:8px;font-size:17px;font-weight:500;letter-spacing:.12em}
+  .edition{position:absolute;right:38px;top:32px;text-align:right;font:12px/1.7 Consolas,monospace;letter-spacing:.16em;color:var(--muted);pointer-events:none;transition:opacity .4s}
+  .edition span{display:block;color:#c7deed}
+  .caption{position:absolute;left:38px;bottom:38px;pointer-events:none;transition:opacity .4s}
+  .caption p{margin:0 0 12px;font-size:24px;line-height:1.6;font-weight:300;letter-spacing:-.04em}
+  .caption small{color:var(--muted);font:11px/1.8 Consolas,monospace;letter-spacing:.12em}
+  .hint{position:absolute;right:38px;bottom:38px;text-align:right;font-size:12px;line-height:1.8;color:var(--muted);pointer-events:none;transition:opacity .4s}
+  .controls{position:absolute;bottom:31px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:3px;padding:7px;border:1px solid var(--line);border-radius:30px;background:#07111bba;backdrop-filter:blur(18px);white-space:nowrap;transition:opacity .4s}
+  .controls button{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:0;background:transparent;padding:10px 12px;border-radius:22px;min-height:40px;font-size:13px;color:#bdd0e1;transition:background .2s,color .2s}
+  .controls button:hover{background:#b2d9ff16;color:#fff}.controls button[aria-pressed="true"]{color:#d7f3ff;background:#8acbff13}
+  .controls svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .divider{width:1px;height:19px;background:var(--line);margin:0 3px}
+  #clean{position:absolute;right:32px;top:92px;width:36px;height:36px;border:1px solid var(--line);border-radius:50%;background:#101d2b70;color:#bdd0e1;font:14px Consolas,monospace;opacity:.65}
+  #toast{position:absolute;left:50%;bottom:99px;transform:translateX(-50%);padding:11px 18px;border:1px solid var(--line);border-radius:22px;background:#0a1625ed;color:#d7eaff;font-size:13px;max-width:90vw;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none}
+  body.clean .chrome{opacity:0;pointer-events:none}body.clean #clean{opacity:0}body.clean #clean:hover,body.clean #clean:focus-visible{opacity:1}
+  @media(max-width:1100px){.caption p{font-size:20px}.hint{display:none}.caption{bottom:110px}.controls{bottom:25px}.masthead{left:24px;top:24px}.edition{right:24px;top:26px}}
+  @media(max-width:600px){.masthead{top:20px;left:20px}.masthead strong{font-size:14px}.eyebrow,.edition{font-size:10px}.edition{right:20px;top:21px}.caption{left:20px;bottom:104px}.caption p{font-size:16px;margin-bottom:5px}.caption small{font-size:9px}.controls{gap:0;bottom:max(16px,env(safe-area-inset-bottom));padding:5px}.controls button{font-size:11px;padding:10px 9px;gap:5px}.controls button svg{width:14px;height:14px}.controls .optional{display:none}.divider{margin:0 2px}#clean{right:16px;top:80px}#toast{bottom:84px}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+  #code-toggle{color:#dcf5ec;background:#76d5b31d}
+  .code-pane{
+    position:absolute;top:50%;right:max(clamp(16px,4vw,76px),calc((100vw - 1440px)/2));transform:translateY(-50%);
+    width:min(42vw,570px);max-height:calc(100dvh - 160px);display:flex;flex-direction:column;
+    border:1px solid #81c8b54a;border-radius:20px;background:#07131aee;overflow:hidden;
+    box-shadow:0 18px 65px #0008;backdrop-filter:blur(18px);
+    animation:code-in .32s ease-out;
+  }
+  .code-pane[hidden]{display:none}
+  @keyframes code-in{from{opacity:0;translate:0 12px}to{opacity:1;translate:0 0}}
+  .code-head{display:flex;align-items:flex-start;justify-content:space-between;padding:20px 20px 13px;gap:12px}
+  .code-head h1{font-size:21px;font-weight:600;margin:0 0 5px;letter-spacing:-.04em}
+  .code-head p,.code-meta{font-size:12px;color:#9db7bc;margin:0;line-height:1.5}
+  .code-close{width:32px;height:32px;flex:none;border:1px solid var(--line);border-radius:50%;background:#14232b;font-size:21px;line-height:28px}
+  .code-files{display:flex;gap:5px;flex-wrap:wrap;padding:0 20px 12px}
+  .code-files button{padding:6px 9px;border:1px solid transparent;border-radius:7px;background:transparent;color:#abc2c8;font-size:12px;white-space:nowrap}
+  .code-files button[aria-pressed="true"]{background:#15312d;border-color:#70d2ae50;color:#c5f6e3}
+  .code-meta{padding:11px 20px 9px;border-top:1px solid var(--line)}
+  #code-lines{margin:0;padding:5px 20px 18px;min-height:0;overflow:auto;overscroll-behavior:contain;color:#cee5e8;font:13px/1.55 Consolas,"Malgun Gothic",monospace}
+  #code-lines code{font:inherit}
+  .py-keyword{color:#c9a8fb}.py-string{color:#aaddac}.py-number{color:#ffcb8a}.py-comment{color:#89a6ae}
+  body.code-view .hint,body.code-view .caption{opacity:0}
+  @media(max-width:760px){
+    .code-pane{top:auto;bottom:82px;right:12px;left:12px;transform:none;width:auto;max-height:51dvh;border-radius:15px}
+    .code-head{padding:13px 14px 9px}.code-head h1{font-size:17px}.code-files{padding:0 12px 8px;gap:3px}
+    .code-meta{padding:7px 14px}#code-lines{padding:0 14px 12px;font-size:12px}
+  }
+  @media(max-width:380px){.controls button{padding-inline:6px}}
+  @media(prefers-reduced-motion:reduce){.code-pane{animation:none}}
+
+  body.embedded :is(.masthead,.edition,.caption,.hint,#clean,#theme,.divider,#save,#full){display:none}
+  body.embedded canvas{touch-action:pan-y}
+  body.embedded canvas:focus-visible{outline:2px solid #a9dfff;outline-offset:-3px}
+  body.embedded .controls{top:12px;right:12px;bottom:auto;left:auto;z-index:3;transform:none;padding:3px}
+  body.embedded .controls button{min-height:34px;padding:6px 8px;font-size:11px}
+  body.embedded #replay span{display:inline}
+  body.embedded .code-pane{top:62px;right:14px;bottom:14px;width:min(44%,540px);max-height:none;transform:none;z-index:2}
+  @media(max-width:760px){body.embedded .code-pane{top:auto;right:12px;bottom:12px;left:12px;width:auto;max-height:49dvh}}
+  @media(max-width:430px){body.embedded .controls :is(#play,#snow) span{display:none}}
+  .note-layer{position:absolute;inset:0;z-index:1;pointer-events:none}
+  .tree-note{
+    position:absolute;top:0;left:0;width:clamp(44px,11vw,64px);aspect-ratio:1.06;
+    background:none;border:0;padding:0;pointer-events:auto;visibility:hidden;z-index:var(--depth,0);
+  }
+  .tree-note-paper{
+    position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;height:100%;padding:6px;
+    border-radius:2px;background:var(--paper);color:#342a25;rotate:var(--tilt);transform-origin:50% 6%;
+    box-shadow:2px 5px 10px #00120cb3;transition:scale .15s;
+  }
+  .tree-note-paper::before{
+    content:"";position:absolute;z-index:1;left:27%;right:27%;top:-5px;height:10px;
+    rotate:-6deg;background:#f8ddb99e;box-shadow:0 1px 2px #30221635;
+  }
+  .tree-note-paper::after{
+    content:"";position:absolute;right:0;bottom:0;width:9px;height:9px;
+    background:linear-gradient(135deg,#20150a1f 49%,#17271b55 51%);
+  }
+  .tree-note-preview{
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;
+    font-size:clamp(10px,2.5vw,12px);font-weight:700;line-height:1.25;text-align:center;
+  }
+  .tree-note-author{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(8px,2.1vw,10px);line-height:1.2;font-weight:600;color:#654534}
+  .tree-note-author[hidden]{display:none}
+  .tree-note:is(:hover,:focus-visible){z-index:500}
+  .tree-note:is(:hover,:focus-visible) .tree-note-paper{scale:1.12}
+  .tree-note.is-attaching{z-index:600}
+  .tree-note.is-attaching .tree-note-paper{animation:note-stick .85s cubic-bezier(.21,.67,.2,1) both}
+  @keyframes note-stick{
+    0%{opacity:0;transform:translate(95px,-100px) rotate(24deg) scale(1.25)}
+    28%{opacity:1;transform:translate(59px,-60px) rotate(-13deg) scale(1.16)}
+    67%{transform:translate(0,0) rotate(5deg) scale(1.06)}
+    84%{transform:translate(0,1px) rotate(-2deg) scale(.96)}
+    100%{opacity:1;transform:none}
+  }
+  @media(prefers-reduced-motion:reduce){.tree-note.is-attaching .tree-note-paper{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="scene" role="img" aria-label="눈 내리는 밤, 금빛 전구와 선물이 장식된 입체 ASCII 크리스마스트리. 꼭대기에는 SSAFY 광주 2반 LED 도트 글자가 빛납니다."></canvas>
+<div id="tree-notes" class="note-layer" role="group" aria-label="트리에 붙은 포스트잇" hidden></div>
+<header class="masthead chrome"><div class="eyebrow">A CHRISTMAS WRITTEN IN CODE</div><strong>SSAFY WINTER</strong></header>
+<div class="edition chrome">SEASON OF POSSIBILITIES<span>CHRISTMAS · 2026</span></div>
+<div class="caption chrome"><p>코드로 피어난<br>우리의 겨울.</p><small>MAKE A WISH. BUILD YOUR TOMORROW.</small></div>
+<div class="hint chrome">드래그하여 회전 · 휠을 올려 코드 보기<br>Space 일시정지 · F 전체화면 · H 화면 정리</div>
+<nav class="controls chrome" aria-label="트리 조작">
+  <button id="play" aria-label="애니메이션 일시정지" aria-pressed="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 4v12M13 4v12"/></svg><span>일시정지</span></button>
+  <button id="snow" aria-label="눈 효과" aria-pressed="true"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2v16M3.1 6l13.8 8M3.1 14l13.8-8M7.5 3.5L10 6l2.5-2.5M7.5 16.5L10 14l2.5 2.5"/></svg><span>눈</span></button>
+  <button id="theme" aria-label="싸피 블루 조명" aria-pressed="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2c-2 3-6 6-6 10a6 6 0 0012 0c0-4-4-7-6-10z"/></svg><span>싸피 블루</span></button>
+  <button id="replay" aria-label="트리 조립 다시 보기" title="트리 조립 다시 보기 (R)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 7a7 7 0 111 8M4 2v5h5"/></svg><span class="optional">다시 보기</span></button>
+  <button id="code-toggle" aria-controls="code-pane" aria-expanded="false"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 5-5 5 5 5m8-10 5 5-5 5m-2-12-4 14"/></svg><span>코드 보기</span></button>
+  <span class="divider"></span>
+  <button id="save" aria-label="트리 PNG 사진 저장" title="현재 장면을 PNG로 저장"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 6h4l1-2h4l1 2h4v11H3z"/><circle cx="10" cy="11" r="3"/></svg><span class="optional">사진</span></button>
+  <button id="full" aria-label="전체화면" title="전체화면 (F)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 7V3h4m6 0h4v4M3 13v4h4m6 0h4v-4"/></svg></button>
+</nav>
+<aside id="code-pane" class="code-pane" aria-labelledby="code-heading" hidden>
+  <div class="code-head">
+    <div><h1 id="code-heading">트리 속 파이썬</h1><p>SSAFY 16기 교육과정에서 가져온 코드</p></div>
+    <button id="code-close" class="code-close" type="button" aria-label="코드 닫기">×</button>
+  </div>
+  <div id="code-files" class="code-files" role="group" aria-label="코드 선택"></div>
+  <p id="code-meta" class="code-meta"></p>
+  <pre id="code-lines" tabindex="0" aria-label="파이썬 코드"><code></code></pre>
+</aside>
+<button id="clean" aria-label="화면의 글자와 버튼 숨기기" title="화면 정리 (H)">H</button>
+<div id="toast" role="status" aria-live="polite"></div>
+<script id="python-sources" type="application/json">[{"name": "중첩 JSON", "stage": "AI Python · 학습 노트 예제", "title": "중첩 JSON에서 가격 꺼내기", "filename": "Python 데이터 변환과 중첩 JSON.md", "code": "payload = {\n    \"items\": [\n        {\"title\": \"A\", \"price\": \"12000\"},\n        {\"title\": \"B\", \"price\": None},\n    ]\n}\n\ndef extract_prices(data):\n    result = []\n    for item in data.get(\"items\", []):\n        raw = item.get(\"price\")\n        if raw is None:\n            continue\n        result.append((item[\"title\"], int(raw)))\n    return result\n\nprint(extract_prices(payload))  # [('A', 12000)]"}, {"name": "전기버스", "stage": "알고리즘 · 실습 풀이 발췌", "title": "도달 가능한 가장 먼 충전소 찾기", "filename": "4831.py", "code": "now = 0\nresult = 0\n\nwhile now + K \u003c N:\n    found = False\n\n    for i in range(K, 0, -1):\n        if now + i in charge:\n            now += i\n            result += 1\n            found = True\n            break\n\n    if not found:\n        result = 0\n        break\n\nprint(f\"#{test_case} {result}\")"}, {"name": "숫자 카드", "stage": "알고리즘 · 실습 풀이 발췌", "title": "딕셔너리로 숫자 빈도 세기", "filename": "4834.py", "code": "N=int(input())\na=int(input())\nb=[]\nmany=0\nmax=0\nfor i in range(N):\n    b.append(a%10)\n    a=a//10\n\nc={}\nfor i in b:\n    if i not in c:\n        c[i]=1\n    else:\n        c[i]=c[i]+1\nfor key,value in c.items():\n    if many\u003cvalue:\n        max=key\n        many=value\n    if value==many and max\u003ckey:\n        max=key\n\nprint(f\"#{test_case} {max} {many}\")"}, {"name": "사다리", "stage": "알고리즘 · 실습 풀이 발췌", "title": "도착점에서 사다리를 거슬러 올라가기", "filename": "1210_다른풀이.py", "code": "i = 99\nj = N[99].index(2)\n\n# 맨 위까지 올라가기\nwhile i > 0:\n\n    # 왼쪽에 길이 있으면\n    if j > 0 and N[i][j - 1] == 1:\n\n        # 왼쪽 끝까지 이동\n        while j > 0 and N[i][j - 1] == 1:\n            j -= 1\n\n        # 한 칸 위로\n        i -= 1\n\n    # 오른쪽에 길이 있으면\n    elif j \u003c 99 and N[i][j + 1] == 1:\n\n        # 오른쪽 끝까지 이동\n        while j \u003c 99 and N[i][j + 1] == 1:\n            j += 1\n\n        # 한 칸 위로\n        i -= 1\n\n    # 좌우에 길이 없으면 그냥 위로\n    else:\n        i -= 1\n\nprint(f\"#{test_case} {j}\")"}]</script>
+<script>
+/*
+ * SSAFY Christmas — 라이브러리 없는 단일 파일.
+ * 좌표 생성 → Y축 회전 → 원근 투영 → 깊이 버퍼 → ASCII 글리프 그리기.
+ * 튜닝: CONFIG의 needleCount / rotationSpeed / snowCount를 수정하세요.
+ * SSAFY 글자도 5×7 LED 도트로 직접 그립니다.
+ * introDuration: 입자가 모여 트리가 만들어지는 첫 등장 연출 시간입니다.
+ */
+(() => {
+  'use strict';
+  const CONFIG = {needleCount:21000,rotationSpeed:0.115,snowCount:480,fps:30,introDuration:6.5};
+  const TAU=Math.PI*2, canvas=document.getElementById('scene'),ctx=canvas.getContext('2d',{alpha:false});
+  if(!ctx){document.getElementById('toast').textContent='Canvas를 지원하는 최신 브라우저에서 열어 주세요.';return;}
+  const $=id=>document.getElementById(id), reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const embedded=window.parent!==window && new URLSearchParams(location.search).get('embed')==='1';
+  document.body.classList.toggle('embedded',embedded);
+  let W=1,H=1,DPR=1,unit=1,angle=.55,time=0,last=0,lastPaint=0,zoom=1,blue=false,snowing=true,paused=reduceMotion,dragging=false,dragX=0,dragOrigin=0,toastTimer;
+  let glyphSize=8,cw=4.9,ch=7.2,cols=1,rows=1,zbuf,ids,pxs,pys,scales,depths,alphas,atlas,starAtlas,ledSprite;
+  let introAge=reduceMotion?CONFIG.introDuration:0;
+  canvas.setAttribute('aria-busy',String(introAge<CONFIG.introDuration));
+  const pythonSources = JSON.parse($('python-sources').textContent);
+  const codePane = $('code-pane');
+  const codeToggle = $('code-toggle');
+  const pointers = new Map();
+  const sourceGlyphs = [...new Set(pythonSources.flatMap(({code}) => [...code].filter(char => /[!-~]/.test(char))))];
+  let sourceAtlas, activeGlyphs = [], codeView = false, viewMix = 0, targetZoom = 1;
+  let sceneX = 0, sceneY = 0, sceneScale = 1, sceneInset = 0, codeDensity = 0, pinchDistance = 0;
+  const noteLayer = $('tree-notes');
+  const noteButtons = new Map();
+  // 나뭇가지 높이와 둘레 방향을 고정하고 트리와 같은 카메라로 투영합니다.
+  const noteAnchors = [
+    [2.12, Math.PI / 2 - .55],
+    [1.27, .11], [1.25, 3.10],
+    [.36, -.44], [.37, 1.62], [.36, 3.68],
+    [-.65, -1.22], [-.58, .87], [-.67, 2.99],
+  ].map(([y, azimuth]) => {
+    const height = (y + 1.48) / 4.83;
+    const radius = 1.81 * Math.pow(1 - height, .81);
+    return { y, azimuth, x: radius * Math.cos(azimuth), z: radius * Math.sin(azimuth), radius, revealAt: 1.69 + height * 2.85 };
+  });
+  const noteColors = ['#ffe7a0', '#ffd2c8', '#d2edb1', '#cce8ff', '#e6d8ff'];
+  const noteTilts = [-7, 7, -6, -8, 5, 9, 4, -6, -5];
+
+  if (embedded) {
+    noteLayer.hidden = false;
+    canvas.tabIndex = 0;
+    canvas.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight Space R');
+    addEventListener('message', (event) => {
+      if (event.source !== window.parent || event.origin !== location.origin ||
+          event.data?.type !== 'ssafy-tree:notes' || !Array.isArray(event.data.notes)) return;
+      const notes = event.data.notes.slice(0, noteAnchors.length);
+      const ids = new Set(notes.map(({ id }) => id));
+
+      for (const [id, button] of noteButtons) {
+        if (ids.has(id)) continue;
+        noteButtons.delete(id);
+        button.remove();
+      }
+
+      notes.forEach(({ id, content, author_name, is_sample }, index) => {
+        let button = noteButtons.get(id);
+        if (!button) {
+          button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'tree-note';
+          const paper = document.createElement('span');
+          paper.className = 'tree-note-paper';
+          const preview = document.createElement('span');
+          preview.className = 'tree-note-preview';
+          const author = document.createElement('span');
+          author.className = 'tree-note-author';
+          paper.append(preview, author);
+          button.append(paper);
+          button.addEventListener('click', () => window.parent.postMessage({ type: 'ssafy-tree:open-note', id }, location.origin));
+          if (id === event.data.newNoteId) {
+            const { azimuth } = noteAnchors[index];
+            if (Math.sin(azimuth + angle) < .78) {
+              angle = Math.PI / 2 - azimuth;
+              if (dragging) dragOrigin = angle;
+            }
+            if (!reduceMotion) {
+              button.dataset.attach = 'pending';
+              paper.addEventListener('animationend', () => button.classList.remove('is-attaching'), { once: true });
+            }
+          }
+          noteButtons.set(id, button);
+        }
+        button.querySelector('.tree-note-preview').textContent = content;
+        const author = button.querySelector('.tree-note-author');
+        const signature = is_sample ? '예시' : author_name;
+        author.textContent = signature || '';
+        author.hidden = !signature;
+        button.setAttribute('aria-label', `포스트잇 열기 · ${[...content].slice(0, 22).join('')} · ${signature || '익명'}`);
+        button.dataset.anchor = index;
+        button.style.setProperty('--paper', noteColors[index % noteColors.length]);
+        button.style.setProperty('--tilt', `${noteTilts[index]}deg`);
+        if (noteLayer.children[index] !== button) noteLayer.insertBefore(button, noteLayer.children[index] ?? null);
+      });
+
+      positionNotes(Math.cos(angle), Math.sin(angle));
+    });
+  }
+
+  function positionNotes(cosAngle, sinAngle) {
+    const assemblyTime = introTime();
+    for (const button of noteButtons.values()) {
+      const { x, y, z, radius, revealAt } = noteAnchors[Number(button.dataset.anchor)];
+      const facing = (x * sinAngle + z * cosAngle) / radius;
+      const reveal = smooth((assemblyTime - revealAt) / .4);
+      if (facing <= .04 || reveal <= 0) {
+        button.style.visibility = 'hidden';
+        continue;
+      }
+      const [screenX, screenY, scale, depth] = project(x, y, z, cosAngle, sinAngle);
+      const width = scale * (.28 + .72 * facing);
+      button.style.visibility = 'visible';
+      button.style.opacity = reveal * Math.min(1, (facing - .04) / .24);
+      button.style.setProperty('--depth', Math.round(100 + depth * 45));
+      button.style.transform = `translate(${screenX}px,${screenY}px) translate(-50%,-18%) scale(${width},${scale})`;
+      if (button.dataset.attach && reveal >= .35) {
+        delete button.dataset.attach;
+        button.classList.add('is-attaching');
+      }
+    }
+  }
+
+  const needles=[],decoration=[],floor=[],stars=[],snow=[],flares=[];
+  let seed=20261225;
+  const rng=()=>{seed=(Math.imul(1664525,seed)+1013904223)|0;return(seed>>>0)/4294967296;};
+  const rand=(a,b)=>a+(b-a)*rng(),clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+  function point(x,y,z,kind,shade=1,glyph=0,phase=0){return{x,y,z,kind,shade,glyph,phase};}
+
+  // 여러 층의 가지와 살짝 처지는 가지 끝으로 원뿔형 수관을 만듭니다.
+  for(let tier=0;tier<31;tier++){
+    const u=tier/31,y=-1.48+u*4.83,L=1.70*Math.pow(1-u,.81),n=Math.round(18-9*u),twist=rand(0,TAU);
+    for(let b=0;b<n;b++){
+      const a=twist+b*TAU/n;
+      for(let j=0;j<32;j++){
+        const s=.08+.92*j/31;
+        for(let side=0;side<2;side++){
+          const spread=rand(-1,1)*L*(.045+.10*s),r=L*s;
+          const x=Math.cos(a)*r-Math.sin(a)*spread,z=Math.sin(a)*r+Math.cos(a)*spread;
+          const yy=y+.17*Math.sin(s*Math.PI)-.14*s*s+rand(-.065,.065)*(1-u*.6);
+          const light=clamp(.38+.42*s+rand(-.16,.2),.18,1);
+          needles.push(point(x,yy,z,0,light,Math.floor(rng()*8),rand(0,TAU)));
+        }
+      }
+    }
+  }
+  // 가지 사이에도 잎을 채워 입체적인 윤곽을 만듭니다.
+  while(needles.length<CONFIG.needleCount){
+    const u=1-Math.pow(rng(),.56),a=rand(0,TAU),r=1.64*Math.pow(1-u,.82)*rand(.68,1);
+    needles.push(point(r*Math.cos(a),-1.46+u*4.78,r*Math.sin(a),0,rand(.3,.83),Math.floor(rng()*8),rand(0,TAU)));
+  }
+  // 트리 표면에 금빛 전구를 4.3바퀴 감습니다.
+  for(let i=0;i<740;i++){
+    const u=i/739*.96,a=u*TAU*4.3+.6,r=1.74*Math.pow(1-u,.81)+.035;
+    decoration.push(point(Math.cos(a)*r,-1.42+u*4.82,Math.sin(a)*r,i%5===0?2:1,rand(.6,1),i%5===0?2:0,a));
+  }
+  // 구형 장식도 ASCII로 만들고 표면의 빛을 문자 밝기에 반영합니다.
+  for(let i=0;i<64;i++){
+    const u=rand(.035,.89),a=i*2.399963,r=1.72*Math.pow(1-u,.81)+.035,sz=rand(.038,.074)*(1-u*.3),kind=i%5===0?5:i%3===0?4:3;
+    const ox=Math.cos(a)*r,oy=-1.38+u*4.78,oz=Math.sin(a)*r;
+    for(let j=0;j<35;j++){
+      const sy=1-2*(j+.5)/35,ra=Math.sqrt(1-sy*sy),phi=j*2.399963,sx=ra*Math.cos(phi),zz=ra*Math.sin(phi);
+      decoration.push(point(ox+sx*sz,oy+sy*sz,oz+zz*sz,kind,clamp(.4+sy*.25-sx*.20+zz*.25,.20,1),1,i));
+    }
+  }
+  for(let j=0;j<200;j++){
+    const a=rand(0,TAU),r=rand(0,.105);needles.push(point(Math.cos(a)*r,rand(-1.85,-1.35),Math.sin(a)*r,6,rand(.3,.7),0,0));
+  }
+  function gift(x,z,w,h,d,kind,rotation){
+    const c=Math.cos(rotation),s=Math.sin(rotation),originY=-1.87;
+    const add=(xx,yy,zz,face)=>{const ribbon=Math.abs(xx)<w*.075||Math.abs(zz)<d*.075;decoration.push(point(x+xx*c-zz*s,originY+yy,z+xx*s+zz*c,ribbon?2:kind,face,Math.floor(rng()*3),0));};
+    for(let xx=-w/2;xx<=w/2;xx+=.023)for(let yy=0;yy<=h;yy+=.032){add(xx,yy,d/2,.9);add(xx,yy,-d/2,.5);}
+    for(let zz=-d/2;zz<=d/2;zz+=.024)for(let yy=0;yy<=h;yy+=.032){add(-w/2,yy,zz,.65);add(w/2,yy,zz,.75);}
+    for(let xx=-w/2;xx<=w/2;xx+=.024)for(let zz=-d/2;zz<=d/2;zz+=.026)add(xx,h,zz,1);
+    for(let j=0;j<160;j++){
+      const a=j/160*TAU,r=.09,xx=Math.sin(a)*r*(j%2?1:-1),yy=h+.04+Math.sin(a*2)*.04,zz=Math.cos(a)*.05;
+      add(xx,yy,zz,1);
+    }
+  }
+  gift(-1.28,.60,.46,.50,.42,3,-.2);gift(-.85,1.0,.37,.30,.38,2,.15);
+  gift(.98,.70,.52,.37,.44,4,.18);gift(1.30,-.24,.36,.58,.34,3,-.15);
+  gift(.28,1.25,.40,.25,.35,5,-.15);gift(-.45,-1.15,.38,.40,.34,4,.3);
+  for(let i=0;i<5500;i++){
+    const a=rand(0,TAU),r=Math.sqrt(rng())*3.5;
+    floor.push(point(Math.cos(a)*r,-1.91+rand(-.009,.009),Math.sin(a)*r,7,rand(.15,.8),i%9?0:2,rand(0,TAU)));
+  }
+  for(let i=0;i<135;i++)stars.push({x:rng(),y:rng(),alpha:rand(.12,.65),phase:rand(0,TAU),size:rng()>.9?2:1});
+  for(let i=0;i<CONFIG.snowCount;i++)snow.push({x:rng(),y:rng(),z:rand(.25,1),phase:rand(0,TAU),speed:rand(.014,.045)});
+  const world=needles.concat(decoration);
+  pxs=new Float32Array(world.length);pys=new Float32Array(world.length);scales=new Float32Array(world.length);depths=new Float32Array(world.length);alphas=new Float32Array(world.length);
+  const ledLetters = {
+    S: ['01111','10000','10000','10000','01110','00001','00001','00001','11110'],
+    A: ['01110','10001','10001','10001','11111','10001','10001','10001','10001'],
+    F: ['11111','10000','10000','10000','11110','10000','10000','10000','10000'],
+    Y: ['10001','10001','10001','01010','00100','00100','00100','00100','00100'],
+    '광': ['11111000100','00001000100','00001000111','00100000100','00100000100','11111111100','00001110000','00010001000','00001110000'],
+    '주': ['011111110','000010000','000101000','001000100','010000010','000000000','111111111','000010000','000010000'],
+    '2': ['01110','10001','00001','00001','00010','00100','01000','10000','11111'],
+    '반': ['100100100','100100100','111100111','100100100','111100100','000000000','010000000','010000000','011111110'],
+  };
+  const logoDots=[];
+  let logoWidth=0;
+  for (const letter of 'SSAFY 광주 2반') {
+    if (letter === ' ') {
+      logoWidth += 2;
+      continue;
+    }
+    const glyphRows = ledLetters[letter];
+    glyphRows.forEach((row, y) => {
+      for (let x = 0; x < row.length; x++) {
+        if (row[x] === '1') logoDots.push({ x: logoWidth + x, y, phase: rand(0, TAU) });
+      }
+    });
+    logoWidth += glyphRows[0].length + 1;
+  }
+  logoWidth -= 1;
+  const logoMid = (logoWidth - 1) / 2;
+  const logoMidY = (ledLetters.S.length - 1) / 2;
+  const smooth=x=>{x=clamp(x,0,1);return x*x*(3-2*x);};
+  const introTime=()=>introAge/CONFIG.introDuration*6.5;
+
+  // 수천 개 문자를 빠르게 그리기 위해 색상별 문자 이미지를 캐시합니다.
+  function buildAtlas(){
+    const colors=blue?[[48,186,226],[149,219,255],[225,246,255],[66,151,255],[90,201,255],[230,234,249],[97,69,45],[163,192,218]]:[[69,199,119],[233,184,89],[255,226,158],[255,62,66],[69,145,255],[243,193,82],[97,69,45],[163,192,218]];
+    const chars=['.',':','*','+','x','^','/','o'];
+    const a=document.createElement('canvas');a.width=8*24;a.height=8*12*24;
+    const c=a.getContext('2d');c.font=`${glyphSize}px Consolas, "Courier New", monospace`;c.textAlign='center';c.textBaseline='middle';
+    for(let k=0;k<8;k++)for(let level=0;level<12;level++){
+      const br=.32+level/11*1.22,col=colors[k].map(v=>Math.round(Math.min(255,v*br)));
+      c.fillStyle=`rgb(${col.join(',')})`;
+      for(let g=0;g<8;g++)c.fillText(chars[g],g*24+12,(k*12+level)*24+12);
+    }
+    atlas=a;
+    const codeAtlas=document.createElement('canvas');
+    codeAtlas.width=sourceGlyphs.length*24;
+    codeAtlas.height=12*24;
+    const letters=codeAtlas.getContext('2d');
+    letters.font=`${glyphSize}px Consolas, "Courier New", monospace`;
+    letters.textAlign='center';
+    letters.textBaseline='middle';
+    for(let level=0;level<12;level++){
+      const brightness=.38+level/11*1.12;
+      const color=(blue?[92,198,254]:[139,218,164]).map(value=>Math.round(Math.min(255,value*brightness)));
+      letters.fillStyle=`rgb(${color.join(',')})`;
+      sourceGlyphs.forEach((char,index)=>letters.fillText(char,index*24+12,level*24+12));
+    }
+    sourceAtlas=codeAtlas;
+    starAtlas=document.createElement('canvas');starAtlas.width=64;starAtlas.height=64;const s=starAtlas.getContext('2d');
+    const grad=s.createRadialGradient(32,32,0,32,32,31);grad.addColorStop(0,'#fff7da');grad.addColorStop(.07,'#ffe4aacc');grad.addColorStop(.22,blue?'#7ccfff55':'#ffc56444');grad.addColorStop(1,'#ffce7600');s.fillStyle=grad;s.fillRect(0,0,64,64);
+    ledSprite=document.createElement('canvas');ledSprite.width=64;ledSprite.height=64;const lc=ledSprite.getContext('2d'),lg=lc.createRadialGradient(32,32,0,32,32,31);lg.addColorStop(0,'#effcff');lg.addColorStop(.08,'#e4f9ff');lg.addColorStop(.18,'#8cddffe0');lg.addColorStop(.38,'#64bdff44');lg.addColorStop(1,'#449dff00');lc.fillStyle=lg;lc.fillRect(0,0,64,64);
+  }
+  function resize(){
+    W=innerWidth;H=innerHeight;DPR=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0);
+    sceneInset=embedded&&W<=930?48:0;
+    unit=embedded ? Math.min((H-sceneInset)*.144,W*.243) : Math.min(H*.122,W*.225);
+    glyphSize=clamp(unit*.054,6.8,9.8);cw=glyphSize*.60;ch=glyphSize*.82;
+    cols=Math.ceil(W/cw)+2;rows=Math.ceil(H/ch)+2;zbuf=new Float32Array(cols*rows);ids=new Int32Array(cols*rows);buildAtlas();
+  }
+  function project(x,y,z,c,s){
+    const xx=x*c-z*s,zz=x*s+z*c,yy=y*.978-zz*.208,depth=zz*.978+y*.208,sc=7.7/(7.7-depth);
+    return[sceneX+xx*sceneScale*sc,sceneY-yy*sceneScale*sc,sc,depth];
+  }
+  function glyph(x,y,kind,level,g=0,scale=1){
+    const n=24*scale;ctx.drawImage(atlas,g*24,(kind*12+clamp(level|0,0,11))*24,24,24,x-n/2,y-n/2,n,n);
+  }
+  function glow(x,y,size,alpha=1){ctx.globalAlpha=alpha;ctx.drawImage(starAtlas,x-size/2,y-size/2,size,size);ctx.globalAlpha=1;}
+  function backdrop(){
+    ctx.fillStyle='#040810';ctx.fillRect(0,0,W,H);
+    const g=ctx.createRadialGradient(W*.5,H*.45,0,W*.5,H*.45,Math.max(W,H)*.6);g.addColorStop(0,blue?'#0a1c30':'#09151d');g.addColorStop(.48,'#060c15');g.addColorStop(1,'#03060d');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+    const light=ctx.createRadialGradient(W*.5,H*.82,0,W*.5,H*.82,unit*3.8);light.addColorStop(0,blue?'#17385c33':'#283b3224');light.addColorStop(1,'#09142300');ctx.fillStyle=light;ctx.fillRect(0,0,W,H);
+    for(const st of stars){ctx.globalAlpha=st.alpha*(.72+.28*Math.sin(time*.7+st.phase));ctx.fillStyle='#b4cfe5';ctx.fillRect(st.x*W,st.y*H,st.size,st.size);}ctx.globalAlpha=1;
+  }
+  function ground(c,s){
+    const reveal=smooth(introTime()/1.4);
+    for(const p of floor){const q=project(p.x,p.y,p.z,c,s),fade=clamp(1-Math.hypot(p.x,p.z)/3.6,0,1);ctx.globalAlpha=fade*.65*reveal;glyph(q[0],q[1],7,Math.round(p.shade*8),p.glyph,.8);}ctx.globalAlpha=1;
+    // 바닥의 동심원 조명으로 공간의 깊이를 표현합니다.
+    for(let ring=0;ring<3;ring++){
+      const r=2.03+ring*.33;ctx.beginPath();for(let j=0;j<=180;j++){const a=j/180*TAU,q=project(Math.cos(a)*r,-1.92,Math.sin(a)*r,c,s);if(!j)ctx.moveTo(q[0],q[1]);else ctx.lineTo(q[0],q[1]);}ctx.strokeStyle=blue?'#5aafff13':'#bddbc412';ctx.globalAlpha=reveal;ctx.lineWidth=.65;ctx.stroke();ctx.globalAlpha=1;
+    }
+  }
+  function tree(c,s){
+    zbuf.fill(-Infinity);ids.fill(-1);flares.length=0;
+    const it=introTime(),forming=it<6.5;
+    for(let i=0;i<world.length;i++){
+      const p=world[i];let x=p.x,y=p.y,z=p.z,alpha=1;
+      if(forming){
+        const height=clamp((p.y+1.48)/4.83,0,1);
+        const delay=p.kind===0?.12+height*2.85+(Math.sin(p.phase*13)+1)*.16:p.kind===6?0:p.phase===0?.55:2.55+height*1.5;
+        const k=smooth((it-delay)/(p.kind===0?1.25:1.0));if(k<=0)continue;alpha=smooth(k*1.7);
+        const spread=1-k,twist=spread*3.6,tc=Math.cos(twist),ts=Math.sin(twist);
+        x=p.x*tc-p.z*ts+Math.cos(p.phase+i*.31)*spread*1.8;
+        z=p.x*ts+p.z*tc+Math.sin(p.phase+i*.31)*spread*1.8;
+        y=p.y-spread*(1.05+height*.8);
+      }
+      alphas[i]=alpha;
+      const q=project(x,y,z,c,s),gx=(q[0]/cw)|0,gy=(q[1]/ch)|0;
+      if(gx<0||gx>=cols||gy<0||gy>=rows)continue;
+      pxs[i]=q[0];pys[i]=q[1];scales[i]=q[2];depths[i]=q[3];const k=gy*cols+gx;
+      if(q[3]>zbuf[k]){zbuf[k]=q[3];ids[k]=i;}
+    }
+    for(let k=0;k<ids.length;k++){
+      const i=ids[k];if(i<0)continue;const p=world[i];
+      const lighting=clamp(.86+.24*(p.x*c-p.z*s)/1.8+.16*depths[i]/2,.50,1.18);
+      let shade=p.shade*lighting,scale=clamp(scales[i],.75,1.25),g=p.glyph;
+      if(p.kind===1||p.kind===2){shade=p.shade*(.90+.10*Math.sin(time*1.7+p.phase));g=p.kind===2?2:0;}
+      if(p.kind>=3&&p.kind<=5)shade=clamp(shade*1.4,.55,1);
+      if(p.kind===0&&Math.sin(p.phase*17+time*.8)>.997){shade*=1.45;g=2;}
+      ctx.globalAlpha=alphas[i];
+      const level=clamp(Math.round(shade*11),0,11);
+      if(p.kind===0&&(i%71)/71<codeDensity){
+        const index=activeGlyphs[i%activeGlyphs.length];
+        const size=24*scale*1.2;
+        ctx.drawImage(sourceAtlas,index*24,level*24,24,24,pxs[i]-size/2,pys[i]-size/2,size,size);
+      }else{
+        glyph(pxs[i],pys[i],p.kind,level,g,scale);
+      }
+      if(p.kind===2&&p.phase!==0)flares.push([pxs[i],pys[i],14*scale,(.58+.20*Math.sin(time*1.9+p.phase))*alphas[i]]);
+    }
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='screen';for(const f of flares)glow(...f);ctx.globalCompositeOperation='source-over';
+  }
+  function topper(c,s){
+    const it=introTime(),reveal=smooth((it-4.45)/1.65);if(reveal<=0)return;
+    const q=project(0,3.56,0,c,s),spacing=Math.min(sceneScale*.044,W*.5/logoWidth),cx=q[0],cy=q[1]-sceneScale*.02;
+    const haloRadius=spacing*(logoMid+6);
+    ctx.globalCompositeOperation='screen';
+    const halo=ctx.createRadialGradient(cx,cy,2,cx,cy,haloRadius);halo.addColorStop(0,'#6bc6ff1a');halo.addColorStop(.45,'#4cafff09');halo.addColorStop(1,'#449dff00');ctx.globalAlpha=reveal;ctx.fillStyle=halo;ctx.fillRect(cx-haloRadius,cy-haloRadius,haloRadius*2,haloRadius*2);
+    for(const dot of logoDots){
+      const k=smooth((it-4.45-dot.x/logoWidth*.72-dot.y*.014)/.68);if(k<=0)continue;
+      const scatter=1-k,x=cx+(dot.x-logoMid)*spacing+Math.cos(dot.phase+time*2)*scatter*spacing*9,y=cy+(dot.y-logoMidY)*spacing+Math.sin(dot.phase+time*2)*scatter*spacing*7;
+      const flicker=.93+.07*Math.sin(time*1.3+dot.phase);ctx.globalAlpha=k*flicker;
+      const size=spacing*3.3;ctx.drawImage(ledSprite,x-size/2,y-size/2,size,size);
+      ctx.fillStyle='#e3f9ff';ctx.beginPath();ctx.arc(x,y,Math.max(.8,spacing*.18),0,TAU);ctx.fill();
+    }
+    ctx.globalAlpha=reveal;const bottom=cy+spacing*(logoMidY+1.3),tip=project(0,3.29,0,c,s);
+    for(let y=bottom;y<tip[1];y+=spacing*.65){ctx.fillStyle='#a8e5ff';ctx.globalAlpha=reveal*.55;ctx.fillRect(cx-.65,y,1.3,1.3);}
+    ctx.globalAlpha=1;glow(tip[0],tip[1],sceneScale*.21,reveal*.8);ctx.globalCompositeOperation='source-over';
+  }
+  function assembly(c,s){
+    const it=introTime();if(it<.1||it>4.7)return;
+    const u=clamp((it-.1)/4.35,0,1),y=-1.48+u*4.83,r=1.72*Math.pow(1-u,.81)+.06,aura=smooth(it/.55)*(1-smooth((it-4.1)/.6));
+    ctx.globalCompositeOperation='screen';
+    for(let i=0;i<150;i++){
+      const a=i/150*TAU+time*3.3,spread=.04+Math.sin(i*13.37+time*2)*.025,q=project(Math.cos(a)*(r+spread),y+Math.sin(a*5+time*4)*.055,Math.sin(a)*(r+spread),c,s);
+      ctx.globalAlpha=aura*(.25+.55*(i%5===0));glyph(q[0],q[1],blue?4:2,11,i%3?0:2,.85);if(i%11===0)glow(q[0],q[1],16,aura*.6);
+    }
+    ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';
+  }
+  function snowfall(){
+    if(!snowing)return;
+    for(const p of snow){const x=((p.x+Math.sin(time*.22+p.phase)*.024+time*.007*p.z)%1+1)%1,y=(p.y+time*p.speed)%1;ctx.globalAlpha=(.18+p.z*.65)*(.78+.22*Math.sin(p.phase+time));glyph(x*W,y*H,7,p.z>.7?11:8,p.z>.78?2:0,.45+p.z*.7);}ctx.globalAlpha=1;
+  }
+  function render(now){
+    requestAnimationFrame(render);if(!last)last=now;const dt=(now-last)/1000;last=now;
+    if(!paused&&!document.hidden){
+      time+=dt;
+      introAge=Math.min(CONFIG.introDuration,introAge+dt);
+      const keyboardReading=embedded&&noteLayer.contains(document.activeElement)&&document.activeElement.matches(':focus-visible');
+      if(!dragging&&!keyboardReading)angle+=dt*CONFIG.rotationSpeed*(embedded?1.8:1);
+    }
+    const step=reduceMotion?1:1-Math.exp(-dt*11);
+    zoom+=(targetZoom-zoom)*step;
+    viewMix+=((codeView?1:0)-viewMix)*step;
+    const compact=W<=760;
+    sceneX=W*.5-(compact?0:Math.min(W*.46,655)*.45*viewMix);
+    if(embedded){
+      sceneY=sceneInset+(H-sceneInset)*(.624+(compact?-.334:.025)*viewMix);
+      sceneScale=unit*zoom*(1-(compact?.63:.19)*viewMix);
+    }else{
+      sceneY=H*(.555+(compact?-.16:.10)*viewMix);
+      sceneScale=unit*zoom*(compact?1-.23*viewMix:1);
+    }
+    codeDensity=smooth((zoom-1.05)/.25)*.93;
+    if(document.hidden||now-lastPaint<1000/CONFIG.fps)return;lastPaint=now;
+    const c=Math.cos(angle),s=Math.sin(angle);backdrop();ground(c,s);tree(c,s);assembly(c,s);topper(c,s);snowfall();
+    if(embedded)positionNotes(c,s);
+    if(introAge===CONFIG.introDuration&&canvas.getAttribute('aria-busy')==='true')canvas.setAttribute('aria-busy','false');
+    canvas.dataset.rendered='true';
+  }
+  function notify(msg){clearTimeout(toastTimer);$('toast').textContent=msg;$('toast').style.opacity=1;toastTimer=setTimeout(()=>$('toast').style.opacity=0,3200);}
+  function syncPlay(){const b=$('play');b.setAttribute('aria-pressed',String(paused));b.setAttribute('aria-label',paused?'애니메이션 재생':'애니메이션 일시정지');b.querySelector('span').textContent=paused?'재생':'일시정지';b.querySelector('svg').innerHTML=paused?'<path d="M6 3l10 7-10 7z"/>':'<path d="M7 4v12M13 4v12"/>';}
+  $('play').onclick=()=>{paused=!paused;syncPlay();};
+  $('snow').onclick=()=>{snowing=!snowing;$('snow').setAttribute('aria-pressed',String(snowing));};
+  $('theme').onclick=()=>{blue=!blue;$('theme').setAttribute('aria-pressed',String(blue));buildAtlas();};
+  const fileButtons=pythonSources.map(({name}, index)=>{
+    const button=document.createElement('button');
+    button.type='button';
+    button.textContent=name;
+    button.onclick=()=>selectCode(index);
+    $('code-files').append(button);
+    return button;
+  });
+  function selectCode(index){
+    const source=pythonSources[index];
+    const displayedCode=$('code-lines').querySelector('code');
+    activeGlyphs=[...source.code].filter(char=>/[!-~]/.test(char)).map(char=>sourceGlyphs.indexOf(char));
+    fileButtons.forEach((button,i)=>button.setAttribute('aria-pressed',String(i===index)));
+    $('code-meta').textContent=`${source.stage} / ${source.filename} / ${source.title}`;
+    displayedCode.textContent='';
+    const tokens=/#.*|f?"(?:\\.|[^"\\])*"|f?'(?:\\.|[^'\\])*'|\b(?:class|def|for|while|in|if|elif|else|return|break|continue|not|import|from|True|False|None)\b|\b\d+(?:\.\d+)?\b/g;
+    let offset=0;
+    for(const token of source.code.matchAll(tokens)){
+      displayedCode.append(source.code.slice(offset,token.index));
+      const span=document.createElement('span');
+      const value=token[0];
+      span.className='py-'+(value.startsWith('#')?'comment':/["']/.test(value)?'string':/^\d/.test(value)?'number':'keyword');
+      span.textContent=value;
+      displayedCode.append(span);
+      offset=token.index+value.length;
+    }
+    displayedCode.append(source.code.slice(offset));
+    $('code-lines').scrollTop=0;
+    $('code-lines').scrollLeft=0;
+  }
+  function setCodeView(show){
+    if(codeView===show)return;
+    if(!show&&codePane.contains(document.activeElement)) codeToggle.focus();
+    codeView=show;
+    codePane.hidden=!show;
+    codeToggle.setAttribute('aria-expanded',String(show));
+    codeToggle.querySelector('span').textContent=show?'코드 닫기':'코드 보기';
+    document.body.classList.toggle('code-view',show);
+  }
+  function setZoom(next){
+    targetZoom=clamp(next,.68,1.30);
+    const show=codeView?targetZoom>=1.16:targetZoom>=1.25;
+    setCodeView(show&&!document.body.classList.contains('clean'));
+  }
+  codeToggle.onclick=()=>setZoom(codeView?1:1.29);
+  $('code-close').onclick=()=>setZoom(1);
+  function replay(){
+    setZoom(1);
+    introAge=0;
+    canvas.setAttribute('aria-busy','true');
+    time=0;
+    last=0;
+    angle=.55;
+    paused=false;
+    syncPlay();
+  }
+  $('replay').onclick=replay;
+  const clean=()=>{
+    document.body.classList.toggle('clean');
+    if(document.body.classList.contains('clean'))setZoom(1);
+    $('clean').setAttribute('aria-label',document.body.classList.contains('clean')?'글자와 버튼 다시 표시':'화면의 글자와 버튼 숨기기');
+  };$('clean').onclick=clean;
+  async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else notify('이 브라우저에서는 전체화면을 지원하지 않습니다.');}catch(e){notify('브라우저의 전체화면 기능을 사용해 주세요.');}}
+  $('full').onclick=fullscreen;
+  function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
+  $('save').onclick=()=>{canvas.toBlob(blob=>{if(blob){download(blob,'SSAFY-Christmas.png');notify('트리 사진을 저장했습니다.');}else notify('사진 저장에 실패했습니다. 다시 시도해 주세요.');},'image/png');};
+  function handlePointer(event){
+    pointers.set(event.pointerId, {x:event.clientX,y:event.clientY});
+    if(pointers.size===2){
+      const [first,second]=pointers.values();
+      const distance=Math.hypot(first.x-second.x,first.y-second.y);
+      if(event.type==='pointermove'&&pinchDistance>0&&distance>0){
+        setZoom(targetZoom*distance/pinchDistance);
+      }
+      pinchDistance=distance;
+      dragging=false;
+      return;
+    }
+    if(event.type==='pointerdown'){
+      dragX=event.clientX;
+      dragOrigin=angle;
+      dragging=true;
+    }else if(dragging){
+      angle=dragOrigin-(event.clientX-dragX)*.007;
+    }
+  }
+  function releasePointer(event){
+    pointers.delete(event.pointerId);
+    dragging=false;
+    pinchDistance=0;
+  }
+  canvas.addEventListener('pointerdown',event=>{
+    canvas.setPointerCapture(event.pointerId);
+    handlePointer(event);
+  });
+  canvas.addEventListener('pointermove',event=>{
+    if(pointers.has(event.pointerId))handlePointer(event);
+  });
+  canvas.addEventListener('lostpointercapture',releasePointer);
+  function zoomWithWheel(event){
+    const multiplier=event.deltaMode===1?16:event.deltaMode===2?H:1;
+    const delta=clamp(event.deltaY*multiplier,-180,180);
+    if(embedded&&delta>0&&targetZoom<=1)return;
+    event.preventDefault();
+    const next=targetZoom*Math.exp(-delta*.00115);
+    setZoom(embedded&&delta>0?Math.max(1,next):next);
+  }
+  canvas.addEventListener('wheel',zoomWithWheel,{passive:false});
+  if(embedded)noteLayer.addEventListener('wheel',zoomWithWheel,{passive:false});
+  addEventListener('keydown',event=>{
+    if(event.key==='Escape'&&codeView){setZoom(1);return;}
+    if(event.target instanceof HTMLButtonElement||codePane.contains(event.target))return;
+    if(embedded&&event.target!==canvas)return;
+    if(embedded&&(event.key==='ArrowLeft'||event.key==='ArrowRight')){
+      event.preventDefault();
+      angle+=event.key==='ArrowRight'?Math.PI/8:-Math.PI/8;
+    }
+    if(event.code==='Space'){event.preventDefault();$('play').click();}
+    const key=event.key.toLowerCase();
+    if(!embedded&&key==='h')clean();
+    if(!embedded&&key==='f')fullscreen();
+    if(key==='r')replay();
+    if(key==='+'||key==='=')setZoom(targetZoom*1.16);
+    if(key==='-')setZoom(targetZoom/1.16);
+  });
+  addEventListener('resize',resize);document.addEventListener('visibilitychange',()=>{last=0;});
+  selectCode(0);
+  resize();syncPlay();requestAnimationFrame(render);
+})();
+</script>
+</body>
+</html>
