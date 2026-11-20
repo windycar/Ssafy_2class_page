@@ -65,6 +65,11 @@
   body.embedded :is(.masthead,.edition,.caption,.hint,#clean,#theme,.divider,#save,#full){display:none}
   body.embedded canvas{touch-action:pan-y}
   body.embedded canvas:focus-visible{outline:2px solid #a9dfff;outline-offset:-3px}
+  body.placing-ornament canvas{cursor:crosshair}
+  body.placing-ornament canvas:active{cursor:grabbing}
+  body.placing-ornament .note-layer{opacity:.45}
+  body.placing-ornament .tree-note{pointer-events:none}
+  #ornament-placement-hint{position:absolute;z-index:3;bottom:14px;left:50%;width:max-content;max-width:calc(100% - 24px);transform:translateX(-50%);border:1px solid #668c78;border-radius:14px;padding:9px 14px;background:#102a24eb;color:#e5fff0;font-size:12px;text-align:center;pointer-events:none}
   body.embedded .controls{top:12px;right:12px;bottom:auto;left:auto;z-index:3;transform:none;padding:3px}
   body.embedded .controls button{min-height:34px;padding:6px 8px;font-size:11px}
   body.embedded #replay span{display:inline}
@@ -114,6 +119,7 @@
 <body>
 <canvas id="scene" role="img" aria-label="눈 내리는 밤, 금빛 전구와 선물이 장식된 입체 ASCII 크리스마스트리. 꼭대기에는 SSAFY 광주 2반 LED 도트 글자가 빛납니다."></canvas>
 <div id="tree-notes" class="note-layer" role="group" aria-label="트리에 붙은 포스트잇" hidden></div>
+<p id="ornament-placement-hint" hidden>가지를 눌러 장식을 달아 주세요. 드래그하면 트리가 돌아가요.</p>
 <header class="masthead chrome"><div class="eyebrow">A CHRISTMAS WRITTEN IN CODE</div><strong>SSAFY WINTER</strong></header>
 <div class="edition chrome">SEASON OF POSSIBILITIES<span>CHRISTMAS · 2026</span></div>
 <div class="caption chrome"><p>코드로 피어난<br>우리의 겨울.</p><small>MAKE A WISH. BUILD YOUR TOMORROW.</small></div>
@@ -179,23 +185,109 @@
   const noteTilts = [-7, 7, -6, -8, 5, 9, 4, -6, -5];
   const ornamentSprites = new Map();
   let ornaments = [], hangingOrnament = null;
+  let placement = null, consumedPlacementId = null, placementCursor = null, placementTap = null;
+
+  function ornamentAnchor(height, azimuth) {
+    const radius = 1.81 * Math.pow(1 - height, .81);
+    return { height, azimuth, radius, x: radius * Math.cos(azimuth), y: -1.48 + height * 4.83, z: radius * Math.sin(azimuth), revealAt: 1.69 + height * 2.85 };
+  }
 
   function setOrnaments(items, highlightedId) {
-    const previousKind = ornaments.find(({ id }) => id === highlightedId)?.kind;
-    ornaments = items.map(({ id, kind }, index) => {
-      // Offset successive ornaments in height and angle so a new one leaves space around earlier ones.
-      const height = .15 + .56 * ((.36 + index * .754877666) % 1);
-      const azimuth = Math.PI / 2 - .55 + index * 2.39996323;
-      const radius = 1.81 * Math.pow(1 - height, .81);
-      return { id, kind, azimuth, radius, x: radius * Math.cos(azimuth), y: -1.48 + height * 4.83, z: radius * Math.sin(azimuth), revealAt: 1.69 + height * 2.85 };
-    });
+    const previous = ornaments.find(({ id }) => id === highlightedId);
+    ornaments = items.map(({ id, kind, height, azimuth }, index) => ({
+      id, kind,
+      ...ornamentAnchor(height ?? .15 + .56 * ((.36 + index * .754877666) % 1),
+        azimuth ?? Math.PI / 2 - .55 + index * 2.39996323),
+    }));
     const highlighted = ornaments.find(({ id }) => id === highlightedId);
-    if (!highlighted || highlighted.kind === previousKind) return;
-    if (Math.sin(highlighted.azimuth + angle) < .82) {
+    if (!highlighted || (highlighted.kind === previous?.kind && highlighted.height === previous.height && highlighted.azimuth === previous.azimuth)) return;
+    if (Math.sin(highlighted.azimuth + angle) <= .04) {
       angle = Math.PI / 2 - highlighted.azimuth;
       if (dragging) dragOrigin = angle;
     }
     if (!reduceMotion) hangingOrnament = { id: highlighted.id, start: null };
+  }
+
+  function setPlacement(next) {
+    if (next?.id === consumedPlacementId || next?.id === placement?.id) return;
+    placement = next ?? null;
+    placementCursor = null;
+    placementTap = null;
+    document.body.classList.toggle('placing-ornament', Boolean(placement));
+    $('ornament-placement-hint').hidden = !placement;
+    canvas.setAttribute('aria-keyshortcuts', placement ? 'ArrowUp ArrowDown ArrowLeft ArrowRight Enter Escape' : 'ArrowLeft ArrowRight Space R');
+    if (placement) {
+      canvas.setAttribute('aria-description', '방향키로 위치를 고르고 Enter 키로 장식을 다세요. Escape 키로 취소합니다.');
+      canvas.focus({ preventScroll: true });
+    } else {
+      canvas.removeAttribute('aria-description');
+    }
+  }
+
+  function pickBranch(screenX, screenY) {
+    const px = (screenX - sceneX) / sceneScale;
+    const py = (sceneY - screenY) / sceneScale;
+    const pitchCos = .978, pitchSin = .208;
+    const pitchNorm = pitchCos ** 2 + pitchSin ** 2;
+
+    // Follow the camera ray from the near side to the first surface of the tapered canopy.
+    function sample(depth) {
+      const perspective = 1 - depth / 7.7;
+      const x = px * perspective, projectedY = py * perspective;
+      const y = (projectedY * pitchCos + depth * pitchSin) / pitchNorm;
+      const z = (depth * pitchCos - projectedY * pitchSin) / pitchNorm;
+      const height = (y + 1.48) / 4.83;
+      const inside = height >= 0 && height <= 1 && Math.hypot(x, z) <= 1.81 * Math.pow(1 - height, .81);
+      return { inside, x, z, height };
+    }
+
+    for (let depth = 2.44; depth >= -2.5; depth -= .06) {
+      if (!sample(depth).inside) continue;
+      let far = depth, near = depth + .06;
+      for (let step = 0; step < 10; step++) {
+        const mid = (far + near) / 2;
+        if (sample(mid).inside) far = mid;
+        else near = mid;
+      }
+      const { x, z, height } = sample(far);
+      if (height < .03 || height > .94 || z / Math.hypot(x, z) <= .04 || introTime() < 1.83 + height * 2.85) return null;
+      return { height, azimuth: ((Math.atan2(z, x) - angle) % TAU + TAU) % TAU };
+    }
+    return null;
+  }
+
+  function defaultPlacementCursor() {
+    const front = ornamentAnchor(.40, Math.PI / 2 - angle);
+    return project(front.x, front.y, front.z, Math.cos(angle), Math.sin(angle)).slice(0, 2);
+  }
+
+  function finishOrnamentPlacement(position) {
+    const { id } = placement;
+    setPlacement(null);
+    consumedPlacementId = id;
+    window.parent.postMessage({
+      type: position ? 'ssafy-tree:place-ornament' : 'ssafy-tree:cancel-ornament',
+      id,
+      ...position,
+    }, location.origin);
+  }
+
+  function drawPlacementPreview(c, s) {
+    const position = pickBranch(...(placementCursor ?? defaultPlacementCursor()));
+    if (!position) return;
+    const { x, y, z } = ornamentAnchor(position.height, position.azimuth);
+    const [screenX, screenY, scale] = project(x, y, z, c, s);
+    const size = clamp(sceneScale * .25, 19, 37) * scale;
+    ctx.save();
+    ctx.globalAlpha = .8;
+    ctx.drawImage(ornamentSprite(placement.kind), screenX - size / 2, screenY - size * .18, size, size);
+    ctx.strokeStyle = '#fff3c3';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.arc(screenX, screenY + size * .28, size * .56, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
   }
 
   function ornamentSprite(kind) {
@@ -214,7 +306,16 @@
     brush.fillStyle = '#ffd68b';
     brush.fillRect(13, 7, 6, 3);
 
-    if (kind === 'snowflake') {
+    if (kind === 'candy') {
+      const cane = new Path2D('M10 27 L19 13 C24 6 31 13 25 18');
+      brush.strokeStyle = '#fff5e8';
+      brush.lineWidth = 5;
+      brush.stroke(cane);
+      brush.strokeStyle = '#d62646';
+      brush.lineCap = 'butt';
+      brush.setLineDash([2.2, 3]);
+      brush.stroke(cane);
+    } else if (kind === 'snowflake') {
       brush.strokeStyle = '#a8ddff';
       brush.lineWidth = 1.9;
       for (let spoke = 0; spoke < 6; spoke++) {
@@ -234,17 +335,41 @@
       const outlines = {
         star: 'M16 8 L19.5 15 L27.5 16 L22 21.4 L23.5 29 L16 25.4 L8.5 29 L10 21.4 L4.5 16 L12.5 15 Z',
         bell: 'M16 9 C10.5 9 9 13 9 17 C9 21 7 23 6 24 L26 24 C25 23 23 21 23 17 C23 13 21.5 9 16 9 Z M13 25 C13 30 19 30 19 25 Z',
+        ribbon: 'M15 15 C10 9 4 9 5 16 C5 22 9 22 14 19 L8 28 L13 27 L17 22 L21 28 L25 28 L20 19 C26 23 29 20 28 15 C27 9 22 10 18 15 Z',
+        gift: 'M6 13 H26 V18 H24 V29 H8 V18 H6 Z',
+        gingerbread: 'M12 17 C5 14 4 20 9 21 L12 21 L9 27 Q9 31 13 29 L16 25 L19 29 Q23 31 23 27 L20 21 L23 21 C28 20 27 14 20 17 A5.3 5.3 0 1 0 12 17 Z',
+      };
+      const colors = {
+        star: ['#fff7b2', '#eaa42b'], bell: ['#ffe59c', '#da782e'], bauble: ['#ff9d9a', '#c7274a'],
+        ribbon: ['#ff9de0', '#b21b82'], gift: ['#a3ecc0', '#1f8b61'], gingerbread: ['#f5b87e', '#a85933'],
       };
       const body = kind === 'bauble' ? new Path2D() : new Path2D(outlines[kind]);
       if (kind === 'bauble') body.arc(16, 19, 9.7, 0, TAU);
       const shine = brush.createLinearGradient(8, 10, 24, 29);
-      const [light, dark] = kind === 'bauble' ? ['#ff9d9a', '#c7274a'] : kind === 'bell' ? ['#ffe59c', '#da782e'] : ['#fff7b2', '#eaa42b'];
+      const [light, dark] = colors[kind];
       shine.addColorStop(0, light);
       shine.addColorStop(1, dark);
       brush.fillStyle = shine;
       brush.fill(body);
       brush.strokeStyle = light;
       brush.stroke(body);
+      if (kind === 'gift') {
+        brush.fillStyle = '#ffd580';
+        brush.fillRect(14, 13, 4, 16);
+        brush.fillRect(6, 17, 20, 2);
+      }
+      if (kind === 'ribbon') {
+        brush.fillStyle = '#ffd0ed';
+        brush.fillRect(14, 14, 5, 6);
+      }
+      if (kind === 'gingerbread') {
+        brush.fillStyle = '#fff3df';
+        for (const [x, y] of [[14, 12], [18, 12], [16, 19], [16, 22]]) {
+          brush.beginPath();
+          brush.arc(x, y, .8, 0, TAU);
+          brush.fill();
+        }
+      }
     }
     ornamentSprites.set(kind, sprite);
     return sprite;
@@ -318,6 +443,7 @@
       const notes = event.data.notes;
       const ornaments = event.data.ornaments;
       if (Array.isArray(ornaments)) setOrnaments(ornaments, event.data.highlightedOrnamentId);
+      setPlacement(event.data.ornamentPlacement);
       if (notes.length !== noteAnchors.length) {
         noteAnchors = buildNoteAnchors(notes.length);
         updatePaperSize();
@@ -686,7 +812,7 @@
       time+=dt;
       introAge=Math.min(CONFIG.introDuration,introAge+dt);
       const keyboardReading=embedded&&noteLayer.contains(document.activeElement)&&document.activeElement.matches(':focus-visible');
-      if(!dragging&&!keyboardReading)angle+=dt*CONFIG.rotationSpeed*(embedded?1.8:1)*(1-.60*viewMix);
+      if(!dragging&&!keyboardReading&&!placement)angle+=dt*CONFIG.rotationSpeed*(embedded?1.8:1)*(1-.60*viewMix);
     }
     const step=reduceMotion?1:1-Math.exp(-dt*11);
     zoom+=(targetZoom-zoom)*step;
@@ -702,6 +828,7 @@
     if(document.hidden||now-lastPaint<1000/CONFIG.fps)return;lastPaint=now;
     const c=Math.cos(angle),s=Math.sin(angle);backdrop();ground(c,s);tree(c,s);assembly(c,s);topper(c,s);
     if (ornaments.length) drawOrnaments(c,s,now);
+    if (placement) drawPlacementPreview(c,s);
     snowfall();
     if(embedded)positionNotes(c,s);
     if(introAge===CONFIG.introDuration&&canvas.getAttribute('aria-busy')==='true')canvas.setAttribute('aria-busy','false');
@@ -817,17 +944,40 @@
     }
   }
   function releasePointer(event){
-    pointers.delete(event.pointerId);
+    if (!pointers.delete(event.pointerId)) return;
+    if (placementTap?.id === event.pointerId) placementTap = null;
     dragging=false;
     pinchDistance=0;
   }
   canvas.addEventListener('pointerdown',event=>{
+    if (placement) {
+      if (event.button !== 0) return;
+      placementCursor = [event.clientX, event.clientY];
+      placementTap = pointers.size ? null : { id: event.pointerId, x: event.clientX, y: event.clientY };
+    }
     canvas.setPointerCapture(event.pointerId);
     handlePointer(event);
   });
   canvas.addEventListener('pointermove',event=>{
+    if (placement) {
+      placementCursor = [event.clientX, event.clientY];
+      if (placementTap?.id === event.pointerId) {
+        if (Math.hypot(event.clientX - placementTap.x, event.clientY - placementTap.y) < 7) return;
+        placementTap = null;
+      }
+    }
     if(pointers.has(event.pointerId))handlePointer(event);
   });
+  canvas.addEventListener('pointerup', event => {
+    const tapped = placement && placementTap?.id === event.pointerId &&
+      Math.hypot(event.clientX - placementTap.x, event.clientY - placementTap.y) < 7;
+    releasePointer(event);
+    if (!tapped) return;
+    const position = pickBranch(event.clientX, event.clientY);
+    if (position) finishOrnamentPlacement(position);
+    else notify('가지가 있는 곳을 눌러 주세요.');
+  });
+  canvas.addEventListener('pointercancel',releasePointer);
   canvas.addEventListener('lostpointercapture',releasePointer);
   function zoomWithWheel(event){
     const multiplier=event.deltaMode===1?16:event.deltaMode===2?H:1;
@@ -840,6 +990,27 @@
   canvas.addEventListener('wheel',zoomWithWheel,{passive:false});
   if(embedded)noteLayer.addEventListener('wheel',zoomWithWheel,{passive:false});
   addEventListener('keydown',event=>{
+    if (placement && event.target === canvas) {
+      const steps = { ArrowUp: [0, -12], ArrowDown: [0, 12], ArrowLeft: [-12, 0], ArrowRight: [12, 0] };
+      const cursor = placementCursor && pickBranch(...placementCursor) ? placementCursor : defaultPlacementCursor();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        finishOrnamentPlacement(null);
+        return;
+      }
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const position = pickBranch(...cursor);
+        if (position) finishOrnamentPlacement(position);
+        return;
+      }
+      if (Object.hasOwn(steps, event.key)) {
+        event.preventDefault();
+        const [dx, dy] = steps[event.key], next = [cursor[0] + dx, cursor[1] + dy];
+        if (pickBranch(...next)) placementCursor = next;
+        return;
+      }
+    }
     if(event.key==='Escape'&&codeView){setZoom(1);return;}
     if(event.target instanceof HTMLButtonElement||codePane.contains(event.target))return;
     if(embedded&&event.target!==canvas)return;

@@ -20,6 +20,9 @@ import {
   saveChristmasTreeNote,
   type ChristmasNote,
   type ChristmasOrnament,
+  type OrnamentKind,
+  type OrnamentPosition,
+  type SceneOrnament,
 } from "../services/christmasTree";
 import ChristmasTreeOrnaments from "./ChristmasTreeOrnaments";
 
@@ -32,7 +35,8 @@ const DEMO_NOTES: ChristmasNote[] = [
 
 type TreeNotes = Awaited<ReturnType<typeof getChristmasTreeNotes>>;
 type NoteEditor = { kind: "add" } | { kind: "edit"; noteId: string };
-type SceneOrnament = Pick<ChristmasOrnament, "id" | "kind">;
+type OrnamentPlacement = { id: string; kind: OrnamentKind };
+type PendingPlacement = { id: string; resolve: (position: OrnamentPosition | null) => void };
 
 export default function ChristmasTreeView() {
   const { currentUser, isDemo } = useAuth();
@@ -42,6 +46,7 @@ export default function ChristmasTreeView() {
 function ChristmasTree({ isDemo }: { isDemo: boolean }) {
   const scene = useRef<HTMLIFrameElement>(null);
   const pendingNoteId = useRef<string | null>(null);
+  const pendingPlacement = useRef<PendingPlacement | null>(null);
   const [tree, setTree] = useState<TreeNotes | null>(isDemo ? { notes: DEMO_NOTES, ownNotes: [] } : null);
   const [loadError, setLoadError] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -55,6 +60,7 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
   const [deleting, setDeleting] = useState(false);
   const [ornaments, setOrnaments] = useState<SceneOrnament[]>([]);
   const [highlightedOrnamentId, setHighlightedOrnamentId] = useState<string | null>(null);
+  const [ornamentPlacement, setOrnamentPlacement] = useState<OrnamentPlacement | null>(null);
 
   const notes = tree?.notes;
   const noteCount = notes?.length ?? 0;
@@ -87,9 +93,28 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
   }, [isDemo, loadAttempt]);
 
   const updateOrnaments = useCallback((items: ChristmasOrnament[], highlightedId: string | null) => {
-    setOrnaments(items.map(({ id, kind }) => ({ id, kind })));
+    setOrnaments(items.map(({ id, kind, height, azimuth }) => ({ id, kind, height, azimuth })));
     setHighlightedOrnamentId(highlightedId);
     if (highlightedId) scene.current?.scrollIntoView({ block: "nearest" });
+  }, []);
+
+  const pickOrnamentPosition = useCallback((kind: OrnamentKind) => {
+    if (pendingPlacement.current) return Promise.resolve(null);
+    const id = crypto.randomUUID();
+    scene.current?.scrollIntoView({ block: "start" });
+    scene.current?.focus({ preventScroll: true });
+    setOrnamentPlacement({ id, kind });
+    return new Promise<OrnamentPosition | null>((resolve) => {
+      pendingPlacement.current = { id, resolve };
+    });
+  }, []);
+
+  const finishPlacement = useCallback((position: OrnamentPosition | null) => {
+    const placement = pendingPlacement.current;
+    if (!placement) return;
+    pendingPlacement.current = null;
+    setOrnamentPlacement(null);
+    placement.resolve(position);
   }, []);
 
   const sendSceneItems = useCallback(() => {
@@ -99,20 +124,32 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
       newNoteId,
       ornaments,
       highlightedOrnamentId,
+      ornamentPlacement,
     }, "*"); // The sandboxed scene has an opaque origin.
-  }, [notes, newNoteId, ornaments, highlightedOrnamentId]);
+  }, [notes, newNoteId, ornaments, highlightedOrnamentId, ornamentPlacement]);
 
   useEffect(sendSceneItems, [sendSceneItems]);
 
   useEffect(() => {
-    function openNote(event: MessageEvent) {
-      if (event.source !== scene.current?.contentWindow || event.data?.type !== "ssafy-tree:open-note") return;
-      const note = notes?.find(({ id }) => id === event.data.id);
-      if (note) setSelectedNote(note);
+    function receiveSceneMessage(event: MessageEvent) {
+      if (event.source !== scene.current?.contentWindow) return;
+      const { type, id, height, azimuth } = event.data ?? {};
+      if (type === "ssafy-tree:open-note") {
+        const note = notes?.find((item) => item.id === id);
+        if (note) setSelectedNote(note);
+      }
+      if (!pendingPlacement.current || pendingPlacement.current.id !== id) return;
+      if (type === "ssafy-tree:cancel-ornament") finishPlacement(null);
+      if (type === "ssafy-tree:place-ornament" && typeof height === "number" && height >= 0.03 && height <= 0.94 &&
+        typeof azimuth === "number" && azimuth >= 0 && azimuth < 2 * Math.PI) {
+        finishPlacement({ height, azimuth });
+      }
     }
-    window.addEventListener("message", openNote);
-    return () => window.removeEventListener("message", openNote);
-  }, [notes]);
+    window.addEventListener("message", receiveSceneMessage);
+    return () => window.removeEventListener("message", receiveSceneMessage);
+  }, [notes, finishPlacement]);
+
+  useEffect(() => () => { pendingPlacement.current?.resolve(null); }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -332,7 +369,12 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
             </>
           )}
         </section>
-        <ChristmasTreeOrnaments isDemo={isDemo} onUpdate={updateOrnaments} />
+        <ChristmasTreeOrnaments
+          isDemo={isDemo}
+          onUpdate={updateOrnaments}
+          pickPosition={pickOrnamentPosition}
+          cancelPlacement={() => finishPlacement(null)}
+        />
       </div>
 
       <Dialog.Root open={selectedNote !== null} onOpenChange={(open) => { if (!open) setSelectedNote(null); }}>

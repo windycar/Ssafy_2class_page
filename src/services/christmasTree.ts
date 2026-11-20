@@ -10,16 +10,25 @@ export type ChristmasNote = {
   is_sample?: boolean;
 };
 
-export type OrnamentKind = "star" | "bell" | "snowflake" | "bauble";
+export type OrnamentKind = "star" | "bell" | "snowflake" | "bauble" | "candy" | "ribbon" | "gift" | "gingerbread";
+export type OrnamentSlot = 1 | 2;
+export type OrnamentPosition = { height: number; azimuth: number };
+export type SceneOrnament = { id: string; kind: OrnamentKind; height: number | null; azimuth: number | null };
 
-export type ChristmasOrnament = {
-  id: string;
-  kind: OrnamentKind;
-  is_mine: boolean;
-};
+export type ChristmasOrnament = SceneOrnament & { own_slot: OrnamentSlot | null };
 
-export async function manageChristmasTreeOrnament(kind: OrnamentKind | null, remove = false, signal?: AbortSignal) {
-  const request = requireSupabase().rpc("manage_my_christmas_tree_ornament", { p_kind: kind, p_remove: remove });
+type OrnamentChange =
+  | { slot: OrnamentSlot; kind: OrnamentKind; position?: OrnamentPosition }
+  | { slot: OrnamentSlot; remove: true };
+
+export async function manageChristmasTreeOrnaments(change?: OrnamentChange, signal?: AbortSignal) {
+  const request = requireSupabase().rpc("manage_my_christmas_tree_ornaments", {
+    p_slot: change?.slot ?? null,
+    p_kind: change && "kind" in change ? change.kind : null,
+    p_height: change && "position" in change ? change.position?.height ?? null : null,
+    p_azimuth: change && "position" in change ? change.position?.azimuth ?? null : null,
+    p_remove: Boolean(change && "remove" in change),
+  });
   const { data, error } = await (signal ? request.abortSignal(signal) : request);
   if (error) throw error;
   return data as ChristmasOrnament[];
