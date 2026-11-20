@@ -427,7 +427,7 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
       }}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-[#02090b]/80" />
-          <Dialog.Content aria-describedby={undefined} className="fixed top-1/2 left-1/2 z-50 w-fit min-w-52 max-w-[min(54rem,calc(100%-1.5rem))] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-[#f7f0e4] p-4 shadow-2xl sm:p-5">
+          <Dialog.Content aria-describedby={undefined} className="fixed top-1/2 left-1/2 z-50 max-h-[calc(100dvh-1.5rem)] w-[min(48rem,calc(100%-1.5rem),86dvh)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-[#f7f0e4] p-4 shadow-2xl sm:p-5">
             <div className="mb-3 flex items-center justify-between gap-3 text-[#393126]">
               <Dialog.Title className="font-extrabold">사진 오너먼트</Dialog.Title>
               <Dialog.Close aria-label="사진 닫기" className="-my-2 -mr-1 grid size-9 place-items-center rounded-full hover:bg-black/5 focus-visible:outline-2">
@@ -435,8 +435,8 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
               </Dialog.Close>
             </div>
             {displayedPhoto && (
-              <figure className="mx-auto w-fit max-w-full bg-[#fffdf4] p-2 pb-6 shadow-md sm:p-3 sm:pb-8">
-                <img src={displayedPhoto} alt="트리에 달린 사진" onError={detailedImage ? () => setPhotoDetail(null) : undefined} className="block max-h-[72dvh] max-w-full bg-[#e7e1d3] object-contain" />
+              <figure className="w-full bg-[#fffdf4] p-2 pb-6 shadow-md sm:p-3 sm:pb-8">
+                <img src={displayedPhoto} alt="트리에 달린 사진" onError={detailedImage ? () => setPhotoDetail(null) : undefined} className="block max-h-[68dvh] w-full object-contain" />
               </figure>
             )}
           </Dialog.Content>
