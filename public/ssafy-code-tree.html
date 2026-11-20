@@ -375,10 +375,11 @@
         star: ['#fff7b2', '#eaa42b'], bell: ['#ffe59c', '#da782e'], bauble: ['#ff9d9a', '#c7274a'],
         ribbon: ['#ff9de0', '#b21b82'], gift: ['#a3ecc0', '#1f8b61'], gingerbread: ['#f5b87e', '#a85933'],
       };
-      const body = kind === 'bauble' ? new Path2D() : new Path2D(outlines[kind]);
-      if (kind === 'bauble') body.arc(16, 19, 9.7, 0, TAU);
+      const outline = Object.hasOwn(outlines, kind) ? outlines[kind] : null;
+      const body = outline ? new Path2D(outline) : new Path2D();
+      if (!outline) body.arc(16, 19, 9.7, 0, TAU);
       const shine = brush.createLinearGradient(8, 10, 24, 29);
-      const [light, dark] = colors[kind];
+      const [light, dark] = outline ? colors[kind] : colors.bauble;
       shine.addColorStop(0, light);
       shine.addColorStop(1, dark);
       brush.fillStyle = shine;
