@@ -27,7 +27,7 @@ import {
 import ChristmasTreeOrnaments from "./ChristmasTreeOrnaments";
 
 // Reload the embedded scene when its message format changes so an open tab uses the matching renderer.
-const TREE_SCENE_URL = `${import.meta.env.BASE_URL}ssafy-code-tree.html?embed=1&v=2`;
+const TREE_SCENE_URL = `${import.meta.env.BASE_URL}ssafy-code-tree.html?embed=1&v=4`;
 const DEMO_NOTES: ChristmasNote[] = [
   { id: "demo-1", content: "어려운 문제도 같이 풀어서 즐거웠어요. 우리 반 모두 따뜻한 연말 보내요!", author_name: null, is_sample: true },
   { id: "demo-2", content: "매일 아침 인사해 줘서 고마워요. 메리 크리스마스!", author_name: null, is_sample: true },
@@ -60,10 +60,13 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
   const [noteToDelete, setNoteToDelete] = useState<ChristmasNote | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [ornaments, setOrnaments] = useState<SceneOrnament[]>([]);
+  const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
   const [highlightedOrnamentId, setHighlightedOrnamentId] = useState<string | null>(null);
   const [ornamentPlacement, setOrnamentPlacement] = useState<OrnamentPlacement | null>(null);
 
   const notes = tree?.notes;
+  const selectedPhoto = ornaments.find((ornament) => ornament.id === selectedPhotoId && ornament.kind === "custom");
+  const hasPhotos = ornaments.some((ornament) => ornament.kind === "custom");
   const noteCount = notes?.length ?? 0;
   const draftLength = Array.from(draft).length;
   const ownedCount = tree?.ownNotes.length ?? 0;
@@ -139,6 +142,10 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
         const note = notes?.find((item) => item.id === id);
         if (note) setSelectedNote(note);
       }
+      if (type === "ssafy-tree:open-photo" && !pendingPlacement.current &&
+        ornaments.some((item) => item.id === id && item.kind === "custom" && item.image_data)) {
+        setSelectedPhotoId(id);
+      }
       if (!pendingPlacement.current || pendingPlacement.current.id !== id) return;
       if (type === "ssafy-tree:cancel-ornament") finishPlacement(null);
       if (type === "ssafy-tree:place-ornament" && typeof height === "number" && height >= 0.03 && height <= 0.94 &&
@@ -148,7 +155,7 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
     }
     window.addEventListener("message", receiveSceneMessage);
     return () => window.removeEventListener("message", receiveSceneMessage);
-  }, [notes, finishPlacement]);
+  }, [notes, ornaments, finishPlacement]);
 
   useEffect(() => () => { pendingPlacement.current?.resolve(null); }, []);
 
@@ -255,7 +262,9 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
               {tree ? `${isDemo ? "예시 포스트잇" : "붙은 포스트잇"} ${noteCount}장` : loadError ? "포스트잇을 불러오지 못했어요." : "포스트잇을 불러오는 중이에요."}
             </p>
             {ornaments.length > 0 && <p className="text-[#c0d4cd]">오너먼트 {ornaments.length}개</p>}
-            {noteCount > 0 && <p className="text-[#a9c1b8]">트리를 돌려 포스트잇을 읽어보세요.</p>}
+            {(hasPhotos || noteCount > 0) && (
+              <p className="text-[#a9c1b8]">{hasPhotos ? "폴라로이드를 누르면 사진을 크게 볼 수 있어요." : "트리를 돌려 포스트잇을 읽어보세요."}</p>
+            )}
           </div>
           {notes && notes.length > 0 && (
             <details className="border-t border-[#233532] bg-[#0b161b] px-4 py-3 text-sm text-[#d6e8dd] sm:px-5">
@@ -390,6 +399,25 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
             <Dialog.Close aria-label="포스트잇 닫기" className="absolute top-3 right-3 rounded-lg p-2.5 hover:bg-black/5">
               <X className="size-5" aria-hidden="true" />
             </Dialog.Close>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <Dialog.Root open={Boolean(selectedPhoto?.image_data)} onOpenChange={(open) => { if (!open) setSelectedPhotoId(null); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-[#02090b]/80" />
+          <Dialog.Content aria-describedby={undefined} className="fixed top-1/2 left-1/2 z-50 w-[min(30rem,calc(100%-2rem),72dvh)] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-[#f7f0e4] p-4 shadow-2xl sm:p-5">
+            <div className="mb-3 flex items-center justify-between gap-3 text-[#393126]">
+              <Dialog.Title className="font-extrabold">사진 오너먼트</Dialog.Title>
+              <Dialog.Close aria-label="사진 닫기" className="-my-2 -mr-1 grid size-9 place-items-center rounded-full hover:bg-black/5 focus-visible:outline-2">
+                <X className="size-5" aria-hidden="true" />
+              </Dialog.Close>
+            </div>
+            {selectedPhoto?.image_data && (
+              <figure className="bg-[#fffdf4] p-2 pb-6 shadow-md sm:p-3 sm:pb-8">
+                <img src={selectedPhoto.image_data} alt="트리에 달린 사진" className="aspect-square w-full bg-[#e7e1d3] object-contain" />
+              </figure>
+            )}
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>

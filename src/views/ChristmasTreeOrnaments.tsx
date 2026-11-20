@@ -9,7 +9,7 @@ import {
   type OrnamentPosition,
   type OrnamentSlot,
 } from "../services/christmasTree";
-import { createOrnamentThumbnail, ORNAMENT_IMAGE_MAX_BYTES, ORNAMENT_IMAGE_TYPES } from "../utils/christmasTreeImage";
+import { prepareOrnamentPhoto, ORNAMENT_IMAGE_MAX_BYTES, ORNAMENT_IMAGE_TYPES } from "../utils/christmasTreeImage";
 
 const ornamentOptions = [
   { kind: "star", label: "별", Icon: Star, color: "fill-amber-300 text-amber-700" },
@@ -82,7 +82,7 @@ export default function ChristmasTreeOrnaments({ isDemo, onUpdate, pickPosition,
     setImageError(null);
     setOperation("preparing-image");
     try {
-      setDraftImage(await createOrnamentThumbnail(file));
+      setDraftImage(await prepareOrnamentPhoto(file));
     } catch {
       setImageError("사진을 열지 못했어요. 다른 파일을 골라 주세요.");
     } finally {
