@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronLeft, ChevronRight, LoaderCircle, LockKeyhole, Pencil, Pin, Plus, StickyNote, Trash2, TreePine, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, LoaderCircle, LockKeyhole, Pencil, Pin, Plus, StickyNote, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
+import christmasTreeArt from "../assets/home/quick-menu/christmas-tree.png";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -194,8 +195,8 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
   return (
     <div className="space-y-5">
       <header className="flex items-center gap-3.5 sm:gap-4">
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#dfece5] text-[#275843] sm:size-14">
-          <TreePine className="size-6 sm:size-7" aria-hidden="true" />
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#dfece5] sm:size-14">
+          <img src={christmasTreeArt} alt="" className="size-10 object-contain drop-shadow-sm sm:size-12" draggable={false} />
         </div>
         <div>
           <h1 className="text-2xl font-black tracking-tight text-[#152b26] sm:text-3xl">크리스마스 트리</h1>

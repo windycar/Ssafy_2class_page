@@ -51,7 +51,7 @@
   .code-files button[aria-pressed="true"]{background:#15312d;border-color:#70d2ae50;color:#c5f6e3}
   .code-meta{padding:11px 20px 9px;border-top:1px solid var(--line)}
   #code-lines{margin:0;padding:5px 20px 18px;min-height:0;overflow:auto;overscroll-behavior:contain;color:#cee5e8;font:13px/1.55 Consolas,"Malgun Gothic",monospace}
-  #code-lines code{font:inherit}
+  #code-lines code{font:inherit;tab-size:4;font-variant-ligatures:none}
   .py-keyword{color:#c9a8fb}.py-string{color:#aaddac}.py-number{color:#ffcb8a}.py-comment{color:#89a6ae}
   body.code-view .hint,body.code-view .caption{opacity:0}
   @media(max-width:760px){
@@ -162,9 +162,9 @@
   const codePane = $('code-pane');
   const codeToggle = $('code-toggle');
   const pointers = new Map();
-  const sourceGlyphs = [...new Set(pythonSources.flatMap(({code}) => [...code].filter(char => /[!-~]/.test(char))))];
-  let sourceAtlas, activeGlyphs = [], codeView = false, viewMix = 0, targetZoom = 1;
-  let sceneX = 0, sceneY = 0, sceneScale = 1, sceneInset = 0, codeDensity = 0, pinchDistance = 0;
+  let activeCodeLines = [], codeLayout, codeView = false, viewMix = 0, targetZoom = 1;
+  let sceneX = 0, sceneY = 0, sceneScale = 1, sceneInset = 0, pinchDistance = 0;
+  const codeInk = { plain:'#ddf1e8', keyword:'#d5b3ff', string:'#aaddac', number:'#ffcb8a', comment:'#a3bec8' };
   const noteLayer = $('tree-notes');
   const noteButtons = new Map();
   // 나뭇가지 높이와 둘레 방향을 고정하고 트리와 같은 카메라로 투영합니다.
@@ -374,20 +374,6 @@
       for(let g=0;g<8;g++)c.fillText(chars[g],g*24+12,(k*12+level)*24+12);
     }
     atlas=a;
-    const codeAtlas=document.createElement('canvas');
-    codeAtlas.width=sourceGlyphs.length*24;
-    codeAtlas.height=12*24;
-    const letters=codeAtlas.getContext('2d');
-    letters.font=`${glyphSize}px Consolas, "Courier New", monospace`;
-    letters.textAlign='center';
-    letters.textBaseline='middle';
-    for(let level=0;level<12;level++){
-      const brightness=.38+level/11*1.12;
-      const color=(blue?[92,198,254]:[139,218,164]).map(value=>Math.round(Math.min(255,value*brightness)));
-      letters.fillStyle=`rgb(${color.join(',')})`;
-      sourceGlyphs.forEach((char,index)=>letters.fillText(char,index*24+12,level*24+12));
-    }
-    sourceAtlas=codeAtlas;
     starAtlas=document.createElement('canvas');starAtlas.width=64;starAtlas.height=64;const s=starAtlas.getContext('2d');
     const grad=s.createRadialGradient(32,32,0,32,32,31);grad.addColorStop(0,'#fff7da');grad.addColorStop(.07,'#ffe4aacc');grad.addColorStop(.22,blue?'#7ccfff55':'#ffc56444');grad.addColorStop(1,'#ffce7600');s.fillStyle=grad;s.fillRect(0,0,64,64);
     ledSprite=document.createElement('canvas');ledSprite.width=64;ledSprite.height=64;const lc=ledSprite.getContext('2d'),lg=lc.createRadialGradient(32,32,0,32,32,31);lg.addColorStop(0,'#effcff');lg.addColorStop(.08,'#e4f9ff');lg.addColorStop(.18,'#8cddffe0');lg.addColorStop(.38,'#64bdff44');lg.addColorStop(1,'#449dff00');lc.fillStyle=lg;lc.fillRect(0,0,64,64);
@@ -448,18 +434,72 @@
       if(p.kind===1||p.kind===2){shade=p.shade*(.90+.10*Math.sin(time*1.7+p.phase));g=p.kind===2?2:0;}
       if(p.kind>=3&&p.kind<=5)shade=clamp(shade*1.4,.55,1);
       if(p.kind===0&&Math.sin(p.phase*17+time*.8)>.997){shade*=1.45;g=2;}
-      ctx.globalAlpha=alphas[i];
+      ctx.globalAlpha=alphas[i]*(p.kind===0?1-.28*viewMix:1);
       const level=clamp(Math.round(shade*11),0,11);
-      if(p.kind===0&&(i%71)/71<codeDensity){
-        const index=activeGlyphs[i%activeGlyphs.length];
-        const size=24*scale*1.2;
-        ctx.drawImage(sourceAtlas,index*24,level*24,24,24,pxs[i]-size/2,pys[i]-size/2,size,size);
-      }else{
-        glyph(pxs[i],pys[i],p.kind,level,g,scale);
-      }
+      glyph(pxs[i],pys[i],p.kind,level,g,scale);
       if(p.kind===2&&p.phase!==0)flares.push([pxs[i],pys[i],14*scale,(.58+.20*Math.sin(time*1.9+p.phase))*alphas[i]]);
     }
     ctx.globalAlpha=1;ctx.globalCompositeOperation='screen';for(const f of flares)glow(...f);ctx.globalCompositeOperation='source-over';
+  }
+  function treeCodeRows(width, font, limit) {
+    if (codeLayout?.width === width && codeLayout.font === font && codeLayout.limit === limit) return codeLayout.rows;
+
+    const rows = [];
+    for (const sourceLine of activeCodeLines) {
+      let row = [];
+      let offsetX = 0;
+      for (const { text, kind } of sourceLine) {
+        for (const piece of text.match(/\s+|\S+/g) ?? []) {
+          const pieceWidth = Math.min(width, ctx.measureText(piece).width);
+          if (row.length && offsetX + pieceWidth > width) {
+            rows.push(row);
+            if (rows.length === limit) break;
+            row = [];
+            offsetX = 0;
+          }
+          row.push({ text: piece, kind, offsetX, width: pieceWidth });
+          offsetX += pieceWidth;
+        }
+        if (rows.length === limit) break;
+      }
+      if (rows.length === limit) break;
+      rows.push(row);
+      if (rows.length === limit) break;
+    }
+    codeLayout = { width, font, limit, rows };
+    return rows;
+  }
+  function drawTreeCode(){
+    const opacity = smooth(viewMix) * smooth((introTime() - 3.7) / .8);
+    const width = Math.floor(sceneScale * 2.25);
+    if (opacity < .02 || width < 142) return;
+    const fontSize = clamp(Math.round(sceneScale * .129), 11, 15);
+    const lineHeight = Math.ceil(fontSize * 1.45);
+    const limit = Math.min(12, Math.floor(sceneScale * 1.7 / lineHeight));
+    const font = `${fontSize}px Consolas, "Courier New", "Malgun Gothic", monospace`;
+    const left = Math.round(sceneX - width / 2);
+    const top = Math.round(sceneY - sceneScale * .88);
+
+    ctx.save();
+    ctx.font = font;
+    ctx.textBaseline = 'top';
+    const rows = treeCodeRows(width, font, limit);
+    const shade = ctx.createLinearGradient(left - 12, top, left + width + 12, top);
+    shade.addColorStop(0, '#02090b00');
+    shade.addColorStop(.1, '#02090bd9');
+    shade.addColorStop(.9, '#02090bd9');
+    shade.addColorStop(1, '#02090b00');
+    ctx.globalAlpha = opacity;
+    ctx.fillStyle = shade;
+    ctx.fillRect(left - 12, top - 6, width + 24, rows.length * lineHeight + 12);
+
+    rows.forEach((row, index) => {
+      for (const { text, kind, offsetX, width } of row) {
+        ctx.fillStyle = codeInk[kind];
+        ctx.fillText(text, left + offsetX, top + index * lineHeight, width);
+      }
+    });
+    ctx.restore();
   }
   function topper(c,s){
     const it=introTime(),reveal=smooth((it-4.45)/1.65);if(reveal<=0)return;
@@ -512,9 +552,9 @@
       sceneY=H*(.555+(compact?-.16:.10)*viewMix);
       sceneScale=unit*zoom*(compact?1-.23*viewMix:1);
     }
-    codeDensity=smooth((zoom-1.05)/.25)*.93;
     if(document.hidden||now-lastPaint<1000/CONFIG.fps)return;lastPaint=now;
     const c=Math.cos(angle),s=Math.sin(angle);backdrop();ground(c,s);tree(c,s);assembly(c,s);topper(c,s);snowfall();
+    drawTreeCode();
     if(embedded)positionNotes(c,s);
     if(introAge===CONFIG.introDuration&&canvas.getAttribute('aria-busy')==='true')canvas.setAttribute('aria-busy','false');
     canvas.dataset.rendered='true';
@@ -532,25 +572,41 @@
     $('code-files').append(button);
     return button;
   });
+  function highlightCodeLine(line){
+    const tokens = /#.*|f?"(?:\\.|[^"\\])*"|f?'(?:\\.|[^'\\])*'|\b(?:class|def|for|while|in|if|elif|else|return|break|continue|and|or|is|not|import|from|True|False|None)\b|\b\d+(?:\.\d+)?\b/g;
+    const runs = [];
+    let offset = 0;
+    for (const token of line.matchAll(tokens)) {
+      if (token.index > offset) runs.push({ text: line.slice(offset, token.index), kind: 'plain' });
+      const text = token[0];
+      const kind = text.startsWith('#') ? 'comment' : /["']/.test(text) ? 'string' : /^\d/.test(text) ? 'number' : 'keyword';
+      runs.push({ text, kind });
+      offset = token.index + text.length;
+    }
+    if (offset < line.length) runs.push({ text: line.slice(offset), kind: 'plain' });
+    return runs;
+  }
   function selectCode(index){
-    const source=pythonSources[index];
-    const displayedCode=$('code-lines').querySelector('code');
-    activeGlyphs=[...source.code].filter(char=>/[!-~]/.test(char)).map(char=>sourceGlyphs.indexOf(char));
+    const source = pythonSources[index];
+    const displayedCode = $('code-lines').querySelector('code');
+    activeCodeLines = source.code.split('\n').map(highlightCodeLine);
+    codeLayout = undefined;
     fileButtons.forEach((button,i)=>button.setAttribute('aria-pressed',String(i===index)));
     $('code-meta').textContent=`${source.stage} / ${source.filename} / ${source.title}`;
-    displayedCode.textContent='';
-    const tokens=/#.*|f?"(?:\\.|[^"\\])*"|f?'(?:\\.|[^'\\])*'|\b(?:class|def|for|while|in|if|elif|else|return|break|continue|not|import|from|True|False|None)\b|\b\d+(?:\.\d+)?\b/g;
-    let offset=0;
-    for(const token of source.code.matchAll(tokens)){
-      displayedCode.append(source.code.slice(offset,token.index));
-      const span=document.createElement('span');
-      const value=token[0];
-      span.className='py-'+(value.startsWith('#')?'comment':/["']/.test(value)?'string':/^\d/.test(value)?'number':'keyword');
-      span.textContent=value;
-      displayedCode.append(span);
-      offset=token.index+value.length;
-    }
-    displayedCode.append(source.code.slice(offset));
+    displayedCode.textContent = '';
+    activeCodeLines.forEach((line, index) => {
+      if (index) displayedCode.append('\n');
+      for (const { text, kind } of line) {
+        if (kind === 'plain') {
+          displayedCode.append(text);
+        } else {
+          const span = document.createElement('span');
+          span.className = 'py-' + kind;
+          span.textContent = text;
+          displayedCode.append(span);
+        }
+      }
+    });
     $('code-lines').scrollTop=0;
     $('code-lines').scrollLeft=0;
   }
