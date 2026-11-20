@@ -10,6 +10,21 @@ export type ChristmasNote = {
   is_sample?: boolean;
 };
 
+export type OrnamentKind = "star" | "bell" | "snowflake" | "bauble";
+
+export type ChristmasOrnament = {
+  id: string;
+  kind: OrnamentKind;
+  is_mine: boolean;
+};
+
+export async function manageChristmasTreeOrnament(kind: OrnamentKind | null, remove = false, signal?: AbortSignal) {
+  const request = requireSupabase().rpc("manage_my_christmas_tree_ornament", { p_kind: kind, p_remove: remove });
+  const { data, error } = await (signal ? request.abortSignal(signal) : request);
+  if (error) throw error;
+  return data as ChristmasOrnament[];
+}
+
 export async function getChristmasTreeNotes(signal: AbortSignal) {
   const client = requireSupabase();
   const [notes, ownNotes] = await Promise.all([

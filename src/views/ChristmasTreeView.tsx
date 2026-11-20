@@ -19,7 +19,9 @@ import {
   getChristmasTreeNotes,
   saveChristmasTreeNote,
   type ChristmasNote,
+  type ChristmasOrnament,
 } from "../services/christmasTree";
+import ChristmasTreeOrnaments from "./ChristmasTreeOrnaments";
 
 const TREE_SCENE_URL = `${import.meta.env.BASE_URL}ssafy-code-tree.html?embed=1`;
 const DEMO_NOTES: ChristmasNote[] = [
@@ -30,6 +32,7 @@ const DEMO_NOTES: ChristmasNote[] = [
 
 type TreeNotes = Awaited<ReturnType<typeof getChristmasTreeNotes>>;
 type NoteEditor = { kind: "add" } | { kind: "edit"; noteId: string };
+type SceneOrnament = Pick<ChristmasOrnament, "id" | "kind">;
 
 export default function ChristmasTreeView() {
   const { currentUser, isDemo } = useAuth();
@@ -50,6 +53,8 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
   const [selectedNote, setSelectedNote] = useState<ChristmasNote | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<ChristmasNote | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [ornaments, setOrnaments] = useState<SceneOrnament[]>([]);
+  const [highlightedOrnamentId, setHighlightedOrnamentId] = useState<string | null>(null);
 
   const notes = tree?.notes;
   const noteCount = notes?.length ?? 0;
@@ -81,15 +86,23 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
     return () => controller.abort();
   }, [isDemo, loadAttempt]);
 
-  const sendNotes = useCallback(() => {
+  const updateOrnaments = useCallback((items: ChristmasOrnament[], highlightedId: string | null) => {
+    setOrnaments(items.map(({ id, kind }) => ({ id, kind })));
+    setHighlightedOrnamentId(highlightedId);
+    if (highlightedId) scene.current?.scrollIntoView({ block: "nearest" });
+  }, []);
+
+  const sendSceneItems = useCallback(() => {
     scene.current?.contentWindow?.postMessage({
       type: "ssafy-tree:notes",
       notes: notes ?? [],
       newNoteId,
+      ornaments,
+      highlightedOrnamentId,
     }, "*"); // The sandboxed scene has an opaque origin.
-  }, [notes, newNoteId]);
+  }, [notes, newNoteId, ornaments, highlightedOrnamentId]);
 
-  useEffect(sendNotes, [sendNotes]);
+  useEffect(sendSceneItems, [sendSceneItems]);
 
   useEffect(() => {
     function openNote(event: MessageEvent) {
@@ -189,11 +202,11 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
         </div>
       </header>
 
-      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <section aria-label="포스트잇이 붙은 트리" className="min-w-0 overflow-hidden rounded-3xl border border-[#20372f] bg-[#040810] shadow-xl shadow-[#132b22]/10">
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-[auto_1fr]">
+        <section aria-label="포스트잇과 오너먼트가 붙은 트리" className="min-w-0 overflow-hidden rounded-3xl border border-[#20372f] bg-[#040810] shadow-xl shadow-[#132b22]/10 lg:row-span-2">
           <iframe
             ref={scene}
-            onLoad={sendNotes}
+            onLoad={sendSceneItems}
             title="SSAFY 크리스마스 트리"
             src={TREE_SCENE_URL}
             sandbox="allow-scripts"
@@ -203,6 +216,7 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
             <p className="text-[#c0d4cd]" aria-live="polite">
               {tree ? `${isDemo ? "예시 포스트잇" : "붙은 포스트잇"} ${noteCount}장` : loadError ? "포스트잇을 불러오지 못했어요." : "포스트잇을 불러오는 중이에요."}
             </p>
+            {ornaments.length > 0 && <p className="text-[#c0d4cd]">오너먼트 {ornaments.length}개</p>}
             {noteCount > 0 && <p className="text-[#a9c1b8]">트리를 돌려 포스트잇을 읽어보세요.</p>}
           </div>
           {notes && notes.length > 0 && (
@@ -318,6 +332,7 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
             </>
           )}
         </section>
+        <ChristmasTreeOrnaments isDemo={isDemo} onUpdate={updateOrnaments} />
       </div>
 
       <Dialog.Root open={selectedNote !== null} onOpenChange={(open) => { if (!open) setSelectedNote(null); }}>

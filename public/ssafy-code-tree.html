@@ -177,6 +177,101 @@
   let noteAnchors = [];
   const noteColors = ['#ffe7a0', '#ffd2c8', '#d2edb1', '#cce8ff', '#e6d8ff'];
   const noteTilts = [-7, 7, -6, -8, 5, 9, 4, -6, -5];
+  const ornamentSprites = new Map();
+  let ornaments = [], hangingOrnament = null;
+
+  function setOrnaments(items, highlightedId) {
+    const previousKind = ornaments.find(({ id }) => id === highlightedId)?.kind;
+    ornaments = items.map(({ id, kind }, index) => {
+      // Offset successive ornaments in height and angle so a new one leaves space around earlier ones.
+      const height = .15 + .56 * ((.36 + index * .754877666) % 1);
+      const azimuth = Math.PI / 2 - .55 + index * 2.39996323;
+      const radius = 1.81 * Math.pow(1 - height, .81);
+      return { id, kind, azimuth, radius, x: radius * Math.cos(azimuth), y: -1.48 + height * 4.83, z: radius * Math.sin(azimuth), revealAt: 1.69 + height * 2.85 };
+    });
+    const highlighted = ornaments.find(({ id }) => id === highlightedId);
+    if (!highlighted || highlighted.kind === previousKind) return;
+    if (Math.sin(highlighted.azimuth + angle) < .82) {
+      angle = Math.PI / 2 - highlighted.azimuth;
+      if (dragging) dragOrigin = angle;
+    }
+    if (!reduceMotion) hangingOrnament = { id: highlighted.id, start: null };
+  }
+
+  function ornamentSprite(kind) {
+    if (ornamentSprites.has(kind)) return ornamentSprites.get(kind);
+    const sprite = document.createElement('canvas');
+    sprite.width = sprite.height = 64;
+    const brush = sprite.getContext('2d');
+    brush.scale(2, 2);
+    brush.lineCap = 'round';
+    brush.lineJoin = 'round';
+    brush.lineWidth = 1.35;
+    brush.strokeStyle = '#fee0a5';
+    brush.beginPath();
+    brush.arc(16, 5, 2.6, 0, TAU);
+    brush.stroke();
+    brush.fillStyle = '#ffd68b';
+    brush.fillRect(13, 7, 6, 3);
+
+    if (kind === 'snowflake') {
+      brush.strokeStyle = '#a8ddff';
+      brush.lineWidth = 1.9;
+      for (let spoke = 0; spoke < 6; spoke++) {
+        brush.save();
+        brush.translate(16, 19);
+        brush.rotate(spoke * TAU / 6);
+        brush.beginPath();
+        brush.moveTo(0, 0);
+        brush.lineTo(0, -10);
+        brush.moveTo(-3, -7);
+        brush.lineTo(0, -4);
+        brush.lineTo(3, -7);
+        brush.stroke();
+        brush.restore();
+      }
+    } else {
+      const outlines = {
+        star: 'M16 8 L19.5 15 L27.5 16 L22 21.4 L23.5 29 L16 25.4 L8.5 29 L10 21.4 L4.5 16 L12.5 15 Z',
+        bell: 'M16 9 C10.5 9 9 13 9 17 C9 21 7 23 6 24 L26 24 C25 23 23 21 23 17 C23 13 21.5 9 16 9 Z M13 25 C13 30 19 30 19 25 Z',
+      };
+      const body = kind === 'bauble' ? new Path2D() : new Path2D(outlines[kind]);
+      if (kind === 'bauble') body.arc(16, 19, 9.7, 0, TAU);
+      const shine = brush.createLinearGradient(8, 10, 24, 29);
+      const [light, dark] = kind === 'bauble' ? ['#ff9d9a', '#c7274a'] : kind === 'bell' ? ['#ffe59c', '#da782e'] : ['#fff7b2', '#eaa42b'];
+      shine.addColorStop(0, light);
+      shine.addColorStop(1, dark);
+      brush.fillStyle = shine;
+      brush.fill(body);
+      brush.strokeStyle = light;
+      brush.stroke(body);
+    }
+    ornamentSprites.set(kind, sprite);
+    return sprite;
+  }
+
+  function drawOrnaments(c, s, now) {
+    const assemblyTime = introTime();
+    const visible = [];
+    for (const ornament of ornaments) {
+      const facing = (ornament.x * s + ornament.z * c) / ornament.radius;
+      const reveal = smooth((assemblyTime - ornament.revealAt) / .4);
+      if (reveal <= 0) continue;
+      if (hangingOrnament?.id === ornament.id && hangingOrnament.start === null) hangingOrnament.start = now;
+      if (facing <= .04) continue;
+      visible.push({ ornament, facing, reveal, screen: project(ornament.x, ornament.y, ornament.z, c, s) });
+    }
+    visible.sort((a, b) => a.screen[3] - b.screen[3]);
+    for (const { ornament, facing, reveal, screen: [x, y, scale] } of visible) {
+      const size = clamp(sceneScale * .25, 19, 37) * scale;
+      const width = size * (.66 + .34 * facing);
+      const hang = hangingOrnament?.id === ornament.id ? smooth((now - hangingOrnament.start) / 480) : 1;
+      ctx.globalAlpha = reveal * Math.min(1, (facing - .04) / .22) * (.42 + .58 * hang);
+      ctx.drawImage(ornamentSprite(ornament.kind), x - width / 2, y - size * .18 - (1 - hang) * 15, width, size);
+    }
+    if (hangingOrnament?.start != null && now - hangingOrnament.start >= 480) hangingOrnament = null;
+    ctx.globalAlpha = 1;
+  }
 
   function buildNoteAnchors(count) {
     if (!count) return [];
@@ -221,6 +316,8 @@
       if (event.source !== window.parent || event.origin !== location.origin ||
           event.data?.type !== 'ssafy-tree:notes' || !Array.isArray(event.data.notes)) return;
       const notes = event.data.notes;
+      const ornaments = event.data.ornaments;
+      if (Array.isArray(ornaments)) setOrnaments(ornaments, event.data.highlightedOrnamentId);
       if (notes.length !== noteAnchors.length) {
         noteAnchors = buildNoteAnchors(notes.length);
         updatePaperSize();
@@ -603,7 +700,9 @@
     }
     sceneScale=unit*zoom*(1-(1-codeViewScale(compact))*viewMix);
     if(document.hidden||now-lastPaint<1000/CONFIG.fps)return;lastPaint=now;
-    const c=Math.cos(angle),s=Math.sin(angle);backdrop();ground(c,s);tree(c,s);assembly(c,s);topper(c,s);snowfall();
+    const c=Math.cos(angle),s=Math.sin(angle);backdrop();ground(c,s);tree(c,s);assembly(c,s);topper(c,s);
+    if (ornaments.length) drawOrnaments(c,s,now);
+    snowfall();
     if(embedded)positionNotes(c,s);
     if(introAge===CONFIG.introDuration&&canvas.getAttribute('aria-busy')==='true')canvas.setAttribute('aria-busy','false');
     canvas.dataset.rendered='true';
