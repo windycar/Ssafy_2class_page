@@ -184,6 +184,7 @@
   const noteColors = ['#ffe7a0', '#ffd2c8', '#d2edb1', '#cce8ff', '#e6d8ff'];
   const noteTilts = [-7, 7, -6, -8, 5, 9, 4, -6, -5];
   const ornamentSprites = new Map();
+  const ornamentImageSprites = new Map();
   let ornaments = [], hangingOrnament = null;
   let placement = null, consumedPlacementId = null, placementCursor = null, placementTap = null;
 
@@ -194,13 +195,14 @@
 
   function setOrnaments(items, highlightedId) {
     const previous = ornaments.find(({ id }) => id === highlightedId);
-    ornaments = items.map(({ id, kind, height, azimuth }, index) => ({
-      id, kind,
+    ornaments = items.map(({ id, kind, height, azimuth, image_data }, index) => ({
+      id, kind, image_data,
       ...ornamentAnchor(height ?? .15 + .56 * ((.36 + index * .754877666) % 1),
         azimuth ?? Math.PI / 2 - .55 + index * 2.39996323),
     }));
     const highlighted = ornaments.find(({ id }) => id === highlightedId);
-    if (!highlighted || (highlighted.kind === previous?.kind && highlighted.height === previous.height && highlighted.azimuth === previous.azimuth)) return;
+    if (!highlighted || (highlighted.kind === previous?.kind && highlighted.height === previous.height &&
+      highlighted.azimuth === previous.azimuth && highlighted.image_data === previous.image_data)) return;
     if (Math.sin(highlighted.azimuth + angle) <= .04) {
       angle = Math.PI / 2 - highlighted.azimuth;
       if (dragging) dragOrigin = angle;
@@ -280,7 +282,7 @@
     const size = clamp(sceneScale * .25, 19, 37) * scale;
     ctx.save();
     ctx.globalAlpha = .8;
-    ctx.drawImage(ornamentSprite(placement.kind), screenX - size / 2, screenY - size * .18, size, size);
+    ctx.drawImage(ornamentSprite(placement), screenX - size / 2, screenY - size * .18, size, size);
     ctx.strokeStyle = '#fff3c3';
     ctx.lineWidth = 1.5;
     ctx.setLineDash([3, 3]);
@@ -290,7 +292,37 @@
     ctx.restore();
   }
 
-  function ornamentSprite(kind) {
+  function ornamentImageSprite(source) {
+    if (ornamentImageSprites.has(source)) return ornamentImageSprites.get(source);
+    const sprite = document.createElement('canvas');
+    sprite.width = sprite.height = 96;
+    const brush = sprite.getContext('2d');
+    brush.scale(3, 3);
+    brush.translate(16, 16);
+    brush.rotate(-.075);
+    brush.translate(-16, -16);
+    brush.shadowColor = '#03090dc0';
+    brush.shadowBlur = 3;
+    brush.shadowOffsetY = 1.3;
+    brush.fillStyle = '#fffdf4';
+    brush.fillRect(4, 4, 24, 27);
+    brush.shadowColor = 'transparent';
+    brush.fillStyle = '#dfbd82';
+    brush.fillRect(12.5, 1.6, 7, 3.6);
+    brush.fillStyle = '#e7e1d3';
+    brush.fillRect(6, 6, 20, 20);
+
+    if (source?.startsWith('data:image/webp;base64,') || source?.startsWith('data:image/png;base64,')) {
+      const photo = new Image();
+      photo.onload = () => brush.drawImage(photo, 6, 6, 20, 20);
+      photo.src = source;
+    }
+    ornamentImageSprites.set(source, sprite);
+    return sprite;
+  }
+
+  function ornamentSprite({ kind, image_data }) {
+    if (kind === 'custom') return ornamentImageSprite(image_data);
     if (ornamentSprites.has(kind)) return ornamentSprites.get(kind);
     const sprite = document.createElement('canvas');
     sprite.width = sprite.height = 64;
@@ -392,7 +424,7 @@
       const width = size * (.66 + .34 * facing);
       const hang = hangingOrnament?.id === ornament.id ? smooth((now - hangingOrnament.start) / 480) : 1;
       ctx.globalAlpha = reveal * Math.min(1, (facing - .04) / .22) * (.42 + .58 * hang);
-      ctx.drawImage(ornamentSprite(ornament.kind), x - width / 2, y - size * .18 - (1 - hang) * 15, width, size);
+      ctx.drawImage(ornamentSprite(ornament), x - width / 2, y - size * .18 - (1 - hang) * 15, width, size);
     }
     if (hangingOrnament?.start != null && now - hangingOrnament.start >= 480) hangingOrnament = null;
     ctx.globalAlpha = 1;
@@ -441,9 +473,14 @@
       if (event.source !== window.parent || event.origin !== location.origin ||
           event.data?.type !== 'ssafy-tree:notes' || !Array.isArray(event.data.notes)) return;
       const notes = event.data.notes;
-      const ornaments = event.data.ornaments;
-      if (Array.isArray(ornaments)) setOrnaments(ornaments, event.data.highlightedOrnamentId);
+      const items = event.data.ornaments;
+      if (Array.isArray(items)) setOrnaments(items, event.data.highlightedOrnamentId);
       setPlacement(event.data.ornamentPlacement);
+      const imageSources = new Set(ornaments.map((ornament) => ornament.image_data));
+      imageSources.add(placement?.image_data);
+      for (const source of ornamentImageSprites.keys()) {
+        if (!imageSources.has(source)) ornamentImageSprites.delete(source);
+      }
       if (notes.length !== noteAnchors.length) {
         noteAnchors = buildNoteAnchors(notes.length);
         updatePaperSize();

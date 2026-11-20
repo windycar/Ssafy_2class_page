@@ -20,7 +20,7 @@ import {
   saveChristmasTreeNote,
   type ChristmasNote,
   type ChristmasOrnament,
-  type OrnamentKind,
+  type OrnamentDesign,
   type OrnamentPosition,
   type SceneOrnament,
 } from "../services/christmasTree";
@@ -35,7 +35,7 @@ const DEMO_NOTES: ChristmasNote[] = [
 
 type TreeNotes = Awaited<ReturnType<typeof getChristmasTreeNotes>>;
 type NoteEditor = { kind: "add" } | { kind: "edit"; noteId: string };
-type OrnamentPlacement = { id: string; kind: OrnamentKind };
+type OrnamentPlacement = OrnamentDesign & { id: string };
 type PendingPlacement = { id: string; resolve: (position: OrnamentPosition | null) => void };
 
 export default function ChristmasTreeView() {
@@ -93,17 +93,17 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
   }, [isDemo, loadAttempt]);
 
   const updateOrnaments = useCallback((items: ChristmasOrnament[], highlightedId: string | null) => {
-    setOrnaments(items.map(({ id, kind, height, azimuth }) => ({ id, kind, height, azimuth })));
+    setOrnaments(items.map(({ id, kind, height, azimuth, image_data }) => ({ id, kind, height, azimuth, image_data })));
     setHighlightedOrnamentId(highlightedId);
     if (highlightedId) scene.current?.scrollIntoView({ block: "nearest" });
   }, []);
 
-  const pickOrnamentPosition = useCallback((kind: OrnamentKind) => {
+  const pickOrnamentPosition = useCallback((design: OrnamentDesign) => {
     if (pendingPlacement.current) return Promise.resolve(null);
     const id = crypto.randomUUID();
     scene.current?.scrollIntoView({ block: "start" });
     scene.current?.focus({ preventScroll: true });
-    setOrnamentPlacement({ id, kind });
+    setOrnamentPlacement({ id, ...design });
     return new Promise<OrnamentPosition | null>((resolve) => {
       pendingPlacement.current = { id, resolve };
     });

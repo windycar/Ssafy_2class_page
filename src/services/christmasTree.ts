@@ -10,24 +10,28 @@ export type ChristmasNote = {
   is_sample?: boolean;
 };
 
-export type OrnamentKind = "star" | "bell" | "snowflake" | "bauble" | "candy" | "ribbon" | "gift" | "gingerbread";
+export type OrnamentKind = "star" | "bell" | "snowflake" | "bauble" | "candy" | "ribbon" | "gift" | "gingerbread" | "custom";
 export type OrnamentSlot = 1 | 2;
 export type OrnamentPosition = { height: number; azimuth: number };
-export type SceneOrnament = { id: string; kind: OrnamentKind; height: number | null; azimuth: number | null };
+export type OrnamentDesign = { kind: OrnamentKind; image_data: string | null };
+export type SceneOrnament = OrnamentDesign & { id: string; height: number | null; azimuth: number | null };
 
 export type ChristmasOrnament = SceneOrnament & { own_slot: OrnamentSlot | null };
 
 type OrnamentChange =
-  | { slot: OrnamentSlot; kind: OrnamentKind; position?: OrnamentPosition }
+  | { slot: OrnamentSlot; design: OrnamentDesign; position?: OrnamentPosition }
   | { slot: OrnamentSlot; remove: true };
 
 export async function manageChristmasTreeOrnaments(change?: OrnamentChange, signal?: AbortSignal) {
-  const request = requireSupabase().rpc("manage_my_christmas_tree_ornaments", {
+  const design = change && "design" in change ? change.design : null;
+  const position = change && "position" in change ? change.position : undefined;
+  const request = requireSupabase().rpc("manage_my_christmas_tree_ornament_images", {
     p_slot: change?.slot ?? null,
-    p_kind: change && "kind" in change ? change.kind : null,
-    p_height: change && "position" in change ? change.position?.height ?? null : null,
-    p_azimuth: change && "position" in change ? change.position?.azimuth ?? null : null,
+    p_kind: design?.kind ?? null,
+    p_height: position?.height ?? null,
+    p_azimuth: position?.azimuth ?? null,
     p_remove: Boolean(change && "remove" in change),
+    p_image: design?.image_data ?? null,
   });
   const { data, error } = await (signal ? request.abortSignal(signal) : request);
   if (error) throw error;
