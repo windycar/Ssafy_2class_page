@@ -162,9 +162,14 @@
   const codePane = $('code-pane');
   const codeToggle = $('code-toggle');
   const pointers = new Map();
-  let activeCodeLines = [], codeLayout, codeView = false, viewMix = 0, targetZoom = 1;
+  const CODE_CELL = 24;
+  const CODE_ATLAS_FONT = 15;
+  const CODE_CANOPY_TOP = 2.34;
+  const codeCharacters = [...new Set(pythonSources.flatMap(({code}) => [...code].filter(char => !/\s/.test(char))))];
+  const codeCharacterIndex = new Map(codeCharacters.map((char, index) => [char, index]));
+  let codeSourceLines = [], codeLeaves = [], codeAtlas, codeFontSize = 8, codeOrientation = 0;
+  let codeView = false, viewMix = 0, targetZoom = 1;
   let sceneX = 0, sceneY = 0, sceneScale = 1, sceneInset = 0, pinchDistance = 0;
-  const codeInk = { plain:'#ddf1e8', keyword:'#d5b3ff', string:'#aaddac', number:'#ffcb8a', comment:'#a3bec8' };
   const noteLayer = $('tree-notes');
   const noteButtons = new Map();
   // 나뭇가지 높이와 둘레 방향을 고정하고 트리와 같은 카메라로 투영합니다.
@@ -374,6 +379,15 @@
       for(let g=0;g<8;g++)c.fillText(chars[g],g*24+12,(k*12+level)*24+12);
     }
     atlas=a;
+    codeAtlas=document.createElement('canvas');
+    codeAtlas.width=codeCharacters.length*CODE_CELL;
+    codeAtlas.height=CODE_CELL;
+    const letters=codeAtlas.getContext('2d');
+    letters.font=`${CODE_ATLAS_FONT}px Consolas, "Courier New", "Malgun Gothic", monospace`;
+    letters.textAlign='center';
+    letters.textBaseline='middle';
+    letters.fillStyle=blue?'#92dbff':'#89e7a3';
+    codeCharacters.forEach((char,index)=>letters.fillText(char,index*CODE_CELL+CODE_CELL/2,CODE_CELL/2));
     starAtlas=document.createElement('canvas');starAtlas.width=64;starAtlas.height=64;const s=starAtlas.getContext('2d');
     const grad=s.createRadialGradient(32,32,0,32,32,31);grad.addColorStop(0,'#fff7da');grad.addColorStop(.07,'#ffe4aacc');grad.addColorStop(.22,blue?'#7ccfff55':'#ffc56444');grad.addColorStop(1,'#ffce7600');s.fillStyle=grad;s.fillRect(0,0,64,64);
     ledSprite=document.createElement('canvas');ledSprite.width=64;ledSprite.height=64;const lc=ledSprite.getContext('2d'),lg=lc.createRadialGradient(32,32,0,32,32,31);lg.addColorStop(0,'#effcff');lg.addColorStop(.08,'#e4f9ff');lg.addColorStop(.18,'#8cddffe0');lg.addColorStop(.38,'#64bdff44');lg.addColorStop(1,'#449dff00');lc.fillStyle=lg;lc.fillRect(0,0,64,64);
@@ -384,6 +398,7 @@
     unit=embedded ? Math.min((H-sceneInset)*.144,W*.243) : Math.min(H*.122,W*.225);
     glyphSize=clamp(unit*.054,6.8,9.8);cw=glyphSize*.60;ch=glyphSize*.82;
     cols=Math.ceil(W/cw)+2;rows=Math.ceil(H/ch)+2;zbuf=new Float32Array(cols*rows);ids=new Int32Array(cols*rows);buildAtlas();
+    if(codeSourceLines.length)buildCodeLeaves();
   }
   function project(x,y,z,c,s){
     const xx=x*c-z*s,zz=x*s+z*c,yy=y*.978-zz*.208,depth=zz*.978+y*.208,sc=7.7/(7.7-depth);
@@ -410,6 +425,7 @@
   function tree(c,s){
     zbuf.fill(-Infinity);ids.fill(-1);flares.length=0;
     const it=introTime(),forming=it<6.5;
+    const codeBlend=smooth(viewMix)*smooth((it-3.7)/.8);
     for(let i=0;i<world.length;i++){
       const p=world[i];let x=p.x,y=p.y,z=p.z,alpha=1;
       if(forming){
@@ -434,72 +450,69 @@
       if(p.kind===1||p.kind===2){shade=p.shade*(.90+.10*Math.sin(time*1.7+p.phase));g=p.kind===2?2:0;}
       if(p.kind>=3&&p.kind<=5)shade=clamp(shade*1.4,.55,1);
       if(p.kind===0&&Math.sin(p.phase*17+time*.8)>.997){shade*=1.45;g=2;}
-      ctx.globalAlpha=alphas[i]*(p.kind===0?1-.28*viewMix:1);
+      const foliageFade = p.y > CODE_CANOPY_TOP ? .30 : .74;
+      ctx.globalAlpha=alphas[i]*(p.kind===0 ? 1-codeBlend*foliageFade : 1);
       const level=clamp(Math.round(shade*11),0,11);
       glyph(pxs[i],pys[i],p.kind,level,g,scale);
       if(p.kind===2&&p.phase!==0)flares.push([pxs[i],pys[i],14*scale,(.58+.20*Math.sin(time*1.9+p.phase))*alphas[i]]);
     }
+    if(codeBlend>.01)paintCodeLeaves(codeBlend);
     ctx.globalAlpha=1;ctx.globalCompositeOperation='screen';for(const f of flares)glow(...f);ctx.globalCompositeOperation='source-over';
   }
-  function treeCodeRows(width, font, limit) {
-    if (codeLayout?.width === width && codeLayout.font === font && codeLayout.limit === limit) return codeLayout.rows;
+  function buildCodeLeaves(){
+    const scale = Math.max(1, unit * 1.29 * codeViewScale(W<=760));
+    codeFontSize = clamp(Math.round(scale * .119), 7, 14);
+    const lineStep = codeFontSize * 1.39 / scale;
+    const columnStep = codeFontSize * .68 / scale;
+    const sector = TAU / 3;
+    codeLeaves = [];
+    let line = 0, column = 0;
 
-    const rows = [];
-    for (const sourceLine of activeCodeLines) {
-      let row = [];
-      let offsetX = 0;
-      for (const { text, kind } of sourceLine) {
-        for (const piece of text.match(/\s+|\S+/g) ?? []) {
-          const pieceWidth = Math.min(width, ctx.measureText(piece).width);
-          if (row.length && offsetX + pieceWidth > width) {
-            rows.push(row);
-            if (rows.length === limit) break;
-            row = [];
-            offsetX = 0;
-          }
-          row.push({ text: piece, kind, offsetX, width: pieceWidth });
-          offsetX += pieceWidth;
+    // 문자의 위치를 수관 표면에 고정합니다. 공백도 원래 열을 차지합니다.
+    for (let y = CODE_CANOPY_TOP; y >= -1.43; y -= lineStep) {
+      const height = (y + 1.48) / 4.83;
+      const radius = 1.73 * Math.pow(1 - height, .81) + .035;
+      const step = columnStep / radius;
+      const capacity = Math.floor((sector - .16) / step);
+      if (capacity < 4) continue;
+
+      const sourceLine = codeSourceLines[line];
+      const characters = sourceLine.slice(column, column + capacity);
+      column += characters.length;
+      if (column === sourceLine.length) {
+        line = (line + 1) % codeSourceLines.length;
+        column = 0;
+      }
+
+      characters.forEach((character, index) => {
+        const glyph = codeCharacterIndex.get(character);
+        if (glyph === undefined) return;
+        for (let side = 0; side < 3; side++) {
+          const azimuth = (side + .5) * sector - .08 - (index + .5) * step;
+          codeLeaves.push({ x:radius*Math.cos(azimuth), y, z:radius*Math.sin(azimuth), radius, glyph });
         }
-        if (rows.length === limit) break;
-      }
-      if (rows.length === limit) break;
-      rows.push(row);
-      if (rows.length === limit) break;
+      });
     }
-    codeLayout = { width, font, limit, rows };
-    return rows;
   }
-  function drawTreeCode(){
-    const opacity = smooth(viewMix) * smooth((introTime() - 3.7) / .8);
-    const width = Math.floor(sceneScale * 2.25);
-    if (opacity < .02 || width < 142) return;
-    const fontSize = clamp(Math.round(sceneScale * .129), 11, 15);
-    const lineHeight = Math.ceil(fontSize * 1.45);
-    const limit = Math.min(12, Math.floor(sceneScale * 1.7 / lineHeight));
-    const font = `${fontSize}px Consolas, "Courier New", "Malgun Gothic", monospace`;
-    const left = Math.round(sceneX - width / 2);
-    const top = Math.round(sceneY - sceneScale * .88);
+  function paintCodeLeaves(blend){
+    const phase = angle + codeOrientation;
+    const c = Math.cos(phase), s = Math.sin(phase);
+    const sprite = codeFontSize * CODE_CELL / CODE_ATLAS_FONT;
+    for (const leaf of codeLeaves) {
+      const facing = (leaf.x*s + leaf.z*c) / leaf.radius;
+      if (facing <= .13) continue;
 
-    ctx.save();
-    ctx.font = font;
-    ctx.textBaseline = 'top';
-    const rows = treeCodeRows(width, font, limit);
-    const shade = ctx.createLinearGradient(left - 12, top, left + width + 12, top);
-    shade.addColorStop(0, '#02090b00');
-    shade.addColorStop(.1, '#02090bd9');
-    shade.addColorStop(.9, '#02090bd9');
-    shade.addColorStop(1, '#02090b00');
-    ctx.globalAlpha = opacity;
-    ctx.fillStyle = shade;
-    ctx.fillRect(left - 12, top - 6, width + 24, rows.length * lineHeight + 12);
+      const [x,y,scale,depth] = project(leaf.x,leaf.y,leaf.z,c,s);
+      if (x < 0 || x >= W || y < 0 || y >= H) continue;
+      const cell = Math.floor(y/ch)*cols + Math.floor(x/cw);
+      const covering = world[ids[cell]];
+      if (covering && covering.kind !== 0 && zbuf[cell] > depth+.025) continue;
+      const height = sprite*scale;
+      const width = height*(.56+.44*facing);
 
-    rows.forEach((row, index) => {
-      for (const { text, kind, offsetX, width } of row) {
-        ctx.fillStyle = codeInk[kind];
-        ctx.fillText(text, left + offsetX, top + index * lineHeight, width);
-      }
-    });
-    ctx.restore();
+      ctx.globalAlpha = blend*smooth((facing-.13)/.57);
+      ctx.drawImage(codeAtlas,leaf.glyph*CODE_CELL,0,CODE_CELL,CODE_CELL,x-width/2,y-height/2,width,height);
+    }
   }
   function topper(c,s){
     const it=introTime(),reveal=smooth((it-4.45)/1.65);if(reveal<=0)return;
@@ -532,13 +545,17 @@
     if(!snowing)return;
     for(const p of snow){const x=((p.x+Math.sin(time*.22+p.phase)*.024+time*.007*p.z)%1+1)%1,y=(p.y+time*p.speed)%1;ctx.globalAlpha=(.18+p.z*.65)*(.78+.22*Math.sin(p.phase+time));glyph(x*W,y*H,7,p.z>.7?11:8,p.z>.78?2:0,.45+p.z*.7);}ctx.globalAlpha=1;
   }
+  function codeViewScale(compact){
+    if(embedded)return compact ? .37 : .81;
+    return compact ? .77 : 1;
+  }
   function render(now){
     requestAnimationFrame(render);if(!last)last=now;const dt=(now-last)/1000;last=now;
     if(!paused&&!document.hidden){
       time+=dt;
       introAge=Math.min(CONFIG.introDuration,introAge+dt);
       const keyboardReading=embedded&&noteLayer.contains(document.activeElement)&&document.activeElement.matches(':focus-visible');
-      if(!dragging&&!keyboardReading)angle+=dt*CONFIG.rotationSpeed*(embedded?1.8:1);
+      if(!dragging&&!keyboardReading)angle+=dt*CONFIG.rotationSpeed*(embedded?1.8:1)*(1-.60*viewMix);
     }
     const step=reduceMotion?1:1-Math.exp(-dt*11);
     zoom+=(targetZoom-zoom)*step;
@@ -547,14 +564,12 @@
     sceneX=W*.5-(compact?0:Math.min(W*.46,655)*.45*viewMix);
     if(embedded){
       sceneY=sceneInset+(H-sceneInset)*(.624+(compact?-.334:.025)*viewMix);
-      sceneScale=unit*zoom*(1-(compact?.63:.19)*viewMix);
     }else{
       sceneY=H*(.555+(compact?-.16:.10)*viewMix);
-      sceneScale=unit*zoom*(compact?1-.23*viewMix:1);
     }
+    sceneScale=unit*zoom*(1-(1-codeViewScale(compact))*viewMix);
     if(document.hidden||now-lastPaint<1000/CONFIG.fps)return;lastPaint=now;
     const c=Math.cos(angle),s=Math.sin(angle);backdrop();ground(c,s);tree(c,s);assembly(c,s);topper(c,s);snowfall();
-    drawTreeCode();
     if(embedded)positionNotes(c,s);
     if(introAge===CONFIG.introDuration&&canvas.getAttribute('aria-busy')==='true')canvas.setAttribute('aria-busy','false');
     canvas.dataset.rendered='true';
@@ -589,12 +604,13 @@
   function selectCode(index){
     const source = pythonSources[index];
     const displayedCode = $('code-lines').querySelector('code');
-    activeCodeLines = source.code.split('\n').map(highlightCodeLine);
-    codeLayout = undefined;
+    const lines = source.code.split('\n');
+    codeSourceLines = lines.map((line) => [...line]);
+    buildCodeLeaves();
     fileButtons.forEach((button,i)=>button.setAttribute('aria-pressed',String(i===index)));
     $('code-meta').textContent=`${source.stage} / ${source.filename} / ${source.title}`;
     displayedCode.textContent = '';
-    activeCodeLines.forEach((line, index) => {
+    lines.map(highlightCodeLine).forEach((line, index) => {
       if (index) displayedCode.append('\n');
       for (const { text, kind } of line) {
         if (kind === 'plain') {
@@ -613,6 +629,7 @@
   function setCodeView(show){
     if(codeView===show)return;
     if(!show&&codePane.contains(document.activeElement)) codeToggle.focus();
+    if(show)codeOrientation=Math.PI/2-angle;
     codeView=show;
     codePane.hidden=!show;
     codeToggle.setAttribute('aria-expanded',String(show));
@@ -706,8 +723,7 @@
     if(key==='-')setZoom(targetZoom/1.16);
   });
   addEventListener('resize',resize);document.addEventListener('visibilitychange',()=>{last=0;});
-  selectCode(0);
-  resize();syncPlay();requestAnimationFrame(render);
+  resize();selectCode(0);syncPlay();requestAnimationFrame(render);
 })();
 </script>
 </body>
