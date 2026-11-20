@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Shuffle, Utensils, ArrowRight, GitBranch, GitCommit, Terminal, HardHat } from "lucide-react";
+import { Shuffle, Utensils, ArrowRight, GitBranch, GitCommit, Terminal, HardHat, TreePine } from "lucide-react";
 import { TOTAL_STUDENTS } from "../config/constants";
 import teamQuickMenuArt from "../assets/home/quick-menu/team.png";
 import coffeeQuickMenuArt from "../assets/home/quick-menu/coffee.png";
@@ -110,6 +110,20 @@ const QUICK_MENU = [
     colorText: "text-sky-700",
     colorBtn: "bg-sky-600 hover:bg-sky-700 text-white",
     shadowColor: "shadow-sky-100",
+  },
+  {
+    title: "크리스마스 트리",
+    description: "트리에 연말 인사를 포스트잇으로 남겨요.",
+    icon: TreePine,
+    path: "/christmas-tree",
+    badge: "회원당 2장",
+    buttonLabel: "트리 바로가기",
+    colorBg: "bg-[#fff5ee]",
+    colorBorder: "border-[#edcdbe]",
+    colorIcon: "bg-[#236047]",
+    colorText: "text-[#24563e]",
+    colorBtn: "bg-[#236047] hover:bg-[#194d38] text-white",
+    shadowColor: "shadow-[#edcdbe]/35",
   },
 ];
 
@@ -277,12 +291,16 @@ export default function HomeView() {
               >
                 <div className="flex items-start justify-between">
                   <div className={`w-11 h-11 ${item.colorIcon} rounded-xl flex items-center justify-center shadow-md`}>
-                    <img
-                      src={item.imageSrc}
-                      alt=""
-                      className="w-10 h-10 object-contain drop-shadow-sm"
-                      draggable={false}
-                    />
+                    {item.icon ? (
+                      <item.icon className="size-6 text-white" aria-hidden="true" />
+                    ) : (
+                      <img
+                        src={item.imageSrc}
+                        alt=""
+                        className="w-10 h-10 object-contain drop-shadow-sm"
+                        draggable={false}
+                      />
+                    )}
                   </div>
                   <span className={`text-xs font-bold ${item.colorText} bg-white px-2.5 py-1 rounded-full shadow-sm border border-current/10`}>
                     {item.badgeIcon ? (
