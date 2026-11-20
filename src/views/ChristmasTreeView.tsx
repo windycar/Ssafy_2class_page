@@ -17,6 +17,7 @@ import {
   CHRISTMAS_NOTES_PER_MEMBER,
   deleteChristmasTreeNote,
   getChristmasTreeNotes,
+  getChristmasTreePhotoDetail,
   saveChristmasTreeNote,
   type ChristmasNote,
   type ChristmasOrnament,
@@ -27,7 +28,7 @@ import {
 import ChristmasTreeOrnaments from "./ChristmasTreeOrnaments";
 
 // Reload the embedded scene when its message format changes so an open tab uses the matching renderer.
-const TREE_SCENE_URL = `${import.meta.env.BASE_URL}ssafy-code-tree.html?embed=1&v=4`;
+const TREE_SCENE_URL = `${import.meta.env.BASE_URL}ssafy-code-tree.html?embed=1&v=5`;
 const DEMO_NOTES: ChristmasNote[] = [
   { id: "demo-1", content: "어려운 문제도 같이 풀어서 즐거웠어요. 우리 반 모두 따뜻한 연말 보내요!", author_name: null, is_sample: true },
   { id: "demo-2", content: "매일 아침 인사해 줘서 고마워요. 메리 크리스마스!", author_name: null, is_sample: true },
@@ -61,11 +62,14 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
   const [deleting, setDeleting] = useState(false);
   const [ornaments, setOrnaments] = useState<SceneOrnament[]>([]);
   const [selectedPhotoId, setSelectedPhotoId] = useState<string | null>(null);
+  const [photoDetail, setPhotoDetail] = useState<{ id: string; image: string } | null>(null);
   const [highlightedOrnamentId, setHighlightedOrnamentId] = useState<string | null>(null);
   const [ornamentPlacement, setOrnamentPlacement] = useState<OrnamentPlacement | null>(null);
 
   const notes = tree?.notes;
   const selectedPhoto = ornaments.find((ornament) => ornament.id === selectedPhotoId && ornament.kind === "custom");
+  const detailedImage = photoDetail && photoDetail.id === selectedPhoto?.id ? photoDetail.image : null;
+  const displayedPhoto = detailedImage ?? selectedPhoto?.image_data;
   const hasPhotos = ornaments.some((ornament) => ornament.kind === "custom");
   const noteCount = notes?.length ?? 0;
   const draftLength = Array.from(draft).length;
@@ -144,6 +148,7 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
       }
       if (type === "ssafy-tree:open-photo" && !pendingPlacement.current &&
         ornaments.some((item) => item.id === id && item.kind === "custom" && item.image_data)) {
+        setPhotoDetail(null);
         setSelectedPhotoId(id);
       }
       if (!pendingPlacement.current || pendingPlacement.current.id !== id) return;
@@ -158,6 +163,17 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
   }, [notes, ornaments, finishPlacement]);
 
   useEffect(() => () => { pendingPlacement.current?.resolve(null); }, []);
+
+  useEffect(() => {
+    if (!selectedPhotoId) return;
+    const controller = new AbortController();
+    getChristmasTreePhotoDetail(selectedPhotoId, controller.signal)
+      .then((image) => {
+        if (!controller.signal.aborted) setPhotoDetail(image ? { id: selectedPhotoId, image } : null);
+      })
+      .catch(() => {}); // The saved preview stays available when the larger image cannot be loaded.
+    return () => controller.abort();
+  }, [selectedPhotoId]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -403,19 +419,24 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
         </Dialog.Portal>
       </Dialog.Root>
 
-      <Dialog.Root open={Boolean(selectedPhoto?.image_data)} onOpenChange={(open) => { if (!open) setSelectedPhotoId(null); }}>
+      <Dialog.Root open={Boolean(selectedPhoto?.image_data)} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedPhotoId(null);
+          setPhotoDetail(null);
+        }
+      }}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-[#02090b]/80" />
-          <Dialog.Content aria-describedby={undefined} className="fixed top-1/2 left-1/2 z-50 w-[min(30rem,calc(100%-2rem),72dvh)] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-[#f7f0e4] p-4 shadow-2xl sm:p-5">
+          <Dialog.Content aria-describedby={undefined} className="fixed top-1/2 left-1/2 z-50 w-fit min-w-52 max-w-[min(54rem,calc(100%-1.5rem))] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-[#f7f0e4] p-4 shadow-2xl sm:p-5">
             <div className="mb-3 flex items-center justify-between gap-3 text-[#393126]">
               <Dialog.Title className="font-extrabold">사진 오너먼트</Dialog.Title>
               <Dialog.Close aria-label="사진 닫기" className="-my-2 -mr-1 grid size-9 place-items-center rounded-full hover:bg-black/5 focus-visible:outline-2">
                 <X className="size-5" aria-hidden="true" />
               </Dialog.Close>
             </div>
-            {selectedPhoto?.image_data && (
-              <figure className="bg-[#fffdf4] p-2 pb-6 shadow-md sm:p-3 sm:pb-8">
-                <img src={selectedPhoto.image_data} alt="트리에 달린 사진" className="aspect-square w-full bg-[#e7e1d3] object-contain" />
+            {displayedPhoto && (
+              <figure className="mx-auto w-fit max-w-full bg-[#fffdf4] p-2 pb-6 shadow-md sm:p-3 sm:pb-8">
+                <img src={displayedPhoto} alt="트리에 달린 사진" onError={detailedImage ? () => setPhotoDetail(null) : undefined} className="block max-h-[72dvh] max-w-full bg-[#e7e1d3] object-contain" />
               </figure>
             )}
           </Dialog.Content>

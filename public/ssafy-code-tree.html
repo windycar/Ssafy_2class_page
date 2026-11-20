@@ -70,10 +70,14 @@
   body.placing-ornament .note-layer{opacity:.45}
   body.placing-ornament .tree-note{pointer-events:none}
   .photo-layer{position:absolute;inset:0;z-index:1;pointer-events:none}
-  .tree-photo{position:absolute;top:0;left:0;border:0;border-radius:4px;background:transparent;cursor:zoom-in;touch-action:pan-y;pointer-events:auto}
+  .tree-photo{position:absolute;top:0;left:0;padding:0;border:0;border-radius:2px;background:transparent;cursor:zoom-in;touch-action:pan-y;pointer-events:auto}
   .tree-photo:active{cursor:grabbing}
   .tree-photo:focus-visible{outline:2px solid #fff3c3;outline-offset:2px}
-  body.placing-ornament .tree-photo{pointer-events:none}
+  body.placing-ornament .tree-photo,.tree-photo:disabled,.photo-placement-preview{pointer-events:none}
+  .tree-photo-paper{position:relative;display:block;width:100%;height:100%;padding:7% 7% 18%;background:#fffdf4;box-shadow:1px 3px 6px #03090db5;rotate:-4deg}
+  .tree-photo-paper::before{content:"";position:absolute;z-index:1;top:-6%;left:37%;width:26%;height:12%;border-radius:1px;background:linear-gradient(#e8c891,#cba66f)}
+  .tree-photo-paper img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:#e7e1d3}
+  .photo-placement-preview .tree-photo-paper{outline:1px dashed #fff3c3;outline-offset:3px}
   #ornament-placement-hint{position:absolute;z-index:3;bottom:14px;left:50%;width:max-content;max-width:calc(100% - 24px);transform:translateX(-50%);border:1px solid #668c78;border-radius:14px;padding:9px 14px;background:#102a24eb;color:#e5fff0;font-size:12px;text-align:center;pointer-events:none}
   body.embedded .controls{top:12px;right:12px;bottom:auto;left:auto;z-index:3;transform:none;padding:3px}
   body.embedded .controls button{min-height:34px;padding:6px 8px;font-size:11px}
@@ -188,17 +192,39 @@
   const photoLayer = $('tree-photos');
   const noteButtons = new Map();
   const photoButtons = new Map();
+  const placementPhoto = createPhotoCard('div');
+  placementPhoto.classList.add('photo-placement-preview');
+  placementPhoto.style.zIndex = '500';
   let noteAnchors = [];
   const noteColors = ['#ffe7a0', '#ffd2c8', '#d2edb1', '#cce8ff', '#e6d8ff'];
   const noteTilts = [-7, 7, -6, -8, 5, 9, 4, -6, -5];
   const ornamentSprites = new Map();
-  const ornamentImageSprites = new Map();
   let ornaments = [], hangingOrnament = null;
   let placement = null, consumedPlacementId = null, placementCursor = null, sceneTap = null;
 
   function ornamentAnchor(height, azimuth) {
     const radius = 1.81 * Math.pow(1 - height, .81);
     return { height, azimuth, radius, x: radius * Math.cos(azimuth), y: -1.48 + height * 4.83, z: radius * Math.sin(azimuth), revealAt: 1.69 + height * 2.85 };
+  }
+
+  function createPhotoCard(tag) {
+    const element = document.createElement(tag);
+    element.className = 'tree-photo';
+    element.hidden = true;
+    const paper = document.createElement('span');
+    paper.className = 'tree-photo-paper';
+    const image = document.createElement('img');
+    image.alt = '';
+    image.draggable = false;
+    paper.append(image);
+    element.append(paper);
+    return element;
+  }
+
+  function setPhotoSource(element, source) {
+    if (!(source?.startsWith('data:image/webp;base64,') || source?.startsWith('data:image/png;base64,'))) return;
+    const image = element.querySelector('img');
+    if (image.getAttribute('src') !== source) image.src = source;
   }
 
   function setOrnaments(items, highlightedId) {
@@ -208,24 +234,26 @@
       ...ornamentAnchor(height ?? .15 + .56 * ((.36 + index * .754877666) % 1),
         azimuth ?? Math.PI / 2 - .55 + index * 2.39996323),
     }));
-    const photoIds = new Set(items.filter(({ kind, image_data }) => kind === 'custom' && image_data).map(({ id }) => id));
+    const photos = items.filter(({ kind, image_data }) => kind === 'custom' && image_data);
+    const photoIds = new Set(photos.map(({ id }) => id));
     for (const [id, button] of photoButtons) {
       if (photoIds.has(id)) continue;
       button.remove();
       photoButtons.delete(id);
     }
-    for (const id of photoIds) {
-      if (photoButtons.has(id)) continue;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'tree-photo';
-      button.dataset.photoId = id;
-      button.hidden = true;
-      button.setAttribute('aria-label', '사진 오너먼트 크게 보기');
-      // The pointer handlers below distinguish a tap from dragging the tree.
-      button.addEventListener('click', event => { if (event.detail === 0) openPhoto(id); });
-      photoButtons.set(id, button);
-      photoLayer.append(button);
+    for (const { id, image_data } of photos) {
+      let button = photoButtons.get(id);
+      if (!button) {
+        button = createPhotoCard('button');
+        button.type = 'button';
+        button.dataset.photoId = id;
+        button.setAttribute('aria-label', '사진 오너먼트 크게 보기');
+        // The pointer handlers below distinguish a tap from dragging the tree.
+        button.addEventListener('click', event => { if (event.detail === 0) openPhoto(id); });
+        photoButtons.set(id, button);
+        photoLayer.append(button);
+      }
+      setPhotoSource(button, image_data);
     }
     const highlighted = ornaments.find(({ id }) => id === highlightedId);
     if (!highlighted || (highlighted.kind === previous?.kind && highlighted.height === previous.height &&
@@ -246,6 +274,8 @@
     placement = next ?? null;
     placementCursor = null;
     sceneTap = null;
+    placementPhoto.hidden = true;
+    if (placement?.kind === 'custom') setPhotoSource(placementPhoto, placement.image_data);
     document.body.classList.toggle('placing-ornament', Boolean(placement));
     $('ornament-placement-hint').hidden = !placement;
     canvas.setAttribute('aria-keyshortcuts', placement ? 'ArrowUp ArrowDown ArrowLeft ArrowRight Enter Escape' : 'ArrowLeft ArrowRight Space R');
@@ -309,12 +339,25 @@
     return clamp(sceneScale * .25, 19, 37) * scale * (kind === 'custom' ? 1.35 : 1);
   }
 
+  function positionPhoto(card, x, y, size, opacity) {
+    const width = Math.round(size * .73);
+    card.style.width = `${width}px`;
+    card.style.height = `${Math.round(width * 1.16)}px`;
+    card.style.transform = `translate(${Math.round((x - width / 2) * DPR) / DPR}px,${Math.round(y * DPR) / DPR}px)`;
+    card.style.opacity = opacity;
+  }
+
   function drawPlacementPreview(c, s) {
     const position = pickBranch(...(placementCursor ?? defaultPlacementCursor()));
+    placementPhoto.hidden = !position || placement.kind !== 'custom';
     if (!position) return;
     const { x, y, z } = ornamentAnchor(position.height, position.azimuth);
     const [screenX, screenY, scale] = project(x, y, z, c, s);
     const size = ornamentSize(placement.kind, scale);
+    if (placement.kind === 'custom') {
+      positionPhoto(placementPhoto, screenX, screenY, size, .9);
+      return;
+    }
     ctx.save();
     ctx.globalAlpha = .8;
     ctx.drawImage(ornamentSprite(placement), screenX - size / 2, screenY - size * .18, size, size);
@@ -327,37 +370,7 @@
     ctx.restore();
   }
 
-  function ornamentImageSprite(source) {
-    if (ornamentImageSprites.has(source)) return ornamentImageSprites.get(source);
-    const sprite = document.createElement('canvas');
-    sprite.width = sprite.height = 96;
-    const brush = sprite.getContext('2d');
-    brush.scale(3, 3);
-    brush.translate(16, 16);
-    brush.rotate(-.075);
-    brush.translate(-16, -16);
-    brush.shadowColor = '#03090dc0';
-    brush.shadowBlur = 3;
-    brush.shadowOffsetY = 1.3;
-    brush.fillStyle = '#fffdf4';
-    brush.fillRect(4, 4, 24, 27);
-    brush.shadowColor = 'transparent';
-    brush.fillStyle = '#dfbd82';
-    brush.fillRect(12.5, 1.6, 7, 3.6);
-    brush.fillStyle = '#e7e1d3';
-    brush.fillRect(6, 6, 20, 20);
-
-    if (source?.startsWith('data:image/webp;base64,') || source?.startsWith('data:image/png;base64,')) {
-      const photo = new Image();
-      photo.onload = () => brush.drawImage(photo, 6, 6, 20, 20);
-      photo.src = source;
-    }
-    ornamentImageSprites.set(source, sprite);
-    return sprite;
-  }
-
-  function ornamentSprite({ kind, image_data }) {
-    if (kind === 'custom') return ornamentImageSprite(image_data);
+  function ornamentSprite({ kind }) {
     if (ornamentSprites.has(kind)) return ornamentSprites.get(kind);
     const sprite = document.createElement('canvas');
     sprite.width = sprite.height = 64;
@@ -464,15 +477,13 @@
     const visible = [];
     for (const ornament of ornaments) {
       const facing = (ornament.x * s + ornament.z * c) / ornament.radius;
-      const reveal = smooth((assemblyTime - ornament.revealAt) / .4);
       const button = photoButtons.get(ornament.id);
-      if (button) {
-        const hidden = Boolean(placement) || facing < .17 || reveal < .35;
-        if (button.hidden !== hidden) button.hidden = hidden;
-      }
-      if (reveal <= 0) continue;
+      const revealAt = button ? 4.62 + .66 * ornament.height : ornament.revealAt;
+      const reveal = smooth((assemblyTime - revealAt) / .4);
+      const hidden = facing <= .04 || reveal <= 0;
+      if (button && button.hidden !== hidden) button.hidden = hidden;
+      if (hidden) continue;
       if (hangingOrnament?.id === ornament.id && hangingOrnament.start === null) hangingOrnament.start = now;
-      if (facing <= .04) continue;
       visible.push({ ornament, facing, reveal, button, screen: project(ornament.x, ornament.y, ornament.z, c, s) });
     }
     visible.sort((a, b) => a.screen[3] - b.screen[3]);
@@ -480,16 +491,16 @@
       const size = ornamentSize(ornament.kind, scale);
       const width = ornament.kind === 'bauble' ? size : size * (.66 + .34 * facing);
       const hang = hangingOrnament?.id === ornament.id ? smooth((now - hangingOrnament.start) / 480) : 1;
-      const top = y - size * .18 - (1 - hang) * 15;
-      ctx.globalAlpha = reveal * Math.min(1, (facing - .04) / .22) * (.42 + .58 * hang);
-      ctx.drawImage(ornamentSprite(ornament), x - width / 2, top, width, size);
-      if (button && !button.hidden) {
-        const hitWidth = width * .82;
-        button.style.transform = `translate(${x - hitWidth / 2}px,${top + size * .05}px)`;
-        button.style.width = `${hitWidth}px`;
-        button.style.height = `${size * .92}px`;
+      const opacity = reveal * smooth((facing - .04) / .22) * (.42 + .58 * hang);
+      if (button) {
+        positionPhoto(button, x, y - (1 - hang) * 6, size, opacity * (placement ? .62 : 1));
         button.style.zIndex = Math.round(100 + depth * 45);
+        button.disabled = Boolean(placement) || opacity < .35;
+        continue;
       }
+      const top = y - size * .18 - (1 - hang) * 15;
+      ctx.globalAlpha = opacity;
+      ctx.drawImage(ornamentSprite(ornament), x - width / 2, top, width, size);
     }
     if (hangingOrnament?.start != null && now - hangingOrnament.start >= 480) hangingOrnament = null;
     ctx.globalAlpha = 1;
@@ -533,6 +544,7 @@
   if (embedded) {
     noteLayer.hidden = false;
     photoLayer.hidden = false;
+    photoLayer.append(placementPhoto);
     canvas.tabIndex = 0;
     canvas.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight Space R');
     addEventListener('message', (event) => {
@@ -542,11 +554,6 @@
       const items = event.data.ornaments;
       if (Array.isArray(items)) setOrnaments(items, event.data.highlightedOrnamentId);
       setPlacement(event.data.ornamentPlacement);
-      const imageSources = new Set(ornaments.map((ornament) => ornament.image_data));
-      imageSources.add(placement?.image_data);
-      for (const source of ornamentImageSprites.keys()) {
-        if (!imageSources.has(source)) ornamentImageSprites.delete(source);
-      }
       if (notes.length !== noteAnchors.length) {
         noteAnchors = buildNoteAnchors(notes.length);
         updatePaperSize();
@@ -792,10 +799,11 @@
         const height=clamp((p.y+1.48)/4.83,0,1);
         const delay=p.kind===0?.12+height*2.85+(Math.sin(p.phase*13)+1)*.16:p.kind===6?0:p.phase===0?.55:2.55+height*1.5;
         const k=smooth((it-delay)/(p.kind===0?1.25:1.0));if(k<=0)continue;alpha=smooth(k*1.7);
-        const spread=1-k,twist=spread*3.6,tc=Math.cos(twist),ts=Math.sin(twist);
-        x=p.x*tc-p.z*ts+Math.cos(p.phase+i*.31)*spread*1.8;
-        z=p.x*ts+p.z*tc+Math.sin(p.phase+i*.31)*spread*1.8;
-        y=p.y-spread*(1.05+height*.8);
+        const spread=1-k,twist=spread*(1.12-.44*height),tc=Math.cos(twist),ts=Math.sin(twist);
+        const drift=spread*(.22+.66*Math.pow(1-height,.81));
+        x=p.x*tc-p.z*ts+Math.cos(p.phase+i*.31)*drift;
+        z=p.x*ts+p.z*tc+Math.sin(p.phase+i*.31)*drift;
+        y=p.y-spread*(.30+.42*(1-height));
       }
       alphas[i]=alpha;
       const q=project(x,y,z,c,s),gx=(q[0]/cw)|0,gy=(q[1]/ch)|0;
@@ -892,8 +900,9 @@
     ctx.globalAlpha=1;glow(tip[0],tip[1],sceneScale*.21,reveal*.8);ctx.globalCompositeOperation='source-over';
   }
   function assembly(c,s){
-    const it=introTime();if(it<.1||it>4.7)return;
-    const u=clamp((it-.1)/4.35,0,1),y=-1.48+u*4.83,r=1.72*Math.pow(1-u,.81)+.06,aura=smooth(it/.55)*(1-smooth((it-4.1)/.6));
+    const it=introTime();if(it<.45||it>4.7)return;
+    const u=clamp((it-.45)/4,0,1),y=-1.48+u*4.83,r=1.72*Math.pow(1-u,.81)+.06;
+    const aura=.65*smooth((it-.45)/.55)*(1-smooth((it-4.1)/.6));
     ctx.globalCompositeOperation='screen';
     for(let i=0;i<150;i++){
       const a=i/150*TAU+time*3.3,spread=.04+Math.sin(i*13.37+time*2)*.025,q=project(Math.cos(a)*(r+spread),y+Math.sin(a*5+time*4)*.055,Math.sin(a)*(r+spread),c,s);
@@ -1056,7 +1065,7 @@
 
   function startScenePointer(event) {
     if (event.button !== 0) return;
-    const photoId = event.target.dataset.photoId;
+    const photoId = event.target.closest('.tree-photo')?.dataset.photoId;
     if (placement) placementCursor = [event.clientX, event.clientY];
     sceneTap = !pointers.size && (placement || photoId)
       ? { id: event.pointerId, x: event.clientX, y: event.clientY, photoId }

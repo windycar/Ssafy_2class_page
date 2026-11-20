@@ -19,23 +19,40 @@ export type SceneOrnament = OrnamentDesign & { id: string; height: number | null
 export type ChristmasOrnament = SceneOrnament & { own_slot: OrnamentSlot | null };
 
 type OrnamentChange =
-  | { slot: OrnamentSlot; design: OrnamentDesign; position?: OrnamentPosition }
+  | { slot: OrnamentSlot; design: OrnamentDesign; position?: OrnamentPosition; detail?: string }
   | { slot: OrnamentSlot; remove: true };
 
 export async function manageChristmasTreeOrnaments(change?: OrnamentChange, signal?: AbortSignal) {
+  const client = requireSupabase();
   const design = change && "design" in change ? change.design : null;
   const position = change && "position" in change ? change.position : undefined;
-  const request = requireSupabase().rpc("manage_my_christmas_tree_ornament_images", {
-    p_slot: change?.slot ?? null,
-    p_kind: design?.kind ?? null,
-    p_height: position?.height ?? null,
-    p_azimuth: position?.azimuth ?? null,
-    p_remove: Boolean(change && "remove" in change),
-    p_image: design?.image_data ?? null,
-  });
+  const request = change && "detail" in change && change.detail
+    ? client.rpc("save_my_christmas_tree_ornament_photo", {
+      p_slot: change.slot,
+      p_image: change.design.image_data,
+      p_detail: change.detail,
+      p_height: position?.height ?? null,
+      p_azimuth: position?.azimuth ?? null,
+    })
+    : client.rpc("manage_my_christmas_tree_ornament_images", {
+      p_slot: change?.slot ?? null,
+      p_kind: design?.kind ?? null,
+      p_height: position?.height ?? null,
+      p_azimuth: position?.azimuth ?? null,
+      p_remove: Boolean(change && "remove" in change),
+      p_image: design?.image_data ?? null,
+    });
   const { data, error } = await (signal ? request.abortSignal(signal) : request);
   if (error) throw error;
   return data as ChristmasOrnament[];
+}
+
+export async function getChristmasTreePhotoDetail(id: string, signal: AbortSignal) {
+  const { data, error } = await requireSupabase()
+    .rpc("get_christmas_tree_ornament_photo_detail", { p_ornament_id: id })
+    .abortSignal(signal);
+  if (error) throw error;
+  return data as string | null;
 }
 
 export async function getChristmasTreeNotes(signal: AbortSignal) {

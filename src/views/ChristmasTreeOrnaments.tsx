@@ -9,7 +9,7 @@ import {
   type OrnamentPosition,
   type OrnamentSlot,
 } from "../services/christmasTree";
-import { prepareOrnamentPhoto, ORNAMENT_IMAGE_MAX_BYTES, ORNAMENT_IMAGE_TYPES } from "../utils/christmasTreeImage";
+import { prepareOrnamentPhoto, ORNAMENT_IMAGE_MAX_BYTES, ORNAMENT_IMAGE_TYPES, type PreparedOrnamentPhoto } from "../utils/christmasTreeImage";
 
 const ornamentOptions = [
   { kind: "star", label: "별", Icon: Star, color: "fill-amber-300 text-amber-700" },
@@ -33,16 +33,16 @@ export default function ChristmasTreeOrnaments({ isDemo, onUpdate, pickPosition,
   const [ownOrnaments, setOwnOrnaments] = useState<ChristmasOrnament[]>([]);
   const [slot, setSlot] = useState<OrnamentSlot>(1);
   const [draftKind, setDraftKind] = useState<OrnamentKind | null>(null);
-  const [draftImage, setDraftImage] = useState<string | null>(null);
+  const [draftPhoto, setDraftPhoto] = useState<PreparedOrnamentPhoto | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [operation, setOperation] = useState<"preparing-image" | "placing" | "saving" | null>(null);
   const ownOrnament = ownOrnaments.find((item) => item.own_slot === slot);
   const selected = draftKind ?? ownOrnament?.kind ?? "star";
-  const image = selected === "custom" ? draftImage ?? ownOrnament?.image_data ?? null : null;
+  const image = selected === "custom" ? draftPhoto?.preview ?? ownOrnament?.image_data ?? null : null;
   const validDesign = selected !== "custom" || image !== null;
-  const changedDesign = ownOrnament && (selected !== ownOrnament.kind || image !== ownOrnament.image_data);
+  const changedDesign = ownOrnament && (selected !== ownOrnament.kind || (selected === "custom" && draftPhoto !== null));
 
   useEffect(() => {
     if (isDemo) return;
@@ -62,7 +62,7 @@ export default function ChristmasTreeOrnaments({ isDemo, onUpdate, pickPosition,
 
   function resetDraft() {
     setDraftKind(null);
-    setDraftImage(null);
+    setDraftPhoto(null);
     setImageError(null);
   }
 
@@ -82,7 +82,7 @@ export default function ChristmasTreeOrnaments({ isDemo, onUpdate, pickPosition,
     setImageError(null);
     setOperation("preparing-image");
     try {
-      setDraftImage(await prepareOrnamentPhoto(file));
+      setDraftPhoto(await prepareOrnamentPhoto(file));
     } catch {
       setImageError("사진을 열지 못했어요. 다른 파일을 골라 주세요.");
     } finally {
@@ -103,7 +103,8 @@ export default function ChristmasTreeOrnaments({ isDemo, onUpdate, pickPosition,
         position = picked;
       }
       setOperation("saving");
-      const ornaments = await manageChristmasTreeOrnaments(action === "remove" ? { slot, remove: true } : { slot, design, position });
+      const detail = selected === "custom" ? draftPhoto?.detail : undefined;
+      const ornaments = await manageChristmasTreeOrnaments(action === "remove" ? { slot, remove: true } : { slot, design, position, detail });
       setOwnOrnaments(ornaments.filter((ornament) => ornament.own_slot !== null));
       resetDraft();
       const highlighted = action === "place" ? ornaments.find((ornament) => ornament.own_slot === slot) : null;
