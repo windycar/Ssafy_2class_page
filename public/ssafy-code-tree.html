@@ -71,30 +71,32 @@
   body.embedded .code-pane{top:62px;right:14px;bottom:14px;width:min(44%,540px);max-height:none;transform:none;z-index:2}
   @media(max-width:760px){body.embedded .code-pane{top:auto;right:12px;bottom:12px;left:12px;width:auto;max-height:49dvh}}
   @media(max-width:430px){body.embedded .controls :is(#play,#snow) span{display:none}}
-  .note-layer{position:absolute;inset:0;z-index:1;pointer-events:none}
+  .note-layer{position:absolute;inset:0;z-index:1;pointer-events:none;--note-width:48px}
   .tree-note{
-    position:absolute;top:0;left:0;width:clamp(44px,11vw,64px);aspect-ratio:1.06;
+    position:absolute;top:0;left:0;width:var(--note-width);aspect-ratio:1.06;
     background:none;border:0;padding:0;pointer-events:auto;visibility:hidden;z-index:var(--depth,0);
   }
   .tree-note-paper{
-    position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;height:100%;padding:6px;
+    position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:100%;height:100%;padding:clamp(2px,calc(var(--note-width)*.1),5px);
     border-radius:2px;background:var(--paper);color:#342a25;rotate:var(--tilt);transform-origin:50% 6%;
     box-shadow:2px 5px 10px #00120cb3;transition:scale .15s;
   }
   .tree-note-paper::before{
-    content:"";position:absolute;z-index:1;left:27%;right:27%;top:-5px;height:10px;
+    content:"";position:absolute;z-index:1;left:27%;right:27%;top:-3px;height:clamp(4px,calc(var(--note-width)*.16),8px);
     rotate:-6deg;background:#f8ddb99e;box-shadow:0 1px 2px #30221635;
   }
   .tree-note-paper::after{
-    content:"";position:absolute;right:0;bottom:0;width:9px;height:9px;
+    content:"";position:absolute;right:0;bottom:0;width:calc(var(--note-width)*.16);height:calc(var(--note-width)*.16);
     background:linear-gradient(135deg,#20150a1f 49%,#17271b55 51%);
   }
   .tree-note-preview{
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;
-    font-size:clamp(10px,2.5vw,12px);font-weight:700;line-height:1.25;text-align:center;
+    font-size:max(6px,calc(var(--note-width)*.215));font-weight:700;line-height:1.2;text-align:center;
   }
-  .tree-note-author{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(8px,2.1vw,10px);line-height:1.2;font-weight:600;color:#654534}
+  .tree-note-author{width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:max(5px,calc(var(--note-width)*.18));line-height:1.1;font-weight:600;color:#654534}
   .tree-note-author[hidden]{display:none}
+  .dense-notes .tree-note-paper{gap:1px}
+  .dense-notes .tree-note-preview{-webkit-line-clamp:1;line-height:1.1}
   .tree-note:is(:hover,:focus-visible){z-index:500}
   .tree-note:is(:hover,:focus-visible) .tree-note-paper{scale:1.12}
   .tree-note.is-attaching{z-index:600}
@@ -172,19 +174,44 @@
   let sceneX = 0, sceneY = 0, sceneScale = 1, sceneInset = 0, pinchDistance = 0;
   const noteLayer = $('tree-notes');
   const noteButtons = new Map();
-  // 나뭇가지 높이와 둘레 방향을 고정하고 트리와 같은 카메라로 투영합니다.
-  const noteAnchors = [
-    [2.12, Math.PI / 2 - .55],
-    [1.27, .11], [1.25, 3.10],
-    [.36, -.44], [.37, 1.62], [.36, 3.68],
-    [-.65, -1.22], [-.58, .87], [-.67, 2.99],
-  ].map(([y, azimuth]) => {
-    const height = (y + 1.48) / 4.83;
-    const radius = 1.81 * Math.pow(1 - height, .81);
-    return { y, azimuth, x: radius * Math.cos(azimuth), z: radius * Math.sin(azimuth), radius, revealAt: 1.69 + height * 2.85 };
-  });
+  let noteAnchors = [];
   const noteColors = ['#ffe7a0', '#ffd2c8', '#d2edb1', '#cce8ff', '#e6d8ff'];
   const noteTilts = [-7, 7, -6, -8, 5, 9, 4, -6, -5];
+
+  function buildNoteAnchors(count) {
+    if (!count) return [];
+    const tierCount = Math.ceil(Math.sqrt(count * .78));
+    const tiers = Array.from({ length: tierCount }, (_, index) => {
+      const y = tierCount === 1 ? 2.12 : 2.12 - index * 3.28 / (tierCount - 1);
+      const height = (y + 1.48) / 4.83;
+      return { y, radius: 1.81 * Math.pow(1 - height, .81), revealAt: 1.69 + height * 2.85 };
+    });
+
+    // 넓은 아래쪽 가지에 더 많은 포스트잇을 배치합니다.
+    const totalRadius = tiers.reduce((sum, tier) => sum + tier.radius, 0);
+    const extraNotes = count - tierCount;
+    let radiusSoFar = 0, assigned = 0;
+    return tiers.flatMap((tier, index) => {
+      radiusSoFar += tier.radius;
+      const totalAssigned = index === tiers.length - 1 ? extraNotes : Math.round(extraNotes * radiusSoFar / totalRadius);
+      const tierNotes = 1 + totalAssigned - assigned;
+      assigned = totalAssigned;
+      const spacing = TAU / tierNotes;
+      const start = Math.PI / 2 - .55 + (index % 2) * Math.min(.6, spacing / 2);
+      return Array.from({ length: tierNotes }, (_, slot) => {
+        const azimuth = start + slot * spacing;
+        return { ...tier, azimuth, x: tier.radius * Math.cos(azimuth), z: tier.radius * Math.sin(azimuth) };
+      });
+    });
+  }
+
+  function updatePaperSize() {
+    const baseWidth = clamp(W * .094, 26, 48);
+    const density = Math.sqrt(11 / Math.max(11, noteAnchors.length));
+    const width = Math.max(18, Math.round(baseWidth * density));
+    noteLayer.style.setProperty('--note-width', `${width}px`);
+    noteLayer.classList.toggle('dense-notes', width < 29);
+  }
 
   if (embedded) {
     noteLayer.hidden = false;
@@ -193,7 +220,11 @@
     addEventListener('message', (event) => {
       if (event.source !== window.parent || event.origin !== location.origin ||
           event.data?.type !== 'ssafy-tree:notes' || !Array.isArray(event.data.notes)) return;
-      const notes = event.data.notes.slice(0, noteAnchors.length);
+      const notes = event.data.notes;
+      if (notes.length !== noteAnchors.length) {
+        noteAnchors = buildNoteAnchors(notes.length);
+        updatePaperSize();
+      }
       const ids = new Set(notes.map(({ id }) => id));
 
       for (const [id, button] of noteButtons) {
@@ -238,7 +269,7 @@
         button.setAttribute('aria-label', `포스트잇 열기 · ${[...content].slice(0, 22).join('')} · ${signature || '익명'}`);
         button.dataset.anchor = index;
         button.style.setProperty('--paper', noteColors[index % noteColors.length]);
-        button.style.setProperty('--tilt', `${noteTilts[index]}deg`);
+        button.style.setProperty('--tilt', `${noteTilts[index % noteTilts.length]}deg`);
         if (noteLayer.children[index] !== button) noteLayer.insertBefore(button, noteLayer.children[index] ?? null);
       });
 
@@ -248,6 +279,7 @@
 
   function positionNotes(cosAngle, sinAngle) {
     const assemblyTime = introTime();
+    const paperScale = W<=760 ? 1-.4*viewMix : 1;
     for (const button of noteButtons.values()) {
       const { x, y, z, radius, revealAt } = noteAnchors[Number(button.dataset.anchor)];
       const facing = (x * sinAngle + z * cosAngle) / radius;
@@ -257,11 +289,12 @@
         continue;
       }
       const [screenX, screenY, scale, depth] = project(x, y, z, cosAngle, sinAngle);
-      const width = scale * (.28 + .72 * facing);
+      const height = scale * paperScale;
+      const width = height * (.28 + .72 * facing);
       button.style.visibility = 'visible';
       button.style.opacity = reveal * Math.min(1, (facing - .04) / .24);
       button.style.setProperty('--depth', Math.round(100 + depth * 45));
-      button.style.transform = `translate(${screenX}px,${screenY}px) translate(-50%,-18%) scale(${width},${scale})`;
+      button.style.transform = `translate(${screenX}px,${screenY}px) translate(-50%,-18%) scale(${width},${height})`;
       if (button.dataset.attach && reveal >= .35) {
         delete button.dataset.attach;
         button.classList.add('is-attaching');
@@ -398,6 +431,7 @@
     unit=embedded ? Math.min((H-sceneInset)*.144,W*.243) : Math.min(H*.122,W*.225);
     glyphSize=clamp(unit*.054,6.8,9.8);cw=glyphSize*.60;ch=glyphSize*.82;
     cols=Math.ceil(W/cw)+2;rows=Math.ceil(H/ch)+2;zbuf=new Float32Array(cols*rows);ids=new Int32Array(cols*rows);buildAtlas();
+    if(embedded)updatePaperSize();
     if(codeSourceLines.length)buildCodeLeaves();
   }
   function project(x,y,z,c,s){

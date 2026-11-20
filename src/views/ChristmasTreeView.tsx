@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronLeft, ChevronRight, LoaderCircle, LockKeyhole, Pencil, Pin, Plus, StickyNote, Trash2, X } from "lucide-react";
+import { LoaderCircle, LockKeyhole, Pencil, Pin, Plus, StickyNote, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import christmasTreeArt from "../assets/home/quick-menu/christmas-tree.png";
 import {
@@ -21,7 +21,6 @@ import {
   type ChristmasNote,
 } from "../services/christmasTree";
 
-const NOTES_PER_PAGE = 9;
 const TREE_SCENE_URL = `${import.meta.env.BASE_URL}ssafy-code-tree.html?embed=1`;
 const DEMO_NOTES: ChristmasNote[] = [
   { id: "demo-1", content: "어려운 문제도 같이 풀어서 즐거웠어요. 우리 반 모두 따뜻한 연말 보내요!", author_name: null, is_sample: true },
@@ -31,10 +30,6 @@ const DEMO_NOTES: ChristmasNote[] = [
 
 type TreeNotes = Awaited<ReturnType<typeof getChristmasTreeNotes>>;
 type NoteEditor = { kind: "add" } | { kind: "edit"; noteId: string };
-
-function getNotePageCount(noteCount: number) {
-  return Math.max(1, Math.ceil(noteCount / NOTES_PER_PAGE));
-}
 
 export default function ChristmasTreeView() {
   const { currentUser, isDemo } = useAuth();
@@ -51,7 +46,6 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
   const [showName, setShowName] = useState(false);
   const [editor, setEditor] = useState<NoteEditor | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [page, setPage] = useState(0);
   const [newNoteId, setNewNoteId] = useState<string | null>(null);
   const [selectedNote, setSelectedNote] = useState<ChristmasNote | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<ChristmasNote | null>(null);
@@ -59,7 +53,6 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
 
   const notes = tree?.notes;
   const noteCount = notes?.length ?? 0;
-  const pageCount = getNotePageCount(noteCount);
   const draftLength = Array.from(draft).length;
   const ownedCount = tree?.ownNotes.length ?? 0;
   const canAdd = ownedCount < CHRISTMAS_NOTES_PER_MEMBER;
@@ -81,7 +74,6 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
           ...notes.map((note) => ownedById.get(note.id) ?? note),
         ];
         setTree({ notes: mergedNotes, ownNotes });
-        setPage((current) => Math.min(current, getNotePageCount(mergedNotes.length) - 1));
       })
       .catch(() => {
         if (!controller.signal.aborted) setLoadError(true);
@@ -92,10 +84,10 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
   const sendNotes = useCallback(() => {
     scene.current?.contentWindow?.postMessage({
       type: "ssafy-tree:notes",
-      notes: notes?.slice(page * NOTES_PER_PAGE, (page + 1) * NOTES_PER_PAGE) ?? [],
+      notes: notes ?? [],
       newNoteId,
     }, "*"); // The sandboxed scene has an opaque origin.
-  }, [notes, page, newNoteId]);
+  }, [notes, newNoteId]);
 
   useEffect(sendNotes, [sendNotes]);
 
@@ -139,7 +131,6 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
       if (editing) {
         toast.success("포스트잇을 수정했어요.");
       } else {
-        setPage(0);
         setNewNoteId(note.id);
         scene.current?.scrollIntoView({ block: "nearest" });
         const alreadySaved = note.content !== content || Boolean(note.author_name) !== showName;
@@ -174,7 +165,6 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
       const removed = await deleteChristmasTreeNote(id);
       const remainingNotes = tree.notes.filter((note) => note.id !== id);
       setTree({ notes: remainingNotes, ownNotes: tree.ownNotes.filter((note) => note.id !== id) });
-      setPage((current) => Math.min(current, getNotePageCount(remainingNotes.length) - 1));
       setSelectedNote((selected) => selected?.id === id ? null : selected);
       setNewNoteId((newId) => newId === id ? null : newId);
       setNoteToDelete(null);
@@ -185,11 +175,6 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
     } finally {
       setDeleting(false);
     }
-  }
-
-  function changePage(nextPage: number) {
-    setPage(nextPage);
-    setNewNoteId(null);
   }
 
   return (
@@ -218,17 +203,6 @@ function ChristmasTree({ isDemo }: { isDemo: boolean }) {
             <p className="text-[#c0d4cd]" aria-live="polite">
               {tree ? `${isDemo ? "예시 포스트잇" : "붙은 포스트잇"} ${noteCount}장` : loadError ? "포스트잇을 불러오지 못했어요." : "포스트잇을 불러오는 중이에요."}
             </p>
-            {pageCount > 1 ? (
-              <div className="flex items-center gap-2 text-[#d6e8dd]" aria-label="포스트잇 페이지">
-                <button type="button" aria-label="이전 포스트잇" disabled={page === 0} onClick={() => changePage(page - 1)} className="rounded-lg border border-white/15 p-2 hover:bg-white/10 disabled:opacity-30">
-                  <ChevronLeft className="size-4" aria-hidden="true" />
-                </button>
-                <span className="tabular-nums" aria-live="polite">{page + 1} / {pageCount}</span>
-                <button type="button" aria-label="다음 포스트잇" disabled={page + 1 === pageCount} onClick={() => changePage(page + 1)} className="rounded-lg border border-white/15 p-2 hover:bg-white/10 disabled:opacity-30">
-                  <ChevronRight className="size-4" aria-hidden="true" />
-                </button>
-              </div>
-            ) : null}
             {noteCount > 0 && <p className="text-[#a9c1b8]">트리를 돌려 포스트잇을 읽어보세요.</p>}
           </div>
           {notes && notes.length > 0 && (
