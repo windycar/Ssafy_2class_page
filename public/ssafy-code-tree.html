@@ -74,7 +74,7 @@
   .tree-photo:active{cursor:grabbing}
   .tree-photo:focus-visible{outline:2px solid #fff3c3;outline-offset:2px}
   body.placing-ornament .tree-photo,.tree-photo:disabled,.photo-placement-preview{pointer-events:none}
-  .tree-photo-paper{position:relative;display:block;width:100%;height:100%;padding:7% 7% 18%;background:#fffdf4;box-shadow:1px 3px 6px #03090db5;rotate:-4deg}
+  .tree-photo-paper{position:relative;display:block;width:100%;height:100%;padding:5% 5% 16%;background:#fffdf4;box-shadow:1px 3px 6px #03090db5;rotate:-4deg}
   .tree-photo-paper::before{content:"";position:absolute;z-index:1;top:-6%;left:37%;width:26%;height:12%;border-radius:1px;background:linear-gradient(#e8c891,#cba66f)}
   .tree-photo-paper img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:#e7e1d3}
   .photo-placement-preview .tree-photo-paper{outline:1px dashed #fff3c3;outline-offset:3px}
@@ -336,7 +336,10 @@
   }
 
   function ornamentSize(kind, scale) {
-    return clamp(sceneScale * .25, 19, 37) * scale * (kind === 'custom' ? 1.35 : 1);
+    const size = kind === 'custom'
+      ? clamp(sceneScale * .63, 43, 78)
+      : clamp(sceneScale * .25, 19, 37);
+    return size * scale;
   }
 
   function positionPhoto(card, x, y, size, opacity) {

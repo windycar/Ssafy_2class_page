@@ -28,7 +28,7 @@ import {
 import ChristmasTreeOrnaments from "./ChristmasTreeOrnaments";
 
 // Reload the embedded scene when its message format changes so an open tab uses the matching renderer.
-const TREE_SCENE_URL = `${import.meta.env.BASE_URL}ssafy-code-tree.html?embed=1&v=5`;
+const TREE_SCENE_URL = `${import.meta.env.BASE_URL}ssafy-code-tree.html?embed=1&v=6`;
 const DEMO_NOTES: ChristmasNote[] = [
   { id: "demo-1", content: "어려운 문제도 같이 풀어서 즐거웠어요. 우리 반 모두 따뜻한 연말 보내요!", author_name: null, is_sample: true },
   { id: "demo-2", content: "매일 아침 인사해 줘서 고마워요. 메리 크리스마스!", author_name: null, is_sample: true },
