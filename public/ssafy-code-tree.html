@@ -198,6 +198,7 @@
   let noteAnchors = [];
   const noteColors = ['#ffe7a0', '#ffd2c8', '#d2edb1', '#cce8ff', '#e6d8ff'];
   const noteTilts = [-7, 7, -6, -8, 5, 9, 4, -6, -5];
+  const ornamentKinds = ['star', 'bell', 'snowflake', 'bauble', 'candy', 'ribbon', 'gift', 'gingerbread'];
   const ornamentSprites = new Map();
   let ornaments = [], hangingOrnament = null;
   let placement = null, consumedPlacementId = null, placementCursor = null, sceneTap = null;
@@ -338,7 +339,7 @@
   function ornamentSize(kind, scale) {
     const size = kind === 'custom'
       ? clamp(sceneScale * .63, 43, 78)
-      : clamp(sceneScale * .25, 19, 37);
+      : clamp(sceneScale * .29, 22, 42);
     return size * scale;
   }
 
@@ -374,102 +375,149 @@
   }
 
   function ornamentSprite({ kind }) {
+    if (!ornamentKinds.includes(kind)) kind = 'bauble';
     if (ornamentSprites.has(kind)) return ornamentSprites.get(kind);
     const sprite = document.createElement('canvas');
-    sprite.width = sprite.height = 64;
+    sprite.width = sprite.height = 128;
     const brush = sprite.getContext('2d');
-    brush.scale(2, 2);
+    brush.scale(4, 4);
     brush.lineCap = 'round';
     brush.lineJoin = 'round';
-    brush.lineWidth = 1.35;
-    brush.strokeStyle = '#fee0a5';
-    brush.beginPath();
-    brush.arc(16, 5, 2.6, 0, TAU);
-    brush.stroke();
-    brush.fillStyle = '#ffd68b';
-    brush.fillRect(13, 7, 6, 3);
 
-    if (kind === 'candy') {
-      const cane = new Path2D('M10 27 L19 13 C24 6 31 13 25 18');
-      brush.strokeStyle = '#fff5e8';
-      brush.lineWidth = 5;
-      brush.stroke(cane);
-      brush.strokeStyle = '#d62646';
-      brush.lineCap = 'butt';
-      brush.setLineDash([2.2, 3]);
-      brush.stroke(cane);
+    function linear(x1, y1, x2, y2, ...colors) {
+      const gradient = brush.createLinearGradient(x1, y1, x2, y2);
+      colors.forEach((color, i) => gradient.addColorStop(i / (colors.length - 1), color));
+      return gradient;
+    }
+
+    function fill(path, paint) {
+      brush.fillStyle = paint;
+      brush.fill(typeof path === 'string' ? new Path2D(path) : path);
+    }
+
+    function stroke(path, paint, width) {
+      brush.strokeStyle = paint;
+      brush.lineWidth = width;
+      brush.stroke(typeof path === 'string' ? new Path2D(path) : path);
+    }
+
+    function ellipse(x, y, width, height, rotation = 0) {
+      const path = new Path2D();
+      path.ellipse(x, y, width / 2, height / 2, rotation, 0, TAU);
+      return path;
+    }
+
+    const cap = linear(12.5, 0, 19.5, 0, '#a2652a', '#fff0b8', '#c08235', '#77441f');
+    const hook = kind === 'snowflake' ? linear(13, 2, 18, 6, '#f3ffff', '#487da5') : cap;
+    const hanger = kind === 'candy' ? 'M16 6.1 Q17.5 8.1 20.7 9.2'
+      : kind === 'ribbon' ? 'M16 6.1 Q16.7 10.7 16.5 14.6'
+      : 'M16 6.1 V8.5';
+    stroke(hanger, '#1a1720ad', 1.8);
+    stroke(hanger, hook, 1.05);
+    stroke(ellipse(16, 4.1, 4.6, 5.1), '#14181b9c', 2);
+    stroke(ellipse(16, 3.9, 4.6, 5.1), hook, 1.25);
+
+    if (kind === 'star') {
+      const points = [[16,6.4],[19.6,13.7],[27.8,14.8],[21.8,20.4],[23.3,28.7],[16,24.7],[8.7,28.7],[10.2,20.4],[4.2,14.8],[12.4,13.7]];
+      const silhouette = new Path2D('M' + points.map(point => point.join(' ')).join(' L') + ' Z');
+      brush.save();
+      brush.translate(.6, .9);
+      fill(silhouette, '#683508');
+      brush.restore();
+      const faces = ['#fff5bd','#d68d20','#ffe399','#a56216','#ffc54d','#9d5513','#f5aa29','#ffe893','#b87817','#fff0a9'];
+      points.forEach(([x, y], i) => {
+        const [nx, ny] = points[(i + 1) % points.length];
+        fill(`M16 18.6 L${x} ${y} L${nx} ${ny} Z`, faces[i]);
+      });
+      stroke(silhouette, '#ffd77d', .55);
+      stroke('M16 7 L16 18.6 L5.2 14.9 M16 18.6 L22.5 27.2', '#fff7d499', .6);
+    } else if (kind === 'bell') {
+      fill('M13.4 8 V6 H18.6 V8.8 Z', cap);
+      fill(ellipse(16, 25.7, 4.9, 6), linear(14, 24, 18, 29, '#ffdd83', '#71501c'));
+      const body = 'M16 7.4 C10.8 7.4 8.9 11.8 8.9 16.6 C8.9 20 7.1 22.2 5.1 24 L26.9 24 C24.8 22.2 23.1 20 23.1 16.6 C23.1 11.8 21.2 7.4 16 7.4 Z';
+      fill(body, linear(6, 13, 25, 19, '#b67722', '#fff4bd', '#e4a841', '#9b4c12', '#683410'));
+      fill(ellipse(16, 24.1, 23, 4.8), linear(10, 22, 12, 27, '#ffdf82', '#7b3a12', '#eba63e'));
+      fill(ellipse(16, 24.9, 19.1, 2), '#5a2c13');
+      fill(ellipse(16, 26, 3.8, 2.7), linear(14, 24.5, 17.8, 27.9, '#ffd982', '#a46b25'));
+      stroke('M13.6 9.1 C10.5 11 10.7 15 10.3 17.6 M7.8 23.1 Q16 21.2 24.2 23.1', '#fff0b9', .7);
     } else if (kind === 'snowflake') {
-      brush.strokeStyle = '#a8ddff';
-      brush.lineWidth = 1.9;
+      const branch = 'M0 .9 V-11 M-4 -7.2 L0 -4.4 L4 -7.2 M-2.45 -9.3 L0 -7.45 L2.45 -9.3';
+      brush.save();
+      brush.translate(16, 19);
       for (let spoke = 0; spoke < 6; spoke++) {
         brush.save();
-        brush.translate(16, 19);
-        brush.rotate(spoke * TAU / 6);
-        brush.beginPath();
-        brush.moveTo(0, 0);
-        brush.lineTo(0, -10);
-        brush.moveTo(-3, -7);
-        brush.lineTo(0, -4);
-        brush.lineTo(3, -7);
-        brush.stroke();
+        brush.translate(.55, .7);
+        stroke(branch, '#214d72', 3.4);
         brush.restore();
+        stroke(branch, '#65aacd', 2.6);
+        stroke(branch, '#e1f9ff', 1.15);
+        fill('M0 -11.8 L1.1 -10.6 L0 -9.35 L-1.1 -10.6 Z', '#f4feff');
+        brush.rotate(TAU / 6);
       }
+      fill('M0 -3.6 L3.1 -1.8 L3.1 1.8 L0 3.6 L-3.1 1.8 L-3.1 -1.8 Z', linear(-2.6,-3,3,3,'#fbffff','#85c8e5','#306892'));
+      brush.restore();
+    } else if (kind === 'candy') {
+      const cane = 'M10 27.9 L19 12 C23.2 4.2 31.1 9.8 26.2 15.9';
+      brush.save();
+      brush.translate(.45,.65);
+      stroke(cane, '#63192b', 6.3);
+      brush.restore();
+      stroke(cane, linear(10, 9, 23, 17, '#f7d8bd', '#fff7e9', '#f9eed9', '#b48279'), 5.8);
+      brush.lineCap = 'butt';
+      brush.setLineDash([2.8, 3]);
+      brush.lineDashOffset = -1.8;
+      stroke(cane, linear(10, 10, 23, 17, '#a91d3e', '#f25b64', '#bd2047', '#7d1836'), 5.55);
+      brush.setLineDash([]);
+      brush.lineCap = 'round';
+      stroke('M8.9 26.8 L17.8 11.2 C20 7.3 22.6 6.6 24.7 7.7', '#fffafa99', .7);
+    } else if (kind === 'ribbon') {
+      fill('M13.7 16.5 C12 21 9 26.5 6.8 29 L11.5 27.8 L13.5 30 L17.2 20.1 L21.5 29.8 L23.1 27.2 L27.1 28.1 C23.7 23.8 22.8 19.7 19.9 15.5 Z', linear(10, 28, 23, 15, '#7a1c42', '#e74772', '#681437'));
+      const left = 'M16 14.6 C12.3 12 8.3 8.1 5.4 9.6 C3 11.1 3.3 16.8 5.9 19.1 C8.9 21.8 13.1 18.5 16.1 17 Z';
+      const right = 'M16.8 14.6 C20.7 11.4 23.9 7.8 26.7 9.3 C29.6 11 29.1 17.9 26.1 19.5 C23.3 21 20.6 18.7 16.8 17.2 Z';
+      fill(left, linear(6, 9, 13, 20, '#ffb1bb', '#d33b70', '#711637'));
+      fill(right, linear(24, 8, 20, 20, '#ed7698', '#bf245b', '#671134'));
+      stroke('M5.8 10.7 Q8.1 9.8 14.4 14.6 M26.3 10.2 Q23.3 10.9 19.2 14.7', '#ffdee5ae', .8);
+      stroke('M7 16 Q9.1 18.5 14.2 16.7 M25.7 17.5 Q22.1 18.6 18.6 16.5', '#6c123c', 1.05);
+      fill('M14.8 13.7 Q16.5 12.8 18.6 14.2 L18.6 18.4 Q16.6 20 14.5 18.4 Z', linear(14.7,14,18.8,19,'#ffb1bb','#dc3a6c','#851a46'));
+    } else if (kind === 'gift') {
+      fill('M5.5 13.4 L16.6 18.6 V30 L5.5 24.9 Z', linear(5,12,16,29,'#7ce4ad','#239661','#12624b'));
+      fill('M16.6 18.6 L26.6 12.8 V24.7 L16.6 30 Z', linear(16,16,27,27,'#32946a','#0c513e','#0b302a'));
+      fill('M4.3 12.1 L15 7.6 L28 12.3 L16.6 17.7 Z', linear(9,8,25,18,'#b9edca','#57b989','#269165'));
+      fill('M4.3 12.2 L16.6 17.7 V21.3 L4.3 15.8 Z', linear(4,13,17,20,'#7ed7a8','#24875d'));
+      fill('M16.6 17.7 L28 12.3 V15.9 L16.6 21.3 Z', linear(17,18,27,15,'#287a56','#499c71'));
+      fill('M8.8 14.3 L12 15.7 V27.7 L8.8 26.2 Z M22.2 15.2 L24.5 14.1 V25.8 L22.2 27 Z', linear(9,14,25,26,'#fff1ad','#edb653','#905820'));
+      fill('M8.8 14.3 L19.7 9.3 L23 10.5 L12 15.7 Z M10.2 9.7 L24.5 14.1 L22.2 15.2 L7.9 10.8 Z', linear(9,9,23,15,'#fff1b2','#e9ae48'));
+      const bow = 'M16.5 11.4 C11.4 10.6 9.2 6.6 12.2 6.5 Q15 6.4 16.5 11.4 C18.7 6.2 23.5 6.8 22.4 9.1 Q21.6 10.8 16.5 11.4';
+      stroke(bow, '#9f5a21', 1.75);
+      stroke(bow, '#ffe08a', .95);
+    } else if (kind === 'gingerbread') {
+      const cookie = 'M12.5 16.1 C5.4 13.8 4 17.5 7.5 20 L12 21 L9.1 26.7 Q8.5 30.1 12.7 29.3 L16 25.5 L19.4 29.3 Q23.2 30 22.8 26.7 L20 21 L24.5 20 Q29 17.1 24.4 16.1 L19.6 16.1 A5.2 5.2 0 1 0 12.5 16.1 Z';
+      brush.save();
+      brush.translate(.4,.7);
+      fill(cookie, '#572914');
+      brush.restore();
+      fill(cookie, linear(8,8,24,29,'#ffe0a2','#c78244','#934623','#572e1d'));
+      stroke(cookie, '#f0be8180', .68);
+      stroke('M8.3 17.1 L9.4 19.4 M23.5 17.1 L22.8 19.5 M10.9 26.3 L13.1 27.4 M19 27.5 L21 26.3 M14.4 13.7 Q16 15.1 17.7 13.7', '#fff3d5', .85);
+      fill(ellipse(14.1, 11.6, 1.4, 1.4), '#523021');
+      fill(ellipse(17.9, 11.6, 1.4, 1.4), '#523021');
+      fill(ellipse(16, 18.6, 2.35, 2.35), '#e47070');
+      fill(ellipse(16, 22, 2.35, 2.35), '#a8cd83');
+      fill(ellipse(15.75, 18.2, .8, .72), '#ffbbb1');
     } else {
-      const outlines = {
-        star: 'M16 8 L19.5 15 L27.5 16 L22 21.4 L23.5 29 L16 25.4 L8.5 29 L10 21.4 L4.5 16 L12.5 15 Z',
-        bell: 'M16 9 C10.5 9 9 13 9 17 C9 21 7 23 6 24 L26 24 C25 23 23 21 23 17 C23 13 21.5 9 16 9 Z M13 25 C13 30 19 30 19 25 Z',
-        ribbon: 'M15 15 C10 9 4 9 5 16 C5 22 9 22 14 19 L8 28 L13 27 L17 22 L21 28 L25 28 L20 19 C26 23 29 20 28 15 C27 9 22 10 18 15 Z',
-        gift: 'M6 13 H26 V18 H24 V29 H8 V18 H6 Z',
-        gingerbread: 'M12 17 C5 14 4 20 9 21 L12 21 L9 27 Q9 31 13 29 L16 25 L19 29 Q23 31 23 27 L20 21 L23 21 C28 20 27 14 20 17 A5.3 5.3 0 1 0 12 17 Z',
-      };
-      const colors = {
-        star: ['#fff7b2', '#eaa42b'], bell: ['#ffe59c', '#da782e'],
-        ribbon: ['#ff9de0', '#b21b82'], gift: ['#a3ecc0', '#1f8b61'], gingerbread: ['#f5b87e', '#a85933'],
-      };
-      const outline = Object.hasOwn(outlines, kind) ? outlines[kind] : null;
-      const body = outline ? new Path2D(outline) : new Path2D();
-      const shine = outline ? brush.createLinearGradient(8, 10, 24, 29) : brush.createRadialGradient(12.5, 14, .5, 16.7, 20, 10.9);
-      if (outline) {
-        const [light, dark] = colors[kind];
-        shine.addColorStop(0, light);
-        shine.addColorStop(1, dark);
-        brush.strokeStyle = light;
-      } else {
-        body.arc(16, 19, 9.7, 0, TAU);
-        shine.addColorStop(0, '#fff5eb');
-        shine.addColorStop(.20, '#ffb0a8');
-        shine.addColorStop(.50, '#eb526b');
-        shine.addColorStop(.83, '#9f1c3e');
-        shine.addColorStop(1, '#50122d');
-        brush.lineWidth = .7;
-        brush.strokeStyle = '#f4afae';
-      }
-      brush.fillStyle = shine;
-      brush.fill(body);
-      brush.stroke(body);
-      if (!outline) {
-        brush.strokeStyle = '#ffc8ce78';
-        brush.beginPath();
-        brush.arc(16, 19, 8.6, .2, 1.24);
-        brush.stroke();
-      }
-      if (kind === 'gift') {
-        brush.fillStyle = '#ffd580';
-        brush.fillRect(14, 13, 4, 16);
-        brush.fillRect(6, 17, 20, 2);
-      }
-      if (kind === 'ribbon') {
-        brush.fillStyle = '#ffd0ed';
-        brush.fillRect(14, 14, 5, 6);
-      }
-      if (kind === 'gingerbread') {
-        brush.fillStyle = '#fff3df';
-        for (const [x, y] of [[14, 12], [18, 12], [16, 19], [16, 22]]) {
-          brush.beginPath();
-          brush.arc(x, y, .8, 0, TAU);
-          brush.fill();
-        }
-      }
+      const ball = ellipse(16, 19.7, 20.4, 20.4);
+      const glass = brush.createRadialGradient(12.2, 13.8, .6, 17, 20.5, 10.6);
+      glass.addColorStop(0, '#ffebe0');
+      glass.addColorStop(.22, '#ef8b86');
+      glass.addColorStop(.57, '#d0405d');
+      glass.addColorStop(.84, '#921f41');
+      glass.addColorStop(1, '#49132d');
+      fill(ball, glass);
+      stroke(ball, '#f8b4b27f', .6);
+      fill('M12.7 9.9 L13 6.3 Q16 5.8 19 6.3 L19.3 9.9 Z', cap);
+      stroke('M14.8 7.2 V9.3 M17.2 7.2 V9.2', '#8759258c', .55);
+      fill(ellipse(11.9, 14.3, 4.5, 2.1, -.65), '#fff0e9a0');
+      stroke('M23.6 22.8 Q22.5 26.8 18.4 28', '#ffc8d095', 1.1);
     }
     ornamentSprites.set(kind, sprite);
     return sprite;
@@ -492,7 +540,7 @@
     visible.sort((a, b) => a.screen[3] - b.screen[3]);
     for (const { ornament, facing, reveal, button, screen: [x, y, scale, depth] } of visible) {
       const size = ornamentSize(ornament.kind, scale);
-      const width = ornament.kind === 'bauble' ? size : size * (.66 + .34 * facing);
+      const width = ornament.kind === 'bauble' ? size : size * (.76 + .24 * facing);
       const hang = hangingOrnament?.id === ornament.id ? smooth((now - hangingOrnament.start) / 480) : 1;
       const opacity = reveal * smooth((facing - .04) / .22) * (.42 + .58 * hang);
       if (button) {
@@ -550,9 +598,15 @@
     photoLayer.append(placementPhoto);
     canvas.tabIndex = 0;
     canvas.setAttribute('aria-keyshortcuts', 'ArrowLeft ArrowRight Space R');
+    let sentOrnamentArt = false;
     addEventListener('message', (event) => {
       if (event.source !== window.parent || event.origin !== location.origin ||
           event.data?.type !== 'ssafy-tree:notes' || !Array.isArray(event.data.notes)) return;
+      if (!sentOrnamentArt) {
+        sentOrnamentArt = true;
+        const artwork = Object.fromEntries(ornamentKinds.map(kind => [kind, ornamentSprite({ kind }).toDataURL('image/png')]));
+        window.parent.postMessage({ type: 'ssafy-tree:ornament-art', artwork }, location.origin);
+      }
       const notes = event.data.notes;
       const items = event.data.ornaments;
       if (Array.isArray(items)) setOrnaments(items, event.data.highlightedOrnamentId);

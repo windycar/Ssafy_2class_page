@@ -24,12 +24,13 @@ const ornamentOptions = [
 
 type Props = {
   isDemo: boolean;
+  artwork: Partial<Record<OrnamentKind, string>>;
   onUpdate: (ornaments: ChristmasOrnament[], highlightedId: string | null) => void;
   pickPosition: (design: OrnamentDesign) => Promise<OrnamentPosition | null>;
   cancelPlacement: () => void;
 };
 
-export default function ChristmasTreeOrnaments({ isDemo, onUpdate, pickPosition, cancelPlacement }: Props) {
+export default function ChristmasTreeOrnaments({ isDemo, artwork, onUpdate, pickPosition, cancelPlacement }: Props) {
   const [ownOrnaments, setOwnOrnaments] = useState<ChristmasOrnament[]>([]);
   const [slot, setSlot] = useState<OrnamentSlot>(1);
   const [draftKind, setDraftKind] = useState<OrnamentKind | null>(null);
@@ -163,15 +164,20 @@ export default function ChristmasTreeOrnaments({ isDemo, onUpdate, pickPosition,
           <fieldset disabled={operation !== null}>
             <legend className="sr-only">장식 종류</legend>
             <div className="grid grid-cols-4 gap-1.5">
-              {ornamentOptions.map(({ kind, label, Icon, color }) => (
-                <label key={kind}>
-                  <input type="radio" name="ornament-kind" value={kind} checked={selected === kind} onChange={() => setDraftKind(kind)} className="peer sr-only" />
-                  <span className="flex min-h-15 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-[#e1e6db] px-1 text-center text-[11px] leading-tight font-bold text-[#355144] peer-checked:border-[#2d674d] peer-checked:bg-[#e8f1ea] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#2d674d] peer-disabled:cursor-default">
-                    <Icon className={`size-5 ${color}`} aria-hidden="true" />
-                    {label}
-                  </span>
-                </label>
-              ))}
+              {ornamentOptions.map(({ kind, label, Icon, color }) => {
+                const source = artwork[kind];
+                return (
+                  <label key={kind}>
+                    <input type="radio" name="ornament-kind" value={kind} checked={selected === kind} onChange={() => setDraftKind(kind)} className="peer sr-only" />
+                    <span className="flex min-h-17 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-[#e1e6db] px-1 text-center text-[11px] leading-tight font-bold text-[#355144] peer-checked:border-[#2d674d] peer-checked:bg-[#e8f1ea] peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#2d674d] peer-disabled:cursor-default">
+                      {typeof source === "string" && source.startsWith("data:image/png;base64,")
+                        ? <img src={source} alt="" className="size-8 object-contain" draggable={false} />
+                        : <Icon className={`size-7 ${color}`} aria-hidden="true" />}
+                      {label}
+                    </span>
+                  </label>
+                );
+              })}
             </div>
             <label className="mt-1.5 block">
               <input type="radio" name="ornament-kind" value="custom" checked={selected === "custom"} onChange={() => setDraftKind("custom")} className="peer sr-only" />
